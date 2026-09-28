@@ -44,35 +44,46 @@ Everything below is defined in terms of relative paths under `GRV_DIR`.
 The layout is identical on all three; backends differ only in how they
 fulfil the **backend contract** below.
 
-**Backend contract.** The layout requires six operations:
+**Backend contract.** The layout requires seven operations:
 
 | operation            | meaning                                                             |
 |----------------------|---------------------------------------------------------------------|
-| `put`                | write an object; readers observe either the old or the new content, never a partial one |
+| `put`                | write an object; readers observe either the old or the new content, never a partial one; returns the new validator |
 | `get`                | read an object's content and its validator                          |
-| `list-by-prefix`     | list object names under a prefix                                  |
+| `head`               | read an object's validator and size without its content            |
+| `list-by-prefix`     | list object names under a prefix; optionally with delimiter `/`, returning only the immediate child names (common prefixes) |
 | `delete`             | remove an object (idempotent)                                     |
-| `conditional-create` | create only if the object does not exist; fail otherwise          |
-| `conditional-put`    | replace only if the object's validator matches one read earlier (compare-and-swap) |
+| `conditional-create` | create only if the object does not exist, atomically with its full content; fail otherwise; returns the new validator |
+| `conditional-put`    | replace only if the object's validator matches one read earlier (compare-and-swap); returns the new validator |
 
 A *validator* is the backend's identity for an object's content: the S3
-`ETag` (MD5 for normal uploads), the GCS object `generation`, or, locally,
-the file stat (inode + mtime + size).
+`ETag`, the GCS object `generation`, or, locally, the file stat (device +
+inode + nanosecond mtime + size). A validator changes whenever the object is
+rewritten; it is not portable across backends or copies.
+
+Every prefix passed to `list-by-prefix` in this specification ends in `/`
+(e.g. `<table>/region=eu/`), so that `region=eu` never matches `region=eu2`
+and `version=1` never matches `version=10`.
 
 Per-backend mapping:
 
 | operation            | local filesystem                          | S3                                            | GCS                                     |
 |----------------------|-------------------------------------------|-----------------------------------------------|-------------------------------------------|
-| `put`                | write to temp file, then `rename`         | single `PUT`                                 | object write (new generation)             |
+| `put`                | write to temp file, then `rename`         | single or multipart `PUT`                    | object write (new generation)             |
 | `get`               | read; validator from `stat`               | `GET` + `ETag`                               | `GET` + `generation`                      |
-| `list-by-prefix`    | directory walk                            | `ListObjectsV2` with prefix                   | bucket list with prefix                   |
+| `head`              | `stat`                                    | `HEAD`                                       | object metadata `GET`                     |
+| `list-by-prefix`    | directory walk (`readdir` for delimiter)  | `ListObjectsV2` with `prefix` (+ `delimiter`) | object list with `prefix` (+ `delimiter`) |
 | `delete`            | `unlink`                                  | `DELETE`                                     | object delete                             |
-| `conditional-create`| `open(O_CREAT\|O_EXCL)`                    | `PUT` with `x-amz-if-none-match: *`          | `PUT` with `if-generation: 0`             |
-| `conditional-put`   | read-modify-write under a directory lock  | `PUT` with `if-match: <ETag>`                | `PUT` with `if-generation-match`          |
+| `conditional-create`| write to temp file, then `link(2)` to the target (fails if it exists), then unlink the temp | `PUT` (or multipart complete) with `If-None-Match: *` | write with `ifGenerationMatch=0` (`x-goog-if-generation-match: 0`) |
+| `conditional-put`   | under an exclusive `flock` on the containing directory: `stat`, compare, write temp, `rename` | `PUT` with `If-Match: <ETag>`   | write with `ifGenerationMatch=<generation>` |
 
-Two deliberate omissions: the layout never requires **rename** (object
-stores lack it; publishing is made safe instead by the manifest-as-commit-
-marker, §4), and never requires **conditional delete** (S3 lacks it; every
+The local backend requires a filesystem with reliable `flock` and `link`
+semantics; network filesystems without them are unsupported.
+
+Two deliberate omissions: the layout never requires **rename** as a layout
+operation (object stores lack it; publishing is made safe instead by the
+manifest-as-commit-marker, §4 — the local backend may use rename
+internally), and never requires **conditional delete** (S3 lacks it; every
 deletion in this layout is either guarded by a held claim (§5, §10) or is
 idempotent housekeeping).
 
@@ -82,27 +93,35 @@ idempotent housekeeping).
 GRV_DIR/
 └── datasets/
     └── <dataset>/
-        ├── <table>/          # one folder per table
-        ├── .runs/            # run metadata
-        └── .states/          # revisions + LATEST
+        ├── <table>/              # one folder per table (§3)
+        ├── .retired              # optional; the dataset is retired (§10)
+        ├── .runs/                # run files (§6)
+        │   └── <run-id>.json
+        └── .states/
+            ├── .claim            # dataset claim: publish steps and GC passes (§8, §10)
+            ├── LATEST            # current revision number (§8)
+            └── revisions/
+                └── revision={n}/
+                    ├── data.parquet   # the revision (§7)
+                    └── .keep          # optional pin (§10)
 ```
 
 - The top-level folder is always `datasets/`; each dataset gets one folder
   under it.
 - A dataset is a collection of tables; each table lives in its own folder
   directly under the dataset folder.
-- `.runs/` and `.states/` are per-dataset metadata folders. The dot prefix
-  distinguishes them from table folders.
+- `.runs/`, `.states/` and `.retired` are per-dataset metadata. The dot
+  prefix distinguishes them from table folders.
 
 The `datasets/` level is deliberate, not ceremony: `GRV_DIR` is a
 *root*, and the layout reserves the right to place other top-level
 structures there later (system state, GC staging, caches) without a
-breaking change. It also keeps "list all datasets" a single prefix listing
-on object stores, where a root shared with other tools' objects would make
-every listing a filter, and it gives every dataset a uniform path
-(`<root>/datasets/<name>/...`). Dropping the level now to save one path
-segment would turn re-adding it into a data migration; keeping it costs one
-segment.
+breaking change. It also keeps "list all datasets" a single delimited
+prefix listing on object stores, where a root shared with other tools'
+objects would make every listing a filter, and it gives every dataset a
+uniform path (`<root>/datasets/<name>/...`). Dropping the level now to save
+one path segment would turn re-adding it into a data migration; keeping it
+costs one segment.
 
 ### 3. Table layout and `.layout.json`
 
@@ -150,16 +169,22 @@ There are two cases:
 
 Rules:
 
-- Dataset and table names must also match
+- Dataset and table names must match
   `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`. The leading-alphanumeric requirement
   means no name can start with a dot, so table folders can never collide
   with `.runs/`, `.states/`, or any `.claim` / `.keep` / `.pruned` /
-  `.retired` marker. Names are case-sensitive; on a case-insensitive local
-  filesystem, sibling names MUST NOT differ only by case.
+  `.retired` marker.
+- Names and values are case-sensitive, but on **every** backend sibling
+  names — datasets, tables, and the values of one partition key under the
+  same parent — MUST NOT differ only by case. This keeps every layout
+  portable to case-insensitive local filesystems, so a directory valid on
+  S3 is valid everywhere. Writers reject such a collision.
 - `partition_keys` is the discriminator between the two cases: empty means
   case a, non-empty means case b. Keys appear in the declared order in the
   path, and entries are unique.
-- The path segment `key1=value1/key2=value2` is the **partition**.
+- The path segment `key1=value1/key2=value2` is the **partition**. In case
+  b, `version={n}` directories and `.claim` appear only at full partition
+  depth; no intermediate directory holds versions.
 - Partition **key names** and **values** must both match
   `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`. Writers validate on write (layout,
   claim, manifest, revision); non-conforming names or values are rejected.
@@ -172,8 +197,10 @@ Rules:
   leading zeros) and satisfies `1 ≤ n ≤ 2^63−1`, matching the `int64`
   revision column (§7).
 - A table's `.layout.json` is created by the table's first writer via
-  `conditional-create` and is **immutable** thereafter: a different
-  `partition_keys` is a different table (§4).
+  `conditional-create` and is **immutable** thereafter. A writer whose
+  create fails reads the existing file; if its `partition_keys` differ from
+  the writer's, the write is rejected — a different `partition_keys` is a
+  different table (§4).
 - In case b, each of a version's data files additionally contains one
   column per partition key, named `_{key_name}_` (e.g. `_key1_`,
   `_key2_`), duplicating the partition values as data (hive-style). The
@@ -192,25 +219,29 @@ Rules:
 ### 4. Versions and `manifest.json`
 
 - `version={n}`: `n` is a positive integer, unique per (table, partition).
-  Versions are **immutable**: once published, a version directory is never
-  modified.
+  Versions are **immutable**: once written, a version's data files and
+  `manifest.json` are never modified. The only objects later added to a
+  version directory are the GC markers `.keep` and `.pruned` (§10), and
+  the only later deletions are GC pruning (§10).
 - A version consists of one or more **data files** plus its
-  `manifest.json`. The single-file form is `data.parquet`; for large
-  partitions a version may additionally have `data-1.parquet`,
-  `data-2.parquet`, ... (names: `data.parquet` or `data-<i>.parquet`,
-  `<i>` a positive integer without leading zeros; no other `data*` files
-  may appear in a version directory). The files are **join-safe**: each is a
-  complete set of rows (no row is split across files), rows are disjoint
-  across files, and the version's data is the union of its files' rows in
-  any order. The manifest's `data_files` array names exactly the files
-  that exist, each with its SHA-256, so a consumer can verify the set
-  before joining.
+  `manifest.json`. Every version has `data.parquet`; a large version may
+  additionally have `data-1.parquet`, `data-2.parquet`, …, `data-<k>.parquet`
+  with contiguous indices from 1 (`<i>` a positive integer without leading
+  zeros; no other `data*` files may appear in a version directory). The
+  files are **union-safe**: each is a complete set of rows (no row is split
+  across files), every row of the version is in exactly one file, and the
+  version's data is the union of its files' rows in any order. The
+  manifest's `data_files` array names exactly the files that exist, in the
+  order `data.parquet`, `data-1.parquet`, `data-2.parquet`, … (numeric by
+  index, not lexicographic), each with its SHA-256, so a consumer can
+  verify the set before combining.
 - `manifest.json` is the **commit marker** of the version: a version
   directory is valid only when every data file listed in the manifest and
-  the manifest itself are present. Writers upload the data files first and
-  `manifest.json` last, so readers never observe a half-published version.
-  A version whose data files are later lost (pruning, abandonment) is
-  unreadable, and readers report it as such.
+  the manifest itself are present. Writers create the data files first and
+  `manifest.json` last, all via `conditional-create` (§5), so readers never
+  observe a half-published version and no writer can overwrite another's
+  objects. A version whose data files are later lost (pruning,
+  abandonment) is unreadable, and readers report it as such.
 
 **Empty versions (partition tombstones).** A version whose data files
 contain no rows (a zero-row parquet) is an **empty version**. Publishing an
@@ -236,10 +267,19 @@ prunable (§10).
 | `run_id`       | string  | yes      | ULID of the run that produced it (§6)        |
 | `created_at`   | string  | yes      | RFC 3339 UTC timestamp of publication         |
 | `claim_token`  | string  | yes      | token of the claim that allocated this version (§5); the fence |
-| `data_files`   | array   | yes      | the version's data files in name order; each element `{name, sha256}`; the fence |
+| `data_files`   | array   | yes      | the version's data files in index order; each element `{name, sha256, size, validator}` (below); the fence |
 | `row_count`    | integer | yes      | rows across all data files; 0 iff the version is empty |
 | `derived_from` | array   | no       | source references; present iff derived (§9)   |
 | `metadata`     | object  | no       | map of engine name → engine-specific fields; readers MUST ignore entries they do not understand (§11) |
+
+Data file object (each element of `data_files`):
+
+| field       | type    | notes                                                         |
+|-------------|---------|---------------------------------------------------------------|
+| `name`      | string  | `data.parquet` or `data-<i>.parquet`                          |
+| `sha256`    | string  | lowercase hex SHA-256 of the file's content                   |
+| `size`      | integer | size in bytes                                                 |
+| `validator` | string  | the backend validator returned when the file was created (§1) |
 
 Source reference object (each element of `derived_from`):
 
@@ -261,8 +301,8 @@ Example (case b, derived from two sources):
   "created_at": "2026-09-28T10:00:00Z",
   "claim_token": "9f2c1e4a-7b3d-4c1e-9a02-6d5f8e1b2c3d",
   "data_files": [
-    { "name": "data.parquet", "sha256": "…" },
-    { "name": "data-1.parquet", "sha256": "…" }
+    { "name": "data.parquet", "sha256": "…", "size": 104857600, "validator": "…" },
+    { "name": "data-1.parquet", "sha256": "…", "size": 52428800, "validator": "…" }
   ],
   "row_count": 48211,
   "derived_from": [
@@ -288,17 +328,34 @@ non-partitioned table (case a), `partition` is the empty object `{}`. The
 manifest does not duplicate the data's column schema: the parquet file is
 self-describing about its own schema.
 
-The manifest is also the **fence** against stale writers: `claim_token`
-and the `data_files` hashes let the publisher verify that a version was
-written by the claim holder that allocated it, and that its data has not
-been clobbered since (§5, §8).
+**Verifying a data file.** A data file *verifies* against its manifest
+entry if it exists and either (a) its current validator (`head`) equals the
+recorded `validator`, or (b) its SHA-256 equals the recorded `sha256`.
+Check (a) is a metadata read and is the normal path; check (b) reads the
+whole file and is the fallback when validators differ legitimately (the
+directory was copied or restored to another bucket or backend) and for
+full audits. A version *verifies* when every listed data file verifies and
+no other `data*` file is present.
 
-Schema evolution: a new version of a (table, partition) may **add**
-columns relative to its predecessor — the backward-compatible case. Any
-other change to the column schema (removing, renaming, re-typing, or
-reordering columns) is not an evolution of the table: it is a **new
-table**. Changing the partition keys is likewise a new table, since the
-`_{key}_` columns are part of the layout, not the data.
+The manifest is also part of the **fence** against stale writers:
+`claim_token` ties the version to the claim that allocated it, and the run
+file must list the version with the same token (§5, §6).
+
+**Schema evolution.** A new version of a (table, partition) may **add**
+columns relative to its predecessor — the backward-compatible case — and
+added columns are appended after the existing ones. Any other change to the
+column schema (removing, renaming, re-typing, or reordering columns) is not
+an evolution of the table: it is a **new table**. Changing the partition
+keys is likewise a new table, since the `_{key}_` columns are part of the
+layout, not the data. The rule extends across a state: the column lists of
+all versions of one table in one revision must be **prefix-compatible**
+(for any two, one is a prefix of the other, with identical types). The
+table's schema in that state is the longest list; consumers fill trailing
+columns missing from a version with nulls. Because older schemas are
+prefixes of newer ones, reselecting an older version (a rollback) remains
+legal. Writers check a new version against the highest-numbered existing
+version of its (table, partition); the publisher enforces
+prefix-compatibility across the state (§7).
 
 ### 5. Version allocation: `.claim`
 
@@ -318,65 +375,92 @@ both hold `<dataset>/.states/.claim`, so they never run concurrently for one
 dataset.
 
 `.claim` schema — the file's content changes as it moves through the
-lifecycle below; **every transition is a `conditional-put` on `token`**:
+lifecycle below; **every transition is a `conditional-put` against the
+validator of the claim content the writer last read or wrote**; the holder
+recognizes its own claim by its `token`:
 
 | field         | type    | present in         | notes                                     |
 |---------------|---------|--------------------|-------------------------------------------|
-| `holder`      | string  | all states         | a run ULID (§6), a publisher, or a GC pass |
-| `token`       | string  | all states         | opaque random string (e.g. UUID); the CAS key |
+| `holder`      | string  | all states         | a run ULID (§6), or `publish:<ULID>` / `gc:<ULID>` for a publish step or GC pass |
+| `token`       | string  | all states         | opaque random string (e.g. UUID); identifies this claim |
 | `version`     | integer | allocated, released| the reserved number (version or revision)  |
 | `claimed_at`  | string  | acquired, allocated| RFC 3339 UTC, when the claim was taken     |
-| `expires_at`  | string  | acquired, allocated| RFC 3339 UTC, after which the claim is stale|
+| `expires_at`  | string  | acquired, allocated| RFC 3339 UTC, after which the claim is stale; advanced by renewal |
 | `released_at` | string  | released           | RFC 3339 UTC, when the holder finished     |
 
 Protocol:
 
 1. **Acquire.** `conditional-create` `.claim` with `holder`, `token`,
-   `claimed_at`, `expires_at`. If the create fails, read the existing
+   `claimed_at`, `expires_at`. If the create fails, `get` the existing
    claim: if it is unexpired and held by another, abort (or wait and
    retry, at the caller's discretion); if it is expired, or is a release
-   record, take it over with a `conditional-put` on the token just read,
-   writing a new `holder`, `token`, and timers.
-2. **Allocate.** The holder lists the `version={n}` directories, takes
-   `max + 1` (or `1` if none), and rewrites `.claim` (a
-   `conditional-put` on its own token) adding `version`.
-3. **Publish.** Write `version={n}`'s data files, then
-   `version={n}/manifest.json` (§4), whose `claim_token` is this claim's
-   `token` and whose `data_files` records each file's SHA-256.
-4. **Confirm.** Re-read each of the version's data files to confirm they
-   are still present and hash as recorded. If any is missing or changed,
-   the version was clobbered or pruned mid-flight: abandon it (step 5) —
-   it can never be published.
-5. **Release.** Rewrite `.claim` (a `conditional-put` on its own token)
-   into a release record: `holder`, `token`, `version`, `released_at`.
-   The claim file is **never deleted**: a release record is the durable
+   record, take it over with a `conditional-put` against the validator just
+   read, writing a new `holder`, `token`, and timers. On takeover, remember
+   the previous content's `version`, if any, as `prior`.
+2. **Allocate.** The holder lists the `version={n}/` prefixes (delimited
+   listing), takes `n = max(highest listed, prior, 0) + 1`, and rewrites
+   `.claim` (`conditional-put`) adding `version`. Including `prior` means a
+   number allocated by a taken-over claim is never reallocated, even if its
+   holder had not yet written any object.
+3. **Write data.** Create each of `version={n}`'s data files via
+   `conditional-create`, recording each returned validator. A failed create
+   means another writer has objects at this number: abandon the version
+   (step 7).
+4. **Commit.** **Renew** the claim — a `conditional-put` that advances
+   `expires_at` — and, only if it succeeds, create
+   `version={n}/manifest.json` (§4) via `conditional-create`, with
+   `claim_token` set to this claim's `token` and `data_files` recording each
+   file's SHA-256, size and validator.
+5. **Confirm.** Verify the version (§4) and check that no `.pruned` is
+   present in its directory. If this fails, the version was pruned or
+   damaged mid-flight: abandon it (step 7).
+6. **Release.** Rewrite `.claim` (`conditional-put`) into a release record:
+   `holder`, `token`, `version`, `released_at`. A version whose release
+   succeeded is **finalized**; the run lists it in its run file (§6). The
+   claim file is **never deleted**: a release record is the durable
    allocation record for the last version, and the next acquirer takes it
    over.
+7. **Abandon.** Release the claim as in step 6 (so the number stays
+   allocated) but do not list the version in the run file. Its objects are
+   left for GC (§10).
 
-**Fence.** Because every claim transition is a compare-and-swap on the
-token, a stale holder — one whose claim was taken over — fails its next CAS
-and MUST abort the run without writing any version objects. A version is
-fenced at its manifest: the publisher (§8) accepts a *new* version (one
-not referenced by any kept revision) only if its manifest's `claim_token`
-matches the token currently in the (table, partition) claim file and each
-of its data files hashes as the manifest records. A version that was never
-validly fenced can never enter a revision. A version that *was* fenced at
-its first publication stays valid: when it is selected again (e.g. a
-rollback to an older version), only the data hash is re-checked, since its
-historical token is no longer in the claim file. The fence assumes
-conforming writers — every version write is preceded by a successful claim
-CAS; a client that writes version objects without holding the claim is out
-of contract, and store-level access control, not the layout, is the
-mitigation.
+**Renewal.** A holder may renew at any time, and MUST renew at intervals
+shorter than its TTL while it works; `expires_at` must exceed the interval
+between renewals plus the maximum clock skew between writers. A failed
+renewal, release, or other claim CAS means the claim was taken over: the
+holder is **stale** and MUST stop writing objects for that version at once;
+the version is not finalized.
 
-A crashed run's claim is recovered by step 1's takeover; `expires_at` must
-exceed the worst-case publish duration for that (table, partition).
+**Fence.** A version is **publishable** — may be referenced by a revision
+(§7) — iff all of:
+
+- its `manifest.json` exists and matches its path (`table`, `partition`,
+  `version`);
+- no `.pruned` exists in its directory;
+- it verifies (§4);
+- its run file (§6) exists and lists (table, partition, version) with the
+  manifest's `claim_token`;
+- its `derived_from` references resolve (§9).
+
+The same rule applies to a version entering a revision for the first time
+and to one reselected later (e.g. a rollback). A stale holder never gets
+its version into a run file — its release fails — so its version can never
+be published; and because every version object is created with
+`conditional-create`, a stale holder cannot clobber another holder's
+version either. The fence assumes conforming writers — every version write
+follows the protocol above; a client that writes version objects without
+holding the claim is out of contract, and store-level access control, not
+the layout, is the mitigation.
+
+A crashed holder's claim is recovered by step 1's takeover once it expires.
 
 ### 6. Runs
 
 Adding new versions — for one table, a few tables, the partitions of one
-table, or partitions across multiple tables — is a **run**. Each run has a
-unique `run_id` and its metadata is stored at:
+table, or partitions across multiple tables of one dataset — is a **run**.
+A run publishes into exactly one dataset; a job writing to several datasets
+performs one run per dataset. Each run has a unique `run_id` and its
+metadata is stored at:
 
 ```
 <dataset>/.runs/<run-id>.json
@@ -394,19 +478,27 @@ Run file schema:
 |--------------|--------|----------|------------------------------------------|
 | `run_id`     | string | yes      | the run's ULID; the file name is `<run_id>.json` |
 | `created_at` | string | yes      | RFC 3339 UTC                             |
-| `entries`    | array  | yes      | one entry per published version          |
+| `entries`    | array  | yes      | one entry per finalized version          |
+| `inputs`     | array  | no       | the source revisions the run read, each `{dataset, revision}`; recorded at the start of the run (§11) |
 | `metadata`   | object | no       | map of engine name → engine-specific fields (§11) |
 
 Each entry: `table` (string), `partition` (object; `{}` for
-non-partitioned), `version` (integer).
+non-partitioned), `version` (integer), `claim_token` (string; the token of
+the claim that allocated and released it, §5).
 
 ```json
 {
   "run_id": "01J5K8W3N4R6Y8C2D9F0G1H2J3",
   "created_at": "2026-09-28T10:00:00Z",
   "entries": [
-    { "table": "customers", "partition": {}, "version": 2 },
-    { "table": "orders", "partition": { "region": "eu", "year": "2025" }, "version": 3 }
+    { "table": "customers", "partition": {}, "version": 2,
+      "claim_token": "3b7d0c2e-1f4a-4e9b-8c6d-2a5e7f9b1c0d" },
+    { "table": "orders", "partition": { "region": "eu", "year": "2025" }, "version": 3,
+      "claim_token": "9f2c1e4a-7b3d-4c1e-9a02-6d5f8e1b2c3d" }
+  ],
+  "inputs": [
+    { "dataset": "raw_events", "revision": 7 },
+    { "dataset": "ref_data", "revision": 2 }
   ]
 }
 ```
@@ -416,14 +508,28 @@ Versions enter a dataset's state only when a revision (§7) references
 them; the publish step (§8) is what advances `LATEST`. The lifecycle is
 therefore run → publish step → `LATEST`, in that order.
 
-The run file is written **after** all of the run's manifests are committed,
-and is the run's own commit marker: it lists exactly the versions the run
-published and is never modified afterwards. A version whose `run_id` names
-a run with no run file (a crash between the manifest and the run file) is
-**orphaned**: the publisher rejects orphaned versions, and the publisher —
-or a recovery tool acting for the run — may write the run file to finalize
-the run. A version is publishable only if its manifest passes the fence
-(§5) and its run file exists.
+The run file is written via `conditional-create` **after** all of the
+run's versions are finalized, and is the run's own commit marker: it lists
+exactly the versions the run finalized (abandoned and stale versions are
+omitted) and is never modified afterwards. A version whose `run_id` names
+a run with no run file (a crash between release and the run file) is
+**orphaned** and is not publishable.
+
+**Recovering a crashed run.** A recovery tool acting for the run may write
+its run file, but only once every claim held by the run is released or
+expired, so it cannot race a run that is still alive. It lists exactly the
+versions it can prove finalized:
+
+- a version whose (table, partition) claim still holds the run's release
+  record for that `version` and `token`; or
+- a version whose claim is still the run's expired, allocated claim for
+  that `version` and whose manifest carries that `token`: the recovery tool
+  performs steps 5–6 of §5 on the run's behalf, and lists it if the
+  release succeeds.
+
+Versions whose claim has since been taken over by another holder cannot be
+proven finalized and stay orphaned. The recovery tool writes the run file
+with `conditional-create`; if a run file already exists, it leaves it.
 
 ### 7. Revisions
 
@@ -431,7 +537,7 @@ The state of a dataset is described by a **revision**. A revision is a
 **complete snapshot** of the dataset's state: one entry per (table,
 partition) that is *in the state*, each with the current version of that
 (table, partition) and the `run_id` that produced it. A state may contain
-any subset of the dataset's tables.
+any subset of the dataset's tables, including none.
 
 Membership is per-revision: a (table, partition) **absent from a revision
 is not in that revision's state**. Removing a table or partition from a
@@ -452,22 +558,38 @@ All historical revisions are stored as parquet:
 <dataset>/.states/revisions/revision={n}/data.parquet
 ```
 
-Row schema — one row per (table, partition) in the state,
-`previous_revision` constant across rows:
+Row schema — one row per (table, partition) in the state:
 
 | column              | type   | notes                                                    |
 |---------------------|--------|----------------------------------------------------------|
 | `table`             | string | table name                                               |
-| `partition`         | string | e.g. `key1=v1/key2=v2`; empty for non-partitioned       |
+| `partition`         | string | canonical path form, e.g. `key1=v1/key2=v2`; the empty string (not null) for non-partitioned |
 | `version`           | int64  | version of this (table, partition)                      |
 | `run_id`            | string | run that produced the (table, partition, version)       |
-| `previous_revision` | int64  | the revision this one was derived from; `0` for the first |
 
-Validation: a revision is valid iff (a) each (table, partition) appears at
-most once; (b) `previous_revision` is constant across rows; (c) every
-referenced version's manifest exists and passes the fence (§5); (d) the
-referenced tables exist in the dataset. A `LATEST` that names a missing or
-invalid revision is a protocol violation (see §8).
+Revision-level fields are stored in the parquet file's key-value metadata,
+so they survive a zero-row revision (an empty state):
+
+| key                      | value                                                |
+|--------------------------|------------------------------------------------------|
+| `grv.revision`           | this revision's number, in decimal                   |
+| `grv.previous_revision`  | the revision this one was derived from; `0` for the first |
+| `grv.created_at`         | RFC 3339 UTC time the revision was written           |
+
+**Validity** is checked by the publisher when the revision is written
+(§8). A revision is valid iff (a) each (table, partition) appears at most
+once; (b) the three metadata keys are present and `grv.revision` equals
+the path's `n`; (c) every referenced version is publishable (§5); (d) each
+referenced table has a `.layout.json`, and each `partition` string is the
+canonical path form for that table's `partition_keys`; (e) each row's
+`run_id` equals the referenced manifest's `run_id`; (f) the versions of
+each table are prefix-compatible (§4).
+
+**Resolvability** is a separate, time-dependent property: a revision is
+resolvable while every version it references is still present and
+verifies. Validity never changes after the write; resolvability is lost
+when GC prunes a version (§10). A valid but unresolvable revision is not a
+protocol violation — it is the expected result of pruning.
 
 The `revision={n}` path segment deliberately reuses the same `key=value`
 path convention as partitions and versions.
@@ -481,40 +603,56 @@ selects versions, writes the next revision, and advances `LATEST`.
 The publish step:
 
 1. **Acquire** the dataset claim `<dataset>/.states/.claim` (same
-   mechanism as §5). The claim is shared with GC passes (§10): a publish
-   and a GC pass never hold it at the same time.
-2. **Compute the next state.** Start from the current `LATEST` state (or
-   the empty state if the dataset has no revisions yet) and apply the
-   selected changes: new versions replace the (table, partition) entry,
-   and tables or partitions may be dropped by omission (§7).
-3. **Allocate** the revision number: `max(current LATEST, highest existing
-   revision number) + 1` — allocation is above *all* existing revision
-   objects, so a crashed publisher's orphan revision (written but never
-   pointed at) is never overwritten, and gaps in the numbering are legal.
-   Record the number in the claim.
-4. **Validate** every selected version: its manifest exists, passes the
-   fence (§5), and its run file exists (§6).
-5. **Write** `revision={n}/data.parquet` (§7) via `conditional-create`
-   (the number is fresh by construction; a failed create means a
-   collision — abort and re-allocate), with
-   `previous_revision = current LATEST`.
-6. **Advance** `LATEST` to `n`.
+   mechanism as §5, including renewal; on takeover remember `prior`). The
+   claim is shared with GC passes (§10): a publish and a GC pass never hold
+   it at the same time.
+2. **Read** `LATEST` with `get`, keeping its validator (or noting that it
+   is absent). **Compute the next state**: start from the `LATEST` state
+   (or the empty state if `LATEST` is absent) and apply the selected
+   changes: new versions replace the (table, partition) entry, and tables
+   or partitions may be dropped by omission (§7).
+3. **Allocate** the revision number: `max(LATEST, highest existing
+   revision number, prior) + 1` — allocation is above *all* existing
+   revision objects and any number reserved by a taken-over claim, so a
+   crashed publisher's orphan revision (written but never pointed at) is
+   never overwritten, and gaps in the numbering are legal. Record the
+   number in the claim.
+4. **Validate** the next state as a revision (§7): in particular every
+   selected version is publishable (§5).
+5. **Renew** the dataset claim, then **write** `revision={n}/data.parquet`
+   (§7) via `conditional-create` (the number is fresh by construction; a
+   failed create means a collision — abort and re-allocate), with
+   `grv.previous_revision` = the `LATEST` read in step 2 (`0` if absent).
+6. **Advance** `LATEST` to `n` with a `conditional-put` against the
+   validator read in step 2 (`conditional-create` if `LATEST` was absent).
+   If it fails, `LATEST` moved under a stale publisher: abort; revision `n`
+   is an orphan, which is legal.
 7. **Release** the dataset claim.
+
+Step 6's compare-and-swap is what keeps `LATEST` monotonic: a publisher
+whose claim expired mid-step cannot move `LATEST` back over a revision a
+later publisher already advanced to, and every revision `LATEST` ever
+names has, as its `previous_revision`, the `LATEST` it replaced.
 
 `<dataset>/.states/LATEST` is a single-line text file containing the number
 of the latest agreed revision. It is the one pointer readers use to
 resolve the current state of a dataset: read `LATEST` → read
 `revision={n}/data.parquet` → for each (table, partition) in the state,
-read the referenced version's `data.parquet`.
+read the referenced version's `manifest.json` → read the data files it
+lists.
 
 Ordering matters: the revision parquet is written before `LATEST` is
-updated, so `LATEST` never points at a missing revision. A `LATEST` that
-nevertheless names a missing or invalid revision (a crash between steps 5
-and 6, or corruption) is a protocol violation; recovery is a manual
-operation — inspect the revision objects and, if necessary, restore
-`LATEST` to the highest complete revision below it. No reader-side
-fallback is defined: a reader of a corrupt `LATEST` reports the dataset as
-unavailable.
+updated, so `LATEST` never points at a missing revision. A crash between
+steps 5 and 6 leaves `LATEST` unchanged and valid, and revision `n` an
+orphan. A `LATEST` that nevertheless names a missing, unreadable, or
+invalid revision can arise only from corruption or an out-of-contract
+writer, and is a protocol violation; recovery is a manual operation —
+inspect the revision objects and, if necessary, restore `LATEST` to the
+highest valid revision below it. No reader-side fallback is defined: a
+reader of a corrupt `LATEST` reports the dataset as unavailable. (A
+`LATEST` that is valid but no longer resolvable — e.g. of a retired
+dataset, §10 — is not a violation; readers report the pruned versions as
+unavailable.)
 
 ### 9. Cross-dataset derivation
 
@@ -527,6 +665,15 @@ dependency — source dataset, source revision, source table, source
 partition. This makes the provenance chain auditable from the data
 directory alone.
 
+A version's `derived_from` references **resolve** when each named
+(dataset, revision) exists, and the named (table, partition) is in that
+revision's state with a version that is present and not pruned. The
+publisher checks this at publish (§5 fence), so a version whose upstream
+state was pruned before it was published is rejected rather than released
+with broken provenance. Since a referenced revision must exist before the
+version that references it is published, validated derivation links always
+point backward in time.
+
 ### 10. Garbage collection: `.keep` and `.pruned`
 
 The layout assumes a GC process that prunes old versions. Protection is
@@ -534,28 +681,60 @@ declarative, via marker files whose *presence* is the signal (an optional
 JSON body may record `kept_by`, `kept_at`, `reason`):
 
 - `<table>/.../version={n}/.keep` — this version must not be pruned.
-- `<table>/<partition>/.keep` — or `<table>/.keep` for a
-  non-partitioned table — **no version** of this (table, partition) may
-  be pruned.
+- `<table>/<partition>/.keep` — **no version** of this (table, partition)
+  may be pruned.
+- `<table>/.keep` — **no version** of this table, in any partition, may be
+  pruned. (For a non-partitioned table this coincides with the previous
+  rule.)
 - `<dataset>/.states/revisions/revision={n}/.keep` — this revision is
   **pinned** (see the keep set below).
 - `<dataset>/.retired` — the dataset is **retired**: its `LATEST` is no
   longer unconditionally kept (see the keep set below).
 
-**Keep set.** A revision is in the keep set if any of:
+GC is configured with a **pending grace** period, `pending_grace`, which
+must exceed the worst-case time from a run reading its inputs to the
+publish step that includes its versions. It covers the windows in which a
+version or revision is needed but not yet referenced by anything kept.
+
+A version is **pending** if no revision of its dataset references it and
+its number is greater than every version of its (table, partition) that
+any revision references — i.e. it is newer than anything ever published
+for that (table, partition). Versions being written, and finalized
+versions awaiting their publish step, are pending.
+
+**Keep set and protected versions.** The keep set (of revisions, across
+all datasets) and the set of protected versions are computed together, to
+a fixpoint.
+
+A revision is in the keep set if any of:
 
 - it is the current `LATEST` of its dataset, unless the dataset is
   **retired** (`.retired` marker present);
+- it is **recently superseded**: it lies on the `previous_revision` chain
+  from `LATEST`, and the revision that followed it on that chain has
+  `grv.created_at` less than `pending_grace` ago (so a run that read it as
+  `LATEST` shortly before it was superseded can still publish);
 - it has a `.keep`;
-- it is named by any element of the `derived_from` of a version appearing
-  in the state of a revision already in the keep set — the closure walks
-  *backward* across datasets, following derivation links, to a fixpoint;
-- a version with a `.keep` whose `derived_from` is non-empty appears in its
-  state: the revisions that `derived_from` names enter the keep set, so a
-  directly kept derived version retains its upstream dependencies too.
+- it is named by any element of the `derived_from` of a protected version
+  — the closure walks *backward* across datasets, following derivation
+  links.
 
-The closure is a walk over (dataset, revision) nodes. A cycle in that
-graph is a modeling error — the walk detects and reports it, and GC
+A version is protected if any of:
+
+- its directory has a `.keep`;
+- its (table, partition) directory or its table directory has a `.keep`;
+- it appears in the state of a revision in the keep set of its own dataset;
+- it is pending, and it either has no `manifest.json` yet or its
+  manifest's `created_at` is less than `pending_grace` ago.
+
+Because `derived_from` of every protected version feeds the keep set, a
+directly kept derived version, a version of a kept product state, and a
+pending derived version all retain their upstream revisions. References
+to revisions that do not exist are reported and ignored.
+
+The closure is a walk over (dataset, revision) nodes. Validated
+derivation links point backward in time (§9), so a cycle cannot arise from
+conforming writers; if one is found anyway, the walk reports it and GC
 aborts the affected deletions rather than proceeding on an incomplete
 closure. A node reached twice through different paths is not a cycle.
 
@@ -566,32 +745,30 @@ body may record `retired_by`, `retired_at`, `reason`). While the marker is
 present, the dataset's `LATEST` is *not* in the keep set: the dataset is
 retained only to the extent that kept revisions — its own, or other
 datasets' via the `derived_from` closure — still reference it, and may
-otherwise be pruned to nothing but its (small) revision records. Retirement
+otherwise be pruned to nothing but its (small) revision records. Its
+`LATEST` then remains valid but may become unresolvable (§7). Retirement
 is terminal: no new runs or publish steps are made against a retired
 dataset.
 
-**Protected versions.** A version is protected if any of:
+The third protection rule is deliberately coarse: a kept revision of an
+upstream dataset protects *its entire state* — every (table, partition,
+version) it names — even though a downstream product may have used only a
+few of them. Provenance dependencies are revision-wide, not
+selector-narrow.
 
-- its directory has a `.keep`;
-- its (table, partition) directory has a `.keep`;
-- it appears in the state of a revision in the keep set of its own dataset.
-
-The third rule is what makes cross-dataset protection work, and it is
-deliberately coarse: a kept revision of an upstream dataset protects *its
-entire state* — every (table, partition, version) it names — even though a
-downstream product may have used only a few of them. Provenance
-dependencies are revision-wide, not selector-narrow.
-
-**GC coordination.** A GC pass holds the dataset claim
-`<dataset>/.states/.claim` for its entire duration (same mechanism as §5;
-the holder is a GC pass). While it holds the claim, no publish step can
-run, so the keep set computed after acquisition cannot change from
-publication mid-pass. GC still re-checks each version's protection
-immediately before deleting its objects, because a *run* (which holds only
-a (table, partition) claim) may be concurrently writing a new,
-not-yet-referenced version: if that version's objects disappear under it,
-the run's confirm step (§5) fails and the run abandons the version. A
-version that is protected at the moment of GC's re-check is not deleted.
+**GC coordination.** A GC pass that prunes dataset `D` holds `D`'s dataset
+claim `<D>/.states/.claim` for its entire duration (same mechanism as §5,
+including renewal; the holder is a GC pass). While it holds the claim, no
+publish step of `D` can run, so `D`'s own revisions cannot change
+mid-pass. Other datasets can still publish concurrently; the
+recently-superseded and pending rules cover their in-flight needs as long
+as `pending_grace` holds, and the publisher's `derived_from` check (§9)
+rejects a version whose upstream was pruned anyway. GC re-checks each
+version's protection immediately before deleting its objects (a `.keep` may
+have appeared); a version that is protected at the moment of GC's re-check
+is not deleted. A writer that adds a `.keep` to a version should check
+afterwards that no `.pruned` exists; if one does, the version was already
+lost.
 
 **Pruning.** GC may prune any unprotected version. Pruning is
 **tombstone-first**: GC writes the `.pruned` file, then deletes the
@@ -609,15 +786,16 @@ crashed pass is completed by re-running GC:
 ```
 
 A version directory containing `.pruned` is a tombstone: readers report the
-version as unavailable, regardless of which of the other two objects still
-exist.
+version as unavailable, and it is never publishable (§5), regardless of
+which of its other objects still exist. `.pruned` is never deleted, so a
+pruned number stays visible to allocation (§5).
 
 **Reader semantics.** Reads are best-effort and point-in-time. A reader
 resolves a state from the `LATEST` (or a named revision) it read; no pin
 or lease is taken, and a concurrent GC pass may prune a version while the
-read is in flight. A reader that encounters a `.pruned` tombstone reports
-that version as unavailable; the read may be retried against the
-then-current state.
+read is in flight. A reader that encounters a `.pruned` tombstone, or a
+missing object, reports that version as unavailable; the read may be
+retried against the then-current state.
 
 **Final-product retention.** The intended workflow for data products:
 
@@ -627,9 +805,9 @@ then-current state.
 3. Let the keep set close over `derived_from` — the backward walk marks
    the upstream revisions whose states the product was derived from.
 4. Prune everything else: in every other dataset, all versions not
-   protected as above. A (table, partition) with a `.keep` is passed over
-   entirely. A non-final dataset that is no longer needed at all may be
-   marked `.retired`, making even its `LATEST` state prunable.
+   protected as above. A (table, partition) or table with a `.keep` is
+   passed over entirely. A non-final dataset that is no longer needed at
+   all may be marked `.retired`, making even its `LATEST` state prunable.
 
 **Consequences**
 
@@ -639,6 +817,10 @@ then-current state.
 - A dataset's `LATEST` state is protected unless the dataset is retired;
   a retired dataset no longer referenced by any kept revision may be
   pruned to nothing but its revision records.
+- Finalized versions that are never published become prunable once
+  `pending_grace` has elapsed since their manifest was written, or once a
+  newer version of their (table, partition) is published. Abandoned
+  versions without a manifest are reclaimed only in the latter case.
 - Revisions are not pruned in this model: they are the history, and the
   `previous_revision` chain must stay walkable from `LATEST`.
 
@@ -662,29 +844,38 @@ lands in GRV is deliberate. Several engines can play the build-layer role;
 dbt is detailed in §11.1.
 
 **Publish path (engine → GRV).** One GRV run (§6) corresponds to one
-engine invocation, or a selected subset of its units of work. The
-publisher — a thin wrapper that invokes the engine, exports the changed
-output to parquet, runs the §5 claim cycle, and runs the §8 publish step
-— is what touches the layout; the engine itself only produces warehouse
-tables. The run's `metadata` object (below) joins the GRV run back to the
-engine's own run record. The publisher also fixes the provenance boundary:
-it records in the run's `metadata` the exact source revision of each GRV
-dataset read at the start of the engine invocation, and the export must be
-stable — the warehouse tables exported are the ones produced from exactly
-that state (e.g. a dedicated schema per invocation, or a sync that runs to
-completion before the run starts).
+engine invocation, or a selected subset of its units of work, per target
+dataset. The publisher — a thin wrapper that invokes the engine, exports
+the changed output to parquet, runs the §5 claim cycle, and runs the §8
+publish step — is what touches the layout; the engine itself only produces
+warehouse tables. The run's `metadata` object (below) joins the GRV run
+back to the engine's own run record. The publisher also fixes the
+provenance boundary: it records in the run's core `inputs` field (§6) the
+exact source revision of each GRV dataset read at the start of the engine
+invocation, derives each version's `derived_from` from those revisions,
+and the export must be stable — the warehouse tables exported are the ones
+produced from exactly that state (e.g. a dedicated schema per invocation,
+or a sync that runs to completion before the run starts).
 
 **Sync path (GRV → warehouse).** For an engine to consume a GRV dataset as
 source, a sync job materializes the dataset's current state (the `LATEST`
 revision's entries, §7) into warehouse tables: one table per GRV table,
 with the `_{key}_` partition columns as ordinary columns — the hive-style
-duplication is what makes a flat warehouse table sufficient. The job diffs
-the current `LATEST` state against its last-synced revision's state and
-refreshes only the (table, partition) entries that changed, were added, or
-were removed; a partition that is absent from the new state, or whose
-current version is empty (§4), is truncated in the warehouse table. The
-sync watermark (last-synced revision per dataset) is *consumer* state and
-deliberately lives outside the layout.
+duplication is what makes a flat warehouse table sufficient — and the
+table's state schema (§4), with missing trailing columns filled with nulls.
+The job diffs the current `LATEST` state against its last-synced
+revision's state and refreshes only the (table, partition) entries that
+changed, were added, or were removed; a partition that is absent from the
+new state, or whose current version is empty (§4), is truncated in the
+warehouse table, and a table absent from the new state is emptied (not
+dropped, since it may re-enter a later state). The job advances its
+watermark only after every entry of the new state has been applied; if a
+version turns out unavailable mid-sync (a newer `LATEST` was published and
+the old state pruned), it restarts against the then-current `LATEST`.
+Where the warehouse allows, each table's refresh should be applied
+atomically (staging table and swap) so engines never read a mix of states.
+The sync watermark (last-synced revision per dataset) is *consumer* state
+and deliberately lives outside the layout.
 
 **Engine metadata.** `manifest.json` and run files carry an optional
 `metadata` object: a map from **engine name** to that engine's own
@@ -704,8 +895,8 @@ The engine name is the key, so entries for different engines cannot
 collide, and each sub-object uses that engine's own vocabulary. Core fields
 define all GRV semantics: GRV tools MUST NOT depend on `metadata`, and
 readers MUST ignore engine entries they do not understand. With it,
-`derived_from` answers *which upstream state* a version came from, and
-`metadata` answers *which code* produced it.
+`derived_from` and `inputs` answer *which upstream state* a version came
+from, and `metadata` answers *which code* produced it.
 
 **No double-versioning.** For any table released to GRV, the GRV
 version/revision history is the history of record. An engine's own history
@@ -720,13 +911,13 @@ current state; history lives in the revision chain.
 The concrete mapping for dbt:
 
 - **Units of work.** One dbt invocation — or a selected subset of its
-  models — is one GRV run. `metadata.dbt` records the model, the dbt run
-  id, and the dbt manifest hash, so a GRV run joins back to its dbt
-  manifest.
+  models — is one GRV run per target dataset. `metadata.dbt` records the
+  model, the dbt run id, and the dbt manifest hash, so a GRV run joins back
+  to its dbt manifest.
 - **Microbatch.** A dbt model that processes data in time batches
   (incremental / event-time selection) SHOULD carry the batch's time key as
   a partition key on its GRV table (e.g. `date=`); partition keys are
-  fixed per table (§4), so the alignment is a design-time decision. A
+  fixed per table (§3), so the alignment is a design-time decision. A
   batch's output is then a *partition*, and a new batch is a *new version
   of one or a few partitions* — not of the whole table: each batch run
   publishes only the partitions it touched, and the new revision records
@@ -754,53 +945,68 @@ The concrete mapping for dbt:
   only place backends differ, and the layout never requires rename or
   conditional delete.
 - Immutability plus the manifest-as-commit-marker makes publishing safe on
-  object stores without rename: write `data.parquet`, then `manifest.json`;
-  readers never observe a half-published version.
+  object stores without rename: create the data files, then
+  `manifest.json`, all with `conditional-create`; readers never observe a
+  half-published version, and no writer can overwrite another's objects.
 - The claim protocol gives single-writer allocation per (table, partition)
   — and per-dataset serialization of publish steps and GC passes — with no
   central coordinator: every claim transition is a compare-and-swap, a
-  stale holder aborts, and the manifest fence rejects a version whose
-  writer no longer holds the claim.
+  stale holder fails its next renewal or release and never gets a version
+  into a run file, and `LATEST` only moves by compare-and-swap.
 - Each revision is a self-contained snapshot of the dataset's state (a
-  possibly proper subset of its tables); `LATEST` is one small pointer, so
+  possibly empty subset of its tables); `LATEST` is one small pointer, so
   resolving the current state is a single read.
 - The `_{key}_` column duplication makes each data file self-contained —
   any single file of a version can be copied, opened, or processed by a
   single-file reader without needing its containing path; a version's data
-  is the union of its files' rows, and the manifest's per-file hashes make
-  the set verifiable before joining.
-- Full provenance: version → run → entries, and version → `derived_from` →
-  (other dataset, revision).
+  is the union of its files' rows, and the manifest's per-file hashes and
+  validators make the set cheaply verifiable before combining.
+- Full provenance: version → run → entries and inputs, and version →
+  `derived_from` → (other dataset, revision), checked at publish.
 - GC protection is declarative and cross-dataset: `.keep` markers plus the
-  keep-set closure over `derived_from` protect; everything else is
-  prunable; a `.retired` dataset releases even its `LATEST` retention;
-  pruning is tombstone-first; `.pruned` records who pruned and when.
+  keep-set closure over `derived_from` protect; pending versions and
+  recently superseded revisions are protected for `pending_grace`;
+  everything else is prunable; a `.retired` dataset releases even its
+  `LATEST` retention; pruning is tombstone-first; `.pruned` records who
+  pruned and when.
 
 **Trade-offs**
 
 - On object stores, updating `LATEST` is not atomic with writing the
   revision parquet. Convention: write `revision={n}/data.parquet` first,
-  then update `LATEST`, so `LATEST` never points at a missing revision. A
-  `LATEST` that nonetheless names a missing or invalid revision is a
-  protocol violation; recovery is manual (§8) — no reader-side fallback is
-  defined.
+  then compare-and-swap `LATEST`, so `LATEST` never points at a missing
+  revision and orphan revisions are legal. A `LATEST` that nonetheless
+  names a missing or invalid revision is a protocol violation; recovery is
+  manual (§8) — no reader-side fallback is defined.
 - The claim protocol depends on the backend contract's
-  `conditional-create`/`conditional-put` (§1), and a claim's
-  `expires_at` must exceed the worst-case publish time; a crashed
-  claimant's allocation is blocked until the TTL elapses.
+  `conditional-create`/`conditional-put` (§1) and on bounded clock skew; a
+  holder must renew within its TTL, and a crashed claimant's allocation is
+  blocked until the TTL elapses.
+- Cross-dataset GC safety is time-based: it holds only if `pending_grace`
+  exceeds the worst-case run-to-publish latency. When the bound is broken,
+  the publisher's `derived_from` check rejects the affected version
+  instead of releasing it with broken provenance — a liveness cost, not a
+  safety one.
+- Verification normally compares backend validators, not content: it is a
+  metadata read, but it trusts the backend to change the validator on
+  every rewrite. A full SHA-256 check is the fallback after copies and
+  for audits.
 - Revisions are full snapshots: resolution is a single read, but each
   revision is O(state size), so revision-history storage grows with state
   size times revision count; compaction is a separate concern (below).
-- Every version allocation lists all historical `version={n}` prefixes of a
-  (table, partition), including pruned tombstones; a long-lived
+- Every version allocation lists all historical `version={n}/` prefixes of
+  a (table, partition), including pruned tombstones; a long-lived
   (table, partition) grows this listing linearly. Bounding it (allocation
   counters, prefix compaction) is part of the compaction concern.
 - Pruning a version makes historical states that needed it unresolvable;
   §10 defines the mechanics, while retention policy (how far back a
   dataset keeps) is a separate concern (below).
-- The fence assumes conforming writers: every version write is preceded by
-  a successful claim CAS. A non-conforming writer that rewrites an old
-  version's data *and* manifest consistently is undetectable; store-level
+- A run file is written only after all of a run's versions are finalized,
+  so a crash can orphan finalized versions; recovery (§6) salvages those
+  it can prove finalized, and the rest are re-produced by a new run.
+- The fence assumes conforming writers: every version write follows the
+  claim protocol. A non-conforming writer that rewrites an old version's
+  data, manifest, *and* run file consistently is undetectable; store-level
   access control, not the layout, is the mitigation.
 
 **Out of scope (separate concern)**

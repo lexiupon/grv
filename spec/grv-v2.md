@@ -56,10 +56,13 @@ fulfil the **backend contract** below.
 | `conditional-create` | create only if the object does not exist, atomically with its full content; fail otherwise; returns the new validator |
 | `conditional-put`    | replace only if the object's validator matches one read earlier (compare-and-swap); returns the new validator |
 
-A *validator* is the backend's identity for an object's content: the S3
-`ETag`, the GCS object `generation`, or, locally, the file stat (device +
-inode + nanosecond mtime + size). A validator changes whenever the object is
-rewritten; it is not portable across backends or copies.
+A *validator* is an opaque, backend-specific string used for content
+validation and conditional writes: the S3 `ETag`, the GCS object
+`generation`, or, locally, the serialized file stat (device + inode +
+nanosecond mtime + size). It is not portable across backends or copies,
+and is not necessarily a rewrite counter: an S3 ETag can repeat when
+identical content is rewritten. Claim transitions MUST change the content:
+a takeover uses a fresh token and a renewal strictly advances `expires_at`.
 
 Every prefix passed to `list-by-prefix` in this specification ends in `/`
 (e.g. `<table>/region=eu/`), so that `region=eu` never matches `region=eu2`
@@ -70,7 +73,7 @@ Per-backend mapping:
 | operation            | local filesystem                          | S3                                            | GCS                                     |
 |----------------------|-------------------------------------------|-----------------------------------------------|-------------------------------------------|
 | `put`                | write to temp file, then `rename`         | single or multipart `PUT`                    | object write (new generation)             |
-| `get`               | read; validator from `stat`               | `GET` + `ETag`                               | `GET` + `generation`                      |
+| `get`               | read and `fstat` the same open file descriptor | `GET` + `ETag`                               | `GET` + `generation`                      |
 | `head`              | `stat`                                    | `HEAD`                                       | object metadata `GET`                     |
 | `list-by-prefix`    | directory walk (`readdir` for delimiter)  | `ListObjectsV2` with `prefix` (+ `delimiter`) | object list with `prefix` (+ `delimiter`) |
 | `delete`            | `unlink`                                  | `DELETE`                                     | object delete                             |
@@ -83,9 +86,9 @@ semantics; network filesystems without them are unsupported.
 Two deliberate omissions: the layout never requires **rename** as a layout
 operation (object stores lack it; publishing is made safe instead by the
 manifest-as-commit-marker, §4 — the local backend may use rename
-internally), and never requires **conditional delete** (S3 lacks it; every
-deletion in this layout is either guarded by a held claim (§5, §10) or is
-idempotent housekeeping).
+internally), and never requires **conditional delete**. S3 supports
+conditional deletion with `If-Match`, but this layout does not use it;
+deletions follow the GC protocol (§10) or are idempotent housekeeping.
 
 ### 2. Top-level layout
 
@@ -213,8 +216,10 @@ Rules:
   list of (key, value) pairs — and appears in two media: the path form
   `key1=v1/key2=v2` (directory names, and the `partition` column of the
   revision parquet, §7) and the JSON object form `{"key1": "v1", ...}`
-  (`manifest.json`, run files). The two encodings carry the same
-  information; tools must treat them as one identifier.
+  (`manifest.json`, run files). The JSON object must contain exactly the
+  declared partition keys and their string values; object member order is
+  irrelevant. Tools reconstruct the path in `.layout.json` key order and
+  treat the two encodings as one identifier.
 
 ### 4. Versions and `manifest.json`
 
@@ -230,10 +235,12 @@ Rules:
   zeros; no other `data*` files may appear in a version directory). The
   files are **union-safe**: each is a complete set of rows (no row is split
   across files), every row of the version is in exactly one file, and the
-  version's data is the union of its files' rows in any order. The
-  manifest's `data_files` array names exactly the files that exist, in the
-  order `data.parquet`, `data-1.parquet`, `data-2.parquet`, … (numeric by
-  index, not lexicographic), each with its SHA-256, so a consumer can
+  version's data is the union of its files' rows in any order. All data
+  files in one version MUST have identical ordered column schemas,
+  including the partition columns. The manifest's `data_files` array names
+  exactly the files that exist, in the order `data.parquet`,
+  `data-1.parquet`, `data-2.parquet`, … (numeric by index, not lexicographic),
+  each with its SHA-256, so a consumer can
   verify the set before combining.
 - `manifest.json` is the **commit marker** of the version: a version
   directory is valid only when every data file listed in the manifest and
@@ -329,8 +336,9 @@ manifest does not duplicate the data's column schema: the parquet file is
 self-describing about its own schema.
 
 **Verifying a data file.** A data file *verifies* against its manifest
-entry if it exists and either (a) its current validator (`head`) equals the
-recorded `validator`, or (b) its SHA-256 equals the recorded `sha256`.
+entry if it exists, its size equals the recorded `size`, and either (a) its
+current validator (`head`) equals the recorded `validator`, or (b) its
+SHA-256 equals the recorded `sha256`.
 Check (a) is a metadata read and is the normal path; check (b) reads the
 whole file and is the fallback when validators differ legitimately (the
 directory was copied or restored to another bucket or backend) and for
@@ -425,8 +433,9 @@ Protocol:
    left for GC (§10).
 
 **Renewal.** A holder may renew at any time, and MUST renew at intervals
-shorter than its TTL while it works; `expires_at` must exceed the interval
-between renewals plus the maximum clock skew between writers. A failed
+shorter than its TTL while it works; the TTL (the duration from a successful
+acquisition or renewal to `expires_at`) must exceed the interval between
+renewals plus the maximum clock skew between writers. A failed
 renewal, release, or other claim CAS means the claim was taken over: the
 holder is **stale** and MUST stop writing objects for that version at once;
 the version is not finalized.
@@ -466,11 +475,12 @@ metadata is stored at:
 <dataset>/.runs/<run-id>.json
 ```
 
-`run_id` is a **ULID**: 26 characters of Crockford base32
-(`[0-9A-HJKMNP-TV-Z]`, uppercase). Run ids are unique across all
-datasets. ULIDs embed a 48-bit timestamp, so lexicographic order follows
-timestamp order; no stronger cross-writer chronological guarantee is made
-(same-timestamp ties and clock skew).
+`run_id` is a **ULID** in canonical uppercase form, matching
+`^[0-7][0-9A-HJKMNP-TV-Z]{25}$`. The leading character is restricted to
+`0`–`7` so the 26-character encoding fits in 128 bits. Run ids are unique
+across all datasets. ULIDs embed a 48-bit timestamp, so lexicographic order
+follows timestamp order; no stronger cross-writer chronological guarantee
+is made (same-timestamp ties and clock skew).
 
 Run file schema:
 
@@ -592,7 +602,11 @@ when GC prunes a version (§10). A valid but unresolvable revision is not a
 protocol violation — it is the expected result of pruning.
 
 The `revision={n}` path segment deliberately reuses the same `key=value`
-path convention as partitions and versions.
+path convention as partitions and versions. Like version numbers, revision
+numbers use canonical decimal without leading zeros and satisfy
+`1 ≤ n ≤ 2^63−1`; `0` is only the no-predecessor sentinel. Version and
+revision allocation MUST fail on exhaustion rather than wrap or reuse a
+number.
 
 ### 8. Publish step and `LATEST`
 
@@ -612,11 +626,11 @@ The publish step:
    changes: new versions replace the (table, partition) entry, and tables
    or partitions may be dropped by omission (§7).
 3. **Allocate** the revision number: `max(LATEST, highest existing
-   revision number, prior) + 1` — allocation is above *all* existing
-   revision objects and any number reserved by a taken-over claim, so a
-   crashed publisher's orphan revision (written but never pointed at) is
-   never overwritten, and gaps in the numbering are legal. Record the
-   number in the claim.
+   revision number, prior, 0) + 1`, treating absent values as `0` — allocation
+   is above *all* existing revision objects and any number reserved by a
+   taken-over claim, so a crashed publisher's orphan revision (written but
+   never pointed at) is never overwritten, and gaps in the numbering are
+   legal. Record the number in the claim.
 4. **Validate** the next state as a revision (§7): in particular every
    selected version is publishable (§5).
 5. **Renew** the dataset claim, then **write** `revision={n}/data.parquet`
@@ -855,7 +869,8 @@ exact source revision of each GRV dataset read at the start of the engine
 invocation, derives each version's `derived_from` from those revisions,
 and the export must be stable — the warehouse tables exported are the ones
 produced from exactly that state (e.g. a dedicated schema per invocation,
-or a sync that runs to completion before the run starts).
+or a sync that runs to completion before the run starts, with further
+syncs blocked until the invocation and export finish).
 
 **Sync path (GRV → warehouse).** For an engine to consume a GRV dataset as
 source, a sync job materializes the dataset's current state (the `LATEST`
@@ -873,9 +888,11 @@ watermark only after every entry of the new state has been applied; if a
 version turns out unavailable mid-sync (a newer `LATEST` was published and
 the old state pruned), it restarts against the then-current `LATEST`.
 Where the warehouse allows, each table's refresh should be applied
-atomically (staging table and swap) so engines never read a mix of states.
-The sync watermark (last-synced revision per dataset) is *consumer* state
-and deliberately lives outside the layout.
+atomically (staging table and swap) so a table is not exposed half-refreshed.
+This does not make a multi-table refresh atomic: engine invocations must
+wait for dataset-wide completion and keep their inputs stable as described
+above. The sync watermark (last-synced revision per dataset) is *consumer*
+state and deliberately lives outside the layout.
 
 **Engine metadata.** `manifest.json` and run files carry an optional
 `metadata` object: a map from **engine name** to that engine's own
@@ -924,10 +941,12 @@ The concrete mapping for dbt:
   them as the current versions of those partitions. A batch rerun is safe:
   it publishes a *new version* of the same partition, and the superseded
   version is GC-eligible per §10. A version is a full snapshot of its
-  partition, so cost per publish is proportional to partition size — keep
-  partition granularity at or coarser than batch granularity; a table
-  without a natural time partition pays full-table snapshot cost per
-  publish, acceptable for small or infrequently published tables only.
+  partition, so cost per publish is proportional to partition size. Align
+  partition boundaries with batches where practical: coarser partitions
+  require rebuilding the entire affected partitions, while finer
+  partitions increase the number of versions per batch. A table without a
+  natural time partition pays full-table snapshot cost per publish,
+  acceptable for small or infrequently published tables only.
 - **Snapshots.** dbt SCD snapshots are a warehouse-internal construct (see
   the no-double-versioning rule above): a snapshot table is published to
   GRV with its full current contents — all rows, historical SCD rows
@@ -955,9 +974,10 @@ The concrete mapping for dbt:
   into a run file, and `LATEST` only moves by compare-and-swap.
 - Each revision is a self-contained snapshot of the dataset's state (a
   possibly empty subset of its tables); `LATEST` is one small pointer, so
-  resolving the current state is a single read.
-- The `_{key}_` column duplication makes each data file self-contained —
-  any single file of a version can be copied, opened, or processed by a
+  resolving the current state's entries takes one read of `LATEST` and one
+  of its revision parquet, before reading manifests and data.
+- The `_{key}_` column duplication makes each non-empty data file
+  self-contained — it can be copied, opened, or processed by a
   single-file reader without needing its containing path; a version's data
   is the union of its files' rows, and the manifest's per-file hashes and
   validators make the set cheaply verifiable before combining.
@@ -988,12 +1008,13 @@ The concrete mapping for dbt:
   instead of releasing it with broken provenance — a liveness cost, not a
   safety one.
 - Verification normally compares backend validators, not content: it is a
-  metadata read, but it trusts the backend to change the validator on
-  every rewrite. A full SHA-256 check is the fallback after copies and
-  for audits.
-- Revisions are full snapshots: resolution is a single read, but each
-  revision is O(state size), so revision-history storage grows with state
-  size times revision count; compaction is a separate concern (below).
+  metadata read, but it trusts the backend's content validation semantics,
+  not a universal per-rewrite counter. A full SHA-256 check is the fallback
+  after copies and for audits.
+- Revisions are full snapshots: reading a named revision's entries is a
+  single parquet read, but each revision is O(state size), so
+  revision-history storage grows with state size times revision count;
+  compaction is a separate concern (below).
 - Every version allocation lists all historical `version={n}/` prefixes of
   a (table, partition), including pruned tombstones; a long-lived
   (table, partition) grows this listing linearly. Bounding it (allocation

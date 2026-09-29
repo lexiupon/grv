@@ -276,10 +276,15 @@ backend-agnostic: the same code reads a local path, S3, or GCS.
   reads as best-effort). The byte-level integrity check is weaker here (you cannot hash what
   you do not read).
 
-**Read-lease (optional).** To take the no-copy win without the GC race, the sync may drop
-short-lived `.keep` markers on the versions it uses (the GRV retention primitive — GC will not
-prune a `.keep`ed version), build, then remove them. This is a consumer *extension* of the
-GRV primitives (the GRV spec defines no reader lease); it is opt-in and off by default.
+**Read-lease (optional).** The GRV spec defines no reader lease: a pin is created only
+by a pin operation under the owning dataset's `LATEST` lease, and creating a pin record
+directly is not a valid pin protocol. A consumer that has no write access to the source
+(the §9 permission model: read, plus create in its own `.holds/` subfolder) therefore
+cannot pin the versions it reads, and the no-copy trade above stands as documented: a
+concurrent GC pass may prune a version mid-build. A consumer that *does* hold write access
+to the source may pin the versions it uses (and unpin them after the build) through the
+pin operation, which fences the GC for the build's duration; whether to make that the
+default for `s3-view` is an open question below.
 
 ## `grv publish`
 
@@ -329,7 +334,7 @@ than to a local table.
 
 3. CLAIM
    per (table, partition): the .claim cycle (acquire → allocate version)
-   + the dataset-level .states/.claim for the publish step (serializes it)
+   + the dataset lease in LATEST for the publish step (serializes it)
 
 4. WRITE
    each version's data files, then manifest.json LAST (the commit marker);
@@ -355,8 +360,8 @@ writes a shared, monotonic state:
   sees a half-published version — the same commit-marker rule as a raw version.
 - **`LATEST` CAS.** The revision parquet is written before `LATEST` is advanced, so `LATEST`
   never points at a missing revision; the compare-and-swap is the single commit point.
-- **Dataset-level claim.** The publish step holds `<dataset>/.states/.claim` for its duration,
-  so a publish and a GC pass never run concurrently for one dataset.
+- **Dataset lease.** The publish step holds the dataset lease in `<dataset>/.states/LATEST`
+  for its duration, so a publish and a GC pass never run concurrently for one dataset.
 
 The contrast with `sync` is the whole point: `sync` only writes local engine tables, so a
 failed run is free to re-run; `publish` mutates state others share, so a lost race or a
@@ -419,7 +424,7 @@ GRV spec, this document must be re-reviewed.**
   VERIFY.
 - `.layout.json` (partition keys) — VERIFY (contract), MATERIALIZE (`_{key}_` columns).
 - The **backend contract** (`get`, `list-by-prefix`, `conditional-create`) — Backends.
-- **Empty versions** and **omission** semantics (tombstone vs. dropped partition) —
+- **Empty versions** and **omission** semantics (empty version vs. dropped partition) —
   the completeness guarantee.
 
 *Write* (used by `publish`):
@@ -428,7 +433,8 @@ GRV spec, this document must be re-reviewed.**
 - **`manifest.json` as commit marker** + the `claim_token` fence — WRITE.
 - The **`LATEST` compare-and-swap** — MINT.
 - **`derived_from`** in the version manifest — RECORD.
-- **`.keep`** markers — the optional read-lease (`sync`) and retention.
+- **Pins** (`.pins/` records created by the pin/unpin operations) — the optional
+  read-lease (`sync`) and retention.
 
 ## Properties and trade-offs
 
@@ -463,8 +469,8 @@ GRV spec, this document must be re-reviewed.**
 - **Target ownership** — does a command create/own its target (the engine table for `sync`,
   the GRV dataset/table for `publish`), or must the consumer pre-create it; and where does a
   reserved meta schema live?
-- **Read-lease default** — is the `.keep` lease opt-in per run, or on by default for
-  `s3-view`?
+- **Read-lease default** — where the consumer holds write access to the source, is the
+  pin-based lease opt-in per run, or on by default for `s3-view`?
 - **Multi-dataset invocation** — one call = one dataset, or a manifest of many (and how
   failures in one dataset interact with the others in the batch)?
 - **Publish selection default** — is `changed` the default policy; and can `publish`

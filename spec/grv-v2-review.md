@@ -83,8 +83,9 @@ Round 2's list, with these changes:
   Context).
 - **7. Growth** — acceptable with an incremental GC index (see Context).
 
-Items 1, 6, and 8–10 are unchanged. Item 1, the lack of an implementation
-and model check, remains the largest risk.
+Items 1, 6, and 8–10 are unchanged, except that the specification has
+grown to about 1,870 lines since round 2 (item 10). Item 1, the lack of
+an implementation and model check, remains the largest risk.
 
 ## Round 2 (2026-09-29): readiness review
 

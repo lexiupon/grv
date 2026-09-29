@@ -160,6 +160,8 @@ GRV_DIR/
     └── <dataset>/
         ├── <table>/              # one folder per table (§3)
         ├── .retired              # optional; the dataset is retired (§10)
+        ├── .holds/               # dependency holds created by consumer runs (§9)
+        │   └── <consumer-dataset>/revision={n}/<retention-id>.json
         ├── .runs/                # runs (§6)
         │   ├── <run-id>.control.json    # mutable run lease and phase
         │   ├── <run-id>.allocations/    # one mutable record per version allocation
@@ -169,13 +171,12 @@ GRV_DIR/
             ├── LATEST            # JSON: revision + dataset lease + pending operation (§8)
             ├── operations/       # immutable operation descriptions (§8)
             │   └── <operation-id>.json
+            ├── released-holds/   # hold release markers, written by this dataset's GC (§9)
+            │   └── <consumer-dataset>/revision={n}/<retention-id>.json
             └── revisions/
                 └── revision={n}/
                     ├── data.parquet       # the revision (§7)
                     ├── .superseded.json   # supersession receipt (§8)
-                    ├── .holds/            # incoming dependency holds (§9)
-                    │   ├── <retention-id>.json
-                    │   └── <retention-id>.released.json
                     └── .pins/             # revision pins (§10)
                         ├── <pin-id>.json
                         └── <pin-id>.released.json
@@ -185,8 +186,10 @@ GRV_DIR/
   under it.
 - A dataset is a collection of tables; each table lives in its own folder
   directly under the dataset folder.
-- `.runs/`, `.states/` and `.retired` are per-dataset metadata. The dot
-  prefix distinguishes them from table folders.
+- `.runs/`, `.states/`, `.holds/` and `.retired` are per-dataset metadata.
+  The dot prefix distinguishes them from table folders. `.holds/` is the
+  only prefix that other datasets' runs write to, and only to their own
+  `<consumer-dataset>/` subfolder (§9).
 
 **`grv.json`** identifies the store format and holds the parameters that
 all participants must share. It is created once, with `conditional-create`,
@@ -277,20 +280,21 @@ There are two cases:
 { "table": "<table>", "partition_keys": ["key1", "key2"] }
 ```
 
-`.layout.json` schema — two fields, both required:
+`.layout.json` schema:
 
-| field            | type         | notes                                        |
-|------------------|--------------|----------------------------------------------|
-| `table`          | string       | must equal the table folder name             |
-| `partition_keys` | string array | empty = case a; keys in path order = case b  |
+| field            | type         | required | notes                                        |
+|------------------|--------------|----------|----------------------------------------------|
+| `table`          | string       | yes      | must equal the table folder name             |
+| `partition_keys` | string array | yes      | empty = case a; keys in path order = case b  |
+| `extensions`     | object       | no       | map of extension id → that extension's table configuration (below) |
 
 Rules:
 
 - Dataset and table names must match
   `^[a-z0-9][a-z0-9_-]{0,63}$`. The leading-alphanumeric requirement
   means no name can start with a dot, so table folders can never collide
-  with `.runs/`, `.states/`, `.pins/`, `.claim`, `.pruned`, `.retired`, or
-  any other dot-prefixed layout object.
+  with `.runs/`, `.states/`, `.holds/`, `.pins/`, `.claim`, `.pruned`,
+  `.retired`, or any other dot-prefixed layout object.
 - Dataset names, table names, partition key names, and partition values
   use canonical lowercase ASCII on **every** backend. Uppercase input is
   rejected, never silently folded. Thus two valid sibling identifiers
@@ -321,6 +325,15 @@ Rules:
   create fails reads the existing file; if its `partition_keys` differ from
   the writer's, the write is rejected — a different `partition_keys` is a
   different table (§4).
+- **Extensions.** `extensions` names the extensions that every writer of
+  the table must implement, keyed by extension id (for example
+  `crypto-shredding/1`, defined in the companion
+  [grv-crypto-shredding.md](grv-crypto-shredding.md)), each with its
+  configuration for this table. A writer that does not implement every
+  listed extension MUST NOT acquire claims, register schemas, or create
+  version objects for the table. Readers that do not implement an extension
+  read the stored data as-is. Because `.layout.json` is immutable, a
+  table's extensions are fixed when it is created.
 - In case b, each of a version's data files additionally contains one
   column per partition key, named `_{key_name}_` (e.g. `_key1_`,
   `_key2_`), of GRV type `string` (§4), duplicating the partition values
@@ -545,6 +558,16 @@ its data files:
    that version's schema. A later extension does not revoke this authority:
    the authorized schema remains a prefix of every later baseline.
 
+A baseline column may also carry an `ext` object, keyed by extension id,
+recording that extension's properties of the column — for example, that
+its values are encrypted (see the companion crypto-shredding RFC). `ext` is
+set only by the create or CAS that appends the column, never changes
+afterwards, is preserved by every later CAS, and is ignored when schemas are
+compared. Writers MUST honor the baseline's `ext` for every column they
+write, whatever they proposed; a writer that cannot honor it rejects the
+write. Declaring a column's properties in the same compare-and-swap that
+adds the column means that no writer can ever see the column without them.
+
 Incompatible concurrent extensions cannot both succeed, even in different
 partitions or disjoint revisions. A registered extension is never rolled
 back, including when its writer crashes before producing data; subsequent
@@ -681,8 +704,9 @@ renewal and expiry rules apply to run leases (§6) and dataset leases (§8).
 - it verifies (§4);
 - its run file (§6) exists, matches its sealed run control, and lists
   (table, partition, version) with the manifest's `claim_token`;
-- each `derived_from` reference names one of its run's inputs, resolves,
-  and has an active dependency hold for its run (§9);
+- each `derived_from` reference names one of its run's inputs, the run
+  confirmed its holds, the reference resolves, and the cited hold is
+  active (§9);
 - its schema is a prefix of the table's durable baseline (§4).
 
 The same rule applies to a version entering a revision for the first time
@@ -727,6 +751,7 @@ Run file schema:
 | `created_at`    | string  | yes      | RFC 3339 UTC, when the run started       |
 | `base_revision` | integer | yes      | this dataset's `LATEST.revision` when the run started; `0` if none; the base for conflict detection (§8) |
 | `inputs`        | array   | yes      | the source revisions the run reads, each `{dataset, revision, retention_id}`; fixed at the start of the run (§9, §11); may be empty |
+| `holds_confirmed` | boolean | yes    | true once every input's dependency hold passed its checks (§9); a run cites inputs only if true |
 | `sealed_at`     | string  | yes      | RFC 3339 UTC, when the run was sealed    |
 | `entries`       | array   | yes      | one entry per finalized version          |
 | `metadata`      | object  | no       | map of engine name → engine-specific fields (§11) |
@@ -746,6 +771,7 @@ the claim that allocated and released it, §5).
     { "dataset": "ref_data", "revision": 2,
       "retention_id": "fb9b64a3-aeeb-47b4-b60c-4ad5c5e997d0" }
   ],
+  "holds_confirmed": true,
   "sealed_at": "2026-09-28T10:20:00Z",
   "entries": [
     { "table": "customers", "partition": {}, "version": 2,
@@ -771,6 +797,7 @@ It carries the run file's `run_id`, `created_at`, `base_revision`,
 | `owner_token`          | token of the current owner: the run's driver, or a recovery worker |
 | `expires_at`           | lease expiry (§5 renewal rules); absent once sealed      |
 | `mutation_id`          | fresh on every write (§1)                                |
+| `holds_confirmed`      | `false` at creation; set to `true` by one CAS while `open`, once every input's hold is confirmed (§9) |
 | `sealed_at`, `entries` | present iff sealed; exactly the run file's values        |
 
 | from              | to           | by                                  | when |
@@ -813,9 +840,10 @@ a recovery worker racing on the same record reread and accept the winner.
 1. **Start.** Read this dataset's `LATEST.revision` as `base_revision`,
    choose the source revisions to read as inputs (normally each source's
    current `LATEST.revision`), generate a `retention_id` per input, and
-   create the run control (`open`). Then acquire each input's dependency
-   hold (§9), one source at a time. A run that cannot acquire every hold
-   seals without entries and is retried as a new run from fresh inputs.
+   create the run control (`open`). Then place each input's dependency hold
+   and check it (§9), and set `holds_confirmed` by CAS. A run that cannot
+   confirm every hold seals without entries and is retried as a new run
+   from fresh inputs. No version is allocated before `holds_confirmed`.
 2. **Work.** Tasks run the claim cycle (§5) for each version. The owner
    renews the run lease between partition writes as well as during them. A
    task checks that the run control is `open` under its owner's token before
@@ -938,12 +966,12 @@ protocol violation — it is the expected result of pruning.
 
 **Committed revisions.** A revision is **committed** if it is
 `LATEST.revision` or lies on the `previous_revision` chain from it; any
-other revision is an **orphan** left by a failed publication (§8). Only a
-committed publish operation writes a `.superseded.json` receipt (§8), so a
-receipt proves its revision committed with a single `head`; hold
-acquisition (§9) uses this shortcut. GC instead determines committed
-revisions by walking the chain, because a lost receipt would make a
-committed revision look like an orphan (§10).
+other revision is an **orphan** left by a failed publication (§8). A
+`.superseded.json` receipt is written only for a revision observed on the
+chain (§8), so a receipt proves its revision committed with a single
+`head`; hold checks (§9) and pins (§10) use this shortcut and fall back to
+walking the chain. A missing receipt proves nothing, because a receipt may
+not have been written yet; GC therefore walks the chain (§10).
 
 The `revision={n}` path segment deliberately reuses the same `key=value`
 path convention as partitions and versions. Like version numbers, revision
@@ -965,7 +993,7 @@ separate dataset claim. `LATEST` is JSON with these required fields:
 | `revision` | current revision number; `0` means no revision published yet |
 | `high_water` | greatest revision number ever reserved; initially 0, never decreases |
 | `mutation_id` | fresh random id on every mutation, even if `revision` is unchanged |
-| `lease` | null, or `{holder, token, claimed_at, expires_at}`; `holder` identifies a run, publisher, GC, or other tool instance |
+| `lease` | null, or `{holder, token, claimed_at, expires_at}`; `holder` identifies the publisher, GC, or other tool instance |
 | `pending` | null, or the dataset-relative path of a committed operation description, e.g. `.states/operations/<operation-id>.json` |
 
 ```json
@@ -997,8 +1025,9 @@ including GC, changes the validator even when it leaves `revision`
 unchanged. Lease durations, renewal, and expiry follow §5.
 
 **Durable operations.** A lease alone cannot fence a delayed write or delete
-to a different object. Every effect on another object therefore requires a
-committed **operation**, described by an immutable record at
+to a different object. Retention effects — pins, hold releases, retirement,
+and tombstones — therefore require a committed **operation**, described by
+an immutable record at
 `.states/operations/<operation-id>.json` with the fields `operation_id`
 (ULID), `dataset`, `kind`, `created_at`, `created_by` (tool and version),
 and `payload`:
@@ -1023,13 +1052,17 @@ without the original process:
 
 | `kind`         | `payload`                                              | effects (immutable markers) |
 |----------------|--------------------------------------------------------|-----------------------------|
-| `publish`      | `revision`, `previous_revision`, `change_set` (below)  | the predecessor's `.superseded.json`, if `previous_revision` ≠ 0 |
-| `hold`         | `revision`, `retention_id`, `target_dataset`, `target_run_id` | `revision={revision}/.holds/<retention_id>.json` (§9) |
-| `release_hold` | `releases`: array of `{revision, retention_id}`        | each `.holds/<retention_id>.released.json` (§9) |
+| `release_hold` | `releases`: array of `{consumer_dataset, revision, retention_id}` | each `.states/released-holds/<consumer_dataset>/revision={revision}/<retention_id>.json` (§9) |
 | `pin`          | `pin_id`, `scope`, optional `reason`                   | the scope's `.pins/<pin_id>.json` (§10) |
 | `unpin`        | `pin_id`, `scope`, optional `reason`                   | the scope's `.pins/<pin_id>.released.json` (§10) |
 | `retire`       | optional `reason`                                      | `<dataset>/.retired` (§10) |
+| `prune_intent` | `targets`: array of `{table, partition, version}`      | none: a proposal that makes the targets visible to hold checks (§9, §10) |
 | `prune`        | `targets`: array of `{table, partition, version}`      | each target's `.pruned` (§10) |
+
+A publish step also writes a `publish` description, with payload
+`revision`, `previous_revision`, and `change_set` (below), as its audit
+record. It is committed by the revision CAS itself (publish step 5), not
+through `pending`, and has no effects of its own.
 
 A pin `scope` is `{revision}` for a revision pin, or `{table}`,
 `{table, partition}`, or `{table, partition, version}`. Every marker body
@@ -1042,9 +1075,10 @@ grace timestamp.
 
 1. Under the lease, validate the intended operation and create its
    description with a new operation id.
-2. CAS `LATEST.pending` from null to that description's path, retaining the
-   lease. This CAS commits the decision. A description not referenced by a
-   successful commit is an orphan and authorizes no effects.
+2. CAS `LATEST.pending` from null to that description's path — for a
+   prune decision, from its intent (§10) — retaining the lease. This CAS
+   commits the decision. A description not referenced by a successful
+   commit is an orphan and authorizes no effects.
 3. Materialize the operation's effects with `conditional-create`. Clear
    `pending` only after every marker exists, and only as the lease holder,
    by a CAS on a read that shows `pending` naming this operation. Do not
@@ -1054,17 +1088,17 @@ grace timestamp.
 unknown outcome (§1), the caller reacquires the lease — a successful CAS,
 which also fences out any delayed request — and completes any pending
 operation. The operation committed iff a marker recording its
-`operation_id` now exists; a publication is resolved by step 6 below. A
+`operation_id` now exists; a publication is resolved by step 5 below. A
 caller that retries a pin whose outcome it resolved as not committed reuses
 its `pin_id`.
 
 On takeover, the new holder MUST complete any pending operation before
-validating new work. Committed decisions are irrevocable. Replay accepts an
-existing marker iff it records the same fact — the same `successor` for a
-receipt; the same `retention_id`, source revision, and target for a hold;
-the same `retention_id` for a hold release; the same `pin_id` and `scope`
-for a pin; the same `pin_id` for a pin release — ignoring timestamps and
-`*_by` fields; any existing `.pruned` or `.retired` is accepted. A helper
+validating new work; a pending `prune_intent` authorizes nothing and is
+simply cleared. Committed decisions are irrevocable. Replay accepts an
+existing marker iff it records the same fact — the same hold path for a
+hold release; the same `pin_id` and `scope` for a pin; the same `pin_id`
+for a pin release — ignoring timestamps and `*_by` fields; any existing
+`.pruned` or `.retired` is accepted. A helper
 that has lost its lease may still create an already committed operation's
 markers, but may neither clear `pending` nor commit a new operation.
 Operations and their markers are retained.
@@ -1082,7 +1116,7 @@ state:
 Each (table, partition) may be changed by at most one element of a change
 set. A change set may also carry `expected_revision`, which makes the step
 fail unless the predecessor is that revision, and a `reason`. The change
-set is recorded in the publish operation:
+set is recorded in the publish description:
 
 ```json
 "change_set": {
@@ -1119,51 +1153,57 @@ bases; `expected_revision` guards them against concurrent publications.
 The publish step is:
 
 1. **Acquire** the lease in `LATEST`, complete any pending operation, and
-   reject a retired dataset. Read its `revision` as the predecessor `p`;
-   fail if the change set's `expected_revision` differs.
+   reject a retired dataset. Read its `revision` as the predecessor `p`
+   (fail if the change set's `expected_revision` differs), and reserve
+   `n = max(high_water, revision, highest existing revision number) + 1`
+   by storing `high_water: n` — in the acquiring CAS itself when nothing is
+   pending. Every transition, including takeover before allocation,
+   preserves this durable reservation (§5).
 2. **Compute** the next state from `p`'s state (empty if `p = 0`) by
-   applying the change set and checking conflicts. Never hold two dataset
-   leases at once: the runs' dependency holds were acquired when they
-   started (§9).
-3. **Allocate** `n = max(high_water, revision, highest existing revision
-   number) + 1` and CAS-store `high_water: n`. Every transition, including
-   takeover before allocation, preserves this durable reservation (§5).
-4. **Validate** every entry whose version differs from `p`'s entry for the
+   applying the change set and checking conflicts.
+3. **Validate** every entry whose version differs from `p`'s entry for the
    same (table, partition) — new and reselected versions — as §7 requires.
    Entries carried unchanged are valid by inheritance (§7); a publisher MAY
    revalidate them.
-5. **Write.** Renew the lease; create the publish operation description `o`
-   and then `revision={n}/data.parquet`, both with `conditional-create`,
-   setting `grv.previous_revision` to `p` and `grv.operation_id` to `o`. A
+4. **Write** the publish description `o` and then
+   `revision={n}/data.parquet`, both with `conditional-create`, setting
+   `grv.previous_revision` to `p` and `grv.operation_id` to `o`. A
    collision is an error; never overwrite or reuse the number.
-6. **Commit** by a single CAS that changes `revision` to `n` and sets
-   `pending` to `o`, using the latest validator belonging to this lease. A
+5. **Commit** with a single CAS that sets `revision` to `n` and releases
+   the lease, using the latest validator belonging to this lease. A
    takeover by GC or any other holder makes this CAS fail, even if no other
    revision was published. On failure, abort and recompute under a new
    acquisition; do not retry the old revision against a fresh validator. If
-   the outcome is unknown (§1), reread `LATEST`: if it still shows this
-   lease, `revision = n` and `pending = o`, the commit succeeded and step 7
-   follows. Otherwise reacquire the lease and complete any pending
-   operation, as for any operation above; the publication succeeded iff `n`
-   is then on the chain from `LATEST.revision` (§7), and a later holder has
-   completed step 7 for it.
-7. **Record supersession.** If `p ≠ 0`, after observing the committed
-   pointer, create `p`'s `.superseded.json` with
-   `{operation_id: o, successor: n, observed_at: <current UTC time>}`.
-   Then clear `pending` and release the lease, in one CAS. For the first
-   revision there is no predecessor receipt to write.
+   the outcome is unknown (§1), reacquire the lease and complete any
+   pending operation; the publication succeeded iff `n` is then on the
+   chain from `LATEST.revision` (§7).
+6. **Record supersession.** If `p ≠ 0`, after observing the commit, create
+   `p`'s `.superseded.json` with
+   `{operation_id: o, successor: n, observed_at: <current UTC time>}`. This
+   needs no lease. If the publisher fails first, the next process to find
+   `p` superseded without a receipt writes one; GC always does before
+   evaluating `p` (§10). An existing receipt with the same `successor` is
+   accepted. For the first revision there is no receipt to write.
 
-`observed_at` is sampled after observing the successful publication CAS,
-never while preparing the revision or operation description. A helper after
-a crash may record a later time; this conservatively extends retention.
-GC uses the receipt, plus the clock-skew margin (§10), never the successor
-parquet's `grv.created_at`.
+**Renewal.** The commit is fenced by compare-and-swap, not by time: if the
+lease expired and another holder took over, step 5 fails safely, and if
+nobody took over, it succeeds safely. Renewal therefore only protects the
+work in progress from takeover. The publisher renews only when the lease
+could expire before step 5 — when `expires_at − now` is less than the
+expected remaining time plus `max_clock_skew`. A publish that finishes
+within its TTL writes `LATEST` exactly twice: in steps 1 and 5.
+
+`observed_at` is always sampled after observing that `p` has been
+superseded, never while preparing the revision, so it is never earlier than
+the real supersession; a late receipt only extends retention. GC uses the
+receipt, plus the clock-skew margin (§10), never the successor parquet's
+`grv.created_at`.
 
 Readers read `LATEST.revision` → the revision parquet → manifests → data.
 They ignore `lease` and `pending`; `revision = 0` means an empty initial
 state. An absent `LATEST` also means an empty state, but only while the
 dataset has no revision objects; otherwise it is a protocol violation.
-Data and revision objects exist before publication, and a pending
+Data and revision objects exist before publication, and a missing
 supersession receipt does not delay visibility. A failed publication may
 leave an orphan revision, which is legal and does not start a grace period.
 Every published revision has the revision it replaced as its predecessor.
@@ -1199,33 +1239,37 @@ layers.
 
 **Inputs and holds.** Derivation is declared per run. At start, a run fixes
 its **inputs** — one `{dataset, revision, retention_id}` per source
-revision it reads — in its run control (§6), and acquires a **dependency
+revision it reads — in its run control (§6), and places a **dependency
 hold** on each before allocating any version. A hold protects the entire
-source revision, because retention is revision-wide (§10). For each input,
-one at a time:
+source revision, because retention is revision-wide (§10). Placing a hold
+never takes the source's lease or writes its `LATEST`: the consumer creates
+one record in the source and otherwise only reads it. For each input:
 
-1. Acquire the source dataset's `LATEST` lease and complete any pending
-   operation.
-2. Check that the source revision is **committed** (§7) and **complete**:
-   every version it references is present, unpruned, and verifies. The
-   check is immediate when the revision is the `LATEST` of a non-retired
-   dataset or has an active revision pin or hold: such a revision has been
-   protected continuously since it was last verified complete (at its
-   publication, or when that pin or hold was created), so GC cannot have
-   pruned any of its versions. Otherwise — for example, when the source
-   published again after the run read its inputs — check every entry.
-3. Commit a hold operation (§8), materialize
-   `.states/revisions/revision={n}/.holds/<retention_id>.json`, clear
-   `pending`, and release the lease.
+1. Create the hold record
+   `<source>/.holds/<consumer-dataset>/revision={n}/<retention_id>.json`
+   with `conditional-create`.
+2. Read the source's `LATEST`. If `pending` names a `prune_intent` or
+   `prune` operation (§10) with a target that revision `n` references, the
+   hold has failed.
+3. Check that revision `n` is **committed** (§7) and **complete**: every
+   version it references is present, unpruned, and verifies. The check is
+   immediate when `n` is the `LATEST.revision` read in step 2 of a
+   non-retired dataset, or has an active revision pin, because such a
+   revision has been protected continuously since it was last verified
+   complete. Otherwise check every entry.
 
-A hold record contains `retention_id`, `operation_id`, `dataset` and
-`revision` (the source), `target_dataset`, `target_run_id`, and
-`created_at`:
+When every input's hold has passed both checks, the run sets
+`holds_confirmed` in its run control by CAS (§6). A run that cannot confirm
+every hold seals without entries, and a new run starts from available
+inputs.
+
+A hold record contains `retention_id`, `dataset` and `revision` (the
+source), `target_dataset` (equal to the `<consumer-dataset>` folder),
+`target_run_id`, and `created_at`:
 
 ```json
 {
   "retention_id": "28f68c81-dbdc-4ab6-a811-81d7b989c693",
-  "operation_id": "01M3KQA548B2C3D4E5F6G7H8J9",
   "dataset": "raw_events",
   "revision": 7,
   "target_dataset": "orders_product",
@@ -1234,49 +1278,79 @@ A hold record contains `retention_id`, `operation_id`, `dataset` and
 }
 ```
 
-A source's `LATEST` is locked once per input per run, never per derived
-version. If a hold cannot be acquired (for example, the source revision has
-been partly pruned), the run cannot cite that input; it seals without
-entries and a new run starts from available inputs.
+**Why this is safe.** The source's GC first commits a `prune_intent`,
+then re-lists holds, and only then commits the final `prune` decision,
+without every target that a revision with an unreleased hold references
+(§10). Consider when the consumer reads `LATEST` in step 2:
+
+- If the intent was committed before that read and its operation is still
+  pending, the consumer sees the intent or the decision, and fails if a
+  target touches revision `n`. If the decision has already completed, its
+  tombstones are durable and the step 3 check sees them — or `n` is the
+  current `LATEST`, whose versions no prune can target.
+- If the intent is committed after that read, it is committed after the
+  hold record was created, so GC's re-list sees the hold and the decision
+  leaves revision `n`'s versions out.
+
+Either way, a confirmed hold's revision is complete, and stays complete
+until the hold is released. A consumer needs read access to the source and
+create access to `<source>/.holds/<consumer-dataset>/` only. Provided store
+permissions confine each consumer to its own subfolder, a consumer cannot
+publish to, lock, or block the source, nor affect another consumer's holds;
+at worst it makes the source retain data longer.
+
+A crashed GC can leave a `prune_intent` pending until the next lease holder
+of the source — a publisher or GC — clears it. Until then, holds on the
+revisions it touches cannot be confirmed; the consumer retries later or
+reads a newer revision. An intent never targets the versions of a
+non-retired dataset's current `LATEST`, so runs reading the current
+revision are never blocked. A consumer must not ignore an intent whose
+lease has expired: it never writes `LATEST`, so nothing would stop the
+stale GC from committing its decision.
 
 **Fence.** Each `derived_from` element of a version names one of its run's
 inputs — the same dataset, revision, and `retention_id` — and
 **resolves**: its `table`, if present, is in that source revision's state,
-and so is its `partition`, if present. The publisher checks that each
-cited hold exists, is not released, and names this dataset and the
-version's run (§5). It reads source holds without acquiring source leases:
-a hold cannot be released while a version that cites it is publishable
-(below).
+and so is its `partition`, if present. The publisher checks that the run's
+`holds_confirmed` is true, and that each cited hold record exists at
+`<source>/.holds/<this dataset>/revision={n}/<retention_id>.json`, that its
+body matches that path and names the version's run as `target_run_id`, and
+that it has no release marker (§5). It reads them without the source's
+lease: a hold cannot be released while a version that cites it is
+publishable (below).
 
-**Release.** A hold is **active** while its record exists and
-`<retention_id>.released.json` does not. It becomes **releasable** when
-its target run can no longer produce a publishable version that cites it:
+**Release.** A hold is **active** while its record exists and its release
+marker — the same relative path under `.states/released-holds/`, i.e.
+`<source>/.states/released-holds/<consumer-dataset>/revision={n}/<retention_id>.json`
+— does not. Keying the marker by the full path means that releasing one
+consumer's record can never release another's, even if both reuse a
+`retention_id`. A hold becomes **releasable** when its target run can no
+longer produce a publishable version that cites it:
 
-- the target run control is sealed, and
-- every entry of the sealed run is tombstoned (`.pruned`, §10), or has a
-  manifest whose `derived_from` does not cite this `retention_id`.
+- the target run control does not exist — a conforming run creates its
+  control before any hold, so such a record is not a conforming hold; or
+- the target run control is sealed, and either its `holds_confirmed` is
+  false, or every entry of the sealed run is tombstoned (`.pruned`, §10) or
+  has a manifest whose `derived_from` does not cite this `retention_id`.
 
-Both conditions are irreversible, so the check needs no target lease, and
-because GC deletes a manifest only after tombstoning its version (§10), it
-never depends on a manifest GC has already deleted. Allocations that are
-not entries of the sealed run are never publishable and do not delay
-release. Any process — normally the source dataset's GC (§10) — releases
-releasable holds by committing a `release_hold` operation under the source
-lease; each release marker contains `retention_id`, `operation_id`, and
-`released_at`. Holds are not released because a lease expired, a revision
-was superseded, or a grace period elapsed. A target run that never seals
-keeps its holds; any process may recover an expired run (§6) to make them
-releasable. A hold whose target run control is missing is retained and
-reported. Hold ids are never reused.
+These conditions are irreversible, so checking them needs no target lease.
+Because GC deletes a manifest only after tombstoning its version (§10), the
+check never depends on a manifest GC has already deleted. Allocations that
+are not entries of the sealed run are never publishable and do not delay
+release. Only the source dataset's GC releases holds, with a
+`release_hold` operation under its own lease (§8, §10); each release marker
+contains `retention_id`, `operation_id`, and `released_at`. Consumers cannot
+write release markers. Holds are not released because a lease expired, a
+revision was superseded, or a grace period elapsed. A target run that never
+seals keeps its holds until the consumer's own recovery seals it (§6); the
+source's GC, which may have no write access to the consumer's dataset,
+reports such holds rather than recovering the run. A hold record that cannot
+be read, or whose body does not match its path, is a protocol error, and GC
+keeps the revision it names. Hold ids are never reused.
 
-This ordering prevents concurrent publication in another dataset from
-adding an unobserved dependency during upstream GC: hold registration and
-pruning commit against the same source `LATEST`. If pruning wins, the
-completeness check fails; if the hold wins, pruning keeps the whole source
-revision. Holds are acquired one dataset at a time, so no process holds two
-dataset leases. Derivation links point to revisions committed before the
-run started, and holds keep those revisions complete until every version
-that cites them is tombstoned.
+Derivation links point to revisions committed before the run started, and
+holds keep those revisions complete until every version that cites them is
+tombstoned.
 
 ### 10. Garbage collection: pins and `.pruned`
 
@@ -1293,12 +1367,13 @@ declarative, via records whose *presence* is the signal:
     previous rule.)
   - `<dataset>/.states/revisions/revision={n}/.pins/` — this revision is
     **pinned** (see the kept revisions below).
-- **Dependency holds** (§9), under a revision's `.holds/`.
+- **Dependency holds** (§9), under the dataset's `.holds/`, released by
+  markers under `.states/released-holds/`.
 - `<dataset>/.retired` — the dataset is **retired**: its `LATEST` is no
   longer unconditionally kept (see the kept revisions below).
 
-A pin or hold is **active** while its record exists and its
-`.released.json` does not. A pin record contains `pin_id`, `operation_id`,
+A pin or hold is **active** while its record exists and its release
+marker does not. A pin record contains `pin_id`, `operation_id`,
 `scope` (as in the operation, §8), `created_at`, `created_by`, and an
 optional `reason`; a pin release marker contains `pin_id`, `operation_id`,
 and `released_at`.
@@ -1329,16 +1404,16 @@ which case their own publication would conflict anyway (§8).
 **Kept revisions and protected versions.** GC evaluates one dataset at a
 time, under that dataset's lease and after completing any pending
 operation. It determines the committed revisions by walking the
-`previous_revision` chain from `LATEST.revision`; after pending operations
-are complete, every superseded revision on the chain has a receipt, and one
-without a receipt is a protocol error: GC keeps it and reports it. A
-committed revision is **kept** if any of:
+`previous_revision` chain from `LATEST.revision`. A superseded revision on
+the chain without a receipt — its publisher failed after committing (§8) —
+first gets one, with `observed_at` set to GC's current time. A committed
+revision is **kept** if any of:
 
 - it is `LATEST.revision`, unless the dataset is retired;
 - it is superseded and its `.superseded.json` has not expired under the
   deadline rule above; the successor's creation time is irrelevant;
 - it has an active pin;
-- it has an active incoming hold (§9).
+- it has an active hold (§9), confirmed or not.
 
 A version is **protected** if any of:
 
@@ -1359,9 +1434,9 @@ active until every entry that cites it is tombstoned (§9). Pinning a
 product revision therefore keeps the source revisions its versions were
 derived from — transitively, through intermediate datasets — without GC
 walking other datasets' derivation links. Missing or unreadable retention
-records — the revision named by `LATEST`, a superseded revision's receipt,
-a pin, a hold, or a run control needed for a decision — are protocol
-errors: GC aborts the affected deletions rather than guessing.
+records — the revision named by `LATEST`, a pin, a hold, or a run control
+needed for a decision — are protocol errors: GC aborts the affected
+deletions rather than guessing.
 
 Holds are deliberately coarse: a held revision protects *its entire state*
 — every (table, partition, version) it names — even though a downstream
@@ -1374,7 +1449,7 @@ and no longer needed by any kept state — may be marked
 lease (§8); the marker records `operation_id`, `retired_at`, and an
 optional `reason`. Raw marker writes are not conforming. While the marker
 is present, the dataset's `LATEST` is *not* kept: the dataset is retained
-only to the extent that its pins and incoming holds still protect it, and
+only to the extent that its pins and holds still protect it, and
 may otherwise lose all version data while retaining revision and
 coordination records. Its `LATEST` then remains valid but may become
 unresolvable (§7). Retirement is terminal: no new runs or publish steps are
@@ -1413,37 +1488,46 @@ wins, GC sees its protection; if a prune wins, a version or revision pin of
 a target fails. Checking records just before deletion is insufficient.
 
 **GC coordination and pruning.** A GC pass acquires the dataset's lease in
-`LATEST` and completes pending operations. It then releases releasable
-incoming holds (§9) with a `release_hold` operation, and computes the
-dataset's protected versions. Publications, pins, unpins, retirement, and
-incoming hold changes for this dataset all use this same lease and CAS
-object, so every relevant protection is read after acquisition; an earlier
-candidate listing is only a hint. Other datasets cannot add protection to
-this dataset without its lease. New versions may appear concurrently; GC
-commits only an explicit set of observed version directories after checking
-each one's protection. A reserved number without objects needs no action.
+`LATEST`, completes pending operations, and writes any missing receipts. It
+then releases releasable holds (§9) with a `release_hold` operation, and
+computes the dataset's protected versions. Publications, pins, unpins, and
+retirement for this dataset use this same lease and CAS object, so their
+protection is read after acquisition; an earlier candidate listing is only
+a hint. Holds are the one protection created without the lease, which the
+intent-then-decision steps below account for. New versions may appear
+concurrently; GC commits only an explicit set of observed version
+directories after checking each one's protection. A reserved number without
+objects needs no action.
 
 For each batch of unprotected versions:
 
-1. Write an immutable prune operation description with the exact
-   (table, partition, version) targets and audit fields.
-2. CAS `LATEST.pending` to that description while still owning the lease.
-   This is the **irrevocable prune decision**. A failed CAS authorizes no
-   tombstones or deletes; reread and recompute under a new lease.
-3. Create every target's `.pruned` via `conditional-create`. A successor
-   holder must finish these markers before allowing any new pin, hold, or
-   publication. A committed target can never become publishable again.
-4. Once all tombstones are durable, clear `pending` by CAS. Delete only
-   tombstoned targets' data files and then their manifests; these physical
-   deletions can finish outside the lease. They are the only objects GC
-   deletes: every other object — markers, pins, holds, claims, schema
-   baselines, layouts, `LATEST`, `grv.json`, and run, allocation,
-   operation, and revision records — is retained.
+1. **Intent.** Write a `prune_intent` description with the candidate
+   (table, partition, version) targets, and CAS `LATEST.pending` to it while
+   owning the lease. The intent makes the candidates visible to hold checks
+   (§9 step 2) and authorizes nothing.
+2. **Re-list holds.** List the dataset's `.holds/` again and drop every
+   candidate that a committed revision with an unreleased hold references.
+3. **Decision.** Write a `prune` description with the remaining targets —
+   always a subset of the intent's — and CAS `LATEST.pending` from the
+   intent to it. This is the
+   **irrevocable prune decision**. A failed CAS authorizes no tombstones or
+   deletes; reread and recompute under a new lease.
+4. **Tombstones.** Create every decided target's `.pruned` via
+   `conditional-create`. A successor holder must finish these markers
+   before allowing any new pin or publication. A tombstoned target can
+   never become publishable again.
+5. **Clear and delete.** Once all tombstones are durable, clear `pending`
+   by CAS. Delete only tombstoned targets' data files and then their
+   manifests; these physical deletions can finish outside the lease. They
+   are the only objects GC deletes: every other object — markers, pins,
+   holds, claims, schema baselines, layouts, `LATEST`, `grv.json`, and run,
+   allocation, operation, and revision records — is retained.
 
 This ordering also fences a stale GC worker: it may finish deletions only
-for an already committed, permanently tombstoned target, which a later
-publisher or pin cannot revive. A crash before step 2 leaves an inert
-operation description. A crash afterwards leaves replayable work. A delayed
+for an already decided, permanently tombstoned target, which a later
+publisher or pin cannot revive. A crash before step 3 leaves at most an
+intent, which the next holder clears. A crash afterwards leaves replayable
+work with a fixed target set. A delayed
 version writer may create residual objects beneath a tombstone; they remain
 unreadable and can be deleted by another sweep. No number is ever reused.
 
@@ -1530,7 +1614,7 @@ warehouse tables. The run's `metadata` object (below) joins the GRV run
 back to the engine's own run record. The publisher also fixes the
 provenance boundary: at the start of the engine invocation it records the
 target dataset's `base_revision` and, in the run's `inputs` (§6), the exact
-source revision of each GRV dataset read, and acquires their holds (§9).
+source revision of each GRV dataset read, and places their holds (§9).
 It derives each version's `derived_from` from those inputs — at table
 granularity when the engine only knows which tables a model reads (for
 dbt, the model's sources) — and the export must be stable: the warehouse
@@ -1704,25 +1788,30 @@ The concrete mapping for dbt:
   `conditional-create`/`conditional-put` (§1) and on bounded clock skew; a
   holder must renew within its TTL, and a crashed claimant's allocation is
   blocked until the TTL (at most `max_lease_ttl`) elapses.
-- Cross-dataset GC safety requires durable source holds: each run takes
-  one hold per input, which costs a short lease on each source's `LATEST`
-  at run start. Holds are revision-wide and transitive through pipelines,
-  so they can over-retain inputs until every entry that cites them is
-  pruned, and the dataset derivation graph must be acyclic, which GRV does
-  not check (§9). Grace protects publication latency and readers, but retention
+- Cross-dataset GC safety requires durable source holds: each run creates
+  one hold record per input and reads the source's `LATEST` once, and the
+  source's GC spends one extra `LATEST` write per prune batch on its
+  intent. Holds are revision-wide and transitive through pipelines, so they
+  can over-retain inputs until every entry that cites them is pruned, and
+  the dataset derivation graph must be acyclic, which GRV does not check
+  (§9). Grace protects publication latency and readers, but retention
   safety never depends on a run finishing within it.
-- Holds require write access to source datasets: a run CASes each source's
-  `LATEST` and writes a hold record there. Producer and consumer datasets
-  therefore cannot be separated by least-privilege store permissions in
-  this version.
-- Pins, holds, GC decisions, and publications serialize on each dataset's
+- A consumer needs create access to its own subfolder of each source's
+  `.holds/`, besides read access. It never writes a source's `LATEST`, so,
+  provided permissions confine it to that subfolder, it cannot publish to,
+  lock, or block a source, or affect other consumers' holds. A faulty
+  consumer can only make a source retain data longer, for example with
+  unreadable hold records, which GC keeps and reports. Holds of a crashed
+  consumer run stay until the consumer's own recovery seals it.
+- Pins, GC decisions, and publications serialize on each dataset's
   `LATEST`, and every coordination record is a single object. GCS throttles
   sustained writes to one object at about one per second, and S3 rejects
-  concurrent conditional writes to one key, so each dataset sustains at
-  most a few coordination operations per second. Large prune batches can
-  delay other work; bounded batches limit that delay. Pending decisions
-  must be recovered before new decisions, so failed helpers affect
-  availability, not retention safety.
+  concurrent conditional writes to one key. A publish writes `LATEST` twice
+  when it finishes within its lease TTL, so each dataset sustains at most a
+  few publications per second, and consumers add no `LATEST` traffic. Large
+  prune batches can delay other work; bounded batches limit that delay.
+  Pending decisions must be recovered before new decisions, so failed
+  helpers affect availability, not retention safety.
 - Concurrent runs that change the same (table, partition) conflict, and the
   loser must be rebuilt; explicit selections are the override.
 - Schema registration is table-wide and append-only in logical form.
@@ -1775,9 +1864,10 @@ The concrete mapping for dbt:
   revisions; a compaction/checkpoint mechanism is a separate concern.
 - **Data erasure** — immutable versions, pins, and holds leave no
   in-protocol way to remove specific rows or versions sooner than GC would,
-  for example to honour a legal deletion request. An administrative purge
-  protocol, which would make affected revisions unresolvable (§7), is a
-  separate concern.
+  for example to honour a legal deletion request. The companion
+  [grv-crypto-shredding.md](grv-crypto-shredding.md) erases personal data
+  without changing this protocol, by encrypting it under per-subject keys
+  and destroying those keys, through the extension hooks in §3 and §4.
 - **Operations** — runbooks for protocol violations (§8), stuck pending
   operations, and backup and restore are a separate concern. Restoring part
   of a store, such as only `LATEST`, is forbidden (§8); a restore brings

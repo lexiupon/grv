@@ -1,7 +1,90 @@
 # GRV v2 review log
 
+- [Round 3 (2026-09-29): holds without upstream writes, publish cost, erasure](#round-3-2026-09-29-holds-without-upstream-writes-publish-cost-erasure)
 - [Round 2 (2026-09-29): readiness review](#round-2-2026-09-29-readiness-review)
 - [Round 1 (2026-09-28): concurrency and recovery review](#round-1-2026-09-28-concurrency-and-recovery-review)
+
+## Round 3 (2026-09-29): holds without upstream writes, publish cost, erasure
+
+### Context
+
+Follow-up questions on round 2's remaining issues led to three changes and
+several clarifications.
+
+- **Reads were never the reason for holds.** A reader of a superseded
+  revision is protected for `pending_grace` after its receipt, with no
+  writes of its own. Holds protect *lineage*: they keep a source revision
+  resolvable for as long as a product version derived from it is kept.
+- **A mistaken schema column** can be worked around in the same table:
+  append a correctly typed column under a new name, and write nulls to the
+  old one. Only reusing the original name requires a new table.
+- **GC cost** grows with committed revisions × state size. Revisions are
+  immutable, so GC should keep an incremental index and read only new
+  revisions each pass; at small-team scale that is not a concern.
+
+### Changes
+
+| Topic | Decision | Where |
+|---|---|---|
+| Consumer writes to upstream `LATEST` | Consumers no longer take a source's lease or write its `LATEST`. A hold is a create-only record in `<source>/.holds/<consumer-dataset>/`, checked by re-reading the source; the run records `holds_confirmed`. The source's GC commits a `prune_intent`, re-lists holds, and then commits the `prune` decision, so either the consumer sees the prune or GC sees the hold. Release markers move to `.states/released-holds/` and are written only by the source's GC. | §2, §5, §6, §9, §10 |
+| Publish cost | Two `LATEST` writes per publish: acquire and reserve, then commit and release. The supersession receipt is written afterwards without a lease; any process that finds it missing writes one with a later time, which only extends grace. The lease is renewed only when it could expire before the commit, since the commit is fenced by compare-and-swap either way. | §7, §8, §10 |
+| Data erasure | Companion RFC [grv-crypto-shredding.md](grv-crypto-shredding.md): per-subject keys, KMS envelope encryption, an erasure procedure, residual risks, and DPO checklists. The core gains two hooks: `extensions` in `.layout.json`, which writers must implement or refuse to write, and a per-column `ext` in `.schema.json`, set in the same CAS that adds the column. | RFC; §3, §4 |
+
+### Self-review
+
+An adversarial review of the new hold and publish protocol found one safety
+bug, now fixed. Release markers were keyed by `retention_id` alone, so a
+faulty consumer could create a record in its own subfolder reusing another
+consumer's id and get that id released. Release markers are now keyed by
+the full hold path, and the publisher checks that a cited hold's body
+matches its path and names the citing run (§9).
+
+It also found two liveness limits, now documented in §9:
+
+- A crashed GC's `prune_intent` blocks hold confirmation for the
+  revisions it touches until the next publisher or GC clears it. It never
+  blocks runs reading the current `LATEST`. Letting consumers ignore an
+  intent whose lease has expired was rejected as unsafe: consumers never
+  write `LATEST`, so nothing would fence the stale GC's decision.
+- The source's GC cannot recover crashed consumer runs without write access
+  to the consumer's dataset. Their holds stay until the consumer's own
+  recovery seals the run.
+
+Checked and holding:
+
+- Every ordering of hold creation, the consumer's `LATEST` read, intent,
+  re-list, decision, and clear.
+- Stale GC workers, which the decision CAS fences out.
+- Unknown outcomes of intents, decisions, and publish commits.
+- The hold fast path: the current `LATEST` of a non-retired dataset, or an
+  active revision pin.
+- Irreversibility of the release conditions.
+- Lazy receipts, which never shorten grace.
+- The two-write publish, which the compare-and-swap fences.
+- Pins, unpins, and retirement, which serialize with prune intents.
+- Inherited validity.
+
+These are manual checks. The crypto-shredding RFC has had only the author's
+review so far.
+
+### Remaining issues, updated
+
+Round 2's list, with these changes:
+
+- **2. Data erasure** — addressed by the companion RFC, a draft pending DPO
+  sign-off. Its open questions matter most, above all whether erasure is
+  per account or per individual.
+- **3. Cross-dataset write access** — resolved: consumers only create
+  records in their own `.holds/` subfolder of each source.
+- **4. Coordination throughput** — downgraded to a documented limit. A
+  publish writes `LATEST` twice, consumers add no `LATEST` traffic, and GC
+  adds one write per prune batch. This is fine for batch pipelines.
+- **5. Schema mistakes** — a workaround exists within the same table (see
+  Context).
+- **7. Growth** — acceptable with an incremental GC index (see Context).
+
+Items 1, 6, and 8–10 are unchanged. Item 1, the lack of an implementation
+and model check, remains the largest risk.
 
 ## Round 2 (2026-09-29): readiness review
 

@@ -4,7 +4,7 @@
 |---------|------------|
 | Status  | draft      |
 | Version | 2          |
-| Date    | 2026-09-29 |
+| Date    | 2026-09-30 |
 
 ## Overview
 
@@ -95,6 +95,19 @@ atomic snapshot: decisions spanning objects require the coordination below.
 Local implementations must make acknowledged writes durable (including file
 and directory synchronization) before reporting success.
 
+**Durable read-back.** A successful `get` or `head` that finds an object
+MUST also establish the durability of the returned content and its path.
+This applies even when the original write was never acknowledged. Locally,
+the backend synchronizes the opened file, its containing directory, and
+any ancestor directory entries needed to persist the path before returning
+success; a synchronization error is a failed read, never evidence of
+absence. A listing only discovers names: an object found by listing must
+be confirmed by `get` or `head` before its presence is used as proof of a
+completed write or operation. Thus ambiguous-write checks, run recovery,
+and operation replay can safely adopt objects left by a writer that
+crashed between making them visible and synchronizing them. No additional
+backend operation is required.
+
 **Ambiguous outcomes.** A request that fails or times out may still have
 taken effect. Before treating a conditional write as lost, the caller
 rereads the object:
@@ -122,12 +135,12 @@ Per-backend mapping:
 
 | operation            | local filesystem                          | S3                                            | GCS                                     |
 |----------------------|-------------------------------------------|-----------------------------------------------|-------------------------------------------|
-| `get`               | read the file and hash its content        | `GET` + `ETag`                               | `GET` + `generation`                      |
-| `head`              | `stat` for the size; read and hash the content for the validator | `HEAD`                | object metadata `GET`                     |
+| `get`               | read and hash the opened file; synchronize the file and path before returning | `GET` + `ETag`                               | `GET` + `generation`                      |
+| `head`              | `fstat` and hash the same opened file; synchronize the file and path before returning | `HEAD`                | object metadata `GET`                     |
 | `list-by-prefix`    | directory walk (`readdir` for delimiter)  | `ListObjectsV2` with `prefix` (+ `delimiter`) | object list with `prefix` (+ `delimiter`) |
 | `delete`            | `unlink`                                  | `DELETE`                                     | object delete                             |
-| `conditional-create`| write a temp file, then `link(2)` it to the target (fails if it exists), then unlink the temp | `PUT` (or multipart complete) with `If-None-Match: *` | write with `ifGenerationMatch=0` (`x-goog-if-generation-match: 0`) |
-| `conditional-put`   | under an exclusive `flock` on the containing directory: read and hash the current content, compare, write a temp file, `rename` | `PUT` with `If-Match: <ETag>`   | write with `ifGenerationMatch=<generation>` |
+| `conditional-create`| write and synchronize a temp file, then `link(2)` it to the target (fails if it exists), unlink the temp, and synchronize the target's path before success | `PUT` (or multipart complete) with `If-None-Match: *` | write with `ifGenerationMatch=0` (`x-goog-if-generation-match: 0`) |
+| `conditional-put`   | under an exclusive `flock` on the containing directory: read and hash the current content, compare, write and synchronize a temp file, `rename`, and synchronize the target's path before success | `PUT` with `If-Match: <ETag>`   | write with `ifGenerationMatch=<generation>` |
 
 The local backend requires a filesystem with reliable `flock` and `link`
 semantics; network filesystems without them are unsupported. Local
@@ -506,15 +519,22 @@ schema by this mapping:
 | `FIXED_LEN_BYTE_ARRAY(n)` without annotation               | `{"fixed_binary": {"length": n}}` |
 | any physical type with `DECIMAL(p, s)`                     | `{"decimal": {"precision": p, "scale": s}}` |
 | `INT32` with `DATE`                                        | `"date"` |
-| `INT32` or `INT64` with `TIME(unit, …)`                    | `{"time": {"unit": u}}` |
+| `INT32` (`ms`) or `INT64` (`us`/`ns`) with `TIME(unit, isAdjustedToUTC)` | `{"time": {"unit": u, "utc": true or false}}` |
 | `INT64` with `TIMESTAMP(unit, isAdjustedToUTC)`            | `{"timestamp": {"unit": u, "utc": true or false}}` |
 | group with `LIST` (any conforming three-level or legacy two-level form), or a `repeated` field outside a `LIST` or `MAP` group | `{"list": {"element": T}}` |
 | group with `MAP` or legacy `MAP_KEY_VALUE`                 | `{"map": {"key": K, "value": V}}` |
 | group without annotation                                   | `{"struct": {"fields": [{"name": …, "type": T}, …]}}` |
 
-Units `u` are `"ms"`, `"us"`, or `"ns"`. Legacy converted types map to their
-logical-type equivalents (e.g. `TIMESTAMP_MICROS` is
-`{"timestamp": {"unit": "us", "utc": true}}`, `INT_16` is `"int16"`).
+Units `u` are `"ms"`, `"us"`, or `"ns"`. A present Parquet `LogicalType`
+annotation is authoritative; use the legacy `ConvertedType` only when
+`LogicalType` is absent. Legacy `TIME_MILLIS` and `TIME_MICROS` map to
+`{"time": {"unit": "ms", "utc": true}}` and
+`{"time": {"unit": "us", "utc": true}}`, respectively;
+`TIMESTAMP_MICROS` is `{"timestamp": {"unit": "us", "utc": true}}`,
+and `INT_16` is `"int16"`. A modern `TIME` with `isAdjustedToUTC: false`
+remains `utc: false` even if it also carries a legacy time annotation.
+For both time and timestamp columns, changing `unit` or `utc` changes the
+logical type and is rejected by schema registration below.
 `INT96`, `INTERVAL`, and any annotation not listed have no GRV type:
 writers must not produce them (for example, configure Spark to write
 `TIMESTAMP_MICROS`), and a file containing one cannot be registered.
@@ -1079,10 +1099,12 @@ grace timestamp.
    prune decision, from its intent (§10) — retaining the lease. This CAS
    commits the decision. A description not referenced by a successful
    commit is an orphan and authorizes no effects.
-3. Materialize the operation's effects with `conditional-create`. Clear
-   `pending` only after every marker exists, and only as the lease holder,
-   by a CAS on a read that shows `pending` naming this operation. Do not
-   start or commit another operation while `pending` is non-null.
+3. Materialize the operation's effects with `conditional-create`. An
+   existing marker must be confirmed by a successful `get` or `head`,
+   including the durability barrier in §1. Clear `pending` only after
+   every marker is durable, and only as the lease holder, by a CAS on a
+   read that shows `pending` naming this operation. Do not start or commit
+   another operation while `pending` is non-null.
 
 **Unknown outcomes.** When the committing CAS of an operation has an
 unknown outcome (§1), the caller reacquires the lease — a successful CAS,
@@ -1095,7 +1117,7 @@ its `pin_id`.
 On takeover, the new holder MUST complete any pending operation before
 validating new work; a pending `prune_intent` authorizes nothing and is
 simply cleared. Committed decisions are irrevocable. Replay accepts an
-existing marker iff it records the same fact — the same hold path for a
+existing durable marker iff it records the same fact — the same hold path for a
 hold release; the same `pin_id` and `scope` for a pin; the same `pin_id`
 for a pin release — ignoring timestamps and `*_by` fields; any existing
 `.pruned` or `.retired` is accepted. A helper
@@ -1139,16 +1161,33 @@ something absent from the predecessor is a no-op. `runs`,
 `expected_revision` and `reason` are optional.
 
 **Conflicts.** A run's output was computed against its `base_revision`
-(§6). For each (table, partition) a run contributes, its version in the
-predecessor state must equal its version in the base revision's state
-(both absent counts as equal), and a table the run contributes to must not
-have been removed entirely — present in the base state, absent from the
-predecessor. Otherwise the step fails with a **conflict** and changes
-nothing. The first run to publish a change to a
-(table, partition) therefore wins; the loser is rebuilt as a new run from a
-newer base, or its version is assigned by an explicit selection. Omissions
-and selections are explicit decisions and are not checked against run
-bases; `expected_revision` guards them against concurrent publications.
+(§6). The base must be the predecessor or an ancestor on its committed
+`previous_revision` chain; `0` denotes the empty initial state. Otherwise
+the step fails. For each run, the publisher MUST check every committed
+transition after its base through the predecessor, comparing each
+revision's state with its immediate predecessor's state:
+
+- For every (table, partition) the run contributes, the selected version
+  must stay unchanged throughout these transitions; absence is a distinct
+  value, so adding or omitting the pair counts as a change.
+- Every table present in the base state that the run contributes to must
+  stay present in every intervening state, even when the contributed
+  partition was absent from the base.
+
+A violation fails the step with a **conflict** and changes nothing.
+Comparing only the base and predecessor is insufficient: version
+`1 → 2 → 1`, partition `absent → present → absent`, and a table removed
+then restored all still conflict. Orphan revisions are ignored; committed
+revision parquets are retained (§10), so these checks do not require the
+historical version data to remain available. Publications that leave the
+affected versions and table membership unchanged do not conflict.
+
+The first run to publish a change to a (table, partition) therefore wins;
+the loser is rebuilt as a new run from a newer base, or its version is
+assigned by an explicit selection. Omissions and selections are explicit
+decisions and are not checked against run bases; `expected_revision`
+guards them against concurrent publications. Their committed changes
+still count when checking other runs' bases, even if later reversed.
 
 The publish step is:
 
@@ -1814,6 +1853,9 @@ The concrete mapping for dbt:
   helpers affect availability, not retention safety.
 - Concurrent runs that change the same (table, partition) conflict, and the
   loser must be rebuilt; explicit selections are the override.
+- Run conflict checks inspect committed revision states since each run's
+  base, including changes later reversed. Their cost grows with the number
+  of publications during the run; historical version data is not needed.
 - Schema registration is table-wide and append-only in logical form.
   Failed writes may reserve unused columns, and a mistaken registration can
   only be corrected with a new table. Nullability is not part of the
@@ -1831,7 +1873,7 @@ The concrete mapping for dbt:
   metadata read, but it trusts the backend's content validation semantics,
   not a universal per-rewrite counter. A full SHA-256 check is the fallback
   after copies and for audits. On the local backend every validator read
-  hashes the whole object.
+  hashes the whole object and synchronizes the file and its path.
 - Revisions are full snapshots: reading a named revision's entries is a
   single parquet read, but each revision is O(state size), so
   revision-history storage grows with state size times revision count;

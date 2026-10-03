@@ -4,7 +4,7 @@
 |---------|------------|
 | Status  | draft      |
 | Version | 2          |
-| Date    | 2026-09-30 |
+| Date    | 2026-10-01 |
 
 ## Overview
 
@@ -403,7 +403,7 @@ can see it without the revision. A terminated partition may be
 re-populated by a later non-empty version. This complements state-level
 omission (§7): omitting the (table, partition) from a revision removes it
 from the state entirely, while an empty version keeps it present and
-explicitly empty. A consumer materializing a state (e.g. the sync job, §11)
+explicitly empty. A consumer materializing a state (e.g. the pull job, §11)
 treats both as "no rows for this partition in this state." An empty version
 is an ordinary version: it can be pinned and pruned like any other (§10),
 and is unrelated to the `.pruned` tombstone.
@@ -1417,6 +1417,11 @@ marker does not. A pin record contains `pin_id`, `operation_id`,
 optional `reason`; a pin release marker contains `pin_id`, `operation_id`,
 and `released_at`.
 
+Pin identity is `(dataset, scope, pin_id)`, matching the addressed `.pins/`
+directory and operation description. IDs need only be unique within that
+scope; no dataset-wide index or scan is required. Reusing an ID in another
+scope denotes an independent pin, never a retry or release of the first.
+
 GC reads `pending_grace` and `max_clock_skew` from `grv.json` after
 acquiring the dataset's lease (§2).
 `pending_grace` is chosen to exceed the expected worst-case time from a
@@ -1517,7 +1522,7 @@ dataset's `LATEST` lease (§8). Direct record creation followed by a
 
 **Unpinning.** An unpin operation, committed under the same lease,
 releases one active pin by creating `.pins/<pin-id>.released.json`.
-Release is terminal for that `pin_id`; pinning the same scope again
+Release is terminal for that `(scope, pin_id)`; pinning the same scope again
 creates a new pin. What the pin protected becomes prunable at the next GC
 pass unless something else protects it. Deleting pin records by hand is
 not an unpin.
@@ -1635,7 +1640,7 @@ datasets as new versions and revisions. Transformation engines are the
 state, and write working tables.
 
 ```
-GRV (raw) → [sync] → warehouse → engine models → [publish] → GRV (product)
+GRV (raw) → [pull] → warehouse → engine models → [publish] → GRV (product)
 ```
 
 Warehouse tables are a working medium — rebuildable, overwrite-in-place,
@@ -1658,27 +1663,48 @@ It derives each version's `derived_from` from those inputs — at table
 granularity when the engine only knows which tables a model reads (for
 dbt, the model's sources) — and the export must be stable: the warehouse
 tables exported are the ones produced from exactly that state (e.g. a
-dedicated schema per invocation, or a sync that runs to completion before
-the run starts, with further syncs blocked until the invocation and export
+dedicated schema per invocation, or a pull that runs to completion before
+the run starts, with further pulls blocked until the invocation and export
 finish). If the publish step reports a conflict (§8), another run changed
 the same partition first, and the invocation is rerun from the new state.
 
-**Sync path (GRV → warehouse).** For an engine to consume a GRV dataset as
-source, a sync job materializes the dataset's current state (the `LATEST`
+**Pull path (GRV → warehouse).** For an engine to consume a GRV dataset as
+source, a pull job materializes the dataset's current state (the `LATEST`
 revision's entries, §7) into warehouse tables: one table per GRV table,
 with the `_{key}_` partition columns as ordinary columns — the hive-style
 duplication is what makes a flat warehouse table sufficient — and the
 revision's table schema (§4), with missing trailing columns filled with
 nulls.
-The consumer stores a durable checkpoint outside the GRV layout:
-`{committed_revision, attempt_id, target_revision, dirty_tables}`. A sync
+The consumer stores a durable checkpoint outside the GRV layout. A pull
 resolves one target revision and diffs it against `committed_revision`.
 Only changed, added, and removed partitions need work in an uninterrupted
 attempt. Omitted partitions and empty versions leave no rows; a table
 omitted from the target is emptied, not dropped.
 
-**Retry journal.** Before the first mutation to any warehouse table, the
-sync durably adds that table to `dirty_tables`. This includes creating a
+**Transactional refresh.** An adapter MAY apply the entire dataset refresh
+in one durable warehouse transaction, including all data and schema changes,
+table or view creation, membership changes, ownership records, and the
+completion checkpoint. The checkpoint includes `committed_revision` and a
+fresh `attempt_id`. Failure before commit rolls back every change. The
+adapter also writes an immutable successful attempt receipt, keyed by that
+ID, in the same transaction, identifying the fixed request and resulting
+revision/generation. Resolve an ambiguous commit by reading that receipt
+under the serialization that governs refreshes, after fencing the prior
+writer and completing warehouse recovery. A matching receipt proves success
+even if a later refresh replaced the current checkpoint. Absence proves no
+commit only when the receipt history is complete and trustworthy; a different
+checkpoint alone never proves rollback. Preserve receipts for the supported
+retry lifetime and reject requests that reuse an ID with different inputs.
+These receipts are consumer state outside GRV, not publication commit markers.
+There is no separately committed dirty-table journal in this case, because
+no partial refresh can survive. A full rebuild and an incremental refresh
+have the same transaction boundary; per-table commits do not qualify.
+
+**Retry journal for other adapters.** An adapter that cannot provide that
+transaction guarantee stores
+`{committed_revision, attempt_id, target_revision, dirty_tables}`.
+Before the first mutation to any warehouse table, the
+pull durably adds that table to `dirty_tables`. This includes creating a
 new table, changing its schema, replacing data, and removing rows. A table
 stays dirty until dataset-wide completion; marking before mutation makes
 an ambiguous warehouse result safe to retry.
@@ -1699,14 +1725,17 @@ intact. If consumer journal state is lost, rebuild all managed warehouse
 tables from the target, including emptying managed tables absent from it;
 never assume the old watermark describes the current warehouse contents.
 
-One sync may mutate a consumer dataset at a time. Use a warehouse session
-lock, or transactions that check a fencing token on every write and on
-checkpoint commit; an expiring client-side lease alone cannot stop delayed
-writes from an old sync. Keep consumers blocked while a sync attempt is
-incomplete. Per-table staging and atomic swap are recommended, but do not
-make the multi-table refresh atomic. Engine invocations wait for the atomic
-completion checkpoint and keep their inputs stable as described above.
-Both the watermark and journal are consumer state outside the GRV layout.
+For either adapter strategy, one pull may mutate a consumer dataset at a
+time. Use a warehouse session lock, or transactions that check a fencing
+token on every write and on checkpoint commit; an expiring client-side lease
+alone cannot stop delayed
+writes from an old pull. A non-transactional adapter keeps consumers blocked
+while a pull attempt is incomplete. Readers of a transactional adapter may
+continue to use the old complete snapshot. In either case, a build selects
+one completed snapshot and keeps it stable for its invocation. Per-table
+staging and atomic swap are recommended for non-transactional adapters, but
+do not make the multi-table refresh atomic. The checkpoint and any journal
+are consumer state outside the GRV layout.
 
 **Engine metadata.** `manifest.json` and run files carry an optional
 `metadata` object: a map from **engine name** to that engine's own
@@ -1863,9 +1892,10 @@ The concrete mapping for dbt:
   rules. Lowercase-only identifiers reject some source names; callers must
   choose explicit mappings.
 - Pins last until an explicit unpin; there is no expiry.
-- Sync recovery stores a durable dirty-table journal and may rebuild whole
-  tables after partial failure; the last successful watermark alone is
-  insufficient.
+- Pull adapters either commit the complete refresh and checkpoint in one
+  durable transaction or keep a durable dirty-table journal and may rebuild
+  whole tables after partial failure. Without either guarantee, the last
+  successful watermark alone is insufficient.
 - This is the store's first on-disk format: there is no earlier data and no
   migration path. `grv.json`'s `format_version` lets a later format detect
   this one and lets this one refuse a later format.

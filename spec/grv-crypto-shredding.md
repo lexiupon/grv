@@ -256,7 +256,7 @@ Requirements:
   |------------------------------|--------------------------------|----------------------|
   | key service                  | encrypt and decrypt            | manage wrapping keys |
   | writers (ingest, publishers) | decrypt                        | read and insert `deks`; read `suppressed_subjects` |
-  | readers and sync             | decrypt                        | read `deks` |
+  | readers and pull clients     | decrypt                        | read `deks` |
   | erasure operators            | none                           | delete `deks`; insert `suppressed_subjects` and `shredded_keys`; append to the erasure log |
   | database administrators      | none                           | administer the database |
 
@@ -348,11 +348,13 @@ Decrypted data that leaves GRV is outside the reach of crypto-shredding.
 Each such copy needs its own erasure path, and all of them are listed in a
 **plaintext inventory** that the DPO reviews (checklist D1):
 
-- **Warehouse tables** loaded by the sync job (core §11). After a
-  shredding, the sync rebuilds every managed table loaded from a GRV table
+- **Warehouse tables** loaded by the pull job (core §11). After a
+  shredding, the pull rebuilds every managed table loaded from a GRV table
   in which the subject had keys (the dry-run list, §10.2). Rows then carry
-  nulls in protected columns, or are dropped per `on_suppressed`. The sync's dirty-table journal already supports full
-  rebuilds. The warehouse's own time travel and fail-safe retention is `W`.
+  nulls in protected columns, or are dropped per `on_suppressed`. The pull
+  adapter supports full rebuilds through either transactional refreshes or
+  its dirty-table journal (core §11). The warehouse's own time travel and
+  fail-safe retention is `W`.
 - **Exports, BI extracts, caches, and downstream systems** fed from GRV or
   the warehouse: each needs a named owner, an erasure mechanism, and a
   maximum delay.

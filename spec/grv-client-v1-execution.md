@@ -1,13 +1,17 @@
-# GRV Client v1 implementation protocol
+# GRV Client v1 Execution Semantics
 
 ## Relationship to the authoring specification
 
 This normative companion describes how the CLI, core, and adapters implement
-[the user surface and extension contract](grv-cli-v1.md). No CLI is implemented.
+[the user surface and extension contract](grv-client-v1.md). No CLI is implemented.
 Users author that document's declarations; they do not implement the protocols
 below. The managed runner performs build-driver duties for managed builds.
 The explicit external integration API retains the same guarantees.
-[GRV v2](grv-v2.md) remains authoritative and no storage layout is added.
+[GRV v2](grv-storage-v2.md) remains authoritative and no storage layout is added.
+
+The [adapter process protocol](grv-adapter-protocol-v1.md) defines the local
+channel implementing these obligations. See the [specification guide](README.md)
+for document scopes and version relationships.
 
 ### Normalized plans and identity
 
@@ -162,7 +166,7 @@ silently converted into revision 0. Creation of a new target's initial `LATEST`
 belongs to the mutating core protocol.
 
 All commands support `--json`. Stdout contains one JSON document conforming to
-[the output schema](grv-cli-v1-output.schema.json), with `output_version: 1`,
+[the output schema](grv-client-v1-command-output.schema.json), with `output_version: 1`,
 `command`, canonical `root` (null until known), `ok`, `exit_status`, `result`,
 and `errors`. Command names are `init`, `ls`, `show`, `status`, `log`, `diff`,
 `verify`, `pull`, `session prepare`, `session show`, `session renew`,
@@ -991,7 +995,7 @@ why output namespaces are private and the driver must wait for its writers.
 
 Before first finalization, the managed runner or external driver writes one
 atomic, durable JSON file
-conforming to [the build-result schema](grv-cli-v1-build-result.schema.json).
+conforming to [the build-completion schema](grv-client-v1-build-completion.schema.json).
 It is written only after the invocation has succeeded, all output writers and
 database connections have stopped, and the driver has established which
 declared outputs completed. A driver-populated build with no model step uses `kind: direct`; an

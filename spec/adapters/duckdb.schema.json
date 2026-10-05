@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "DuckDB adapter binding schema v1",
-  "$comment": "Registry validation points, not an alternative declaration envelope. Apply these definitions to corresponding common fields; inspect build.execution to choose the source definition. Semantic rules are in grv-cli-v1.md.",
+  "$comment": "Registry validation points, not an alternative declaration envelope. Apply these definitions to corresponding common fields; inspect build.execution to choose the source definition. Semantic rules are in grv-client-v1.md.",
   "$defs": {
     "connection": {
       "type": "object",
@@ -247,19 +247,19 @@
         "materializations": {
           "type": "array",
           "items": {
-            "$ref": "../grv-cli-v1-output.schema.json#/$defs/materialization"
+            "$ref": "../grv-client-v1-command-output.schema.json#/$defs/materialization"
           }
         },
         "sessions": {
           "type": "array",
           "items": {
-            "$ref": "../grv-cli-v1-output.schema.json#/$defs/session"
+            "$ref": "../grv-client-v1-command-output.schema.json#/$defs/session"
           }
         },
         "imports": {
           "type": "array",
           "items": {
-            "$ref": "../grv-cli-v1-output.schema.json#/$defs/application_import"
+            "$ref": "../grv-client-v1-command-output.schema.json#/$defs/application_import"
           }
         }
       },

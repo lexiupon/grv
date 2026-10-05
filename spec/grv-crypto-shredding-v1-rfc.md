@@ -1,11 +1,11 @@
-# GRV crypto-shredding (companion RFC)
+# GRV crypto-shredding v1 (companion RFC)
 
 |                |                                                          |
 |----------------|----------------------------------------------------------|
 | Status         | draft — for review by the Data Protection Officer (DPO)  |
 | Extension id   | `crypto-shredding/1`                                     |
 | Date           | 2026-09-29                                               |
-| Companion to   | [grv-v2.md](grv-v2.md) (GRV v2 storage layout)           |
+| Companion to   | [grv-storage-v2.md](grv-storage-v2.md) (GRV v2 storage layout)           |
 | Sign-off       | see [§13](#13-sign-off)                                  |
 
 ## 1. Summary

@@ -18,12 +18,16 @@ a pull succeeds when its destination operation is known to have completed.
 
 This is a design, not an implemented CLI. The version-1 formats may evolve
 until the implementation contract is frozen. This document defines the user
-surface and adapter architecture. The [protocol companion](grv-cli-v1-protocol.md)
+surface and adapter architecture. The [execution companion](grv-client-v1-execution.md)
 defines implementation and conformance requirements, including locks, holds,
 leases, manifests, transactional receipts, recovery, retention, and advanced
 external build sessions. Those requirements are performed by the implementation.
 
-The client adds no GRV storage layout. [GRV v2](grv-v2.md) remains authoritative.
+The [adapter process protocol](grv-adapter-protocol-v1.md) mechanizes the adapter
+lifecycle obligations through a local process channel. See the
+[specification guide](README.md) for document scopes and version relationships.
+
+The client adds no GRV storage layout. [GRV v2](grv-storage-v2.md) remains authoritative.
 Adapter authentication, captures, job state, contexts, and transfer receipts
 are consumer state outside GRV. The GRV backend (filesystem/S3/GCS) is separate
 from a data adapter (DuckDB/Salesforce/a website).
@@ -98,7 +102,7 @@ with their registered schemas validating the adapter-specific objects.
 There is no duplicated `source.grv`/`target.grv`, explicit extraction mode,
 or user-authored `derived_from: session` field.
 
-The [common declaration schema](grv-cli-v1-declaration.schema.json) validates
+The [common declaration schema](grv-client-v1-declaration.schema.json) validates
 the envelope, table contracts, partitions, checks, and build controls.
 [DuckDB](adapters/duckdb.schema.json) and
 [Salesforce](adapters/salesforce.schema.json) binding schemas illustrate the
@@ -164,7 +168,7 @@ be interpreted as an omission or empty snapshot.
 `selection.policy: changed` is the default: reuse a base version only when
 complete content/schema equality is proved. `all` writes new versions even
 when equal. Other publication selectors are advanced build controls in the
-protocol companion. An extraction fixes its whole dataset base; a concurrent
+execution companion. An extraction fixes its whole dataset base; a concurrent
 publication requires a new attempt rather than mixing snapshots.
 
 ### Pull selection and write behavior
@@ -344,7 +348,7 @@ changed partitions; SQL, append, and explicitly selected partition scopes
 always evaluate their full selected scope. `refresh: full` forces a rebuild.
 No user must choose a refresh algorithm to make SQL/append correct.
 S3 views support complete identity replacement only, against S3 roots, with the
-verification and availability rules in the protocol companion.
+verification and availability rules in the execution companion.
 
 ### SQL bindings and transaction
 
@@ -630,7 +634,7 @@ companion. External engines use `grv session prepare/show/renew/abort` and
 `grv push --session ... --build-result ...`. Contexts are protected consumer state;
 inspection redacts tokens. These are integration tools beneath the managed path.
 
-Results conform to [the output schema](grv-cli-v1-output.schema.json).
+Results conform to [the output schema](grv-client-v1-command-output.schema.json).
 Status returns nullable `adapter_state: {adapter, details}`. Each session has
 registered `adapter_context`; physical mapping identifiers are adapter-owned.
 Every adapter uses the same common transfer result fields plus registered

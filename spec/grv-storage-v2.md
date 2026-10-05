@@ -1,4 +1,4 @@
-# GRV (Golden Record Vault) v2 specification
+# GRV (Golden Record Vault) Storage v2 specification
 
 |         |            |
 |---------|------------|
@@ -341,7 +341,7 @@ Rules:
 - **Extensions.** `extensions` names the extensions that every writer of
   the table must implement, keyed by extension id (for example
   `crypto-shredding/1`, defined in the companion
-  [grv-crypto-shredding.md](grv-crypto-shredding.md)), each with its
+  [grv-crypto-shredding-v1-rfc.md](grv-crypto-shredding-v1-rfc.md)), each with its
   configuration for this table. A writer that does not implement every
   listed extension MUST NOT acquire claims, register schemas, or create
   version objects for the table. Readers that do not implement an extension
@@ -1937,7 +1937,7 @@ The concrete mapping for dbt:
 - **Data erasure** — immutable versions, pins, and holds leave no
   in-protocol way to remove specific rows or versions sooner than GC would,
   for example to honour a legal deletion request. The companion
-  [grv-crypto-shredding.md](grv-crypto-shredding.md) erases personal data
+  [grv-crypto-shredding-v1-rfc.md](grv-crypto-shredding-v1-rfc.md) erases personal data
   without changing this protocol, by encrypting it under per-subject keys
   and destroying those keys, through the extension hooks in §3 and §4.
 - **Operations** — runbooks for protocol violations (§8), stuck pending

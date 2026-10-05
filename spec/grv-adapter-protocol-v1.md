@@ -1,4 +1,4 @@
-# GRV Client v1 Adapter Protocol
+# GRV Adapter Process Protocol v1
 
 |         |            |
 |---------|------------|
@@ -9,11 +9,11 @@
 
 ## Purpose and relationship to the authoring specification
 
-[GRV Client v1](grv-cli-v1.md) defines language-neutral adapter obligations;
-[the implementation companion](grv-cli-v1-protocol.md) defines their ordering,
+[GRV Client v1](grv-client-v1.md) defines language-neutral adapter obligations;
+[the execution companion](grv-client-v1-execution.md) defines their ordering,
 identity, receipt, locking, and recovery requirements. This document mechanizes
 those obligations between the CLI (the **parent**) and an installed **adapter
-process**. Both companions remain normative. [GRV v2](grv-v2.md) alone defines
+process**. Both companions remain normative. [GRV v2](grv-storage-v2.md) alone defines
 the storage layout; this protocol creates no new GRV object or commit marker.
 
 The parent owns GRV backend operations, holds, runs, claims, leases, capture
@@ -447,7 +447,7 @@ the only extensible portions; the surrounding objects are closed.
   eligible identity materialization in the same bound root.
 - **OutputBinding:** `{table: Name, source: J, engine_table: string,
   contract: TableContract}`. Source is the fixed mode-specific table source.
-  V1 completion mappings use the existing build-result schema's qualified-name
+  V1 completion mappings use the existing build-completion schema's qualified-name
   grammar; the adapter supplies and validates its physical mappings.
 - **BuildSession:** `{session_id: UUID, identity: BuildIdentity,
   execution: "managed" | "external", base_revision: Revision,
@@ -463,7 +463,7 @@ the only extensible portions; the surrounding objects are closed.
 
 `AdapterIdentity` is defined in §3.3. Counts are checked against actual consumed
 rows. A build completion is exactly the object in
-[grv-cli-v1-build-result.schema.json](grv-cli-v1-build-result.schema.json);
+[grv-client-v1-build-completion.schema.json](grv-client-v1-build-completion.schema.json);
 no row counts, aliases, or renamed `engine` fields are added to that object.
 
 ### 4.2 Validation and phased connection binding
@@ -776,7 +776,7 @@ It durably writes the exact successful completion record and invocation facts
 in adapter consumer state **before** emitting `build_finished`. The record's
 run/workspace/declaration/mappings come from the prepared session and actual
 invocation; `completed_at` records stopped-writer completion, not receipt time.
-It passes the existing build-result schema, including `kind` and exact
+It passes the existing build-completion schema, including `kind` and exact
 `{table, engine_table}` entries. Counts are separate from the record.
 
 There are **no batch or table-completion frames in execute_build**. On query
@@ -794,7 +794,7 @@ incomplete work from leftover tables.
 | `export_build` | `handle: Handle, session_id: UUID, completion_sha256: Digest, stream_id: UUID` | `export_complete` | `session_id: UUID, completion_sha256: Digest, adapter_result: Doc<J>` |
 
 The parent validates full identity, selected-output coverage and mapping equality
-against its fixed context and the build-result schema, under session/workspace
+against its fixed context and the build-completion schema, under session/workspace
 serialization. For managed work it atomically/durably stores the returned
 completion JSON file; for external work the driver has already written that
 file after stopping all writers/connections. Then it sends acceptance.

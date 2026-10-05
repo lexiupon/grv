@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "GRV CLI v1 declaration",
-  "$comment": "Core authoring envelope only. Resolve the registered adapter and validate connection/options and per-table source/target/select/column-source schemas before binding. Built-ins and extensions use this same contract. Cross-field and resolved-schema rules are normative in grv-cli-v1.md.",
+  "title": "GRV Client v1 declaration",
+  "$comment": "Core authoring envelope only. Resolve the registered adapter and validate connection/options and per-table source/target/select/column-source schemas before binding. Built-ins and extensions use this same contract. Cross-field and resolved-schema rules are normative in grv-client-v1.md.",
   "oneOf": [
     {
       "$ref": "#/$defs/push"

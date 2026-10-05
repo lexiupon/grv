@@ -4,7 +4,7 @@
 |---------|------------|
 | Status  | draft      |
 | Version | 2          |
-| Date    | 2026-10-01 |
+| Date    | 2026-10-05 |
 
 ## Overview
 
@@ -141,6 +141,17 @@ Per-backend mapping:
 | `delete`            | `unlink`                                  | `DELETE`                                     | object delete                             |
 | `conditional-create`| write and synchronize a temp file, then `link(2)` it to the target (fails if it exists), unlink the temp, and synchronize the target's path before success | `PUT` (or multipart complete) with `If-None-Match: *` | write with `ifGenerationMatch=0` (`x-goog-if-generation-match: 0`) |
 | `conditional-put`   | under an exclusive `flock` on the containing directory: read and hash the current content, compare, write and synchronize a temp file, `rename`, and synchronize the target's path before success | `PUT` with `If-Match: <ETag>`   | write with `ifGenerationMatch=<generation>` |
+
+**Local validator cache.** For immutable objects only — data files,
+manifests, and other objects created once by `conditional-create` — a local
+implementation MAY reuse a SHA-256 that it computed earlier for the same path
+while the file's device, inode, size, `mtime` and `ctime` (both at nanosecond
+resolution) are unchanged. The cache is consumer state outside `GRV_DIR`, and
+is allowed only on filesystems with nanosecond timestamps. A cached `get` or
+`head` still performs the durable read-back synchronization. The cache MUST
+NOT be used for `conditional-put` targets (`grv.json`, `.claim`,
+`.schema.json`, `LATEST`, run controls, allocation records) or for full
+audits that require check (b) of §4.
 
 The local backend requires a filesystem with reliable `flock` and `link`
 semantics; network filesystems without them are unsupported. Local
@@ -1463,14 +1474,27 @@ A version is **protected** if any of:
 
 - it, its (table, partition), or its table has an active pin;
 - it appears in the state of a kept revision of its dataset;
-- it is pending, and either it has no `manifest.json`, or its run (the
-  manifest's `run_id`) is not sealed, or it is an entry of its sealed run
-  and the run's `sealed_at` has not expired under the deadline rule above.
+- it is pending, and either it has no `manifest.json` and its (table,
+  partition) `.claim` is still in the allocated state with this `version`, or
+  its run (the manifest's `run_id`) is not sealed, or it is an entry of its
+  sealed run and the run's `sealed_at` has not expired under the deadline rule
+  above.
 
 Every other version is unprotected and may be pruned. In particular, a
 pending version that its sealed run does not list is an orphan and never
 publishable. GC may first recover an expired run (§6), so that a crashed
 run does not protect its versions indefinitely.
+
+A version directory without a manifest is protected only while its claim
+still allocates it, because only that claim's holder can still commit and
+finalize it. Once the claim has left that state — released, abandoned, or
+taken over — it can never return to it: `high_water` is at least `n`, so no
+later allocation reuses `n`, and the old token's release CAS can never
+succeed again (§1, §5). That condition is therefore stable without the
+claim's lease. A late writer that still creates the manifest finds the
+tombstone at its confirm step (§5 step 5), and its version is unreadable. If
+the claim is allocated but expired, GC may recover the claim's run (its
+`holder`) first.
 
 Cross-dataset protection comes only from holds. Every `derived_from`
 reference of a publishable version names an active hold, and a hold stays
@@ -1478,9 +1502,21 @@ active until every entry that cites it is tombstoned (§9). Pinning a
 product revision therefore keeps the source revisions its versions were
 derived from — transitively, through intermediate datasets — without GC
 walking other datasets' derivation links. Missing or unreadable retention
-records — the revision named by `LATEST`, a pin, a hold, or a run control
-needed for a decision — are protocol errors: GC aborts the affected
+records — the revision named by `LATEST`, a pin, a hold, a run control, or a
+claim needed for a decision — are protocol errors: GC aborts the affected
 deletions rather than guessing.
+
+**Incremental evaluation (non-normative).** A committed revision stays
+committed, its parquet is immutable, and the chain grows only at its head. A
+GC or publisher may therefore cache facts derived from committed revisions
+outside the layout, keyed by (dataset, revision): for example, per (table,
+partition), the greatest version that any committed revision up to that one
+references, which is what the pending test needs. A later pass reads only the
+revisions between the current `LATEST.revision` and the cached head. Kept
+status, pins, holds, and grace deadlines change over time and are always
+re-evaluated, never cached. A cache must yield exactly what a full walk would
+compute; on any doubt, such as an unreadable cache or a head not found on the
+chain, fall back to the full walk.
 
 Holds are deliberately coarse: a held revision protects *its entire state*
 — every (table, partition, version) it names — even though a downstream
@@ -1625,8 +1661,9 @@ retried against the then-current state.
   run's `sealed_at` grace deadline (including clock skew) has elapsed, or
   once a newer version of their (table, partition) is published. Versions
   that their sealed run does not list are prunable at once. Versions
-  without a manifest are reclaimed only once a newer version of their
-  (table, partition) is published.
+  without a manifest are prunable once their claim no longer allocates them
+  (the writer released, abandoned, or lost the claim), or once a newer version
+  of their (table, partition) is published.
 - Revisions are not pruned in this model: they are the history, and the
   `previous_revision` chain must stay walkable from `LATEST`.
 
@@ -1885,6 +1922,9 @@ The concrete mapping for dbt:
 - Run conflict checks inspect committed revision states since each run's
   base, including changes later reversed. Their cost grows with the number
   of publications during the run; historical version data is not needed.
+  GC's pending test needs facts from every committed revision; caching them
+  incrementally (§10) bounds each pass to the revisions published since the
+  last one.
 - Schema registration is table-wide and append-only in logical form.
   Failed writes may reserve unused columns, and a mistaken registration can
   only be corrected with a new table. Nullability is not part of the
@@ -1903,7 +1943,8 @@ The concrete mapping for dbt:
   metadata read, but it trusts the backend's content validation semantics,
   not a universal per-rewrite counter. A full SHA-256 check is the fallback
   after copies and for audits. On the local backend every validator read
-  hashes the whole object and synchronizes the file and its path.
+  synchronizes the file and its path, and hashes the whole object unless the
+  optional cache for immutable objects (§1) applies.
 - Revisions are full snapshots: reading a named revision's entries is a
   single parquet read, but each revision is O(state size), so
   revision-history storage grows with state size times revision count;

@@ -15,7 +15,7 @@ optional extension RFC.
 | [Storage v2](grv-storage-v2.md) | Draft | Authoritative GRV storage layout and backend contract: tables, versions, claims, runs, revisions, publication, holds, pins, and GC. |
 | [Client v1](grv-client-v1.md) | Draft; no CLI implemented | Commands, declarations, supported data types, adapter registration, and language-neutral lifecycle obligations. |
 | [Client v1 execution semantics](grv-client-v1-execution.md) | Draft; normative companion | Normalized identity, command results, orchestration, transactions, locks, build completion, recovery, and conformance requirements. |
-| [Adapter process protocol v1](grv-adapter-protocol-v1.md) | Draft; normative companion | Installation, process supervision, handshake, frame grammar, shared-memory data plane, and adapter operation ordering. Implements the client contracts across a process boundary. |
+| [Adapter process protocol v1](grv-adapter-protocol-v1.md) | Draft; normative companion | Installation, process supervision, handshake, frame grammar, stream data plane, and adapter operation ordering. Implements the client contracts across a process boundary for installed adapters; v1 built-ins may run in-process behind the same logical interface. |
 | [Crypto-shredding v1 RFC](grv-crypto-shredding-v1-rfc.md) | Draft; DPO review pending | Proposed `crypto-shredding/1` extension for encrypted personal data and subject-key erasure; includes unresolved decisions and sign-off requirements. |
 
 Each document owns the contract stated above. The execution companion and

@@ -53,7 +53,12 @@ Input field selectors are identifiers, not expressions. Source predicates are
 one adapter-language row predicate; joins/subqueries require managed build SQL.
 
 Each output column has one resolved mapping and no undeclared columns. Source
-selectors may be repeated for distinct output names. Exact types, ordered output,
+selectors may be repeated for distinct output names. A `derive` mapping is
+allowed only in extraction, only for a declared partition key's `_{key}_`
+column of type `utf8`, and only from another output column of type `date32` or
+timestamp; it excludes `source`. Derived columns are computed by the core from
+the mapped batch values before partition grouping. They are not part of the
+contract sent to the adapter, which never produces or sees them. Exact types, ordered output,
 partition columns, and registered extensions must pass core validation. Checks
 name the operation's output columns, not removed source-only fields. An identity
 pull's optional output columns assert equality; they never authorize projection.
@@ -336,7 +341,9 @@ For example, a successful first pull returns:
 ### The type mapping (Arrow → engine)
 
 The engine adapter preserves both values and the declared GRV logical type
-when importing and exporting. V1's supported DuckDB mappings are:
+when importing and exporting. The declaration-type to GRV logical-type mapping
+and the unsupported-type rule are defined in the main spec's *Output columns
+and types*. V1's supported DuckDB mappings are:
 
 | Arrow / GRV meaning | DuckDB |
 | --------------------- | -------- |
@@ -779,7 +786,9 @@ ambiguous committing CAS. Inspection never emits credentials or owner tokens.
    Select/report the attempt UUID and lock its consumer-state directory. A
    matching recorded attempt recovers its context/result; a changed fixed
    request returns `REQUEST_MISMATCH`. Resolve the adapter connection identity.
-2. Initialize the target's `LATEST` if needed and read its base revision. Create
+2. Initialize the target's `LATEST` if needed and read its base revision.
+   Check that every base table is declared or dropped
+   ([Extraction snapshot membership](#extraction-snapshot-membership)). Create
    an ordinary open GRV run with no GRV inputs; confirm the empty hold set.
    Record adapter/package identity, declaration/source configuration, source
    consistency, run/base/owner, and attempt in durable consumer state. Write
@@ -803,6 +812,9 @@ state, staged files, capture receipt, fixed plan, and result. File creation and
 updates are atomic/durable; persistent `session.lock` uses exclusive nonblocking
 `flock` and is never replaced or unlinked. Context aliases use this same lock.
 These records are outside GRV and may not be inferred from folder listings.
+If the state directory is lost (for example, on an ephemeral CI runner), its
+attempts cannot be retried or inspected; their GRV runs are recovered by the
+normal run-recovery protocol and nothing in GRV becomes inconsistent.
 The core owns lease renewal while a transfer command holds the session lock.
 Between commands, an external driver can call `session renew` if it keeps a
 prepared extraction session open. Salesforce sessions never acquire engine locks.
@@ -854,6 +866,8 @@ Preparation performs the following steps:
    root binding, and non-retired target. In one engine transaction, select
    completed input materializations and their metadata. Input aliases and
    output mappings must be unique and must belong to the bound GRV root.
+   Reject self-inputs and observable derivation cycles
+   ([Schemas and provenance](#schemas-and-provenance)).
 2. Initialize a new target's `LATEST` as GRV §8 permits, then read its
    `LATEST.revision` as `base_revision` (0 for a new target). Use the selected
    run ID and generate an owner token and a retention id for each distinct
@@ -866,10 +880,15 @@ Preparation performs the following steps:
    unavailable, preparation fails; the driver must refresh and prepare again.
    An empty input set also completes the normal holds-confirmation transition.
 4. Create private input tables and output tables under namespaces unique to
-   this run. Local inputs are stable copies made from the transaction's
-   selected materializations; S3 inputs are private views over held file sets.
-   Record their fixed schemas and mappings with the prepared engine session,
-   and commit that engine transaction.
+   this run. Local inputs are loaded from the held revision's GRV data files,
+   which the core has verified by size and SHA-256 for the input table's
+   selected entries; S3 inputs are private views over the same held file sets.
+   Tracking tables are never copied: the selected materialization only
+   identifies the input's dataset, revision, contract, and generation. If its
+   recorded contract differs from the verified files' logical schema, fail with
+   `PROTOCOL_FAILURE` (inconsistent consumer metadata). Record the fixed
+   schemas and mappings with the prepared engine session, and commit that
+   engine transaction.
 5. Materialize the context file atomically and durably from the committed
    session record. A retry may recreate an identical context for that session;
    it must not overwrite another context. Return success only when the engine
@@ -941,9 +960,12 @@ produces a complete relation, never an append onto prior-state rows. Query order
 introduce undeclared output dependencies. Suppressed hold/drop outputs are not
 executed or attested. A successful zero-row query completes its output.
 
-For local/previously S3-view inputs, materialize the held fixed file sets locally
-before applying the user-query execution restrictions. Acquire private copies
-under the preparation transaction; no subsequent tracking pull changes them.
+For both local and S3-view inputs, managed builds materialize the held, verified
+GRV file sets locally before applying the user-query execution restrictions.
+Private copies are made under the preparation transaction from GRV files, never
+from tracking tables, so a tracking table modified after its pull cannot leak
+into a build that cites the held revision; no subsequent tracking pull changes
+them either.
 If self-input is enabled, keep a separate immutable base copy for query reads;
 never let a later output query observe an earlier query's new output.
 
@@ -1152,10 +1174,11 @@ version is surfaced rather than repaired by publishing incomplete state.
 ### Build selection and no-op rules
 
 - **`changed`** is the default: export eligible output partitions and reuse an
-  existing base version only when complete content and logical-schema equality
-  are proven. Comparing only `data.parquet` is insufficient for a multi-file
-  version. If equality cannot be established, produce a new version; equality
-  must not be guessed from row count or a partial hash.
+  existing base version only when equality is proven by
+  [Canonical encoding and equality](#canonical-encoding-and-equality).
+  Comparing only `data.parquet` is insufficient for a multi-file version. If
+  equality cannot be established, produce a new version; equality must not be
+  guessed from row count or a partial hash.
 - **`all`** creates new versions for all eligible output partitions, including
   byte-identical data.
 - **`explicit`** restricts outputs to `include` selectors, each naming a whole
@@ -1171,8 +1194,8 @@ version is surfaced rather than repaired by publishing incomplete state.
   group to identify its partition.
 
 These selector lists apply to build declarations. Extraction declarations
-accept only `selection.policy: changed | all` and no selector lists; their
-complete-snapshot membership rules are specified below.
+accept `selection.policy: changed | all` and whole-table `selection.drop`
+only; their complete-snapshot membership rules are specified below.
 
 Selectors use canonical GRV table names and partition objects. Overlapping
 contributions, omissions, holds, or empty requests are rejected. The client
@@ -1217,6 +1240,39 @@ selection:
   empty: [{table: fct_x, partition: {period: '2026-10'}}]
 ```
 
+### Canonical encoding and equality
+
+The core writes every push output group (extraction and build, under any
+policy) in **canonical form**, so that equality can be proven from manifest
+hashes without downloading base data:
+
+1. **Row order.** Rows are sorted by a total order that compares columns left
+   to right in output-schema order. Nulls sort first. `bool` orders false before
+   true; integers, dates, and timestamps order numerically; decimals order by
+   value; `double` uses IEEE 754 `totalOrder` (so `-0` precedes `+0` and NaNs
+   order by bit pattern); `utf8` and `binary` order by unsigned bytes. Duplicate
+   rows are kept and are adjacent.
+2. **Writer.** One fixed Parquet writer configuration, identified by a
+   `canonical_writer` string that includes the writer library and its version,
+   encodes the sorted rows. It produces identical bytes for an identical logical
+   schema and row sequence: fixed compression, encodings, page and row-group
+   sizes, and footer metadata, with no timestamps or random values.
+3. **Files.** Rows are split into `data.parquet`, `data-1.parquet`, … at fixed
+   row-count boundaries determined by `canonical_writer`.
+
+The `canonical_writer` value is recorded in run metadata as
+`metadata.grv_cli.canonical_writer`; this is informational and no rule depends
+on it. Large outputs are sorted with the core's bounded external sort in
+staging.
+
+A staged group **equals** the base version of the same (table, partition) iff
+the base manifest's `data_files` list has the same length and, entry by entry,
+the same `name`, `size`, and `sha256` as the staged files. Equal bytes imply
+equal logical schemas and rows. Unequal bytes prove nothing: the base may have
+been written by another tool or by a different `canonical_writer`, so the group
+simply becomes a new version, which is always safe. A writer upgrade therefore
+costs at most one round of new versions per partition.
+
 ### Extraction snapshot membership
 
 An extraction declaration defines a complete snapshot of its target dataset:
@@ -1226,19 +1282,28 @@ captured partition groups. The adapter's row filter is evaluated before
 mapping/grouping. An unpartitioned zero-row table publishes an empty version.
 A partitioned zero-row table contributes no groups and removes its old groups.
 
-The core derives omission selectors for base tables no longer declared and
-base partitions absent from the complete capture. They are guarded by the
-prepared base revision. A failed/missing output cannot authorize any omission.
-A source declaration is consequently the authoritative snapshot definition,
-not a patch to unrelated tables in the same dataset. Use a separate dataset
-when independent sources need independent refresh ownership.
+For declared tables, the core derives omission selectors for base partitions
+absent from the complete capture. Whole-table omissions are never derived:
+during session preparation, after reading the base revision and before any
+source acquisition, every base table must be either declared in `tables` or
+named in `selection.drop`. Otherwise preparation fails with `STATE_CONFLICT`,
+naming the undeclared tables, before any GRV run is created. A `drop`
+entry must not also be declared in `tables`, and a dropped table already absent
+from the base is a no-op. All omissions are guarded by the prepared base
+revision. A failed/missing output cannot authorize any omission.
+A source declaration is consequently the authoritative snapshot definition of
+the tables it declares or drops, never an implicit patch that removes tables
+another declaration produced. Use a separate dataset when independent sources
+need independent refresh ownership.
 
 `selection.policy: changed` reuses provably equal versions and creates new
 versions for other groups; `all` creates new versions for every captured group.
-Both have identical snapshot membership. Equality proof follows the core's
-logical row/schema rules, never capture time or file names alone. A declaration
-with zero source tables is invalid. Held/drop/include/empty selector lists are
-build-only; extraction determines absence from successful full acquisition.
+Both have identical snapshot membership. Equality proof follows
+[Canonical encoding and equality](#canonical-encoding-and-equality), never
+capture time or file names alone. A declaration with zero source tables is
+invalid. Extraction accepts `selection.drop` with whole-table selectors only;
+`include`, `hold`, `empty`, and pair-form drops are build-only, and partition
+absence is determined from successful full acquisition.
 
 Extraction publication requires the committed predecessor to remain the
 prepared base. Any intervening dataset revision, even to another table, returns
@@ -1277,6 +1342,23 @@ narrowing requires a later specification. The sources must be
 committed revisions in this root, the references must resolve, and the
 consumer dataset must satisfy GRV's acyclic derivation rule. Self-input is
 represented by the target base revision and never by a self-hold.
+
+The client enforces acyclicity as far as it can observe it, during
+preparation and before creating a run:
+
+- An input whose dataset is the target dataset is rejected with
+  `INVALID_DECLARATION`; it would be the self-hold GRV §9 forbids. Use
+  `build.self_input` instead.
+- The client then walks the derivation graph through current states,
+  breadth-first over datasets not yet visited: for each input dataset, read its
+  `LATEST` revision, the run files of the runs its entries name, and those runs'
+  input datasets. Reaching the target dataset fails with
+  `INVALID_DECLARATION`, reporting the cycle path. Unreadable records fail with
+  the corresponding protocol or backend error rather than being skipped.
+
+The walk costs one revision read plus that revision's distinct run files per
+dataset. It sees only current states, so it cannot prove that history is
+acyclic; deployments still assign datasets to layers as GRV §9 recommends.
 
 GRV history is the history of record. Engine working snapshots and session
 copies are disposable execution state; they do not define a second product
@@ -1530,9 +1612,6 @@ Changes to these constructs require joint review:
 | SQL output names/order/types differ from the resolved output column contract | Reject without silent projection or lossy casts |
 | A build tries to use append, partition-selected, or SQL-import targets as identity GRV inputs | Reject unsupported provenance; do not infer a complete source materialization |
 | A namespaced adapter command returns JSON | Validate the common envelope and registered redacted adapter-result schema |
-
-| New scenario | Required result |
-| --------- | ----------------- |
 | Pull uses a fixed revision | Write the declared destination; create no generated historical schema |
 | Same owned replacement scope changes latest/fixed selector | Permit the explicit request without changing ownership or target naming |
 | Partition-selected import excludes a pruned unrelated month | Acquire/validate only selected entries; unrelated data availability does not fail the import |
@@ -1551,3 +1630,14 @@ Changes to these constructs require joint review:
 | Adapter cancellation sees an unresolved destination commit | Preserve receipts/journal and resolve outcome; never report assumed rollback |
 | A replacement declaration changes its mapping members | Update the stable owner scope atomically and clear obsolete owned targets |
 | Managed self-input query omits an old row | Replace private outputs with the complete result; do not retain or duplicate seeded rows |
+| An extraction's base contains a table the declaration neither declares nor drops | `STATE_CONFLICT` naming the table, before source acquisition or run creation |
+| An extraction lists a base table in `selection.drop` | Omit that table under the base guard; a dropped table already absent is a no-op |
+| A tracking input table is edited after its pull | The build loads verified held GRV files; the edited rows never reach its outputs |
+| A build input's dataset is the target dataset | `INVALID_DECLARATION` before run creation; direct the user to `self_input` |
+| Input datasets reach the target through current states | `INVALID_DECLARATION` reporting the cycle path, before run creation |
+| A pull's selected source schema contains `int32`, `time`, or `list` | `INVALID_DECLARATION` naming the column, before destination mutation |
+| A DuckDB `INTEGER` source column is declared `int64` | Accept the exact widening; a narrowing or lossy declaration fails |
+| An unchanged extraction reruns under `changed` | Staged canonical file hashes equal the base manifest; no new version, and no revision when the whole state is equal |
+| A base version was written by another tool or `canonical_writer` | Publish a new version; unequal bytes are not an error |
+| An extraction derives `_month_` from a UTC timestamp | Values are `YYYY-MM` from the UTC date; a null source value fails the extraction |
+| A built-in runs in-process | Same registration, authority split, and logical conformance results as a process adapter |

@@ -112,13 +112,41 @@
               "type": "object"
             }
           ]
+        },
+        "derive": {
+          "type": "object",
+          "$comment": "Extraction only; the column must be a declared partition key's _{key}_ utf8 column and 'from' an output date32/timestamp column. Cross-field rules are normative in grv-client-v1.md.",
+          "properties": {
+            "from": {
+              "type": "string",
+              "minLength": 1
+            },
+            "format": {
+              "enum": [
+                "year",
+                "month",
+                "day"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "from",
+            "format"
+          ]
         }
       },
       "additionalProperties": false,
       "required": [
         "name",
         "type"
-      ]
+      ],
+      "not": {
+        "required": [
+          "source",
+          "derive"
+        ]
+      }
     },
     "column_reference": {
       "oneOf": [
@@ -376,6 +404,14 @@
             "changed",
             "all"
           ]
+        },
+        "drop": {
+          "$comment": "Extraction accepts only whole-table drops: base tables that this declaration intentionally removes. Undeclared base tables not listed here fail with STATE_CONFLICT.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/table_selector"
+          },
+          "uniqueItems": true
         }
       },
       "additionalProperties": false,

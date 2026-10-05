@@ -61,6 +61,79 @@
       "type": "object",
       "properties": {},
       "additionalProperties": false
+    },
+    "connection_details": {
+      "type": "object",
+      "properties": {
+        "org_id": {
+          "type": "string",
+          "pattern": "^00D[A-Za-z0-9]{12}([A-Za-z0-9]{3})?$"
+        },
+        "api_version": {
+          "type": "string",
+          "pattern": "^v[0-9]+\\.[0-9]+$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "org_id",
+        "api_version"
+      ],
+      "$comment": "Resolved org identity after authentication; the alias and credentials are never reported."
+    },
+    "source_identity": {
+      "type": "object",
+      "properties": {
+        "org_id": {
+          "type": "string",
+          "pattern": "^00D[A-Za-z0-9]{12}([A-Za-z0-9]{3})?$"
+        },
+        "object": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "query_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "org_id",
+        "object",
+        "query_sha256"
+      ],
+      "$comment": "query_sha256 hashes the exact generated SOQL text."
+    },
+    "source_job": {
+      "type": "object",
+      "properties": {
+        "transport": {
+          "enum": [
+            "rest",
+            "bulk"
+          ]
+        },
+        "api_version": {
+          "type": "string",
+          "pattern": "^v[0-9]+\\.[0-9]+$"
+        },
+        "job_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "transport",
+        "api_version",
+        "job_ids"
+      ],
+      "$comment": "Bulk job IDs or REST query locators recorded durably before fetching; empty only before the first job is created."
     }
   }
 }

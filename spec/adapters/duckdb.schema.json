@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "DuckDB adapter binding schema v1",
-  "$comment": "Registry validation points, not an alternative declaration envelope. Apply these definitions to corresponding common fields; inspect build.execution to choose the source definition. Semantic rules are in grv-client-v1.md.",
+  "$comment": "Registry validation points, not an alternative declaration envelope. Apply these definitions to corresponding common fields; inspect build.execution to choose the source definition. Semantic rules are in grv-client-v1.md. Relative $ref values into sibling GRV schemas are resolved and bundled into one self-contained resource at installation/handshake, as the adapter process protocol \u00a73.2 requires.",
   "$defs": {
     "connection": {
       "type": "object",
@@ -290,6 +290,149 @@
       "type": "object",
       "properties": {},
       "additionalProperties": false
+    },
+    "connection_details": {
+      "type": "object",
+      "properties": {
+        "database": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workspace_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "binding": {
+          "enum": [
+            "bound",
+            "uninitialized",
+            "not_applicable"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "database",
+        "workspace_id",
+        "binding"
+      ],
+      "$comment": "Canonical absolute database path and observed root/workspace binding; extraction from unmanaged tables reports not_applicable."
+    },
+    "source_identity": {
+      "type": "object",
+      "properties": {
+        "relation": {
+          "type": "string",
+          "pattern": "^[a-z0-9_][a-z0-9_-]*\\.[a-z0-9_][a-z0-9_-]*$"
+        },
+        "database": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "relation",
+        "database"
+      ],
+      "$comment": "One extracted relation, read inside the stream's single snapshot transaction."
+    },
+    "source_job": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false,
+      "required": [],
+      "$comment": "DuckDB extraction has no remote job; the snapshot transaction is local to the adapter process."
+    },
+    "pull_plan": {
+      "type": "object",
+      "properties": {
+        "target_schema": {
+          "type": "string",
+          "pattern": "^[a-z0-9_][a-z0-9_-]*$"
+        },
+        "role": {
+          "enum": [
+            "identity",
+            "application"
+          ]
+        },
+        "refresh": {
+          "enum": [
+            "changed",
+            "full"
+          ]
+        },
+        "mappings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "table": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+              },
+              "target_table": {
+                "type": "string",
+                "pattern": "^[a-z0-9_][a-z0-9_-]*$"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "table",
+              "target_table"
+            ]
+          },
+          "minItems": 1
+        },
+        "prior_revision": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,18})$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "prior_generation_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "obsolete_targets": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_][a-z0-9_-]*$"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "target_schema",
+        "role",
+        "refresh",
+        "mappings",
+        "prior_revision",
+        "prior_generation_id",
+        "obsolete_targets"
+      ],
+      "$comment": "Transactional adapter: PullResolution.recovery is always null, so this point validates only PullPlan.adapter_details. prior_* describe the committed checkpoint the diff was planned against; obsolete_targets are owned targets cleared by a mapping change."
     }
   }
 }

@@ -19,21 +19,36 @@ the storage layout; this protocol creates no new GRV object or commit marker.
 The parent owns GRV backend operations, holds, runs, claims, leases, capture
 writing, and publication. The adapter owns connection/authentication, source
 jobs, destination execution/receipts, engine locks, private engine sessions,
-and stopped-writer attestation. Built-ins use the same registration and channel
-as other adapters; the core does not interpret adapter-specific SQL or catalogs.
+and stopped-writer attestation. The core does not interpret adapter-specific
+SQL or catalogs.
 
-There is no daemon or in-process plugin. A command that needs adapter work
-spawns one process; recovery may spawn a replacement **after** fencing the old
-work. A recorded terminal outcome with no pending hook bypasses source binding,
-authentication, and acquisition, and may bypass spawn entirely. Process-local
-handles are never recovery evidence.
+**Process adapters and built-ins.** Every installed adapter discovered under
+§1 runs as a supervised child process and speaks this protocol. A v1 built-in
+adapter (DuckDB, Salesforce) MAY instead be linked into the CLI behind the
+Client's logical lifecycle interface. A linked built-in MUST:
 
-**Scope.** V1 requires Unix-domain stream sockets and `SCM_RIGHTS`. Linux
-**3.17 or later** is required, with `memfd_create` and file sealing available;
-there is no unsealed Linux fallback. macOS uses private unlinked regular files
-and a detached consumer copy (§5.7). Missing required primitives are refused
-before transfer mutation with `UNSUPPORTED_CAPABILITY`. Windows is deferred.
-Capitalized requirement words have the meanings in RFC 2119 and RFC 8174.
+- register the same name, package, interface, and binding-schema versions,
+  capabilities, served schemas, and commands that it would serve in
+  `identified` (§3);
+- keep the same authority split as a process adapter: it never reads or writes
+  GRV coordination objects, never receives owner, lease, or claim tokens, and
+  never performs GRV mutations; and
+- pass the Client's and execution companion's logical conformance suites and
+  the operation-level scenarios of §9.
+
+Channel, framing, and data-plane requirements (§§2, 5, and the corresponding
+§9 scenarios) apply only to process adapters. There is no daemon mode. A
+command that needs process-adapter work spawns one process; recovery may spawn
+a replacement **after** fencing the old work. A recorded terminal outcome with
+no pending hook bypasses source binding, authentication, and acquisition, and
+may bypass adapter start entirely. Process-local or in-memory handles are never
+recovery evidence, whether the adapter is linked or spawned.
+
+**Scope.** V1 process adapters require a Unix-domain stream `socketpair` on
+Linux or macOS. No descriptor passing or shared memory is used. A missing
+required primitive is refused before transfer mutation with
+`UNSUPPORTED_CAPABILITY`. Windows is deferred. Capitalized requirement words
+have the meanings in RFC 2119 and RFC 8174.
 
 ### Trust boundary
 
@@ -45,8 +60,8 @@ sandbox** and does not confine a same-user process's filesystem access.
 |---------------------|---------------------------|
 | effective declarations, contracts, non-secret source/destination mappings | GRV backend credentials or signed credential-bearing URLs |
 | canonical root **identity**, workspace/attempt/run IDs and request digests | owner, lease, and claim tokens |
-| verified local file descriptors in metadata; exact S3 data-file URIs for S3-view readers | GRV controls, protected contexts containing tokens, or authority to mutate GRV |
-| adapter results, durable checkpoint references, batch regions | authentication credentials, private keys, or session cookies |
+| verified local staging file metadata; exact S3 data-file URIs for S3-view readers | GRV controls, protected contexts containing tokens, or authority to mutate GRV |
+| adapter results, durable checkpoint references, batch payloads | authentication credentials, private keys, or session cookies |
 
 Canonical root coordinates are non-secret identity data required for workspace
 binding. Receiving them does not authorize GRV access. Adapters MUST NOT read
@@ -55,8 +70,8 @@ the companion's S3-view path: exact parent-verified data-file URIs may be read
 using the adapter's own separately configured read-only credentials. Local
 inputs are staged outside GRV. No adapter performs GRV mutations.
 
-Adapter authentication stores, source-job/checkpoint stores, engine databases,
-and disposable region directories are adapter-owned consumer state outside GRV.
+Adapter authentication stores, source-job/checkpoint stores, and engine databases
+are adapter-owned consumer state outside GRV.
 The parent holds its own durable request, capture, context, and outcome state.
 Both sides make required evidence atomic and durable before advancing a phase.
 
@@ -156,6 +171,9 @@ newlines are escaped. Reject BOMs, blank lines, duplicate keys, trailing JSON
 values, unknown members, non-finite numbers, and invalid UTF-8. Frame limits
 count JSON bytes plus LF: 1 MiB normally, 16 MiB for `identified`. Oversized
 metadata uses §2.4, never an oversized frame. Truncated frames are failures.
+The only exception to "frames are JSON lines" is `batch`: its LF is followed
+immediately by a binary payload of exactly its declared `size` (§2.5). The
+next frame begins after the last payload byte.
 
 The frame tables in §§3–4 and the control tables in §§2.4 and 5 are normative
 closed-object grammars. Every listed field is required unless suffixed `?`;
@@ -219,7 +237,7 @@ established commit or accepted completion.
 
 Large declarations, SQL, plans, file lists, checkpoints, sessions, and results
 use `Doc<T>`. Either side may transmit a document after `ready`, before the
-frame that references it. These controls have no `req` and carry no fds:
+frame that references it. These controls have no `req` and no binary payload:
 
 | Frame | Direction | Fields beyond `msg` |
 |-------|-----------|---------------------|
@@ -254,28 +272,26 @@ known effects preserved. Upload timeout/rejection closes the channel with
 `PROTOCOL_FAILURE`; affected mutating work is resolved through §7.
 The served registry itself must fit `identified`'s 16 MiB bootstrap limit.
 
-### 2.5 SCM_RIGHTS association
+### 2.5 Binary batch payloads
 
-Every sender serializes channel writes. For `batch`, send **only its first
-byte** (the `{`) in one `sendmsg` with exactly one `SCM_RIGHTS` fd. A
-successful one-byte send transfers the attachment exactly once; then send
-the remaining JSON and LF with ordinary partial-write handling and no
-ancillary data. On `EINTR`/`EAGAIN` without a byte sent, retry; never resend
-an fd after that byte succeeds. No other frame carries ancillary data.
+Each side has one serialized channel writer. A `batch` frame (§5.1) is written
+as its JSON line, its LF, and then exactly `size` raw payload bytes, with
+ordinary partial-write handling. The writer emits the frame and its payload
+contiguously: no other frame, control, or document chunk may be interleaved
+inside a payload. No other frame has a payload.
 
-Receivers use `recvmsg` for **every** channel read. At a known frame boundary,
-read one byte with ancillary capacity to detect excess fds, reject
-`MSG_CTRUNC` or unexpected ancillary kinds, and associate the fd with that
-frame only. Continue reading that line with `recvmsg`; any later ancillary
-attachment is rejected. A receiver may optimize by reading a known number of
-remaining bytes, but cannot read ahead across an unparsed line boundary or
-discard ancillary data using `read`. This rule deliberately avoids relying
-on stream write boundaries. Linux/BSD behavior is tested separately.
+The receiver parses the `batch` line first, validates its fields (including
+`size` against `max_batch_bytes`), and then reads exactly `size` bytes into
+its own buffer, reserved in advance up to `max_batch_bytes`. It validates only
+that copy (§5.2). It never reads ahead past the payload into the next frame
+before the payload is complete. A payload shorter than `size`, EOF inside a
+payload, or a `size` outside the permitted range is `PROTOCOL_FAILURE`. The
+receiver does not rely on stream write boundaries: frames and payloads may
+arrive fragmented or coalesced in any way.
 
-Set close-on-exec on every received fd before another spawn. Close all delivered
-fds on invalid/truncated frames, cancellation, and abort. `EPIPE`/EOF is handled
-without allowing `SIGPIPE` to terminate the parent. Missing/excess descriptors
-and wrong attachment position are `PROTOCOL_FAILURE`.
+`EPIPE` and EOF are handled without allowing `SIGPIPE` to terminate the
+parent. An invalid or truncated frame or payload closes the channel; the
+receiver discards any partially read payload.
 
 ## 3. Handshake and registration
 
@@ -297,7 +313,7 @@ Defaults are 8 slots, 67108864 batch bytes, 67108864 source-unit bytes, and
 67108864 scratch bytes. Slots are `1..64`; batch size is a multiple of 8 in
 `262144..67108864`; source/scratch budgets are positive and no larger than
 67108864 bytes each. The offered values are repeated unchanged in `ready`.
-Resources are budgets, not a request to allocate all regions at handshake.
+Resources are budgets, not a request to allocate all buffers at handshake.
 Parent-owned metadata/Parquet/consumer budgets are accounted separately (§5).
 
 For example, this is a complete bootstrap request (no `req` field):
@@ -316,7 +332,8 @@ after_publish` (booleans);
 and `data_plane` (array of strings).
 Unsupported directions have empty corresponding mode arrays/null recovery.
 Build capabilities require `push`. Pull requires a recovery contract.
-V1 accepts `data_plane` exactly `["shm"]`; other values are refused.
+V1 accepts `data_plane` exactly `["stream"]` (§2.5, §5); other values are
+refused.
 
 ### 3.2 Served schemas, defaults, and commands
 
@@ -542,7 +559,11 @@ adapter_identity: AdapterIdentity, connection_identity: string,
 selection: {policy: "changed" | "all"},
 tables: [{name: Name, source: J, columns: J, contract: TableContract}],
 resume: Checkpoint | null}`. Source/column selectors retain their effective
-declaration shapes and validate at their extraction points. The parent checks
+declaration shapes and validate at their extraction points. Partition columns
+declared with `derive` are computed by the parent after receiving batches;
+they are omitted from `columns` and `contract`, and the adapter never emits
+them. Whole-table `selection.drop` is likewise a parent-only publication rule
+and is not sent. The parent checks
 and durably fixes identities and open-run ownership before sending this request.
 The private `stream_id` is fresh on each extraction stream, including retries,
 and is not a declaration input.
@@ -578,7 +599,7 @@ Tables stream contiguously. Per-table sequence numbers start at 0 in each stream
 are dense, and never repeat within that stream. No unexpected table is accepted.
 Before `table_complete`, the adapter has received every ack for that table.
 Before `source_complete`, every requested table completed exactly once and all
-ring slots are free. Reported table counts equal the sum of batch counts and
+batch credits are returned. Reported table counts equal the sum of batch counts and
 actual consumed rows; reported capture times are ordered UTC facts.
 
 Zero-row tables send checkpoint coverage and `table_complete` with zero count,
@@ -710,22 +731,31 @@ holds_confirmed: boolean}`; confirmation must be true, even for an empty input s
 After the parent reserves the attempt/run index and acquires the session lock,
 the adapter acquires workspace ownership and opens the preparation transaction.
 Discovery selects eligible completed materialization generations and returns
-their schemas, logical revisions and private output mappings. No application
+their recorded contracts, logical revisions, and private output mappings.
+Discovery only chooses *which* revision, contract, and generation each input
+uses; it never supplies the input rows. No application
 import, revision 0, foreign-root input, mutable view dependency, or guessed table
 provenance is accepted. The discovery reservation/transaction remains open and
 fixed across the parent's backend work; another engine user cannot refresh it.
 The adapter durably records the discovery identity and selected facts before
 returning them; the parent durably records those facts before creating the run.
-If process loss destroys the preparation snapshot after a run was created and
-no matching prepared session/private copies committed, that preparation is
+If process loss destroys the discovery transaction after a run was created and
+no matching prepared session and private inputs committed, that preparation is
 incomplete. Abandon/recover its run; do not perform fresh discovery under it.
 
 The parent creates the GRV run with exactly those fixed inputs, confirms each
 whole-revision dependency hold, and verifies needed file sets, while renewing
 the run. Only then does it send `prepare_build`. Cached rows never replace GRV
-hold/availability checks. The adapter verifies discovery/identity equality,
-materializes private copies from the selected preparation snapshot (or fixed
-held S3 sets), creates output tables, and commits the session record and first
+hold and availability checks. The adapter verifies discovery and identity
+equality, then builds each private input from the held revision's
+parent-verified `input_files`: local inputs are materialized from those files,
+and S3 inputs are private views over the same fixed, held S3 file sets. The
+adapter never copies an input from a tracking table, because ordinary engine
+tables can be changed after a pull and would then no longer match the cited
+revision. If a discovered materialization's recorded contract disagrees with
+the logical schema of the verified input files, preparation fails with
+`PROTOCOL_FAILURE` (inconsistent consumer metadata). The adapter then creates
+output tables and commits the session record and the first
 root/workspace/receipt-store binding atomically. Failed preparation rolls back
 engine preparation; the parent seals the owned GRV run empty or leaves normal
 recovery, never deletes holds as rollback.
@@ -942,8 +972,8 @@ streaming/normal result follows that stopped acknowledgement.
 
 The parent's single serialized channel writer freezes new batch/checkpoint
 ACKs before enqueueing cancel. ACKs already written precede cancel on the
-stream. Events received after that point are drained and their regions released
-without ACK; stopping must not depend on receiving their credits. This prevents
+stream. Events received after that point are drained, and their payloads read
+and discarded, without ACK; stopping must not depend on receiving their credits. This prevents
 late ACKs from racing a stopped terminal result or the next request.
 
 If normal completion wins, send its normal terminal result first, followed by
@@ -964,7 +994,7 @@ its session lock until database users/writers stop, not merely until a terminal
 data frame.
 
 Errors use **only the companion's closed public code set**. Unsupported
-interface/platform/ring is `UNSUPPORTED_CAPABILITY`; frame/transport violations
+interface, platform, or data plane is `UNSUPPORTED_CAPABILITY`; frame/transport violations
 are `PROTOCOL_FAILURE`; schema/hash/count disagreement is `INTEGRITY_FAILURE`.
 There are no `VERSION_MISMATCH` or `CHANNEL_FAILURE` wire/public codes.
 `object` uses the output schema's structured `object_identity` or null, never
@@ -1004,66 +1034,69 @@ an invalid declaration. Unsupported new work is refused before any login/run/
 engine mutation; old terminal facts use their recorded interface/result contract.
 
 
-## 5. Data plane: bounded region credits
+## 5. Data plane: credited stream batches
 
-Only extraction and **accepted build export** produce row regions. Pull/local
-build inputs use explicit verified file metadata; S3 views use their separate
-reader contract. There is no persistent-file or typed-text output data plane.
+Only extraction and **accepted build export** produce row batches. Pull and
+local build inputs use explicit verified file metadata; S3 views use their
+separate reader contract. The v1 data plane is `stream`: row data travels as
+binary payloads on the channel socket itself (§2.5). There is no
+shared-memory, descriptor-passing, persistent-file, or typed-text output data
+plane in v1.
 
 ### 5.1 Slots, batches, and acknowledgements
 
-Slots are logical credits, not reusable mutable files. A slot starts free.
-For each batch the adapter creates a **new region**, fills it, makes it eligible
-for transfer under §5.7, and consumes one credit. It may reuse the slot number
-only after the matching ack; it never rewrites a transferred region. All active
-slots across the one active stream share the offered limit.
+Slots are flow-control credits, not buffers or files. A slot starts free. The
+adapter consumes one credit when it sends a batch, and the matching
+`batch_ack` returns it. The adapter may reuse a slot number only after that
+ack. All active slots in the one active stream share the offered limit.
 
 | Frame | Direction | Fields beyond `msg, req` |
 |-------|-----------|--------------------------|
-| `batch` | adapter → parent | `table: Name, seq: SafeInt, slot: SafeInt, size: U64, rows: U64` plus exactly one fd |
+| `batch` | adapter → parent | `table: Name, seq: SafeInt, slot: SafeInt, size: U64, rows: U64`, followed by exactly `size` payload bytes (§2.5) |
 | `batch_ack` | parent → adapter | `table: Name, seq: SafeInt, slot: SafeInt` |
 | `build_table_complete` | adapter → parent | `table: Name, row_count: U64` |
 
-Slot is in `0..slots-1`. Size is positive, a multiple of 8, no greater than
-`max_batch_bytes`; rows are positive and at most `2^31-1`. Zero-row tables
-use completion without a batch. A busy slot, wrong tuple, repeated/missing
-sequence, unexpected table, or duplicate ack is `PROTOCOL_FAILURE`.
+Slot is in `0..slots-1`. Size is positive, a multiple of 8, and no greater
+than `max_batch_bytes`; rows are positive and at most `2^31-1`. Zero-row
+tables use completion without a batch. A busy slot, wrong tuple, repeated or
+missing sequence, unexpected table, or duplicate ack is `PROTOCOL_FAILURE`.
 Sequences are per table in a stream; audit identity is
 `(attempt, stream_id, table, seq)`, not a tuple reused across fresh channels.
 
-The parent validates the region, consumes every row into its bounded Parquet
-writer, releases **all references to the mapped/copied bytes**, closes the fd,
-then sends the exact ack. An asynchronous writer cannot retain Arrow arrays
-backed by that region after ack. A copy into separately owned bounded buffers
-is permitted. Ack authorizes credit reuse, not capture acceptance, durable
+The parent reads the payload into its own buffer, validates it, consumes every
+row into its bounded Parquet writer, and releases that buffer (or hands its
+rows to separately owned bounded buffers) before sending the exact ack. An
+asynchronous writer cannot retain Arrow arrays backed by the receive buffer
+after the ack. Ack authorizes credit reuse, not capture acceptance, durable
 publication, or destination commit.
 
-The adapter waits for all table acks before table completion and all stream
-acks before successful terminal completion. The parent reconciles batch,
-table and actual sink row counts, verifies output coverage, flushes/stops all
-capture writers and verifies files before accepting complete capture/export.
-Error/stopped cancellation instead abandons credits: close mappings/fds and
-discard incomplete staging, without sending stale acks.
+The adapter waits for all of a table's acks before table completion, and for
+all of the stream's acks before successful terminal completion. The parent
+reconciles batch, table, and actual sink row counts, verifies output coverage,
+flushes and stops all capture writers, and verifies files before accepting a
+complete capture or export. On error or stopped cancellation the parent
+instead abandons outstanding credits and discards incomplete staging, without
+sending stale acks.
 
 ### 5.2 Exact Arrow IPC encoding
 
-Use the [Arrow encapsulated IPC format](https://arrow.apache.org/docs/format/Columnar.html#serialization-and-interprocess-communication-ipc):
+Each payload uses the [Arrow encapsulated IPC format](https://arrow.apache.org/docs/format/Columnar.html#serialization-and-interprocess-communication-ipc):
 exactly a Schema message followed by one RecordBatch message and its body.
 Each has the modern `0xFFFFFFFF` continuation marker, little-endian int32
 metadata length, FlatBuffers Message metadata with MetadataVersion V5, and
 8-byte padding. The schema has no body. RecordBatch buffer offsets are relative
-to the **start of its body**, not the message header or whole region.
+to the **start of its body**, not the message header or whole payload.
 The metadata length includes metadata padding, and the padded body length
-must exactly exhaust the region. No footer, end-of-stream marker, third message,
+must exactly exhaust the payload. No footer, end-of-stream marker, third message,
 dictionary batch, dictionary-encoded field, compression, or big-endian schema
-is permitted in v1. Schema/body buffers use the standard 8-byte IPC alignment.
+is permitted in v1. Schema and body buffers use the standard 8-byte IPC alignment.
 
-Parse bounded metadata first, verifying FlatBuffers structure, message/body
-lengths, buffer offsets/lengths, field-node counts, row counts, string/binary
-offset monotonicity and bounds, UTF-8, and arithmetic overflow before adoption.
-Reject unsupported physical layouts/types rather than relying on a writer's
-choice of encoding. Use a validating Arrow decoder; offset-based storage alone
-does not make a parser memory-safe.
+Parse bounded metadata first, verifying FlatBuffers structure, message and body
+lengths, buffer offsets and lengths, field-node counts, row counts, string and
+binary offset monotonicity and bounds, UTF-8, and arithmetic overflow before
+adoption. Reject unsupported physical layouts and types rather than relying on
+a writer's choice of encoding. Use a validating Arrow decoder; offset-based
+storage alone does not make a parser memory-safe.
 
 ### 5.3 Contract binding
 
@@ -1075,64 +1108,66 @@ registered extensions must be preserved. No implicit cast/truncation repairs
 a mismatch. Validate partition-column values and declared checks as the
 companions require, in addition to structural schema equality.
 
-Malformed IPC/size/fd structure is `PROTOCOL_FAILURE`. Logical schema, row
-count or immutable file/hash disagreement is `INTEGRITY_FAILURE`. Parent
-consumer/writer resource failure is `ADAPTER_FAILURE` unless a more specific
-companion code applies; all paths release descriptors and preserve already
-known outcomes. Earlier staged rows do not make a partial capture acceptable.
+Malformed IPC, size, or payload framing is `PROTOCOL_FAILURE`. Logical schema,
+row count, or immutable file/hash disagreement is `INTEGRITY_FAILURE`. Parent
+consumer or writer resource failure is `ADAPTER_FAILURE` unless a more specific
+companion code applies; all paths release buffers and preserve already known
+outcomes. Earlier staged rows do not make a partial capture acceptable.
 
 ### 5.4 Adaptive size and oversized rows
 
 The encoded batch target `T` starts at offered `max_batch_bytes` and includes
 both messages, metadata and padding, not just value buffers. Batches end at row
 boundaries with encoded size ≤ T. The producer obtains a free credit **before**
-allocating/filling the next region; retries cannot create uncredited regions.
+encoding the next payload; retries cannot create uncredited batches.
 
-On a catchable allocation/fill resource failure, release the partial region
-and scratch, retry up to three times with cancellation-aware waits of at most
-100 ms each, then halve T (round down to a multiple of 8). Stop below 256 KiB
-with `ADAPTER_FAILURE`. Never drop/truncate a row or mark the table complete.
-The adapter may retain a decreased target for subsequent batches; it never
-increases above the offered maximum.
+On a catchable resource failure while encoding a payload, release the partial
+payload and scratch, retry up to three times with cancellation-aware waits of
+at most 100 ms each, then halve T (round down to a multiple of 8). Stop below
+256 KiB with `ADAPTER_FAILURE`. Never drop or truncate a row or mark the table
+complete. The adapter may retain a decreased target for subsequent batches; it
+never increases above the offered maximum.
 
-If one row plus required schema/metadata cannot fit the current target, increase
-T up to the offered maximum for at most one sizing/allocation attempt for that
-row; if it cannot fit or that attempt fails, fail
-`ADAPTER_FAILURE` with an oversized-row diagnostic. Do not loop indefinitely
-halving an indivisible row. Inability to encode even the schema is likewise
-a typed failure. Parent allocation/mapping/Parquet failures abort cleanly where
-catchable; the parent does not send a success ack for unconsumed data.
+If one row plus required schema and metadata cannot fit the current target,
+increase T up to the offered maximum for at most one encoding attempt for that
+row; if it cannot fit or that attempt fails, fail `ADAPTER_FAILURE` with an
+oversized-row diagnostic. Do not loop indefinitely halving an indivisible row.
+Inability to encode even the schema is likewise a typed failure. Parent
+buffer, decoding, or Parquet failures abort cleanly where catchable; the parent
+does not send a success ack for unconsumed data.
 
-Resource allocation can fail during filling, mapping, page faults, or decoding,
-not just region creation. Kernel OOM termination is a crash, not a guaranteed
-catchable typed failure; §7 governs it. No claim of immunity to OOM is made.
+Resource allocation can fail during encoding, receiving, or decoding. Kernel
+OOM termination is a crash, not a guaranteed catchable typed failure; §7
+governs it. No claim of immunity to OOM is made.
 
 ### 5.5 Source backpressure and memory budgets
 
-An adapter holds at most **one source unit** beyond credited regions, and its
-retained encoded/decoded source data together fit `max_source_unit_bytes`.
-Conversion/IPC scratch separately fits `max_scratch_bytes`. If a source API page
-exceeds the budget, use bounded incremental decoding/scan windows or fail before
-adopting it; "one page" alone is not a byte bound. No unbounded prefetch, hidden
-source queue, or full-result buffering bypasses this rule.
+An adapter holds at most **one source unit** beyond its credited batches, and
+its retained encoded and decoded source data together fit
+`max_source_unit_bytes`. Conversion and IPC scratch separately fits
+`max_scratch_bytes`. If a source API page exceeds the budget, use bounded
+incremental decoding or scan windows, or fail before adopting it; "one page"
+alone is not a byte bound. No unbounded prefetch, hidden source queue, or
+full-result buffering bypasses this rule.
 
-With all credits occupied the producer stops fetching/refilling. Its independent
-channel reader remains responsive to acks/cancel/EOF. Source/engine libraries'
-retained extraction buffers count toward the source/scratch budgets. Database
-query caches and private staged build tables have their own configured engine
-memory/spill limits; engine-owned spill is not a file output data plane.
-All selected SQL outputs may stage in engine storage, not an unbounded adapter
-memory queue.
+With all credits occupied the producer stops fetching and encoding. Its
+independent channel reader remains responsive to acks, cancel, and EOF.
+Source and engine libraries' retained extraction buffers count toward the
+source and scratch budgets. Database query caches and private staged build
+tables have their own configured engine memory and spill limits; engine-owned
+spill is not an output data plane. All selected SQL outputs may stage in engine
+storage, not an unbounded adapter memory queue.
 
 These limits bound **transfer buffering**, not total RSS: runtime overhead,
 engine caches, source libraries, parent metadata and Parquet compression require
 additional independently bounded budgets. The parent reserves enough consumer
-memory for one maximum batch (including the macOS detached copy) plus its writer
-budget before offering resources. It consumes at most one copied/mapped batch
-at a time and bounds queued metadata by credits/frame/document caps. It can
-offer fewer/smaller slots if its budget cannot support defaults.
+memory for one maximum batch receive buffer plus its writer budget before
+offering resources. It consumes at most one received batch at a time and bounds
+queued metadata by credit, frame, and document caps. Batches waiting in the
+socket are bounded by the credits. The parent can offer fewer or smaller slots
+if its budget cannot support defaults.
 
-### 5.6 Region-aware liveness
+### 5.6 Credit-aware liveness
 
 Use the deadline classes in §7.1. Producer idle time is suspended **only when
 all credits are occupied**. One held slot with remaining free credits does not
@@ -1140,52 +1175,28 @@ disable the producer deadline. Time spent genuinely credit-blocked does not
 consume its remaining idle budget; a returned credit resumes it.
 
 Each unacked slot has a consumer-progress deadline independent of producer
-silence. A stuck decoder/writer therefore cannot hold a credit forever and
+silence. A stuck decoder or writer therefore cannot hold a credit forever and
 disable all liveness checks. Consumer progress is advancing that batch's
-validated decode/staging work, not unrelated batches. No ping frame or fake
+validated decode and staging work, not unrelated batches. No ping frame or fake
 keepalive resets a deadline.
 
-### 5.7 Platform lifecycle and immutability
+### 5.7 Payload immutability
 
-**Linux ≥ 3.17.** Create with `memfd_create(MFD_CLOEXEC | MFD_ALLOW_SEALING)`,
-size to the exact encoded length, populate, and remove every writable mapping.
-Before passing it, apply `F_SEAL_WRITE | F_SEAL_GROW | F_SEAL_SHRINK`; these seals
-are irreversible. The parent verifies these seals **before** stable `fstat` size/
-regular-file checks and read-only mapping. Missing sealing support or seals is
-a refusal/protocol error, never an unsealed fallback. The adapter closes its
-producer fd after successful transfer; the parent's reference/transit reference
-keeps bytes alive until consumption. New regions replace used credits.
-[Linux sealing reference](https://man7.org/linux/man-pages/man2/memfd_create.2.html).
-
-**macOS.** Create a 0600 regular file with exclusive creation and close-on-exec in
-a private 0700 per-process/session directory. Unlink it **immediately after open,
-before filling or sending**. Size/fill via the retained fd. The parent verifies
-regular-file type, zero link count and bounded size, reads exactly the declared
-bytes with bounded `pread` into its own detached allocation, and validates only
-that detached copy. Short/error reads abort. It does not mmap mutable producer
-files or adopt zero-copy references from them; a concurrent truncate therefore
-cannot invalidate its parser's memory. Size rechecks can detect changes, but
-cannot prove a hostile producer supplied an atomic content snapshot. Validating
-the detached bytes prevents unsafe interpretation; valid dishonest values
-remain within the semi-trusted adapter model.
-
-Only disposable files in a directory whose owner process/session is provably
-dead may be swept. Another session's transient file is not stale by definition.
-Unlink-before-fill minimizes crash residue. Disk exhaustion is handled as a
-catchable producer resource failure, not ignored because the file is anonymous.
-
-On every normal ack/abort/EOF, both sides close their references; kernel objects
-are reclaimed after the final fd/mapping reference, not necessarily at either
-process's first exit. Region paths are never sent or used as GRV objects.
+Payload bytes are copied through the kernel socket into a buffer the parent
+owns. Once sent, the producer cannot change, truncate, or revoke them, and the
+parent never maps or references adapter-owned memory or files. This copy is the
+v1 immutability guarantee: the parent validates and consumes exactly the bytes
+it received. No platform-specific memory primitive, temporary file, or cleanup
+sweep is part of the data plane, and the data plane works identically on Linux
+and macOS.
 
 ### 5.8 Safety limits
 
-Reject non-regular descriptors, linked macOS files, missing Linux seals, invalid
-sizes, and unsupported IPC before using rows. Read-only mappings alone do not
-enforce immutable input; §5.7 provides the platform-specific guarantee.
-Descriptor/metadata parsing cannot open an adapter-supplied pathname. The parent
-does open trusted installation/helper lock paths (§§1, 6) and its own staging/
-state paths; this is an explicit exception to a blanket "no adapter paths" claim.
+Reject invalid sizes, truncated payloads, and unsupported IPC before using rows.
+Frame and payload parsing never opens an adapter-supplied pathname. The parent
+does open trusted installation and helper lock paths (§§1, 6) and its own
+staging and state paths; this is an explicit exception to a blanket "no adapter
+paths" claim.
 
 The channel cannot prove source truth, protect against every parser/runtime bug,
 or stop same-user executable code from using ambient OS permissions. A hostile
@@ -1280,7 +1291,7 @@ Deadlines are operator-configurable, not declaration inputs. V1 defaults:
 | Deadline | Default | Meaning |
 |----------|---------|---------|
 | bootstrap | 30 s | spawn through validated `identified`/`ready` |
-| partial frame | 300 s | first byte through complete LF, irrespective of credits |
+| partial frame | 300 s | first byte through complete LF and, for `batch`, the last payload byte, irrespective of credits |
 | document transfer | 300 s | total begin-through-ack; bounded metadata cannot drip forever |
 | operation start / non-streaming response | 300 s | request through first allowed progress/terminal response |
 | producer progress | 300 s | meaningful checkpoint/batch/table progress; paused only at zero credits |
@@ -1402,29 +1413,33 @@ Remaining native/remote ownership is busy/unknown, not canceled by lease expiry.
 - New work selects highest common interface; unfinished work selects its fixed
   supported version and rejects package/binding/connection drift. Terminal
   outcomes use their recorded evidence/normalization contract.
-- The v1 data-plane offer is exactly `["shm"]`. Unknown values refuse capability;
-  a future interface may add another plane without changing a v1 adapter.
+- The v1 data-plane offer is exactly `["stream"]`. Unknown values refuse
+  capability. A future interface may add another plane, such as shared memory,
+  without changing a v1 adapter.
 - Public output/code versions remain the companion's. Adapter-only diagnostic
   distinctions are messages/details under existing codes, not new public enums.
 
 ## 9. Conformance
 
 An adapter passes the companion's common and capability-specific suites plus
-the scenarios below. A reference **mock parent** drives adapter obligations.
-A separate fake/faulting adapter exercises the **real parent** parser, fd
-handling, staging, timers, renewal and outcome coordinator; mock-parent success
-alone cannot establish parent safety. Cross-language golden JSON and Arrow
-fixtures exercise the normative tables and Linux/macOS transport behavior.
+the scenarios below. Scenarios about the channel, framing, payloads, process
+supervision, or inherited process state apply only to process adapters; a
+built-in linked into the CLI (Purpose section) passes the operation-level
+scenarios through the logical lifecycle interface. A reference **mock parent**
+drives process-adapter obligations. A separate fake/faulting adapter exercises
+the **real parent** parser, payload handling, staging, timers, renewal and
+outcome coordinator; mock-parent success alone cannot establish parent safety.
+Cross-language golden JSON and Arrow fixtures exercise the normative tables and
+the stream transport on Linux and macOS.
 
 The harness injects known credential canaries into both authentication stores
-and parent backend environment/fds, scans control documents/results/diagnostics,
+and the parent's backend environment and inherited descriptors, scans control documents/results/diagnostics,
 and verifies that raw stderr is not publicly teed. It does not claim universal
 secret detection in arbitrary dataset content.
 
 | Scenario | Required result |
 |----------|-----------------|
-| disjoint interface versions / unavailable Linux primitive | `UNSUPPORTED_CAPABILITY`; no operation or mutation |
-| Linux kernel older than 3.17 | refused before transfer mutation |
+| disjoint interface versions / unsupported platform | `UNSUPPORTED_CAPABILITY`; no operation or mutation |
 | manifest/handshake identity or version mismatch | `ADAPTER_FAILURE`; no binding |
 | unknown capability/data-plane offer | refusal without fallback |
 | user/system root shadowing and explicit root override | one deterministic winning manifest; override suppresses every fallback |
@@ -1460,21 +1475,20 @@ secret detection in arbitrary dataset content.
 | engine-free renew during an external invocation | session/backend renewal without workspace contention |
 | closed/unknown/duplicate frame fields or non-safe numerics | `PROTOCOL_FAILURE`; no parser rounding or invented defaults |
 | started event followed by repeated stream req | valid correlation; request stays active until terminal/drain |
-| byte-fragmented/coalesced JSON and partial sendmsg | exact first-byte ancillary association on both platforms |
-| absent/excess fd, unexpected ancillary, MSG_CTRUNC, late attachment | `PROTOCOL_FAILURE`; every delivered fd closed |
+| byte-fragmented or coalesced frames and payloads, partial writes | exact frame and payload boundaries on Linux and macOS |
+| payload shorter than `size`, EOF mid-payload, or `size` above `max_batch_bytes` | `PROTOCOL_FAILURE`; partial payload discarded, channel closed |
+| another frame or document chunk interleaved inside a payload | `PROTOCOL_FAILURE` |
 | peer closes while parent writes | handled EPIPE/EOF, not parent SIGPIPE death |
 | metadata >1 MiB, malformed chunks/digest, >64 MiB declaration | bounded chunking or pre-mutation rejection; no unbounded buffering |
 | standard V5 Schema + RecordBatch fixture across languages | correct body-relative offsets and identical logical rows |
 | legacy prefix, compression, dictionaries, extra messages or offset overflow | structural rejection without parser crash |
 | bad schema/count/partition values or total table count | abort capture/export; no partial acceptance |
-| unsealed/resized Linux region or invalid descriptor type | reject before mapping/adoption |
-| macOS producer truncates/mutates during read | safe detached-byte validation or short/error read; no mutable mmap crash |
 | slot reuse/ack mismatch/non-dense seq or terminal before draining | `PROTOCOL_FAILURE`; no invalid completion acceptance |
 | zero-row extraction/build table | explicit completion accepted under ordinary empty rules |
-| throttled full ring and oversized source page | source/scratch budgets enforced; reader still receives cancel |
+| throttled, all credits occupied, and oversized source page | source/scratch budgets enforced; reader still receives cancel |
 | producer silent with only one busy slot | producer deadline remains armed |
 | all credits occupied / one consumer stuck | producer timing pauses; independent consumer timeout still cancels |
-| allocation/fill/map/Parquet failure or oversized single row | bounded retry/typed failure where catchable; kernel death follows crash recovery |
+| encode/receive/decode/Parquet failure or oversized single row | bounded retry/typed failure where catchable; kernel death follows crash recovery |
 | cancel races with committed apply result | preserve result/resolve receipt; late most-recent cancel is idempotent |
 | cancel races with batch/checkpoint ACK or next request | serialized pre-cancel ACKs precede cancel; later events drained without ACK; matching cancel ACK required before another request |
 | cancel ACK before actual writer stop | conformance failure; ACK is not merely signal receipt |
@@ -1491,8 +1505,11 @@ secret detection in arbitrary dataset content.
 
 - Additional output data planes for languages without an Arrow IPC writer,
   introduced under a new interface contract.
-- Windows transport and platform-specific immutability/descriptor rules.
+- An optional shared-memory or descriptor-passing data plane, if measured
+  throughput shows the v1 stream plane is a bottleneck. It would carry its own
+  platform immutability rules and be negotiated through `data_plane`.
+- Windows transport.
 - Parallel extraction with explicit correlation/credit rules.
 - Remote adapters with authenticated transport and a deliberately revised trust
-  boundary; local fd semantics are not presumed portable over a network.
+  boundary; local socket and process semantics are not presumed portable over a network.
 - A daemon mode, if separately specified; v1 uses per-command supervised processes.

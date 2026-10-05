@@ -80,6 +80,14 @@ The state directory has a platform default; advanced `--state <dir>` selects
 push state outside GRV. Neither a state path nor a session file is needed for
 ordinary transfers.
 
+On ephemeral machines such as CI runners, the default state directory is lost
+with the machine, and with it the ability to retry an attempt with `--attempt`.
+GRV itself stays consistent: an interrupted run is recovered by `grv recover`
+or GC once its lease expires, and its source holds stay until then. Such
+deployments should either place `--state` on durable storage, or treat every
+job as new work and schedule `grv recover` and `grv gc` for the datasets they
+write.
+
 ## The declaration
 
 Every declaration has this common envelope:
@@ -132,17 +140,49 @@ source selectors; pull/expect files and IPC schemas contain pure Arrow fields.
 IPC schemas use input names equal to output names on extraction; choose a YAML
 column file when mapping names. Inline and file forms share one validation path.
 
-Supported types are `bool`, `date32`, `int64`, `double`, `utf8`, `binary`,
-`decimal128(p,s)` (precision 1–38, scale 0–precision), `timestamp(ms)`,
-`timestamp(us)`, `timestamp(ns)`, `timestamp(ms,UTC)`, and `timestamp(us,UTC)`.
-Unsupported structures or lossy conversions fail. Decimal values cannot pass
-through floating point; timestamp precision and UTC semantics are preserved.
-The client validates query/extraction results against the contract without
-silently casting, truncating, or changing schema to make them pass.
+Declarations name types with the Arrow-style spellings below. Each maps to
+exactly one GRV logical type ([GRV v2 §4](grv-storage-v2.md)), which is what
+schema baselines, revision schemas, and the adapter wire contract use:
+
+| Declaration type | GRV logical type |
+| --------- | --------- |
+| `bool` | `"boolean"` |
+| `int64` | `"int64"` |
+| `double` | `"float64"` |
+| `utf8` | `"string"` |
+| `binary` | `"binary"` |
+| `date32` | `"date"` |
+| `decimal128(p,s)` (precision 1–38, scale 0–p) | `{"decimal": {"precision": p, "scale": s}}` |
+| `timestamp(ms)`, `timestamp(us)`, `timestamp(ns)` | `{"timestamp": {"unit": "ms"\|"us"\|"ns", "utc": false}}` |
+| `timestamp(ms,UTC)`, `timestamp(us,UTC)` | `{"timestamp": {"unit": "ms"\|"us", "utc": true}}` |
+
+Every other GRV logical type — `int8`/`int16`/`int32`, unsigned integers,
+`float32`, `json`, `uuid`, `fixed_binary`, `time`, nanosecond UTC timestamps,
+`list`, `map`, and `struct` — is unsupported in client v1. A pull whose
+selected source schema contains one fails with `INVALID_DECLARATION` naming the
+column, before destination mutation; it is never converted.
+
+Extraction may convert a source value only by **exact widening** into its
+declared type: a narrower signed integer to `int64`; a 32-bit float to
+`double`; a decimal to a decimal with at least as many integer digits
+(`p − s`) and fractional digits (`s`); a timestamp to a finer unit with the
+same UTC flag; and a source's textual encoding of a number, date, or timestamp
+that the adapter parses exactly (for example Salesforce decimal strings). Any
+other conversion, and any value that does not fit, fails. Decimal values never
+pass through floating point. The client validates query/extraction results
+against the contract without silently casting, truncating, or changing schema
+to make them pass.
 
 Push tables optionally declare `partition_keys` (default `[]`). Their output
-columns include the non-null string `_{key}_` columns required by GRV.
-Values are canonical partition strings, not inferred from dates. Registered
+columns include the non-null `utf8` `_{key}_` columns required by GRV, whose
+values must already be canonical partition strings; nothing is inferred
+implicitly. In an extraction, a `_{key}_` column may instead declare
+`derive: {from: <output column>, format: year | month | day}` in place of
+`source`. The core computes it from the named `date32` or timestamp output
+column as `2026`, `2026-09`, or `2026-09-15`. UTC timestamps use their UTC
+calendar date and timestamps without a time zone use their wall-clock date. A
+null or out-of-range (outside years 0001–9999) value fails the extraction.
+Builds compute partition columns in SQL instead. Registered
 `ext`, `extensions`, and `column_ext` retain their GRV contracts; unsupported
 required extensions fail. Arrow nullability does not replace a `not_null` check.
 Checks address the operation's output column names, including renamed SQL
@@ -161,14 +201,25 @@ Joins and aggregation use a managed build with declared inputs.
 An extraction is a complete filtered snapshot of the declared dataset,
 not a row-level delta. Every table must finish, including zero-row tables,
 before publication. A record that stops matching the filter disappears from
-the next snapshot. Previously published tables/partitions absent from the
+the next snapshot. Partitions of declared tables that are absent from the
 successful new snapshot are omitted. A failed page or failed table can never
 be interpreted as an omission or empty snapshot.
 
+Whole tables are never removed implicitly. If the base revision contains a
+table that the declaration does not list, the push fails with `STATE_CONFLICT`
+before source acquisition, because that table may belong to another
+declaration. To remove such a table intentionally, name it in
+`selection.drop: [{table: <name>}]`; a listed table that is already absent is
+a no-op. Independent sources that refresh on their own schedules belong in
+separate datasets.
+
 `selection.policy: changed` is the default: reuse a base version only when
-complete content/schema equality is proved. `all` writes new versions even
-when equal. Other publication selectors are advanced build controls in the
-execution companion. An extraction fixes its whole dataset base; a concurrent
+complete content/schema equality is proved. The core writes every output in a
+canonical sorted Parquet form, so equality is proved by comparing staged file
+hashes with the base manifest, without downloading base data (execution
+companion, *Canonical encoding and equality*). `all` writes new versions even
+when equal. Apart from whole-table `drop`, publication selectors are advanced
+build controls in the execution companion. An extraction fixes its whole dataset base; a concurrent
 publication requires a new attempt rather than mixing snapshots.
 
 ### Pull selection and write behavior
@@ -338,7 +389,9 @@ Direct extraction reads unmanaged base tables in one snapshot transaction.
 Views, managed imports, and already-built GRV-derived working tables are not
 extraction sources: their dependencies cannot be reconstructed after the fact.
 Use a managed build for GRV-derived SQL. Source mappings rename fields and
-perform only the declared lossless representation conversion.
+perform only the exact widening conversions defined in
+[Output columns and types](#output-columns-and-types); for example, a DuckDB
+`INTEGER` column may be declared `int64`.
 
 A pull declares `target: {schema: app}`. Each table defaults to its GRV name,
 or overrides it with `target: {table: credit_notes}`. Advanced adapter `options`
@@ -414,8 +467,11 @@ S3-view identity refresh has no user query and follows its separate reader path.
 An optional `build` block changes a push from extraction into a provenance-aware
 build. The default `build.execution` is `managed`. A DuckDB managed build lists
 completed identity input tables with aliases, and supplies one output query per
-table. Users first pull the required identity inputs; the build runner selects
-and freezes their completed generations during preparation.
+table. Users first pull the required identity inputs; the build runner uses
+that completed pull only to choose each input's revision and contract, then
+loads private input copies from the held, verified GRV files of that revision.
+Rows edited in a tracking table after its pull therefore never reach a build
+that cites the revision.
 
 ```yaml
 declaration_version: 1
@@ -492,6 +548,15 @@ version, capability descriptor, validation-point schemas, result schemas, and
 namespaced commands. Duplicate names and incompatible versions fail. The CLI
 uses installed adapters; transfer execution does not install/download plugins.
 Built-ins register through the same API and use the same binding shape.
+
+The lifecycle interface below is the v1 adapter contract. Installed adapters
+always run as supervised processes speaking the
+[adapter process protocol](grv-adapter-protocol-v1.md). The v1 built-ins
+(DuckDB and Salesforce) may instead be linked into the CLI behind this same
+interface, provided they keep the authority split (no GRV coordination objects,
+tokens, or mutations) and pass the same logical conformance suites. The
+process protocol then becomes necessary only when the first installed
+third-party adapter ships.
 
 Capabilities include `push`, `pull`, `managed_build`, `external_build`,
 `source_consistency`, `resumable_extract`, supported `pull_write_modes`, and

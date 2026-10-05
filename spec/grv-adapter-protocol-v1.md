@@ -314,8 +314,9 @@ to the next operation when idle; they are not unrelated background traffic.
 ordinary work except clean close. The adapter stops metadata transmission
 before its cancel ACK, which follows all bytes already sent. Both sides discard
 partial and unconsumed documents at that barrier. If the transfer cannot be
-drained safely, close the transport and use the signal ladder (§7.1). Request
-and channel errors likewise discard their documents and close the channel.
+drained safely, close the transport and use the signal ladder (§7.1). Any
+error frame, request or channel, likewise discards all documents and ends
+ordinary use of the channel (§4.13).
 
 **Limits.**
 
@@ -325,8 +326,10 @@ and channel errors likewise discard their documents and close the channel.
 - No row data or secrets may use this mechanism.
 - The parent checks expanded declaration size before authentication or GRV
   mutation. Exceeding that supported request limit is `INVALID_DECLARATION`.
-- If adapter-produced metadata exceeds the limit, return `ADAPTER_FAILURE` with
-  known effects preserved.
+- If adapter-produced metadata would exceed the limit, the adapter sends an
+  `ADAPTER_FAILURE` request error instead, and the parent reports
+  `ADAPTER_FAILURE` in the command result with known effects preserved. The
+  parent treats an oversized `document_begin` from the adapter the same way.
 - Upload timeout or rejection closes the channel with `PROTOCOL_FAILURE`.
   Affected mutating work is resolved through §7.
 - The served registry itself must fit `identified`'s 16 MiB bootstrap limit.
@@ -961,8 +964,9 @@ Failed preparation rolls back engine preparation. The parent's handling of the
 run (seal it empty or leave it to normal recovery, never delete holds as
 rollback) follows the execution companion.
 
-**Self-input and suppressed outputs.** Self-input files exist exactly when
-self-input is enabled and represent the prepared target base, materialized
+**Self-input and suppressed outputs.** Self-input files are carried in
+`PrepareBuildRequest.base_files`: it lists the prepared target base's files
+when self-input is enabled and is empty otherwise. They are materialized
 locally without a self-hold. Seeding of outputs follows the execution
 companion: managed outputs start empty with a separate immutable self read
 binding, and external outputs may be seeded. Hold and drop selection suppresses
@@ -1281,8 +1285,11 @@ Errors use **only the execution companion's closed public code set**.
   an opaque string.
 - Exit mapping and retryable semantics are exactly the execution companion's.
 
-A request error is terminal. A channel error has a null `req` and closes the
-channel. Error termination can abandon outstanding slots; the parent releases
+A request error has the failed request's `req` and is that request's
+terminal response. A channel error has a null `req`. After either kind, the
+channel carries no further ordinary operations: the parent closes it with
+`close` if it is idle and drained, and otherwise with the signal ladder
+(§7.1). Error termination can abandon outstanding slots; the parent releases
 them and sends no later batch ACKs or ordinary operations on that failed
 channel. Error classification never substitutes for resolving an uncertain
 commit.
@@ -1297,7 +1304,7 @@ Each command uses the operations above in the following order.
 2. `validate_binding`.
 3. `locate_connection`.
 4. `bind_connection` and `authenticate`.
-5. Pin and reserve the attempt and GRV run.
+5. Pin the attempt's fixed request and reserve its GRV run.
 6. Checkpoint handshake.
 7. `extract`: consume and complete.
 8. Seal the capture.

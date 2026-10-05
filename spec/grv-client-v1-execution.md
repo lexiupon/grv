@@ -104,8 +104,10 @@ using [RFC 8785](https://www.rfc-editor.org/rfc/rfc8785). Before hashing:
 - normalize the source revision to `latest` or a decimal string; and
 - resolve paths.
 
-The fixed request additionally fixes the adapter package, interface, and
-binding-schema versions and the stable connection identity. Secrets are stored
+The adapter identity (package, interface, and binding-schema versions) and the
+stable connection identity are hashed together with the canonical declaration
+into `declaration_sha256`, so a changed adapter version or connection changes
+the fixed request. Secrets are stored
 through adapter authentication, never in the declaration or the hash. A reused
 alias cannot retarget an unfinished attempt.
 
@@ -122,7 +124,9 @@ captures and export plans remain fixed on retry.
 
 A pull retry checks its receipt before any source contact (*The pull
 algorithm*, step 1). A terminal receipt can be returned without the source and
-without re-authentication. Restoring receipts is required if they are lost.
+without re-authentication. If receipts are lost, the operator must restore
+them from backup; until then, a replay of an affected attempt fails with
+`PROTOCOL_FAILURE` and is never re-executed.
 
 ### Command surfaces
 
@@ -211,14 +215,16 @@ error result. It cannot report an unobserved checkpoint.
 
 #### Session mutation lock
 
-Mutating CLI operations on one session are serialized by a non-expiring local
-process lock, released by process exit.
+Mutating CLI operations on one build session are serialized by a non-expiring
+local process lock, released by process exit. Extraction sessions do not use
+this lock; they serialize on the `session.lock` in their state directory
+(*Extraction session preparation and capture*).
 
 - Its persistent file is `<canonical-engine-path>.grv-session-<run-id>.lock`.
   Use an exclusive `flock`, never unlink the file during the workspace
   lifetime, and acquire it without waiting. Copies or aliases of a context
   therefore use the same lock.
-- Contention is busy. This includes renewal, finalization, and abort. The
+- Contention returns `ENGINE_BUSY`. This includes renewal, finalization, and abort. The
   operation holding the lock performs its own renewals as needed.
 - An expiring client-side lock is insufficient.
 - A retry first resolves the durable session plan and any recorded publication
@@ -358,7 +364,7 @@ response.
 | `UNSUPPORTED_CAPABILITY` | 2 | Adapter does not implement the requested direction or write behavior |
 | `EXTRACTION_INCOMPLETE` | 6 | Source acquisition has not completed all declared outputs |
 | `ADAPTER_FAILURE` | 6 | Adapter authentication, source, or destination operation failed |
-| `ENGINE_BUSY` | 3 | Workspace or process lock, or DuckDB connection, is busy |
+| `ENGINE_BUSY` | 3 | Workspace lock, session mutation lock, extraction `session.lock`, or DuckDB connection is busy |
 | `STATE_CONFLICT` | 3 | Target ownership, output-plan, or GRV state conflict |
 | `OWNERSHIP_LOST` | 3 | Required run, claim, or dataset ownership was lost |
 | `NOT_FOUND` | 4 | Requested root, dataset, revision, session, or scoped pin is absent |
@@ -992,8 +998,8 @@ All modes use GRV's backend contract, including durable local read-back.
   and validate the latter against the manifest partition. An empty selected
   file still has its manifest's partition identity.
 
-This contract applies to local staging files even if their temporary paths
-happen to look partitioned.
+All of the reader rules above apply to local staging files too, even if their
+temporary paths happen to look partitioned.
 
 #### Materialization modes
 
@@ -1167,8 +1173,8 @@ connection, and the chosen run ID.
   lock and the workspace lock as specified in *Lock ordering*: discovery
   releases the workspace lock before reacquiring the session lock and then the
   workspace lock.
-- Under both locks, recheck the recorded identities. A matching attempt
-  recovers the fixed context and outcome. A mismatching declaration or
+- Under both the session lock and the workspace lock, recheck the recorded
+  identities. A matching attempt recovers the fixed context and outcome. A mismatching declaration or
   connection returns `REQUEST_MISMATCH`.
 - A context recovered from an existing record must match the same effective
   declaration and the canonical engine and root, with the declared target.

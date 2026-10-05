@@ -294,8 +294,10 @@ Registered `ext`, `extensions`, and `column_ext` retain their GRV contracts.
 Unsupported required extensions fail.
 
 Arrow nullability does not replace a `not_null` check. Checks address the
-operation's output column names, including renamed SQL outputs. They run over
-the completed resulting destination scope.
+operation's output column names, including renamed SQL outputs. For a pull,
+they run over the completed resulting destination scope, inside the
+destination transaction. For a push, they run over the complete staged output,
+after capture or export and before any version allocation.
 
 ### Push selection
 
@@ -873,7 +875,8 @@ An optional method is required when the corresponding capability is advertised.
 | Method | Inputs and required result |
 | --------- | --------------------------- |
 | `validate_binding` | Common declaration and adapter fragments → normalized config and defaults; pure validation, with no authentication or storage I/O |
-| `bind_connection` | Normalized config → stable system identity and authenticated handle; aliases are resolved, and secrets remain private |
+| `bind_connection` | Normalized config → non-secret handle and, when knowable offline, the stable system identity; aliases are resolved, and secrets remain private. In the process protocol this is split into `locate_connection`, `bind_connection`, and `authenticate` (§4.2) |
+| `authenticate` | Bound handle → resolved stable system identity, compared with the recorded identity on retry; invoked only for new execution or a pending acknowledgement that needs it |
 | `extract` | Fixed context and output contracts, plus persisted source checkpoint → named table batches and explicit table and source completion |
 | `prepare_pull` | Fixed revision, selected files, and contracts, plus target config → physical mappings, output contracts, and an ownership, write, and recovery plan |
 | `resolve_pull` | Attempt and request identity → committed receipt, trustworthy not-committed, busy, or unknown; checked before reading source files |
@@ -897,7 +900,7 @@ and one explicit `table_complete` (including for zero rows), followed by
 - partial success.
 
 Batching does not prove completeness. The core stages Parquet and seals the
-capture only after all selected outputs and all writers are complete (execution
+capture only after all declared tables and all writers are complete (execution
 companion, *Extraction session preparation and capture*). Resumption uses
 persisted source identity. Fragments from unrelated snapshots cannot be
 combined.
@@ -911,8 +914,8 @@ paths. Pull adapters own destination atomicity and durable receipts.
 `resolve_pull` cannot report not-committed merely because current destination
 rows differ. It must fence the former writer and establish trustworthy receipt
 or journal state. When a committed receipt already proves success, no source
-download or re-evaluation occurs. Lost metadata produces an explicit conflict or
-unknown outcome. Receipt lookup and ambiguous-commit resolution follow the
+download or re-evaluation occurs. Lost metadata produces an explicit
+`OUTCOME_UNKNOWN` or `PROTOCOL_FAILURE`, never an assumed outcome. Receipt lookup and ambiguous-commit resolution follow the
 execution companion, *The pull algorithm*.
 
 #### State ownership and post-publication hooks
@@ -957,7 +960,11 @@ declarations.
   path, not something the user must achieve by choosing a transport.
 - Advanced `rest` or `bulk` preferences fail if they cannot meet the declared
   semantics and types.
-- `options.all_rows` defaults to false.
+- `options.all_rows` defaults to false. When true, the extraction uses
+  `queryAll` semantics, like `sf data query --all-rows`: records that are
+  deleted (in the Recycle Bin, `IsDeleted = true`) or archived are included if
+  they match the filter. When false, they are excluded. The value is part of
+  the fixed request.
 - The adapter fetches all pages and results, verifies reported counts where
   available, and rejects successful-but-truncated CLI exports.
 

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Salesforce adapter binding schema v1",
+  "$comment": "Uses the same common envelope/validation points as DuckDB and future registered adapters. This adapter advertises push only and no managed/external build support.",
+  "$defs": {
+    "connection": {
+      "type": "object",
+      "properties": {
+        "org": {
+          "type": "string",
+          "minLength": 1
+        },
+        "api_version": {
+          "type": "string",
+          "pattern": "^v[0-9]+\\.[0-9]+$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "org"
+      ]
+    },
+    "options": {
+      "type": "object",
+      "properties": {
+        "transport": {
+          "enum": [
+            "auto",
+            "rest",
+            "bulk"
+          ]
+        },
+        "all_rows": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "extract_source": {
+      "type": "object",
+      "properties": {
+        "object": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "filter": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "object"
+      ]
+    },
+    "column_source": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+    },
+    "push_result": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  }
+}

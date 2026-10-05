@@ -1,0 +1,4 @@
+- {name: source_case_id, type: utf8}
+- {name: note_number, type: utf8}
+- {name: amount, type: 'decimal128(38,6)'}
+- {name: currency, type: utf8}

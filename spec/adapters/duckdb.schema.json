@@ -1,0 +1,295 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DuckDB adapter binding schema v1",
+  "$comment": "Registry validation points, not an alternative declaration envelope. Apply these definitions to corresponding common fields; inspect build.execution to choose the source definition. Semantic rules are in grv-cli-v1.md.",
+  "$defs": {
+    "connection": {
+      "type": "object",
+      "properties": {
+        "database": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "database"
+      ]
+    },
+    "options": {
+      "type": "object",
+      "properties": {
+        "materialization": {
+          "enum": [
+            "local",
+            "s3-view"
+          ]
+        },
+        "refresh": {
+          "enum": [
+            "auto",
+            "full"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "$comment": "Pull options. Use push_options for extraction/build; binding validation selects by kind."
+    },
+    "extract_source": {
+      "type": "object",
+      "properties": {
+        "table": {
+          "type": "string",
+          "pattern": "^[a-z0-9_][a-z0-9_-]*\\.[a-z0-9_][a-z0-9_-]*$"
+        },
+        "filter": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "table"
+      ]
+    },
+    "managed_build_source": {
+      "type": "object",
+      "properties": {
+        "sql": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "sql"
+      ]
+    },
+    "external_build_source": {
+      "type": "object",
+      "properties": {
+        "table": {
+          "type": "string",
+          "pattern": "^[a-z0-9_][a-z0-9_-]*$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "table"
+      ]
+    },
+    "column_source": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+    },
+    "pull_target": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "string",
+          "pattern": "^[a-z0-9_][a-z0-9_-]*$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "schema"
+      ]
+    },
+    "pull_table_target": {
+      "type": "object",
+      "properties": {
+        "table": {
+          "type": "string",
+          "pattern": "^[a-z0-9_][a-z0-9_-]*$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "select": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "sql": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "sql"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "file": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "file"
+          ]
+        }
+      ]
+    },
+    "build_input": {
+      "type": "string",
+      "pattern": "^[a-z0-9_][a-z0-9_-]*\\.[a-z0-9_][a-z0-9_-]*$"
+    },
+    "pull_result": {
+      "type": "object",
+      "properties": {
+        "target_schema": {
+          "type": "string",
+          "pattern": "^[a-z0-9_][a-z0-9_-]*$"
+        },
+        "write_mode": {
+          "enum": [
+            "replace",
+            "append"
+          ]
+        },
+        "transform_mode": {
+          "enum": [
+            "identity",
+            "sql"
+          ]
+        },
+        "scope_mode": {
+          "enum": [
+            "complete",
+            "selected"
+          ]
+        },
+        "materialization_mode": {
+          "enum": [
+            "local",
+            "s3-view"
+          ]
+        },
+        "source_partitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "table": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+              },
+              "partition": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
+                  "not": {
+                    "enum": [
+                      "version",
+                      "revision"
+                    ]
+                  }
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                }
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "table",
+              "partition"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "target_schema",
+        "write_mode",
+        "transform_mode",
+        "scope_mode",
+        "materialization_mode",
+        "source_partitions"
+      ]
+    },
+    "push_result": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "inspection_result": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workspace_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "binding": {
+          "enum": [
+            "bound",
+            "uninitialized"
+          ]
+        },
+        "materializations": {
+          "type": "array",
+          "items": {
+            "$ref": "../grv-cli-v1-output.schema.json#/$defs/materialization"
+          }
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "../grv-cli-v1-output.schema.json#/$defs/session"
+          }
+        },
+        "imports": {
+          "type": "array",
+          "items": {
+            "$ref": "../grv-cli-v1-output.schema.json#/$defs/application_import"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "workspace_id",
+        "binding",
+        "materializations",
+        "sessions",
+        "imports"
+      ]
+    },
+    "session_details": {
+      "type": "object",
+      "properties": {
+        "database": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "database"
+      ]
+    },
+    "push_options": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  }
+}

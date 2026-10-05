@@ -1,0 +1,33 @@
+declaration_version: 1
+kind: pull
+dataset: credit_notes
+adapter: duckdb
+connection:
+  database: ../../application.duckdb
+write: replace
+target:
+  schema: crm_selected
+tables:
+  - name: cases
+    target:
+      table: credit_notes
+    select:
+      sql: |
+        SELECT
+          s.id AS source_case_id,
+          s.credit_note_number AS note_number,
+          s.credit_amount AS amount,
+          s.currency_code AS currency
+        FROM grv_source.cases AS s
+        WHERE s.credit_amount > 0
+          AND EXISTS (
+            SELECT 1 FROM app.allowed_accounts AS a
+            WHERE a.account_id = s.account_id
+          )
+    columns:
+      - {name: source_case_id, type: utf8}
+      - {name: note_number, type: utf8}
+      - {name: amount, type: 'decimal128(38,6)'}
+      - {name: currency, type: utf8}
+checks:
+  - {table: cases, not_null: [source_case_id, amount]}

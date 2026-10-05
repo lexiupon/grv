@@ -1,0 +1,16 @@
+declaration_version: 1
+kind: pull
+dataset: credit_notes
+adapter: duckdb
+connection:
+  database: ../../application.duckdb
+revision: 7
+write: replace
+target:
+  schema: crm_history
+tables:
+  - name: cases
+    target:
+      table: credit_notes
+checks:
+  - {table: cases, not_null: [id, credit_amount]}

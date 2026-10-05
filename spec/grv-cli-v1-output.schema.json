@@ -24,7 +24,10 @@
         "unpin",
         "gc",
         "recover",
-        "unknown"
+        "unknown",
+        "adapter list",
+        "adapter capabilities",
+        "adapter command"
       ]
     },
     "root": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
@@ -39,12 +42,7 @@
     {
       "if": {"properties": {"ok": {"const": true}}},
       "then": {
-        "properties": {
-          "exit_status": {"const": 0},
-          "errors": {"maxItems": 0},
-          "root": {"type": "string", "minLength": 1},
-          "command": {"not": {"const": "unknown"}}
-        }
+        "properties": {"exit_status": {"const": 0}, "errors": {"maxItems": 0}, "command": {"not": {"const": "unknown"}}}
       },
       "else": {"properties": {"exit_status": {"enum": [2, 3, 4, 5, 6]}, "errors": {"minItems": 1}}}
     },
@@ -119,7 +117,7 @@
             "result": {
               "allOf": [
                 {"$ref": "#/$defs/result_status"},
-                {"required": ["dataset", "current_revision", "retired", "lease", "pending", "runs", "engine"]}
+                {"required": ["dataset", "current_revision", "retired", "lease", "pending", "runs", "adapter_state"]}
               ]
             }
           }
@@ -197,17 +195,16 @@
                 {"$ref": "#/$defs/result_pull"},
                 {
                   "required": [
+                    "adapter",
                     "attempt_id",
                     "workspace_id",
                     "dataset",
-                    "target_schema",
-                    "revision_mode",
-                    "materialization_mode",
                     "requested_revision",
                     "committed_revision",
                     "generation_id",
                     "pulled_at",
-                    "replayed"
+                    "replayed",
+                    "adapter_result"
                   ]
                 }
               ]
@@ -226,7 +223,7 @@
             "result": {
               "allOf": [
                 {"$ref": "#/$defs/result_session_prepare"},
-                {"required": ["context_path", "engine_path", "session"]}
+                {"required": ["context_path", "engine_path", "session", "state_path"]}
               ]
             }
           }
@@ -243,7 +240,7 @@
             "result": {
               "allOf": [
                 {"$ref": "#/$defs/result_session_show"},
-                {"required": ["context_path", "engine_path", "session"]}
+                {"required": ["context_path", "engine_path", "session", "state_path"]}
               ]
             }
           }
@@ -294,7 +291,7 @@
             "result": {
               "allOf": [
                 {"$ref": "#/$defs/result_push"},
-                {"required": ["dataset", "run_id", "completion_sha256", "outcome", "replayed"]}
+                {"required": ["dataset", "run_id", "completion_sha256", "outcome", "replayed", "adapter", "mode", "attempt_id", "adapter_result"]}
               ]
             }
           }
@@ -391,7 +388,7 @@
               {
                 "properties": {
                   "code": {
-                    "enum": ["INVALID_ARGUMENT", "INVALID_DECLARATION", "REQUEST_MISMATCH", "BUILD_INCOMPLETE"]
+                    "enum": ["INVALID_ARGUMENT", "INVALID_DECLARATION", "REQUEST_MISMATCH", "BUILD_INCOMPLETE", "UNSUPPORTED_CAPABILITY"]
                   }
                 }
               }
@@ -429,9 +426,52 @@
       "then": {
         "properties": {
           "errors": {
-            "prefixItems": [{"properties": {"code": {"enum": ["BACKEND_FAILURE", "ENGINE_FAILURE", "OUTCOME_UNKNOWN"]}}}]
+            "prefixItems": [{"properties": {"code": {"enum": ["BACKEND_FAILURE", "ENGINE_FAILURE", "OUTCOME_UNKNOWN", "EXTRACTION_INCOMPLETE", "ADAPTER_FAILURE"]}}}]
           }
         }
+      }
+    },
+    {
+      "if": {"properties": {"command": {"const": "adapter list"}}},
+      "then": {
+        "if": {"properties": {"ok": {"const": true}}},
+        "then": {"properties": {"result": {"allOf": [{"$ref": "#/$defs/result_adapter_list"}, {"required": ["adapters"]}]}}},
+        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_adapter_list"}, {"type": "null"}]}}}
+      }
+    },
+    {
+      "if": {"properties": {"command": {"const": "adapter capabilities"}}},
+      "then": {
+        "if": {"properties": {"ok": {"const": true}}},
+        "then": {
+          "properties": {"result": {"allOf": [{"$ref": "#/$defs/result_adapter_capabilities"}, {"required": ["adapter"]}]}}
+        },
+        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_adapter_capabilities"}, {"type": "null"}]}}}
+      }
+    },
+    {
+      "if": {"properties": {"command": {"const": "adapter command"}}},
+      "then": {
+        "if": {"properties": {"ok": {"const": true}}},
+        "then": {
+          "properties": {
+            "result": {
+              "allOf": [
+                {"$ref": "#/$defs/result_adapter_command"},
+                {"required": ["adapter", "package_version", "adapter_command", "details"]}
+              ]
+            }
+          }
+        },
+        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_adapter_command"}, {"type": "null"}]}}}
+      }
+    },
+    {
+      "if": {"properties": {"command": {"enum": ["adapter list", "adapter capabilities", "adapter command"]}}},
+      "then": {"properties": {"root": {"type": "null"}}},
+      "else": {
+        "if": {"properties": {"ok": {"const": true}}},
+        "then": {"properties": {"root": {"type": "string", "minLength": 1}}}
       }
     }
   ],
@@ -480,7 +520,10 @@
             "PROTOCOL_FAILURE",
             "BACKEND_FAILURE",
             "ENGINE_FAILURE",
-            "OUTCOME_UNKNOWN"
+            "OUTCOME_UNKNOWN",
+            "UNSUPPORTED_CAPABILITY",
+            "EXTRACTION_INCOMPLETE",
+            "ADAPTER_FAILURE"
           ]
         },
         "message": {"type": "string", "minLength": 1},
@@ -604,11 +647,11 @@
       "properties": {
         "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
         "target_schema": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*$"},
-        "revision_mode": {"enum": ["tracking", "historical"]},
+        "revision_mode": {"enum": ["latest", "fixed"]},
         "materialization_mode": {"enum": ["local", "s3-view"]},
         "committed_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
         "generation_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-        "state": {"enum": ["current", "behind", "historical"]},
+        "state": {"enum": ["current", "behind", "fixed"]},
         "mappings": {
           "type": "array",
           "items": {
@@ -620,7 +663,10 @@
             "additionalProperties": false,
             "required": ["grv_table", "target_table"]
           }
-        }
+        },
+        "adapter": {"const": "duckdb"},
+        "write_mode": {"const": "replace"},
+        "transform_mode": {"const": "identity"}
       },
       "additionalProperties": false,
       "required": [
@@ -631,7 +677,10 @@
         "committed_revision",
         "generation_id",
         "state",
-        "mappings"
+        "mappings",
+        "adapter",
+        "write_mode",
+        "transform_mode"
       ]
     },
     "protection": {
@@ -719,8 +768,8 @@
             "type": "object",
             "properties": {
               "alias": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*$"},
-              "engine_table": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*\\.[a-z0-9_][a-z0-9_-]*$"},
-              "source_table": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*\\.[a-z0-9_][a-z0-9_-]*$"},
+              "engine_table": {"type": "string", "minLength": 1},
+              "source_table": {"type": "string", "minLength": 1},
               "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
               "grv_table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
               "revision": {"type": "string", "pattern": "^[1-9][0-9]*$"},
@@ -746,7 +795,7 @@
             "type": "object",
             "properties": {
               "table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-              "engine_table": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*\\.[a-z0-9_][a-z0-9_-]*$"}
+              "engine_table": {"type": "string", "minLength": 1}
             },
             "additionalProperties": false,
             "required": ["table", "engine_table"]
@@ -845,12 +894,20 @@
         "base_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
         "declaration_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "input_revisions": {"type": "array", "items": {"$ref": "#/$defs/input_revision"}},
-        "mappings": {"$ref": "#/$defs/session_mappings"},
+        "mappings": {"anyOf": [{"$ref": "#/$defs/session_mappings"}, {"type": "null"}]},
         "completion_sha256": {"anyOf": [{"type": "string", "pattern": "^[0-9a-f]{64}$"}, {"type": "null"}]},
         "export_plan": {"anyOf": [{"$ref": "#/$defs/export_plan"}, {"type": "null"}]},
         "publication_attempt": {"anyOf": [{"$ref": "#/$defs/publication_attempt"}, {"type": "null"}]},
         "outcome": {"anyOf": [{"$ref": "#/$defs/session_outcome"}, {"type": "null"}]},
-        "run": {"$ref": "#/$defs/run_observation"}
+        "run": {"$ref": "#/$defs/run_observation"},
+        "adapter": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "mode": {"enum": ["extract", "build"]},
+        "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
+        "capture": {"anyOf": [{"$ref": "#/$defs/capture"}, {"type": "null"}]},
+        "adapter_context": {
+          "type": "object",
+          "$comment": "Registered adapter session details. Generic logical mappings are separate from engine-owned identifiers."
+        }
       },
       "additionalProperties": false,
       "required": [
@@ -865,7 +922,31 @@
         "export_plan",
         "publication_attempt",
         "outcome",
-        "run"
+        "run",
+        "adapter",
+        "mode",
+        "attempt_id",
+        "capture",
+        "adapter_context"
+      ],
+      "allOf": [
+        {
+          "if": {"properties": {"mode": {"const": "build"}}},
+          "then": {
+            "properties": {
+              "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
+              "capture": {"type": "null"},
+              "mappings": {"$ref": "#/$defs/session_mappings"}
+            }
+          },
+          "else": {
+            "properties": {
+              "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
+              "mappings": {"type": "null"},
+              "input_revisions": {"maxItems": 0}
+            }
+          }
+        }
       ]
     },
     "version_progress": {
@@ -1075,24 +1156,16 @@
         "lease": {"anyOf": [{"$ref": "#/$defs/lease"}, {"type": "null"}]},
         "pending": {"anyOf": [{"$ref": "#/$defs/pending"}, {"type": "null"}]},
         "runs": {"type": "array", "items": {"$ref": "#/$defs/run_observation"}},
-        "engine": {
+        "adapter_state": {
           "anyOf": [
             {
               "type": "object",
               "properties": {
-                "path": {"type": "string", "minLength": 1},
-                "workspace_id": {
-                  "anyOf": [
-                    {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-                    {"type": "null"}
-                  ]
-                },
-                "binding": {"enum": ["bound", "uninitialized"]},
-                "materializations": {"type": "array", "items": {"$ref": "#/$defs/materialization"}},
-                "sessions": {"type": "array", "items": {"$ref": "#/$defs/session"}}
+                "adapter": {"type": "string", "minLength": 1},
+                "details": {"type": "object", "$comment": "Validate using the registered read-only inspection schema."}
               },
-              "additionalProperties": false,
-              "required": ["path", "workspace_id", "binding", "materializations", "sessions"]
+              "required": ["adapter", "details"],
+              "additionalProperties": false
             },
             {"type": "null"}
           ]
@@ -1227,9 +1300,6 @@
         "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
         "workspace_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
         "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "target_schema": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*$"},
-        "revision_mode": {"enum": ["tracking", "historical"]},
-        "materialization_mode": {"enum": ["local", "s3-view"]},
         "requested_revision": {"oneOf": [{"const": "latest"}, {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"}]},
         "committed_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
         "generation_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
@@ -1238,7 +1308,12 @@
           "format": "date-time",
           "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
         },
-        "replayed": {"type": "boolean"}
+        "replayed": {"type": "boolean"},
+        "adapter": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "adapter_result": {
+          "type": "object",
+          "$comment": "Every adapter, including built-ins, validates details with its registered pull-result schema; no credentials."
+        }
       },
       "additionalProperties": false,
       "minProperties": 1
@@ -1247,21 +1322,65 @@
       "type": "object",
       "properties": {
         "context_path": {"type": "string", "minLength": 1},
-        "engine_path": {"type": "string", "minLength": 1},
-        "session": {"$ref": "#/$defs/session"}
+        "engine_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
+        "session": {"$ref": "#/$defs/session"},
+        "state_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]}
       },
       "additionalProperties": false,
-      "minProperties": 1
+      "minProperties": 1,
+      "allOf": [
+        {
+          "if": {
+            "properties": {"session": {"properties": {"mode": {"const": "build"}}, "required": ["mode"]}},
+            "required": ["session"]
+          },
+          "then": {
+            "properties": {
+              "engine_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
+              "state_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"session": {"properties": {"mode": {"const": "extract"}}, "required": ["mode"]}},
+            "required": ["session"]
+          },
+          "then": {"properties": {"engine_path": {"type": "null"}, "state_path": {"type": "string", "minLength": 1}}}
+        }
+      ]
     },
     "result_session_show": {
       "type": "object",
       "properties": {
         "context_path": {"type": "string", "minLength": 1},
-        "engine_path": {"type": "string", "minLength": 1},
-        "session": {"$ref": "#/$defs/session"}
+        "engine_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
+        "session": {"$ref": "#/$defs/session"},
+        "state_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]}
       },
       "additionalProperties": false,
-      "minProperties": 1
+      "minProperties": 1,
+      "allOf": [
+        {
+          "if": {
+            "properties": {"session": {"properties": {"mode": {"const": "build"}}, "required": ["mode"]}},
+            "required": ["session"]
+          },
+          "then": {
+            "properties": {
+              "engine_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
+              "state_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"session": {"properties": {"mode": {"const": "extract"}}, "required": ["mode"]}},
+            "required": ["session"]
+          },
+          "then": {"properties": {"engine_path": {"type": "null"}, "state_path": {"type": "string", "minLength": 1}}}
+        }
+      ]
     },
     "result_session_renew": {
       "type": "object",
@@ -1297,10 +1416,24 @@
         "run_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
         "completion_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "outcome": {"$ref": "#/$defs/session_outcome"},
-        "replayed": {"type": "boolean"}
+        "replayed": {"type": "boolean"},
+        "adapter": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "mode": {"enum": ["extract", "build"]},
+        "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
+        "adapter_result": {"type": "object", "$comment": "All adapters validate their result details through the registry."}
       },
       "additionalProperties": false,
-      "minProperties": 1
+      "minProperties": 1,
+      "allOf": [
+        {
+          "if": {"properties": {"mode": {"const": "build"}}, "required": ["mode"]},
+          "then": {"properties": {"attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"}}}
+        },
+        {
+          "if": {"properties": {"mode": {"const": "extract"}}, "required": ["mode"]},
+          "then": {"properties": {"attempt_id": {"$ref": "#/$defs/object_identity/properties/attempt_id"}}}
+        }
+      ]
     },
     "result_pin": {
       "type": "object",
@@ -1347,6 +1480,128 @@
       },
       "additionalProperties": false,
       "minProperties": 1
+    },
+    "capture_table": {
+      "type": "object",
+      "properties": {
+        "table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "row_count": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
+        },
+        "capture_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "job_ids": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      },
+      "additionalProperties": false,
+      "required": ["table", "row_count", "started_at", "completed_at", "capture_sha256", "job_ids"]
+    },
+    "capture": {
+      "type": "object",
+      "properties": {
+        "source_identity": {"type": "string", "minLength": 1},
+        "source_consistency": {"enum": ["transaction-snapshot", "capture-window", "adapter-defined"]},
+        "tables": {"type": "array", "items": {"$ref": "#/$defs/capture_table"}, "minItems": 1}
+      },
+      "additionalProperties": false,
+      "required": ["source_identity", "source_consistency", "tables"]
+    },
+    "application_import": {
+      "type": "object",
+      "properties": {
+        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "target_schema": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*$"},
+        "write_mode": {"enum": ["replace", "append"]},
+        "transform_mode": {"enum": ["identity", "sql"]},
+        "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
+        "source_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
+        "declaration_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "pulled_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
+        },
+        "scope_mode": {"enum": ["complete", "selected"]}
+      },
+      "additionalProperties": false,
+      "required": [
+        "dataset",
+        "target_schema",
+        "write_mode",
+        "transform_mode",
+        "attempt_id",
+        "source_revision",
+        "declaration_sha256",
+        "pulled_at",
+        "scope_mode"
+      ]
+    },
+    "adapter_descriptor": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "package_version": {"type": "string", "minLength": 1},
+        "interface_version": {"const": 1},
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "push": {"type": "boolean"},
+            "pull": {"type": "boolean"},
+            "source_consistency": {"enum": ["transaction-snapshot", "capture-window", "adapter-defined"]},
+            "resumable_extract": {"type": "boolean"},
+            "pull_write_modes": {"type": "array", "items": {"enum": ["replace", "append"]}},
+            "commands": {"type": "array", "items": {"type": "string", "minLength": 1}},
+            "managed_build": {"type": "boolean"},
+            "external_build": {"type": "boolean"}
+          },
+          "additionalProperties": false,
+          "required": [
+            "push",
+            "pull",
+            "source_consistency",
+            "resumable_extract",
+            "pull_write_modes",
+            "commands",
+            "managed_build",
+            "external_build"
+          ]
+        },
+        "binding_schema_version": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false,
+      "required": ["name", "package_version", "interface_version", "capabilities", "binding_schema_version"]
+    },
+    "result_adapter_list": {
+      "type": "object",
+      "properties": {"adapters": {"type": "array", "items": {"$ref": "#/$defs/adapter_descriptor"}}},
+      "additionalProperties": false,
+      "required": []
+    },
+    "result_adapter_capabilities": {
+      "type": "object",
+      "properties": {"adapter": {"$ref": "#/$defs/adapter_descriptor"}},
+      "additionalProperties": false,
+      "required": []
+    },
+    "result_adapter_command": {
+      "type": "object",
+      "properties": {
+        "adapter": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "package_version": {"type": "string", "minLength": 1},
+        "adapter_command": {"type": "string", "minLength": 1},
+        "details": {
+          "type": "object",
+          "$comment": "Must additionally validate against the named adapter command/result schema; secrets are omitted."
+        }
+      },
+      "additionalProperties": false,
+      "required": []
     }
   }
 }

@@ -1,0 +1,46 @@
+declaration_version: 1
+kind: pull
+dataset: invoice_events
+adapter: duckdb
+connection:
+  database: ../../application.duckdb
+write: append
+target:
+  schema: app
+tables:
+  - name: events
+    target:
+      table: invoice_feed
+    partitions:
+      - month: 2026-09
+    select:
+      sql: |
+        SELECT
+          e.event_id AS source_event_id,
+          e.account_id AS billing_account,
+          e.event_date AS posted_date,
+          e.amount AS net_amount,
+          e.currency
+        FROM grv_source.events AS e
+        WHERE e.event_date >= DATE '2026-09-15'
+          AND e.amount > 0
+          AND EXISTS (
+            SELECT 1 FROM app.allowed_accounts AS a
+            WHERE a.account_id = e.account_id
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM grv_target.invoice_feed AS t
+            WHERE t.source_event_id = e.event_id
+          )
+        QUALIFY ROW_NUMBER() OVER (
+          PARTITION BY e.event_id
+          ORDER BY e.event_date DESC, e.amount DESC
+        ) = 1
+    columns:
+      - {name: source_event_id, type: utf8}
+      - {name: billing_account, type: utf8}
+      - {name: posted_date, type: date32}
+      - {name: net_amount, type: 'decimal128(38,6)'}
+      - {name: currency, type: utf8}
+checks:
+  - {table: events, not_null: [source_event_id, billing_account]}

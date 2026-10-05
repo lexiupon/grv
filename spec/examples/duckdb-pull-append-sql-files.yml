@@ -1,0 +1,19 @@
+declaration_version: 1
+kind: pull
+dataset: credit_notes
+adapter: duckdb
+connection:
+  database: ../../application.duckdb
+write: append
+target:
+  schema: app
+tables:
+  - name: cases
+    target:
+      table: credit_notes
+    select:
+      file: ./sql/append-credit-notes.sql
+    columns:
+      file: ./contracts/credit-note-import.columns.yml
+checks:
+  - {table: cases, not_null: [source_case_id, amount]}

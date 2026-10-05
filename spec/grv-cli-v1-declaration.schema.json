@@ -1,13 +1,24 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "GRV CLI v1 declaration",
-  "$comment": "Validate cross-field identities, uniqueness by names, decimal scale <= precision, resolved IPC types, partition layouts, extensions, and checks through grv-cli-v1.md as well.",
-  "oneOf": [{"$ref": "#/$defs/pull"}, {"$ref": "#/$defs/push"}],
+  "$comment": "Core authoring envelope only. Resolve the registered adapter and validate connection/options and per-table source/target/select/column-source schemas before binding. Built-ins and extensions use this same contract. Cross-field and resolved-schema rules are normative in grv-cli-v1.md.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/push"
+    },
+    {
+      "$ref": "#/$defs/pull"
+    }
+  ],
   "$defs": {
     "field": {
       "type": "object",
       "properties": {
-        "name": {"type": "string", "minLength": 1, "pattern": "^[^\\u0000]+$"},
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\u0000]+$"
+        },
         "type": {
           "oneOf": [
             {
@@ -33,7 +44,10 @@
         },
         "ext": {
           "type": "object",
-          "propertyNames": {"type": "string", "minLength": 1},
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
           "additionalProperties": {
             "type": "object",
             "$comment": "Registered extension or redacted core metadata; validate its separate normative contract."
@@ -41,241 +55,630 @@
         }
       },
       "additionalProperties": false,
-      "required": ["name", "type"]
+      "required": [
+        "name",
+        "type"
+      ]
+    },
+    "bound_field": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\u0000]+$"
+        },
+        "type": {
+          "oneOf": [
+            {
+              "enum": [
+                "bool",
+                "date32",
+                "int64",
+                "double",
+                "utf8",
+                "binary",
+                "timestamp(ms)",
+                "timestamp(us)",
+                "timestamp(ns)",
+                "timestamp(ms,UTC)",
+                "timestamp(us,UTC)"
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "^decimal128\\(([1-9]|[12][0-9]|3[0-8]),(0|[1-9]|[12][0-9]|3[0-8])\\)$"
+            }
+          ]
+        },
+        "ext": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "object",
+            "$comment": "Registered extension or redacted core metadata; validate its separate normative contract."
+          }
+        },
+        "source": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "type"
+      ]
+    },
+    "column_reference": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "file": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "file"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ipc": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "ipc"
+          ]
+        }
+      ]
     },
     "arrow_schema": {
       "oneOf": [
-        {"type": "array", "items": {"$ref": "#/$defs/field"}, "minItems": 1},
         {
-          "type": "object",
-          "properties": {"ipc": {"type": "string", "minLength": 1}},
-          "additionalProperties": false,
-          "required": ["ipc"]
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          },
+          "minItems": 1
+        },
+        {
+          "$ref": "#/$defs/column_reference"
         }
+      ]
+    },
+    "columns": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/bound_field"
+          },
+          "minItems": 1
+        },
+        {
+          "$ref": "#/$defs/column_reference"
+        }
+      ]
+    },
+    "partition": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
+        "not": {
+          "enum": [
+            "version",
+            "revision"
+          ]
+        }
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+      }
+    },
+    "expect": {
+      "type": "object",
+      "properties": {
+        "columns": {
+          "$ref": "#/$defs/arrow_schema"
+        },
+        "partition_keys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
+            "not": {
+              "enum": [
+                "version",
+                "revision"
+              ]
+            }
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "check": {
+      "type": "object",
+      "properties": {
+        "table": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "not_null": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "table",
+        "not_null"
       ]
     },
     "table_selector": {
       "type": "object",
-      "properties": {"table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}},
+      "properties": {
+        "table": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        }
+      },
       "additionalProperties": false,
-      "required": ["table"]
+      "required": [
+        "table"
+      ]
     },
     "pair_selector": {
       "type": "object",
       "properties": {
-        "table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "table": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
         "partition": {
           "type": "object",
           "propertyNames": {
             "type": "string",
             "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
-            "not": {"enum": ["version", "revision"]}
-          },
-          "additionalProperties": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}
-        }
-      },
-      "additionalProperties": false,
-      "required": ["table", "partition"]
-    },
-    "selector": {"oneOf": [{"$ref": "#/$defs/table_selector"}, {"$ref": "#/$defs/pair_selector"}]},
-    "check": {
-      "type": "object",
-      "properties": {
-        "table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "not_null": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true}
-      },
-      "additionalProperties": false,
-      "required": ["table", "not_null"]
-    },
-    "pull_table": {
-      "type": "object",
-      "properties": {
-        "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "schema": {"$ref": "#/$defs/arrow_schema"},
-        "target_table": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*$"},
-        "partition_keys": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
-            "not": {"enum": ["version", "revision"]}
-          },
-          "uniqueItems": true
-        },
-        "extensions": {
-          "type": "object",
-          "propertyNames": {"type": "string", "minLength": 1},
-          "additionalProperties": {
-            "type": "object",
-            "$comment": "Registered extension or redacted core metadata; validate its separate normative contract."
-          }
-        },
-        "column_ext": {
-          "type": "object",
-          "propertyNames": {"type": "string", "minLength": 1},
-          "additionalProperties": {
-            "type": "object",
-            "propertyNames": {"type": "string", "minLength": 1},
-            "additionalProperties": {
-              "type": "object",
-              "$comment": "Registered extension or redacted core metadata; validate its separate normative contract."
+            "not": {
+              "enum": [
+                "version",
+                "revision"
+              ]
             }
-          }
-        }
-      },
-      "additionalProperties": false,
-      "required": ["name", "schema", "partition_keys"]
-    },
-    "push_table_schema": {
-      "type": "object",
-      "properties": {
-        "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "columns": {"$ref": "#/$defs/arrow_schema"},
-        "partition_keys": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
-            "not": {"enum": ["version", "revision"]}
           },
-          "uniqueItems": true
-        },
-        "extensions": {
-          "type": "object",
-          "propertyNames": {"type": "string", "minLength": 1},
           "additionalProperties": {
-            "type": "object",
-            "$comment": "Registered extension or redacted core metadata; validate its separate normative contract."
-          }
-        },
-        "column_ext": {
-          "type": "object",
-          "propertyNames": {"type": "string", "minLength": 1},
-          "additionalProperties": {
-            "type": "object",
-            "propertyNames": {"type": "string", "minLength": 1},
-            "additionalProperties": {
-              "type": "object",
-              "$comment": "Registered extension or redacted core metadata; validate its separate normative contract."
-            }
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
           }
         }
       },
       "additionalProperties": false,
-      "required": ["name", "columns", "partition_keys"]
+      "required": [
+        "table",
+        "partition"
+      ]
+    },
+    "selector": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/table_selector"
+        },
+        {
+          "$ref": "#/$defs/pair_selector"
+        }
+      ]
     },
     "selection": {
       "type": "object",
       "properties": {
-        "policy": {"enum": ["changed", "all", "explicit"]},
-        "include": {"type": "array", "items": {"$ref": "#/$defs/selector"}, "uniqueItems": true},
-        "drop": {"type": "array", "items": {"$ref": "#/$defs/selector"}, "uniqueItems": true},
-        "hold": {"type": "array", "items": {"$ref": "#/$defs/table_selector"}, "uniqueItems": true},
-        "empty": {"type": "array", "items": {"$ref": "#/$defs/pair_selector"}, "uniqueItems": true}
+        "policy": {
+          "enum": [
+            "changed",
+            "all",
+            "explicit"
+          ]
+        },
+        "include": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/selector"
+          },
+          "uniqueItems": true
+        },
+        "drop": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/selector"
+          },
+          "uniqueItems": true
+        },
+        "hold": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/table_selector"
+          },
+          "uniqueItems": true
+        },
+        "empty": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pair_selector"
+          },
+          "uniqueItems": true
+        }
       },
       "additionalProperties": false,
       "required": [],
       "allOf": [
         {
-          "if": {"properties": {"policy": {"const": "explicit"}}, "required": ["policy"]},
-          "then": {"required": ["include"], "properties": {"include": {"minItems": 1}}},
-          "else": {"properties": {"include": {"maxItems": 0}}}
+          "if": {
+            "properties": {
+              "policy": {
+                "const": "explicit"
+              }
+            },
+            "required": [
+              "policy"
+            ]
+          },
+          "then": {
+            "required": [
+              "include"
+            ],
+            "properties": {
+              "include": {
+                "minItems": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "include": {
+                "maxItems": 0
+              }
+            }
+          }
         }
       ]
     },
-    "pull": {
+    "extract_selection": {
       "type": "object",
       "properties": {
-        "declaration_version": {"const": 1},
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "checks": {"type": "array", "items": {"$ref": "#/$defs/check"}, "uniqueItems": true},
-        "code_fingerprints": {
-          "type": "object",
-          "propertyNames": {"type": "string", "minLength": 1},
-          "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
-        },
-        "kind": {"const": "pull"},
-        "source": {
-          "type": "object",
-          "properties": {"grv": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}},
-          "additionalProperties": false,
-          "required": ["grv"]
-        },
-        "target": {
-          "type": "object",
-          "properties": {
-            "engine": {"const": "duckdb"},
-            "schema": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*$", "not": {"const": "_grv"}},
-            "mode": {"enum": ["local", "s3-view"]}
-          },
-          "additionalProperties": false,
-          "required": ["engine", "schema"]
-        },
-        "refresh": {"enum": ["full", "changed"]},
-        "tables": {"type": "array", "items": {"$ref": "#/$defs/pull_table"}, "uniqueItems": true}
+        "policy": {
+          "enum": [
+            "changed",
+            "all"
+          ]
+        }
       },
       "additionalProperties": false,
-      "required": ["declaration_version", "kind", "dataset", "source", "target", "tables"]
+      "required": []
     },
-    "push": {
+    "build": {
       "type": "object",
       "properties": {
-        "declaration_version": {"const": 1},
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "checks": {"type": "array", "items": {"$ref": "#/$defs/check"}, "uniqueItems": true},
-        "code_fingerprints": {
-          "type": "object",
-          "propertyNames": {"type": "string", "minLength": 1},
-          "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
-        },
-        "kind": {"const": "push"},
-        "source": {
-          "type": "object",
-          "properties": {
-            "engine": {"const": "duckdb"},
-            "tables": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "table": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*$"},
-                  "grv_table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}
-                },
-                "additionalProperties": false,
-                "required": ["table", "grv_table"]
-              },
-              "uniqueItems": true
-            }
-          },
-          "additionalProperties": false,
-          "required": ["engine", "tables"]
+        "execution": {
+          "enum": [
+            "managed",
+            "external"
+          ]
         },
         "inputs": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "table": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*\\.[a-z0-9_][a-z0-9_-]*$"},
-              "as": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*$"}
+              "table": {
+                "type": "string",
+                "minLength": 1
+              },
+              "as": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+              }
             },
             "additionalProperties": false,
-            "required": ["table", "as"]
+            "required": [
+              "table",
+              "as"
+            ]
+          }
+        },
+        "self_input": {
+          "type": "boolean"
+        },
+        "code_fingerprints": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "push_table": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "source": {
+          "type": "object"
+        },
+        "columns": {
+          "$ref": "#/$defs/columns"
+        },
+        "partition_keys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
+            "not": {
+              "enum": [
+                "version",
+                "revision"
+              ]
+            }
           },
           "uniqueItems": true
         },
-        "self_input": {"type": "boolean"},
-        "target": {
+        "extensions": {
           "type": "object",
-          "properties": {"grv": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}},
-          "additionalProperties": false,
-          "required": ["grv"]
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "object",
+            "$comment": "Registered extension or redacted core metadata; validate its separate normative contract."
+          }
         },
-        "selection": {"$ref": "#/$defs/selection"},
-        "schema": {"type": "array", "items": {"$ref": "#/$defs/push_table_schema"}, "uniqueItems": true},
-        "derived_from": {"const": "session"}
+        "column_ext": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "minLength": 1
+            },
+            "additionalProperties": {
+              "type": "object",
+              "$comment": "Registered extension or redacted core metadata; validate its separate normative contract."
+            }
+          }
+        }
       },
       "additionalProperties": false,
-      "required": ["declaration_version", "kind", "dataset", "source", "target", "schema", "derived_from"]
+      "required": [
+        "name",
+        "source",
+        "columns"
+      ]
+    },
+    "pull_table": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "partitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/partition"
+          },
+          "uniqueItems": true
+        },
+        "expect": {
+          "$ref": "#/$defs/expect"
+        },
+        "target": {
+          "type": "object"
+        },
+        "select": {
+          "type": "object"
+        },
+        "columns": {
+          "$ref": "#/$defs/arrow_schema"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "select"
+            ]
+          },
+          "then": {
+            "required": [
+              "columns"
+            ]
+          }
+        }
+      ]
+    },
+    "push": {
+      "type": "object",
+      "properties": {
+        "declaration_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "push"
+        },
+        "dataset": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "adapter": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "connection": {
+          "type": "object"
+        },
+        "options": {
+          "type": "object"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/check"
+          }
+        },
+        "tables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/push_table"
+          }
+        },
+        "build": {
+          "$ref": "#/$defs/build"
+        },
+        "selection": {
+          "$ref": "#/$defs/selection"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "declaration_version",
+        "kind",
+        "dataset",
+        "adapter",
+        "connection",
+        "tables"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "not": {
+              "required": [
+                "build"
+              ]
+            }
+          },
+          "then": {
+            "properties": {
+              "tables": {
+                "minItems": 1
+              },
+              "selection": {
+                "$ref": "#/$defs/extract_selection"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "pull": {
+      "type": "object",
+      "properties": {
+        "declaration_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "pull"
+        },
+        "dataset": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "adapter": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "connection": {
+          "type": "object"
+        },
+        "options": {
+          "type": "object"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/check"
+          }
+        },
+        "revision": {
+          "oneOf": [
+            {
+              "const": "latest"
+            },
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            }
+          ]
+        },
+        "write": {
+          "enum": [
+            "replace",
+            "append"
+          ]
+        },
+        "target": {
+          "type": "object"
+        },
+        "tables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pull_table"
+          },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "declaration_version",
+        "kind",
+        "dataset",
+        "adapter",
+        "connection",
+        "target",
+        "tables"
+      ]
     }
   }
 }

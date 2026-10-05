@@ -1,0 +1,24 @@
+declaration_version: 1
+kind: push
+dataset: month_totals
+adapter: duckdb
+connection:
+  database: ../../workspace.duckdb
+build:
+  inputs:
+    - {table: raw.mt_month_stats, as: month_stats}
+tables:
+  - name: totals
+    source:
+      sql: |
+        SELECT period, SUM(spend)::DECIMAL(38,4) AS total_spend, _period_
+        FROM grv_input.month_stats
+        GROUP BY period, _period_
+    columns:
+      - {name: period, type: date32}
+      - {name: total_spend, type: 'decimal128(38,4)'}
+      - {name: _period_, type: utf8}
+    partition_keys:
+      - period
+checks:
+  - {table: totals, not_null: [period, total_spend, _period_]}

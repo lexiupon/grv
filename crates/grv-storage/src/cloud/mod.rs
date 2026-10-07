@@ -1,9 +1,22 @@
 //! Conditional cloud backends. Provider errors and signed URLs are private;
 //! only sanitized operation errors cross the storage interface.
+//!
+//! S3 defaults to streaming multipart uploads. Explicitly select
+//! `GRV_S3_UPLOAD_MODE=single-put` (or `CloudOptions::s3_upload_mode`) for
+//! credentials limited to ListBucket/GetObject/PutObject/DeleteObject. This
+//! buffers each source before writing (1 GiB default, configurable with
+//! `GRV_S3_SINGLE_PUT_MAX_BYTES` up to 5,000,000,000 bytes),
+//! including empty objects; it is not an unbounded-data fallback. Multipart
+//! failures never trigger this mode. Multipart abort/list permissions remain
+//! separate requirements when using the default multipart mode.
 mod credentials;
 mod gcs;
 #[cfg(test)]
 mod mock;
+#[cfg(test)]
+#[path = "../../../grv-conformance/src/release_validation_config.rs"]
+#[allow(dead_code)]
+mod private_scope;
 mod s3;
 use crate::{
     Backend, Error, ErrorKind, ListEntry, ListMode, ObjectKey, ObjectMeta, ObjectPrefix, Result,
@@ -169,6 +182,14 @@ impl CloudRoot {
 pub struct CloudOptions {
     pub profile: Option<String>,
     pub region: Option<String>,
+    /// S3 upload protocol: `None`/`multipart` (default) or explicit `single-put`.
+    /// Single PUT buffers at most the configured limit plus one byte before a write.
+    /// It uses signed conditional PUT without HEAD/list checks or retry fallback.
+    pub s3_upload_mode: Option<String>,
+    /// Optional ASCII decimal byte limit for buffered single PUT (default 1 GiB).
+    /// Must be 1..=5,000,000,000 and fit this platform's address space with one
+    /// lookahead byte. Higher values increase potential per-upload memory usage.
+    pub s3_single_put_max_bytes: Option<String>,
     pub gcs_account: Option<String>,
     pub gcs_project: Option<String>,
     pub timeout: Duration,
@@ -180,6 +201,9 @@ impl Default for CloudOptions {
             region: std::env::var("AWS_REGION")
                 .or_else(|_| std::env::var("AWS_DEFAULT_REGION"))
                 .ok(),
+            s3_upload_mode: std::env::var("GRV_S3_UPLOAD_MODE").ok(),
+            s3_single_put_max_bytes: std::env::var_os("GRV_S3_SINGLE_PUT_MAX_BYTES")
+                .map(|value| value.to_string_lossy().into_owned()),
             gcs_account: std::env::var("GRV_GCS_ACCOUNT").ok(),
             gcs_project: std::env::var("GRV_GCS_PROJECT").ok(),
             timeout: Duration::from_secs(120),
@@ -405,6 +429,18 @@ impl CloudBackend {
             .with_timeout(options.timeout);
         match root.scheme {
             Scheme::S3 => {
+                let single_put = match options.s3_upload_mode.as_deref() {
+                    None | Some("multipart") => false,
+                    Some("single-put") => true,
+                    _ => {
+                        return Err(Error::new(
+                            ErrorKind::InvalidRecord,
+                            "S3 upload mode must be multipart or single-put",
+                        ));
+                    }
+                };
+                let single_put_max_bytes =
+                    s3::single_put_limit(options.s3_single_put_max_bytes.as_deref())?;
                 let mut builder = AmazonS3Builder::from_env()
                     .with_bucket_name(&root.bucket)
                     .with_retry(retry)
@@ -440,7 +476,13 @@ impl CloudBackend {
                     builder = s3_endpoint(builder, &region)?;
                 }
                 let store = builder.build().map_err(|e| remote_error(e, false))?;
-                let writer = s3::S3Upload::new(store.clone(), runtime.clone(), options.timeout)?;
+                let writer = s3::S3Upload::new(
+                    store.clone(),
+                    runtime.clone(),
+                    options.timeout,
+                    single_put,
+                    single_put_max_bytes,
+                )?;
                 let ranges = Some(S3RangeRead::new(store.clone(), options.timeout)?);
                 Ok(Self {
                     root,
@@ -1150,18 +1192,20 @@ mod tests {
     #[test]
     #[ignore = "requires an explicitly configured dedicated S3 root and profile"]
     fn live_s3_conditional_multipart_contract() {
+        let scope = private_scope::load().s3;
         let root = std::env::var("GRV_S3_TEST_ROOT").expect("GRV_S3_TEST_ROOT required");
         let profile = std::env::var("AWS_PROFILE").expect("AWS_PROFILE required");
-        let root = format!(
-            "{}/backend-conformance-{}",
-            root.trim_end_matches('/'),
-            grv_types::Uuid::v4()
-        );
+        let region = std::env::var("AWS_REGION").expect("AWS_REGION required");
+        assert_eq!(root.trim_end_matches('/'), scope.root);
+        assert_eq!(profile, scope.profile);
+        assert_eq!(region, scope.region);
+        let root = format!("{}/{}", scope.root, grv_types::Uuid::v4());
         eprintln!("S3 conformance root: {root}");
         let backend = CloudBackend::open(
             &root,
             CloudOptions {
                 profile: Some(profile),
+                region: Some(region),
                 ..Default::default()
             },
         )
@@ -1218,7 +1262,16 @@ mod tests {
             }
         }
         let large = ObjectKey::new("objects/files/large.bin").unwrap();
-        let size = PART_BYTES as u64 + 1024;
+        // Explicit large-object qualification is opt-in and bounded; default
+        // primitive runs remain small. Read/verify each returned byte below.
+        let size = match std::env::var("GRV_S3_TEST_OBJECT_BYTES") {
+            Ok(value) => {
+                let size = s3::single_put_limit(Some(&value)).unwrap();
+                u64::try_from(size).unwrap()
+            }
+            Err(std::env::VarError::NotPresent) => PART_BYTES as u64 + 1024,
+            Err(_) => panic!("invalid S3 test object size"),
+        };
         backend
             .conditional_create(&large, &mut Generated(size))
             .unwrap();
@@ -1445,15 +1498,14 @@ mod tests {
                 &std::env::var("GRV_GCS_WRITE_TEST_ROOT").expect("separate write root required"),
             )
             .unwrap();
-            // Authorization is deliberately hard-coded, not just a nonempty
-            // prefix check: no environment value can authorize the xyz fixture.
+            let scope = private_scope::load().gcs;
             assert_eq!(selected.scheme, Scheme::Gcs);
-            assert_eq!(selected.bucket, "validation-gcs-bucket");
-            assert_eq!(selected.prefix, "grv-release-validation");
+            assert_eq!(selected.canonical(), scope.root);
             assert!(!selected.prefix.is_empty());
             let account = std::env::var("GRV_GCS_ACCOUNT").expect("explicit account required");
             let project = std::env::var("GRV_GCS_PROJECT").expect("explicit project required");
-            assert!(!account.trim().is_empty() && !project.trim().is_empty());
+            assert_eq!(account, scope.account);
+            assert_eq!(project, scope.project);
             let root = format!("{}/{}", selected.canonical(), grv_types::Uuid::v4());
             eprintln!("Owned GCS primitive test root: {root}");
             let mut owned = Self {

@@ -1428,12 +1428,12 @@ mod descriptor_tests {
         let mut engine = NativeEngine::open(&path).unwrap();
         engine
             .configure_s3_reader(&crate::s3_config::S3Reader {
-                scope: "s3://private-scope-placeholder/grv-dev".into(),
-                profile: "private-scope-placeholder".into(),
+                scope: "s3://validation-s3-profile/grv-dev".into(),
+                profile: "validation-s3-profile".into(),
                 region: "eu-west-1".into(),
             })
             .unwrap();
-        assert!(engine.metadata_query("SELECT * FROM read_parquet('s3://private-scope-placeholder/grv-dev/foreign.parquet')").is_err());
+        assert!(engine.metadata_query("SELECT * FROM read_parquet('s3://validation-s3-profile/grv-dev/foreign.parquet')").is_err());
     }
 
     use super::*;

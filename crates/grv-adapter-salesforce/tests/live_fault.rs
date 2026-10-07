@@ -8,6 +8,10 @@
 //! runs on unwinding failures, but cannot survive process abort, loss of credentials,
 //! or a real response loss before the cleanup-only job ID is captured. No cargo or
 //! live execution was performed while writing this test; the parent serializes it.
+#[path = "../../grv-conformance/src/release_validation_config.rs"]
+#[allow(dead_code)]
+mod private_scope;
+
 use grv_adapter_salesforce::{
     Error, Result,
     acquisition::begin_bulk,
@@ -230,19 +234,10 @@ fn fault_delete_exact_job(session: &AuthenticatedSession, job_id: &str) -> Resul
 #[test]
 #[ignore = "creates one real Bulk job; requires explicit org/18-char identity and sf/curl/python3"]
 fn live_bulk_response_loss_never_reposts_or_adopts_after_restart() {
-    let org = std::env::var("GRV_SALESFORCE_TEST_ORG")
-        .expect("set GRV_SALESFORCE_TEST_ORG explicitly; no default org is used");
-    assert!(!org.trim().is_empty(), "explicit org must not be empty");
-    let expected = std::env::var("GRV_SALESFORCE_TEST_IDENTITY")
-        .expect("set GRV_SALESFORCE_TEST_IDENTITY=salesforce:<18-char org Id>");
-    let expected_id = expected
-        .strip_prefix("salesforce:")
-        .expect("expected identity must have the salesforce: prefix");
-    assert_eq!(
-        expected_id.len(),
-        18,
-        "expected org Id must be explicitly 18 characters"
-    );
+    let scope = private_scope::load().sf;
+    let org = scope.org;
+    let expected = format!("salesforce:{}", scope.org_id);
+    let expected_id = scope.org_id.as_str();
     assert_eq!(OrgId::parse(expected_id).unwrap().identity(), expected);
     let connection = Connection {
         org,

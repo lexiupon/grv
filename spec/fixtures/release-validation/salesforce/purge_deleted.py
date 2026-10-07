@@ -15,8 +15,7 @@ from xml.sax.saxutils import escape
 
 import provision
 
-ORG = 'fixture-user@example.invalid'
-ORG_ID = '00D000000000001AAA'
+from private_scope import salesforce_scope
 NS = {'soap': 'http://schemas.xmlsoap.org/soap/envelope/', 'sf': 'urn:partner.soap.sforce.com'}
 
 
@@ -72,6 +71,7 @@ def main():
     parser.add_argument('--expected-org-id', required=True)
     parser.add_argument('--apply', action='store_true', help='irreversibly purge only deleted fixture IDs')
     args = parser.parse_args()
+    ORG, ORG_ID = salesforce_scope()
     if args.org != ORG or args.expected_org_id != ORG_ID:
         raise SystemExit('Only pinned disposable org allowed')
     if args.apply and os.environ.get('GRV_SALESFORCE_TEST_MUTATION') != 'allow':

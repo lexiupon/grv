@@ -5,6 +5,8 @@ from unittest.mock import patch
 
 import generate
 import mutate
+mutate.AUTHORIZED_ORG = 'fixture@example.invalid'
+mutate.AUTHORIZED_ID = '00D000000000001AAA'
 
 
 class FakeSalesforce:
@@ -36,6 +38,11 @@ class Response:
 
 
 class MutationTests(unittest.TestCase):
+    def setUp(self):
+        patcher = patch.object(mutate, "salesforce_scope", return_value=(mutate.AUTHORIZED_ORG, mutate.AUTHORIZED_ID))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def run_mutation(self):
         mutate.mutate(mutate.AUTHORIZED_ORG, mutate.AUTHORIZED_ID)
 

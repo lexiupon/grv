@@ -52,6 +52,28 @@ class EvidenceTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 MODULE.relative_file('link')
 
+    def test_approved_artifact_alias_and_escape_refusal(self):
+        with tempfile.TemporaryDirectory() as other:
+            archive = Path(other).resolve()
+            run = archive / 'run-example'
+            run.mkdir()
+            (run / 'proof.log').write_text('proof')
+            (self.root / 'artifacts').symlink_to(run, target_is_directory=True)
+            config = self.root / '.release-validation.local.json'
+            config.write_text(json.dumps({'archive': {'root': str(archive)}}))
+            config.chmod(0o600)
+            self.assertEqual(MODULE.relative_file('artifacts/proof.log'), run / 'proof.log')
+            (run / 'escape').symlink_to(self.log)
+            # A repository file is allowed, but a link outside both approved roots is not.
+            outside = archive / 'outside.log'
+            outside.write_text('not evidence')
+            (run / 'escape2').symlink_to(outside)
+            with self.assertRaises(ValueError):
+                MODULE.relative_file('artifacts/escape2')
+            config.chmod(0o644)
+            with self.assertRaisesRegex(ValueError, 'owner-only'):
+                MODULE.relative_file('artifacts/proof.log')
+
     def test_result_exit_disagreement_refused(self):
         self.record['exit_code'] = 1
         with self.assertRaisesRegex(ValueError, 'disagree'):
@@ -88,8 +110,11 @@ class EvidenceTests(unittest.TestCase):
         }))
         catalog = self.root / 'catalog.json'
         catalog.write_text('{}')
+        artifact_log = self.root / 'artifacts/run.log'
+        artifact_log.parent.mkdir()
+        artifact_log.write_bytes(self.log.read_bytes())
         args = SimpleNamespace(
-            catalog_id='unit', log=str(self.log), details=str(details),
+            catalog_id='unit', log=str(artifact_log), details=str(details),
             result='passed', exit_code=0, started_at='2026-10-07T12:00:00Z',
             finished_at='2026-10-07T12:01:00Z',
             out_dir=str(self.root / 'artifacts/runs'),

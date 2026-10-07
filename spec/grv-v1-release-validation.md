@@ -77,7 +77,7 @@ this specification, command arguments, transcripts or release artifacts.
 | Local | Available | Fresh protected directories, databases and state for each case. No existing application database. |
 | S3 | Dedicated staging prefix and named profile supplied | Every mutation below a freshly generated child prefix. DuckDB independently selects the approved existing profile and performs only reads. |
 | GCS read | Existing complete `xyz/` fixture supplied | Read, list and verify only. No writes, deletes, uploads or permission changes in that prefix. Its current three-row and empty tables suffice for the read gate. |
-| GCS write | **Authorized:** `gs://validation-gcs-bucket/validation/` | Only fresh owned UUID children: create, conditional update, streaming upload, list/read and delete. Never mutate `xyz/`, other prefixes, bucket settings, IAM or retention. Actual provider permissions still need preflight. |
+| GCS write | **Authorized:** `gs://validation-gcs-bucket/grv-release-validation/` | Only fresh owned UUID children: create, conditional update, streaming upload, list/read and delete. Never mutate `xyz/`, other prefixes, bucket settings, IAM or retention. Actual provider permissions still need preflight. |
 | Salesforce | Disposable fixture org `00D000000000001AAA`: scaled 1,010 rows strictly verified; acquisition and fixture-scoped mutations available; storage is not an execution blocker by review decision | Authentication, Describe, approved read queries, and CRUD confined to the dedicated fixture namespace. Bulk query-job creation is a service effect that changes no source records. During fixture provisioning only, deploy and assign the fixture-scoped `GrvFixAccess` permission set to the fixture user. No changes to global org settings, user profiles or non-fixture records; no token revocation or logout. |
 | Salesforce fixture changes | **Authorized within the fixture namespace** | The org is ours to provision and discard; the reviewed mutation/reset procedure is `reset.sh` in the fixture directory (delete fixture records, reload pristine data). Storage is not an execution blocker by review decision; any actual reset/load failure still fails the case and must be reported. |
 | Platform runners | macOS ARM64 available; other cells deferred for this initial pass | Record host/toolchain/native/artifact hashes and logs. macOS ARM64 results do not establish other-platform qualification. |
@@ -85,7 +85,7 @@ this specification, command arguments, transcripts or release artifacts.
 The worksheet uses `GRV_S3_TEST_ROOT`, `AWS_PROFILE`, `AWS_REGION`,
 `GRV_DUCKDB_S3_READ_PROFILE`, `GRV_DUCKDB_EXTENSIONS_DIR`,
 `GRV_GCS_TEST_ROOT` (read-only), `GRV_GCS_WRITE_TEST_ROOT`
-(`gs://validation-gcs-bucket/validation/`), `GRV_GCS_ACCOUNT`, `GRV_GCS_PROJECT`,
+(`gs://validation-gcs-bucket/grv-release-validation/`), `GRV_GCS_ACCOUNT`, `GRV_GCS_PROJECT`,
 `GRV_SALESFORCE_TEST_ORG`, `GRV_SALESFORCE_TEST_ORG_ID`,
 `GRV_SALESFORCE_TEST_IDENTITY` (`salesforce:<18-character-org-id>` for the
 adapter live-service selector), `GRV_SALESFORCE_TEST_TRANSPORT` (`auto`,
@@ -430,7 +430,7 @@ worksheet. No full release case is marked passed by this review.
 | Other fixtures/oracles | Partial | The plan names scalar, canonical, boundary, partitioned, evolution and remote-file oracles, but there is no versioned release fixture package for them here. Existing identity vectors and in-test fixtures are starting assets; inventory, independently verify and map them rather than assume coverage or duplicate them blindly. |
 | Existing automated/local gates | Runnable after native setup | The listed commands and many native/conformance tests exist. This shell has no exported native/extension or live worksheet variables; restore protected paths and explicit identities before execution. |
 | Existing S3 / GCS-read / Salesforce smoke gates | Conditionally runnable | Exact named selectors exist; restore the authorized worksheet, profiles, native paths and explicit org identity. They are starting gates, not all required lifecycle/fault assertions. |
-| Writable GCS | Authorized | Use `gs://validation-gcs-bucket/validation/` and owned UUID children; add/run write and fault/lifecycle harnesses. Never write to `xyz/`. |
+| Writable GCS | Authorized | Use `gs://validation-gcs-bucket/grv-release-validation/` and owned UUID children; add/run write and fault/lifecycle harnesses. Never write to `xyz/`. |
 | Live fault matrix | Partial | Existing mock seams and specific export restart tests do not cover all successful-effect response loss, commit/publication/administration boundaries or repeated races. Add reviewed barriers/effect-count/cleanup oracles. |
 | Candidate and four-platform evidence | Not ready | Checkout is not a clean frozen candidate; four-platform CI exists but qualifying immutable release-profile artifacts and clean full-run/live matrix evidence are not established. |
 | Packaging and native notices | Not ready | Existing development/relocation evidence is baseline only. Prove clean-host release-profile installation and inventory the exact shipped native/extension dependencies and notices. |
@@ -448,7 +448,7 @@ The later broad release still requires the full matrix.
 - Initial macOS ARM64 validation/candidate scope and package version `0.1.0`
   are the current target. Review initial release limitations before tagging;
   full-v1/four-platform qualification remains separately tracked.
-- GCS writes are authorized under `gs://validation-gcs-bucket/validation/`;
+- GCS writes are authorized under `gs://validation-gcs-bucket/grv-release-validation/`;
   use owned UUID children and preserve the existing `xyz/` fixture.
 - Confirm the disposable Salesforce org (Developer Edition or above; the
   Base Edition candidate was rejected by the provisioning gate) and the

@@ -2,10 +2,14 @@ import importlib.util
 from pathlib import Path
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 SPEC = importlib.util.spec_from_file_location('validate_gcs', Path(__file__).resolve().parents[1] / 'validate-gcs-production.py')
 MOD = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MOD)
+MOD.AUTHORIZED = 'gs://synthetic-bucket/validation'
+MOD.SF_USER = 'fixture@example.invalid'
+MOD.SF_ID = '00D000000000001AAA'
 
 
 class CloudRunner:
@@ -19,6 +23,13 @@ class CloudRunner:
 
 
 class GCSTests(unittest.TestCase):
+    def setUp(self):
+        config = {'gcs': {'root': MOD.AUTHORIZED, 'account': 'fixture@example.com', 'project': 'project'},
+                  'sf': {'org': MOD.SF_USER, 'org_id': MOD.SF_ID}}
+        patcher = patch.object(MOD, 'private_config', return_value=config)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def args(self):
         return SimpleNamespace(write_root=MOD.AUTHORIZED + '/12345678-1234-4123-8123-123456789abc',
                                account='fixture@example.com', project='project',

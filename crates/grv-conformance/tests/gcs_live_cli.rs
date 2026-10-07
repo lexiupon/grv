@@ -20,7 +20,6 @@ use std::{
     process::Command,
 };
 
-const AUTHORIZED_ROOT: &str = "gs://validation-gcs-bucket/validation";
 const MAX_OBJECTS: usize = 256;
 const MAX_STORED_BYTES: usize = 4 * 1024 * 1024;
 const MAX_FILE_BYTES: usize = 512 * 1024;
@@ -45,24 +44,28 @@ impl OwnedRoot {
         )
         .unwrap();
         assert_eq!(selected.scheme, Scheme::Gcs);
-        assert_eq!(
-            selected.canonical(),
-            AUTHORIZED_ROOT,
+        let scope = grv_conformance::release_validation_config::load();
+        let authorized_root = &scope.gcs.root;
+        assert!(
+            selected.canonical() == *authorized_root,
             "unauthorized write root"
         );
         let account = std::env::var("GRV_GCS_ACCOUNT").expect("explicit GCS account required");
         let project = std::env::var("GRV_GCS_PROJECT").expect("explicit GCS project required");
-        assert!(!account.trim().is_empty() && !project.trim().is_empty());
+        assert!(
+            account == scope.gcs.account && project == scope.gcs.project,
+            "GCS identity does not match private authorization"
+        );
         let options = CloudOptions {
             gcs_account: Some(account.clone()),
             gcs_project: Some(project.clone()),
             ..Default::default()
         };
         let uuid = Uuid::v4();
-        let root = format!("{AUTHORIZED_ROOT}/{uuid}");
+        let root = format!("{authorized_root}/{uuid}");
         eprintln!("Owned GCS fixture CLI test root: {root}");
         let mut owned = Self {
-            inventory_backend: CloudBackend::open(AUTHORIZED_ROOT, options.clone()).unwrap(),
+            inventory_backend: CloudBackend::open(authorized_root, options.clone()).unwrap(),
             backend: CloudBackend::open(&root, options).unwrap(),
             prefix: ObjectPrefix::new(format!("{uuid}/")).unwrap(),
             root,

@@ -86,7 +86,9 @@ impl Peer {
                 let length: usize = headers
                     .get("content-length")
                     .map_or(0, |s| s.parse().unwrap());
-                assert!(length <= 16 * 1024 * 1024);
+                // Bound synthetic peer allocations while admitting configurable PUT
+                // tests that deliberately cross the default 16 MiB threshold.
+                assert!(length <= 32 * 1024 * 1024);
                 while bytes.len() - header_end < length {
                     let mut buffer = [0; 8192];
                     let n = socket.read(&mut buffer).unwrap();

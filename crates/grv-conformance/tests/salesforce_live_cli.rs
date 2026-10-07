@@ -26,9 +26,6 @@ use std::{
     process::Command,
 };
 
-const AUTHORIZED_ORG: &str = "fixture-user@example.invalid";
-const AUTHORIZED_ID: &str = "00D000000000001AAA";
-
 fn fixture() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../../spec/fixtures/release-validation/salesforce")
 }
@@ -65,8 +62,11 @@ impl Environment {
             std::env::var("GRV_SALESFORCE_TEST_ORG_ID").expect("explicit expected org ID");
         // This authorization is for exactly this disposable org, not a default
         // alias or an arbitrary (possibly production) environment override.
-        assert_eq!(org, AUTHORIZED_ORG);
-        assert_eq!(expected, AUTHORIZED_ID);
+        let scope = grv_conformance::release_validation_config::load();
+        assert!(
+            org == scope.sf.org && expected == scope.sf.org_id,
+            "Salesforce selection does not match private authorization"
+        );
         grv_adapter_salesforce::auth::OrgId::parse(&expected).unwrap();
         let transport = match std::env::var("GRV_SALESFORCE_TEST_TRANSPORT") {
             Ok(value) => value,
@@ -726,8 +726,11 @@ fn verify_rows_at(
 // Deliberately suppress child output: org/auth diagnostics must never leak tokens.
 // Nonzero status remains a hard failure, including reset failures.
 fn fixture_python(environment: &Environment, script: &str, reset: bool) -> Result<(), String> {
-    assert_eq!(environment.org, AUTHORIZED_ORG);
-    assert_eq!(environment.expected, AUTHORIZED_ID);
+    let scope = grv_conformance::release_validation_config::load();
+    assert!(
+        environment.org == scope.sf.org && environment.expected == scope.sf.org_id,
+        "Salesforce mutation does not match private authorization"
+    );
     let mut command = Command::new("python3");
     command.arg("-B").arg(fixture().join(script)).args([
         "--org",

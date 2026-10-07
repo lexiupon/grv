@@ -15,6 +15,34 @@ use std::{
     process::Command,
 };
 
+// The separately configured reader uses the authorized profile too; this is
+// not an independent least-privilege credential gate.
+fn authorize_s3(parent: &str, reader_profile: &str, reader_region: &str) {
+    let cfg = grv_conformance::release_validation_config::load();
+    let writer_profile = std::env::var("AWS_PROFILE").expect("explicit writer profile required");
+    let writer_region = std::env::var("AWS_REGION").expect("explicit writer region required");
+    assert!(
+        parent.trim_end_matches('/') == cfg.s3.root,
+        "unauthorized S3 parent"
+    );
+    assert!(
+        writer_profile == cfg.s3.profile,
+        "unauthorized S3 writer profile"
+    );
+    assert!(
+        writer_region == cfg.s3.region,
+        "unauthorized S3 writer region"
+    );
+    assert!(
+        reader_profile == cfg.s3.profile,
+        "unauthorized S3 reader profile"
+    );
+    assert!(
+        reader_region == cfg.s3.region,
+        "unauthorized S3 reader region"
+    );
+}
+
 struct Cleanup<'a>(&'a CloudBackend);
 impl Drop for Cleanup<'_> {
     fn drop(&mut self) {
@@ -161,17 +189,18 @@ fn reader_setup(root: &str, profile: &str, region: &str, extensions: &Path) -> V
 }
 
 #[test]
-#[ignore = "requires a dedicated writable GRV S3 prefix, independent adapter reader and pinned extensions"]
+#[ignore = "requires a dedicated writable GRV S3 prefix, separately configured adapter reader and pinned extensions"]
 fn live_s3_views_multifile_refresh_atomic_checks_and_source_free_receipts() {
     let parent = std::env::var("GRV_S3_TEST_ROOT").expect("dedicated test root required");
-    let profile =
-        std::env::var("GRV_DUCKDB_S3_READ_PROFILE").expect("independent reader profile required");
+    let profile = std::env::var("GRV_DUCKDB_S3_READ_PROFILE")
+        .expect("separately configured reader profile required");
     let region = std::env::var("AWS_REGION").expect("explicit region required");
+    authorize_s3(&parent, &profile, &region);
     let extensions = PathBuf::from(
         std::env::var("GRV_DUCKDB_EXTENSIONS_DIR").expect("pinned local extensions required"),
     );
     let root = format!(
-        "{}/s3-view-{}/space%20and%25",
+        "{}/{}/space%20and%25",
         parent.trim_end_matches('/'),
         Uuid::v4()
     );
@@ -365,7 +394,11 @@ fn live_s3_native_reader_exact_uri_validator_hash_fallback_and_changed_hash_refu
     use parquet::arrow::ArrowWriter;
     use std::sync::Arc;
     let parent = std::env::var("GRV_S3_TEST_ROOT").unwrap();
-    let root = format!("{}/s3-read-{}", parent.trim_end_matches('/'), Uuid::v4());
+    let profile = std::env::var("GRV_DUCKDB_S3_READ_PROFILE").unwrap();
+    let region = std::env::var("AWS_REGION").unwrap();
+    authorize_s3(&parent, &profile, &region);
+    let root = format!("{}/{}", parent.trim_end_matches('/'), Uuid::v4());
+    eprintln!("S3 native reader conformance root: {root}");
     let backend = CloudBackend::open(&root, CloudOptions::default()).unwrap();
     let _cleanup = Cleanup(&backend);
     let key =
@@ -414,8 +447,8 @@ fn live_s3_native_reader_exact_uri_validator_hash_fallback_and_changed_hash_refu
     let engine = temp.path().join("reader.duckdb");
     let reader = S3Reader {
         scope: root.clone(),
-        profile: std::env::var("GRV_DUCKDB_S3_READ_PROFILE").unwrap(),
-        region: std::env::var("AWS_REGION").unwrap(),
+        profile,
+        region,
     };
     let plan = p::PullPlan {
         identity: p::PullIdentity { binding: p::WorkspaceBinding { canonical_root: root.clone(), workspace_id: Uuid::v4() }, attempt_id: Uuid::v4(), request_sha256: Digest::new("a".repeat(64)).unwrap(), adapter_identity: serde_json::from_value(json!({"name":"duckdb","package_version":"0.1.0","interface_version":1,"binding_schema_version":1})).unwrap(), dataset: Name::new("probe").unwrap(), target_schema: p::RelationName::new("app").unwrap(), write_mode: p::WriteMode::Replace, scope_mode: p::ScopeMode::Complete, transform_mode: p::TransformMode::Identity, requested_revision: RequestedRevision::Latest(LatestRevision::Latest) },

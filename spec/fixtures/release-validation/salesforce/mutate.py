@@ -15,8 +15,7 @@ import json
 import generate
 import provision
 
-AUTHORIZED_ORG = "fixture-user@example.invalid"
-AUTHORIZED_ID = "00D000000000001AAA"
+from private_scope import salesforce_scope
 QUERY = ("SELECT Id, Name, GrvStatus__c, GrvPartitionDate__c FROM GrvFix__c "
          "WHERE Name IN ('GRVFIX-00000', 'GRVFIX-00001') ORDER BY Name")
 CHANGES = {
@@ -37,6 +36,7 @@ def fixed_rows(sf):
 
 
 def mutate(org, expected_org_id):
+    AUTHORIZED_ORG, AUTHORIZED_ID = salesforce_scope()
     if os.environ.get("GRV_SALESFORCE_TEST_MUTATION") != "allow":
         raise SystemExit("Requires GRV_SALESFORCE_TEST_MUTATION=allow")
     if org != AUTHORIZED_ORG or expected_org_id != AUTHORIZED_ID:

@@ -1,5 +1,9 @@
 //! Explicitly opt-in source validation. This test never creates a Bulk job,
 //! writes source records, or contacts a default org chosen by the CLI.
+#[path = "../../grv-conformance/src/release_validation_config.rs"]
+#[allow(dead_code)]
+mod private_scope;
+
 use grv_adapter_api::{Column, TableContract};
 use grv_adapter_salesforce::{
     acquisition::SourceHttp,
@@ -77,8 +81,9 @@ impl HttpExecutor for DiagnosticHttp {
 #[test]
 #[ignore = "requires an explicitly provided GRV_SALESFORCE_TEST_ORG and installed sf/curl"]
 fn named_org_authentication_metadata_and_read_only_rest_query() {
-    let org = std::env::var("GRV_SALESFORCE_TEST_ORG")
-        .expect("set GRV_SALESFORCE_TEST_ORG explicitly; no default org is used");
+    let scope = private_scope::load().sf;
+    let org = scope.org;
+    let expected = format!("salesforce:{}", scope.org_id);
     let connection = Connection {
         org,
         api_version: "v66.0".into(),
@@ -89,8 +94,6 @@ fn named_org_authentication_metadata_and_read_only_rest_query() {
         locate_connection(&connection, &mut FileMetadataStore::for_home(home.into())).unwrap();
     let canonical = locator.canonical_connection.clone();
     let mut bound = BoundConnection::bind(locator).unwrap();
-    let expected = std::env::var("GRV_SALESFORCE_TEST_IDENTITY")
-        .expect("set the exact authorized org identity explicitly");
     let facts = Arc::new(Mutex::new(HttpDiagnostic::default()));
     let backend = CliAuthentication {
         program: "sf".into(),

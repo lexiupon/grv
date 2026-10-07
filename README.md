@@ -36,8 +36,40 @@ grv --json gc data --grv /protected/path/store --dry-run
 grv --json gc data --grv /protected/path/store --apply
 ```
 
+For S3 writers with only `s3:ListBucket`, `s3:GetObject`, `s3:PutObject` and
+`s3:DeleteObject`, explicitly set `GRV_S3_UPLOAD_MODE=single-put` on the GRV
+CLI environment. Production adapters send Arrow data to the host; the CLI
+owns GRV publication writes and reads these settings directly. This uses atomic conditional PUT
+(`If-Match` / `If-None-Match`), never multipart APIs, and buffers each object
+up to **1 GiB by default** (1,073,741,824 bytes). Configure the byte limit explicitly, for example:
+
+```bash
+export GRV_S3_UPLOAD_MODE=single-put
+export GRV_S3_SINGLE_PUT_MAX_BYTES=67108864  # 64 MiB per object
+```
+
+The limit must be a positive ASCII decimal byte count, at most **5,000,000,000**
+bytes and within the platform's address-space bounds. It applies to each object,
+not the entire dataset. Set it on the CLI process that owns publication.
+The 1 GiB default targets deployments with at least 64 GiB of RAM. Higher limits
+allow correspondingly higher per-upload memory usage (concurrent uploads multiply
+that usage), so choose a limit appropriate for available memory and concurrency.
+GRV does not automatically detect RAM or reduce this limit; smaller hosts should
+set a lower value explicitly.
+Buffers grow on demand, not by allocating the configured maximum up front.
+Larger objects or buffer-allocation failures refuse before a write request;
+this remains a buffered mode, not an unbounded streaming mode. There is no automatic retry/fallback after a failed
+or ambiguous multipart request. Normal multipart streaming remains the default;
+its abort/list cleanup permissions are separate. Bucket policies, KMS encryption
+and other service restrictions can require additional permissions. The limited
+mode does not claim to inventory or reclaim preexisting multipart uploads.
+
 Salesforce uses existing local CLI authentication, API v66.0 and REST-first `auto`. See [its helper and credential requirements](crates/grv-adapter-salesforce/README.md). Credentials stay in local configuration and private helper pipes.
 
-Native builds advertise snapshot extraction, transactional local and S3-view pulls, managed and external builds, and read-only inspection after their conformance gates. External preparation fixes held S3 input views independently of later tracking refreshes. Accepted exports and terminal outcomes replay without their source; a pending post-publication acknowledgement retries only its fixed idempotent hook. Platform execution and complete native dependency notices remain release gates. Live GCS primitives and fixture-CLI publication/replay have passed in owned writable prefixes; production GCS integration qualification is still incomplete.
+Native builds advertise snapshot extraction, transactional local and S3-view pulls, managed and external builds, and read-only inspection after their conformance gates. External preparation fixes held S3 input views independently of later tracking refreshes. Accepted exports and terminal outcomes replay without their source; a pending post-publication acknowledgement retries only its fixed idempotent hook. Platform execution and complete native dependency notices remain release gates. Local and production GCS lifecycles have passed on the previous clean candidate.
+Production S3 multipart and single-PUT lifecycles passed on follow-up bytes;
+the configurable 1 GiB default and final candidate still require qualification.
+S3 fixed-file views and external builds are distinct named gates, not implied
+by publication/local-pull evidence.
 
 The [first release validation plan](spec/grv-v1-release-validation.md) defines the full acceptance matrix. The [validation operations index](spec/release-validation/README.md) tracks the scoped initial macOS ARM64 gates, current status, reusable test catalog, immutable evidence references and change-based rerun policy. Development passes do not qualify later candidate binaries. The current macOS ARM64 native library requires macOS 26.0 or newer (tested host 26.7.1); do not infer macOS 11 support from the CLI or extension minimum alone. Initial scope and notice policy are recorded in [0.1.0-SCOPE.md](spec/release-validation/0.1.0-SCOPE.md).

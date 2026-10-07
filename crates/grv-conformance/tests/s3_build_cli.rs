@@ -443,11 +443,24 @@ fn live_external_s3_build_fixed_view_inputs_self_base_accepted_export_restart_an
     let profile =
         std::env::var("GRV_DUCKDB_S3_READ_PROFILE").expect("independent reader profile required");
     let region = std::env::var("AWS_REGION").expect("explicit region required");
+    let scope = grv_conformance::release_validation_config::load().s3;
+    assert!(
+        parent.trim_end_matches('/') == scope.root,
+        "unauthorized S3 parent"
+    );
+    assert!(
+        std::env::var("AWS_PROFILE").expect("explicit writer profile") == scope.profile,
+        "unauthorized writer profile"
+    );
+    assert!(
+        profile == scope.profile && region == scope.region,
+        "reader/writer scope differs from private authorization"
+    );
     let extensions = PathBuf::from(
         std::env::var("GRV_DUCKDB_EXTENSIONS_DIR").expect("pinned local extensions required"),
     );
     let root = format!(
-        "{}/s3-build-{}/space%20and%25",
+        "{}/{}/space%20and%25",
         parent.trim_end_matches('/'),
         Uuid::v4()
     );

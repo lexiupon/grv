@@ -24,9 +24,6 @@ import threading
 import uuid
 
 ROOT = Path(__file__).resolve().parent.parent
-AUTHORIZED = 'gs://validation-gcs-bucket/validation'
-SF_USER = 'fixture-user@example.invalid'
-SF_ID = '00D000000000001AAA'
 LIMITATIONS = [
     'Not a full build/fault-injection/transport/platform matrix or G5 approval.',
     'Does not prove removal of provider-retained soft-deleted objects.',
@@ -50,6 +47,16 @@ def load_module(name, path):
     return module
 
 
+CONFIG = load_module('release_validation_config', ROOT / 'scripts/release-validation-config.py')
+
+
+def private_config():
+    try:
+        return CONFIG.load_config()
+    except CONFIG.ConfigError as error:
+        raise ValidationError(str(error)) from None
+
+
 def parser():
     p = argparse.ArgumentParser(description=__doc__)
     for flag in ('bundle', 'write-root', 'account', 'project', 'sf-org', 'sf-org-id', 'output'):
@@ -60,7 +67,8 @@ def parser():
 
 
 def validate_args(args):
-    prefix = AUTHORIZED + '/'
+    config = private_config()
+    prefix = config['gcs']['root'] + '/'
     require(args.write_root.startswith(prefix), 'unauthorized write root')
     child = args.write_root[len(prefix):]
     try:
@@ -68,7 +76,10 @@ def validate_args(args):
     except ValueError:
         raise ValidationError('write root must be an exact UUID child') from None
     require(str(parsed) == child and parsed.version == 4, 'write root must be a canonical UUID4 child')
-    require(args.sf_org == SF_USER and args.sf_org_id == SF_ID, 'Salesforce identity not authorized')
+    require(args.sf_org == config['sf']['org'] and args.sf_org_id == config['sf']['org_id'],
+            'Salesforce identity not authorized')
+    require(args.account == config['gcs']['account'] and args.project == config['gcs']['project'],
+            'GCS account/project not authorized')
     for value in (args.account, args.project):
         require(bool(re.fullmatch(r'[A-Za-z0-9@._:+-]+', value)) and not value.startswith('-'),
                 'explicit account/project is invalid')
@@ -483,7 +494,7 @@ def lifecycle(args, runner, cloud, bundle, library, work, report):
 
 def execute(args):
     validate_args(args)
-    output = Path(args.output).absolute()
+    output = Path(args.output).resolve()
     output.mkdir(mode=0o700, parents=False, exist_ok=False)
     output.chmod(0o700)
     report = {'format_version': 1, 'scope': 'production-bundle-gcs-lifecycle',

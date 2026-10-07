@@ -10,6 +10,10 @@
 //! unknown creation response cannot supply a cleanup ID. No job-list adoption.
 #![cfg(unix)]
 
+#[path = "../../grv-conformance/src/release_validation_config.rs"]
+#[allow(dead_code)]
+mod private_scope;
+
 use arrow_array::{
     Array, BooleanArray, Date32Array, Decimal128Array, Int64Array, StringArray,
     TimestampMicrosecondArray,
@@ -563,13 +567,10 @@ fn assert_batch(
 #[test]
 #[ignore = "two real Bulk jobs; explicit pinned org identity and fully restored fixture required"]
 fn live_bulk_scaled_pages_exact_oracle_checkpoint_empty_and_cleanup() {
-    let org = std::env::var("GRV_SALESFORCE_TEST_ORG")
-        .expect("explicit test org required; no default org");
-    assert!(!org.trim().is_empty());
-    let pinned = std::env::var("GRV_SALESFORCE_TEST_IDENTITY")
-        .expect("explicit salesforce:<18-char org Id> required");
-    let org_id = pinned.strip_prefix("salesforce:").unwrap();
-    assert_eq!(org_id.len(), 18);
+    let scope = private_scope::load().sf;
+    let org = scope.org;
+    let pinned = format!("salesforce:{}", scope.org_id);
+    let org_id = scope.org_id.as_str();
     assert_eq!(OrgId::parse(org_id).unwrap().identity(), pinned);
     let connection = Connection {
         org,

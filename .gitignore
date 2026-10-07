@@ -1,4 +1,6 @@
 .pi/
 /target/
 /artifacts/
+/artifacts
+/.release-validation.local.json
 __pycache__/

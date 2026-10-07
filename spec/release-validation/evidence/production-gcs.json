@@ -34,7 +34,7 @@
         "deleted_objects": 18,
         "absence_proved": true
       },
-      "owned_root": "gs://validation-gcs-bucket/validation/8df14f5e-1dc5-4fde-a078-abcf3a4054c6"
+      "owned_root": "gs://validation-gcs-bucket/grv-release-validation/8df14f5e-1dc5-4fde-a078-abcf3a4054c6"
     },
     {
       "version": 1,
@@ -68,7 +68,7 @@
         "deleted_objects": 20,
         "absence_proved": true
       },
-      "owned_root": "gs://validation-gcs-bucket/validation/4a7ef87d-6945-4271-8a7b-7806e128d04e"
+      "owned_root": "gs://validation-gcs-bucket/grv-release-validation/4a7ef87d-6945-4271-8a7b-7806e128d04e"
     },
     {
       "version": 1,
@@ -102,7 +102,7 @@
         "deleted_objects": 20,
         "absence_proved": true
       },
-      "owned_root": "gs://validation-gcs-bucket/validation/a6b93bf5-7ea8-458b-881e-d809d6df1696"
+      "owned_root": "gs://validation-gcs-bucket/grv-release-validation/a6b93bf5-7ea8-458b-881e-d809d6df1696"
     },
     {
       "version": 1,
@@ -136,7 +136,7 @@
         "deleted_objects": 20,
         "absence_proved": true
       },
-      "owned_root": "gs://validation-gcs-bucket/validation/f8322953-2880-4768-b8db-a0314349ac8b"
+      "owned_root": "gs://validation-gcs-bucket/grv-release-validation/f8322953-2880-4768-b8db-a0314349ac8b"
     },
     {
       "version": 1,
@@ -170,7 +170,7 @@
         "deleted_objects": 39,
         "absence_proved": true
       },
-      "owned_root": "gs://validation-gcs-bucket/validation/2cea4540-71d0-4453-8f5a-be81c7b75f7f"
+      "owned_root": "gs://validation-gcs-bucket/grv-release-validation/2cea4540-71d0-4453-8f5a-be81c7b75f7f"
     },
     {
       "version": 1,
@@ -204,7 +204,7 @@
         "deleted_objects": 0,
         "absence_proved": true
       },
-      "owned_root": "gs://validation-gcs-bucket/validation/9632fdf1-a898-422f-a834-1f0cd780b27e"
+      "owned_root": "gs://validation-gcs-bucket/grv-release-validation/9632fdf1-a898-422f-a834-1f0cd780b27e"
     },
     {
       "version": 1,
@@ -238,7 +238,7 @@
         "deleted_objects": 0,
         "absence_proved": true
       },
-      "owned_root": "gs://validation-gcs-bucket/validation/73790505-f65c-4b38-8e17-ecfffde670d8"
+      "owned_root": "gs://validation-gcs-bucket/grv-release-validation/73790505-f65c-4b38-8e17-ecfffde670d8"
     }
   ],
   "supporting_files": []

@@ -377,7 +377,7 @@
       "test_files": [
         "crates/grv-storage/src/cloud/mod.rs"
       ],
-      "limits": "Explicit account/project; only owned UUID children of gs://validation-gcs-bucket/validation/; cleanup must prove absence; do not touch xyz/IAM/retention. Synthetic loss/ordered races, not all network schedules.",
+      "limits": "Explicit account/project; only owned UUID children of gs://validation-gcs-bucket/grv-release-validation/; cleanup must prove absence; do not touch xyz/IAM/retention. Synthetic loss/ordered races, not all network schedules.",
       "triggers": [
         "gcs",
         "backend",
@@ -396,7 +396,7 @@
       "test_files": [
         "crates/grv-storage/src/cloud/mod.rs"
       ],
-      "limits": "Explicit account/project; only owned UUID children of gs://validation-gcs-bucket/validation/; cleanup must prove absence; do not touch xyz/IAM/retention. Synthetic loss/ordered races, not all network schedules.",
+      "limits": "Explicit account/project; only owned UUID children of gs://validation-gcs-bucket/grv-release-validation/; cleanup must prove absence; do not touch xyz/IAM/retention. Synthetic loss/ordered races, not all network schedules.",
       "triggers": [
         "gcs",
         "backend",
@@ -432,7 +432,7 @@
       "test_files": [
         "crates/grv-conformance/tests/gcs_live_cli.rs"
       ],
-      "limits": "Explicit account/project; only owned UUID children of gs://validation-gcs-bucket/validation/; cleanup must prove absence; do not touch xyz/IAM/retention. Fixture CLI not production DuckDB; reconstructed terminal window not kill.",
+      "limits": "Explicit account/project; only owned UUID children of gs://validation-gcs-bucket/grv-release-validation/; cleanup must prove absence; do not touch xyz/IAM/retention. Fixture CLI not production DuckDB; reconstructed terminal window not kill.",
       "triggers": [
         "gcs",
         "lifecycle",
@@ -586,7 +586,7 @@
     },
     {
       "id": "production-gcs",
-      "command": "python3 scripts/validate-gcs-production.py --bundle \"$BUNDLE\" --write-root \"$OWNED_GCS_UUID_ROOT\" --account \"$GRV_GCS_ACCOUNT\" --project \"$GRV_GCS_PROJECT\" --sf-org \"$AUTHORIZED_SF_ORG\" --sf-org-id 00D000000000001AAA --output \"$FRESH_PRIVATE_OUTPUT\"",
+      "command": "GRV_RELEASE_VALIDATION_CONFIG=\"$PRIVATE_CONFIG\" python3 scripts/validate-gcs-production.py --bundle \"$BUNDLE\" --write-root \"$OWNED_UUID_CHILD\" --account \"$GCS_ACCOUNT\" --project \"$GCS_PROJECT\" --sf-org \"$SF_ORG\" --sf-org-id \"$SF_ORG_ID\" --output \"$FRESH_PRIVATE_OUTPUT\"",
       "gates": [
         "G2",
         "G5"
@@ -697,14 +697,14 @@
     },
     {
       "id": "production-s3",
-      "command": "python3 scripts/validate-s3-production.py --bundle \"$BUNDLE\" --write-root \"$OWNED_UUID_CHILD\" --profile private-scope-placeholder --region eu-west-1 --sf-org fixture-user@example.invalid --sf-org-id 00D000000000001AAA --output \"$FRESH_PRIVATE_OUTPUT\"",
+      "command": "GRV_RELEASE_VALIDATION_CONFIG=\"$PRIVATE_CONFIG\" python3 scripts/validate-s3-production.py --bundle \"$BUNDLE\" --write-root \"$OWNED_UUID_CHILD\" --profile \"$S3_PROFILE\" --region \"$S3_REGION\" --sf-org \"$SF_ORG\" --sf-org-id \"$SF_ORG_ID\" --upload-mode \"$UPLOAD_MODE\" --single-put-max-bytes \"$SINGLE_PUT_MAX_BYTES\" --output \"$FRESH_PRIVATE_OUTPUT\"",
       "test_files": [
         "scripts/validate-s3-production.py"
       ],
       "gates": [
         "G5"
       ],
-      "limits": "ExactauthorizedstagingUUIDchildonly;object+multipartinventorymustpass beforewrites;noIAM/retention changes. Noindependentleastprivilegecredentialclaim.",
+      "limits": "Private-config-pinned UUID child only; current-object inventory/cleanup required. Multipart mode also inventories/aborts owned uploads; single-put mode creates none and never claims multipart absence. No IAM/retention changes or independently restricted-principal claim.",
       "triggers": [
         "candidate",
         "safety",
@@ -730,6 +730,28 @@
         "safety"
       ],
       "live": false,
+      "serial": true
+    },
+    {
+      "id": "s3-capabilities",
+      "command": "GRV_RELEASE_VALIDATION_CONFIG=\"$PRIVATE_CONFIG\" python3 scripts/validate-s3-capabilities.py --gate \"$NAMED_GATE\" --upload-mode \"$UPLOAD_MODE\" --output \"$FRESH_PRIVATE_OUTPUT\"",
+      "test_files": [
+        "scripts/validate-s3-capabilities.py",
+        "crates/grv-conformance/tests/s3_views_cli.rs",
+        "crates/grv-conformance/tests/s3_build_cli.rs",
+        "crates/grv-storage/src/cloud/mod.rs"
+      ],
+      "gates": [
+        "G4",
+        "G5"
+      ],
+      "limits": "ONEexactselectoronly;privatepinnedaccount/prefix/region;freshUUIDchild;ownedobjects+multipartinventoryabsence;noIAM/retentionchanges. Samewriter/readerprofileNOTindependentleastprivilege. ConformanceCLI/SDKnotproductionbundle.",
+      "triggers": [
+        "candidate",
+        "backend",
+        "safety"
+      ],
+      "live": true,
       "serial": true
     }
   ]

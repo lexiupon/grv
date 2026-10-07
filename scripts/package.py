@@ -20,6 +20,17 @@ def digest(path):
 
 
 def protected_parent(path):
+    # An explicitly configured artifacts archive alias is allowed; arbitrary
+    # writable/symlink installation ancestors remain refused.
+    if (ROOT / "artifacts").is_symlink() and path.absolute().is_relative_to(ROOT / "artifacts"):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("artifact_evidence", ROOT / "scripts/validation-evidence.py")
+        evidence = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(evidence)
+        approved = evidence.artifact_root()
+        if not path.resolve().is_relative_to(approved):
+            raise SystemExit("bundle path escapes approved artifact archive")
+        path = path.resolve()
     for ancestor in (path, *path.parents):
         metadata = ancestor.lstat()
         if not stat.S_ISDIR(metadata.st_mode) or metadata.st_mode & 0o022:

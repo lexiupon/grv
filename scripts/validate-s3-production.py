@@ -18,27 +18,29 @@ import uuid
 SPEC = importlib.util.spec_from_file_location('production_oracle', Path(__file__).with_name('validate-gcs-production.py'))
 PROOF = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(PROOF)
-AUTHORIZED = 's3://private-scope-placeholder/private-scope-placeholder'
-PROFILE = 'private-scope-placeholder'
-REGION = 'eu-west-1'
 LIMIT = 512
 
 
 def validate_args(args):
-    PROOF.require(args.write_root.startswith(AUTHORIZED + '/'), 'unauthorized S3 root')
-    child = args.write_root[len(AUTHORIZED) + 1:]
+    config = PROOF.private_config()
+    authorized = config['s3']['root']
+    PROOF.require(args.write_root.startswith(authorized + '/'), 'unauthorized S3 root')
+    child = args.write_root[len(authorized) + 1:]
     try:
         parsed = uuid.UUID(child)
     except ValueError:
         raise PROOF.ValidationError('S3 root must be an exact UUID child') from None
     PROOF.require(str(parsed) == child and parsed.version == 4, 'canonical UUID4 child required')
-    PROOF.require(args.profile == PROFILE and args.region == REGION, 'unauthorized staging profile/region')
-    PROOF.require(args.sf_org == PROOF.SF_USER and args.sf_org_id == PROOF.SF_ID, 'unauthorized Salesforce org')
+    PROOF.require(args.profile == config['s3']['profile'] and args.region == config['s3']['region'],
+                  'unauthorized staging profile/region')
+    PROOF.require(args.sf_org == config['sf']['org'] and args.sf_org_id == config['sf']['org_id'],
+                  'unauthorized Salesforce org')
 
 
 class Cloud:
     def __init__(self, args, runner):
         self.root, self.runner = args.write_root, runner
+        self.single_put = getattr(args, 'upload_mode', 'multipart') == 'single-put'
         self.bucket, self.prefix = args.write_root[5:].split('/', 1)
         self.prefix += '/'
         self.flags = ['--profile', args.profile, '--region', args.region,
@@ -60,6 +62,8 @@ class Cloud:
         return entries
 
     def uploads(self):
+        if self.single_put:
+            return []  # No multipart API used; not an inventory/absence proof.
         value = self.json('s3api', 'list-multipart-uploads', '--bucket', self.bucket,
                           '--prefix', self.prefix, '--max-uploads', str(LIMIT + 1), '--no-paginate')
         PROOF.require(not value.get('IsTruncated'), 'owned multipart inventory truncated')
@@ -85,7 +89,8 @@ class Cloud:
             PROOF.require(code == 0, 'owned S3 delete failed')
         PROOF.require(not self.inventory() and not self.uploads(), 'owned S3 prefix not absent')
         return {'deleted_objects': len(objects), 'aborted_uploads': len(uploads),
-                'current_objects_absent': True, 'multipart_uploads_absent': True,
+                'current_objects_absent': True, 'multipart_uploads_absent': None if self.single_put else True,
+                'multipart_inventory': 'not requested; single-put protocol creates no uploads' if self.single_put else 'listed',
                 'absence_proved': True,
                 'limitations': ['Versioned historical objects/delete markers not inventoried or reclaimed.',
                                 'Bucket versioning/retention settings remain unchanged.']}
@@ -96,18 +101,25 @@ def main():
     for flag in ('bundle', 'write-root', 'profile', 'region', 'sf-org', 'sf-org-id', 'output'):
         parser.add_argument('--' + flag, required=True)
     parser.add_argument('--only', choices=('all', 'duckdb'), default='all')
+    parser.add_argument('--upload-mode', choices=('multipart', 'single-put'), default='multipart')
+    parser.add_argument('--single-put-max-bytes', type=int, default=1024 * 1024 * 1024)
+
     args = parser.parse_args()
     validate_args(args)
-    output = Path(args.output).absolute()
+    PROOF.require(1 <= args.single_put_max_bytes <= 5_000_000_000, 'invalid single PUT byte limit')
+    output = Path(args.output).resolve()
     output.mkdir(mode=0o700, exist_ok=False)
     output.chmod(0o700)
     environment = {k: v for k, v in os.environ.items() if k in ('HOME', 'PATH', 'TMPDIR', 'LANG', 'LC_ALL')}
     environment.update(AWS_PROFILE=args.profile, AWS_REGION=args.region, AWS_DEFAULT_REGION=args.region,
                        AWS_EC2_METADATA_DISABLED='true', AWS_PAGER='', AWS_CLI_AUTO_PROMPT='off')
+    environment['GRV_S3_UPLOAD_MODE'] = args.upload_mode
+    environment['GRV_S3_SINGLE_PUT_MAX_BYTES'] = str(args.single_put_max_bytes)
     runner = PROOF.Runner(output, environment)
     cloud = Cloud(args, runner)
     report = {'version': 1, 'scope': 'production-bundle-S3-lifecycle', 'owned_root': args.write_root,
-              'profile': args.profile, 'region': args.region, 'ok': False,
+              'profile': args.profile, 'region': args.region, 'upload_mode': args.upload_mode,
+              'single_put_max_bytes': args.single_put_max_bytes, 'ok': False,
               'limitations': ['No least-privilege reader-credential claim; same explicit staging profile.',
                               'Representative managed publication/local pull/replay, not full external build/view fault matrix.',
                               'No versioned historical object reclamation claim.'],
@@ -119,6 +131,8 @@ def main():
         manifest, library = PROOF.check_bundle(bundle)
         report['manifest_sha256'] = hashlib.sha256((bundle / 'bundle.json').read_bytes()).hexdigest()
         report['source_commit'] = manifest['source_commit']
+        report['manifest'] = {'profile': manifest['profile'], 'source_commit': manifest.get('source_commit'),
+                              'source_dirty': manifest.get('source_dirty'), 'adapters': manifest['adapters']}
         PROOF.require(not cloud.inventory() and not cloud.uploads(), 'S3 child preexists; ownership refused')
         owned = True
         report['ownership_confirmed'] = True

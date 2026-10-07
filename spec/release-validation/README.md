@@ -5,6 +5,27 @@ The normative contracts and `../grv-v1-release-validation.md` remain authoritati
 The initial macOS release gate proposal below is a **scoped preview policy**, not
 completion of the full-v1 plan. Publishing always needs separate approval.
 
+## Private live configuration and archived artifacts
+
+Real live Salesforce identities, GCS account/project/bucket and S3 profile/region/bucket
+belong only in the ignored owner-only `.release-validation.local.json` file.
+Set `GRV_RELEASE_VALIDATION_CONFIG` to its absolute path before live recipes.
+The required sections are `sf` (`org`, `org_id`), `gcs` (`root`, `account`, `project`),
+`s3` (`root`, `profile`, `region`) and `archive` (`root`). Cloud roots must name
+an exact nonempty authorized prefix. This file is **coordinates, not credentials**;
+tokens/passwords/access keys are refused. Fixtures and tests never default to a
+real account. Synthetic examples in this tree are not authorization. Historical
+Git commits retain formerly recorded coordinates; no history rewrite is implied.
+
+`artifacts` can be a symlink to one run-specific child of the configured archive
+root. Evidence/packaging tooling checks this approved alias instead of accepting
+arbitrary symlink escapes. New identity-bound work uses canonical paths. Moving
+existing journals does not authorize rewriting their immutable identities: retain
+the old baseline and create a new baseline in the archive. A local OneDrive move
+does not itself prove remote synchronization, retention guarantees or a backup.
+Raw private evidence may contain account identities and needs restricted access;
+never publish it alongside the distributable without review.
+
 ## Keep three things separate
 
 1. **Test catalog:** `catalog.json` versions repeatable commands, safety limits,

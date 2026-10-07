@@ -4,6 +4,7 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+import os
 from pathlib import Path
 import platform
 import subprocess
@@ -21,12 +22,29 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def artifact_root():
+    """Allow the user-approved artifacts alias only, not arbitrary symlinks."""
+    alias = ROOT / 'artifacts'
+    if not alias.is_symlink():
+        return alias.resolve()
+    config = ROOT / '.release-validation.local.json'
+    metadata = config.lstat()
+    if config.is_symlink() or metadata.st_uid != os.geteuid() or metadata.st_mode & 0o077:
+        raise ValueError('private artifact configuration must be owner-only')
+    approved = Path(json.loads(config.read_text())['archive']['root']).resolve(strict=True)
+    target = alias.resolve(strict=True)
+    if target.parent != approved or not target.is_dir():
+        raise ValueError('artifacts alias differs from approved run archive')
+    return target
+
+
 def relative_file(name):
     path = Path(name)
     if path.is_absolute() or '..' in path.parts:
         raise ValueError('evidence paths must be repository-relative')
     resolved = (ROOT / path).resolve()
-    if not resolved.is_relative_to(ROOT) or not resolved.is_file():
+    allowed_artifact = path.parts and path.parts[0] == 'artifacts' and resolved.is_relative_to(artifact_root())
+    if (not resolved.is_relative_to(ROOT) and not allowed_artifact) or not resolved.is_file():
         raise ValueError(f'missing or escaped file: {name}')
     return resolved
 
@@ -107,8 +125,9 @@ def record_run(args, catalog):
     details = json.loads(Path(args.details).read_text())
     if set(details) != DETAILS:
         raise ValueError(f'details keys must be exactly: {sorted(DETAILS)}')
-    path = Path(args.log).resolve()
-    if not path.is_relative_to(ROOT):
+    logical_path = Path(args.log).absolute()
+    path = logical_path.resolve()
+    if not logical_path.is_relative_to(ROOT) or not path.is_relative_to(artifact_root()):
         raise ValueError('log must be in repository artifact workspace')
     record = {
         'version': 1, 'run_id': str(uuid.uuid4()), 'catalog_id': args.catalog_id,
@@ -120,13 +139,12 @@ def record_run(args, catalog):
         'source_dirty': bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT)),
         'source_sha256': snapshot(),
         'recording_host': {'system': platform.system(), 'machine': platform.machine()},
-        'logs': [{'path': path.relative_to(ROOT).as_posix(), 'sha256': digest(path)}],
+        'logs': [{'path': logical_path.relative_to(ROOT).as_posix(), 'sha256': digest(path)}],
         **details,
     }
     check_record(record, catalog)
-    directory = Path(args.out_dir).resolve()
-    artifacts = ROOT / 'artifacts'
-    if not directory.is_relative_to(artifacts.resolve()):
+    directory = Path(args.out_dir).absolute()
+    if not directory.resolve().is_relative_to(artifact_root()):
         raise ValueError('new raw run records must stay under ignored artifacts/')
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     destination = directory / f'{record["run_id"]}.json'

@@ -4,7 +4,7 @@
   "scope": "macOS ARM64 incremental first pass; initial macOS candidate; full-v1/four-platform qualification deferred",
   "live_execution_authorized": true,
   "source_sha256": {
-    "spec/grv-v1-release-validation.md": "3931270279ce201bdee4b6ab2cb31edb3efcf95367c892045c8690593419ca6d",
+    "spec/grv-v1-release-validation.md": "daee718ed180d3cdf1da980d5b25d34fc7cd7f68d5eb5cc6f396bfa41184d4ee",
     "spec/grv-client-v1.md": "5029d099f1206bd4f001365e70d5e7190f272f75f24f2101f4d33ec77c59826d",
     "spec/grv-client-v1-execution.md": "ed0356cfaa9c2da37c44624738dea1b4141c3763031160fb66ffb871f416e49f",
     "spec/grv-adapter-protocol-v1.md": "c9ac36e6d166409933f558ba28e7bde3c631513802a3f2b872ea62c1e5e1b182",
@@ -3613,7 +3613,7 @@
       "section": "Handshake, installation, and registration",
       "line": 1929,
       "scenario": "unsafe owner or group permissions, or executable changed after hashing",
-      "required_result": "refusal under §1 checks; no spawn of an observed changed object",
+      "required_result": "refusal under \u00a71 checks; no spawn of an observed changed object",
       "candidate_test_files": [
         "crates/grv-conformance/tests/host.rs"
       ],
@@ -5711,8 +5711,9 @@
   "execution_scope": {
     "platform": "macOS ARM64",
     "mapping_policy": "incremental reviewed exact selectors and assertions alongside execution",
-    "gcs_write_root": "gs://validation-gcs-bucket/validation/",
-    "salesforce_org_id": "00D000000000001AAA",
+    "private_configuration": "GRV_RELEASE_VALIDATION_CONFIG",
+    "gcs_write_root": null,
+    "salesforce_org_id": null,
     "publish_authorized": false
   }
 }

@@ -56,6 +56,17 @@ Final download/checksum/installation destinations must be approved separately.
 - Recovery/GC can report busy/unknown/waiting when writer-stop or remote-effect
   evidence is insufficient. Expiry alone is not proof of stopped writes.
 - GCS-backed data materializes locally; GCS views are not advertised.
+- S3 defaults to multipart streaming. Explicit `GRV_S3_UPLOAD_MODE=single-put`
+  uses conditional PUT without multipart APIs. Its buffered per-object default
+  is **1 GiB** (1,073,741,824 bytes), configurable through
+  `GRV_S3_SINGLE_PUT_MAX_BYTES` up to 5,000,000,000 bytes. This default targets
+  machines with at least 64 GiB RAM; concurrent uploads add memory demand and
+  the limit is not an RSS cap. Lower it explicitly on smaller machines.
+  Oversized/source-failed objects refuse before writing; uncertain writes are
+  never automatically retried through another protocol. Four-action-only IAM
+  principal qualification is not currently claimed; KMS/bucket policies may
+  require more permissions. Single-PUT mode does not inventory preexisting
+  multipart uploads.
 - Service-fault tests include synthetic response suppression and controlled
   process exits. They do not establish exhaustive network-loss/cancel schedules
   or performance capacity.

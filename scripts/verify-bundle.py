@@ -182,7 +182,8 @@ def main():
         raise SystemExit("adapter did not load the relocated guard library")
     extensions_verified = verify_extensions(bundle, manifest.get("native_extensions"), library)
     if args.compatibility_root:
-        temp = args.compatibility_root.absolute()
+        # Canonicalize archive aliases before creating identity-bound journals.
+        temp = args.compatibility_root.resolve()
         if temp.exists() or temp.is_symlink():
             raise SystemExit("compatibility workspace must be fresh")
         packager_spec = importlib.util.spec_from_file_location(

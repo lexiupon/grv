@@ -68,11 +68,11 @@ def main():
     if set(details) != EVIDENCE.DETAILS - {'command'}:
         raise SystemExit('details need assertions/limitations/cleanup/environment/binary_sha256/fault only')
     destination = args.out_dir.absolute()
-    if not destination.resolve().is_relative_to((ROOT / 'artifacts').resolve()):
+    if not destination.resolve().is_relative_to(EVIDENCE.artifact_root()):
         raise SystemExit('private logs must be under ignored artifacts/')
     # Reject aliases before creating even the evidence directory.
     for parent in (destination, *destination.parents):
-        if parent.is_symlink():
+        if parent.is_symlink() and parent != ROOT / 'artifacts':
             raise SystemExit('evidence directory symlink refused')
     destination.mkdir(parents=True, exist_ok=True, mode=0o700)
     run_id = str(uuid.uuid4())

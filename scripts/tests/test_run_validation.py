@@ -25,7 +25,7 @@ class RunnerTests(unittest.TestCase):
             if allow:
                 argv += ['--allow-live']
             argv += ['--', 'test-command']
-            with patch.object(sys, 'argv', argv), patch.object(RUN, 'ROOT', root), \
+            with patch.object(sys, 'argv', argv), patch.object(RUN, 'ROOT', root), patch.object(RUN.EVIDENCE, 'artifact_root', return_value=root / 'artifacts'), \
                     patch.object(RUN.EVIDENCE, 'load_catalog', return_value={'unit': {'live': live}}), \
                     patch.object(RUN.EVIDENCE, 'snapshot', side_effect=snapshots or [{}, {}]), \
                     patch.object(RUN.EVIDENCE, 'digest', return_value='a' * 64), \

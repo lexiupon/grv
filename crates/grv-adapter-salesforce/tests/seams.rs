@@ -168,8 +168,10 @@ fn schema_descriptors_supply_whole_point_defaults_and_closed_fragments() {
     assert!(options.has_default);
     assert_eq!(options.default_value, json!({}));
     assert!(
-        serde_json::from_value::<Connection>(json!({"org":"sample-org","access_token":"forbidden"}))
-            .is_err()
+        serde_json::from_value::<Connection>(
+            json!({"org":"sample-org","access_token":"forbidden"})
+        )
+        .is_err()
     );
     assert!(serde_json::from_value::<Options>(json!({"batch_size":1})).is_err());
     assert!(serde_json::from_value::<OrgId>(json!("not-an-org")).is_err());

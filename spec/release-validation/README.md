@@ -15,7 +15,9 @@ The required sections are `sf` (`org`, `org_id`), `gcs` (`root`, `account`, `pro
 an exact nonempty authorized prefix. This file is **coordinates, not credentials**;
 tokens/passwords/access keys are refused. Fixtures and tests never default to a
 real account. Synthetic examples in this tree are not authorization. Historical
-Git commits retain formerly recorded coordinates; no history rewrite is implied.
+Git history is subject to the explicitly requested local privacy rewrite;
+retain the original history and old-to-new identity mapping privately outside Git.
+No remote force-push is authorized by a local rewrite.
 
 `artifacts` can be a symlink to one run-specific child of the configured archive
 root. Evidence/packaging tooling checks this approved alias instead of accepting

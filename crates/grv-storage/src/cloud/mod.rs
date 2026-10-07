@@ -192,7 +192,10 @@ pub struct CloudOptions {
     pub s3_single_put_max_bytes: Option<String>,
     pub gcs_account: Option<String>,
     pub gcs_project: Option<String>,
+    /// Upload/control timeout (default 120 seconds).
     pub timeout: Duration,
+    /// Full-object/range download seconds: default 600, valid 1..=3600.
+    pub read_timeout_seconds: Option<String>,
 }
 impl Default for CloudOptions {
     fn default() -> Self {
@@ -207,6 +210,8 @@ impl Default for CloudOptions {
             gcs_account: std::env::var("GRV_GCS_ACCOUNT").ok(),
             gcs_project: std::env::var("GRV_GCS_PROJECT").ok(),
             timeout: Duration::from_secs(120),
+            read_timeout_seconds: std::env::var_os("GRV_CLOUD_READ_TIMEOUT_SECONDS")
+                .map(|value| value.to_string_lossy().into_owned()),
         }
     }
 }
@@ -219,6 +224,29 @@ impl fmt::Debug for CloudOptions {
             .finish()
     }
 }
+fn cloud_read_timeout(value: Option<&str>) -> Result<Duration> {
+    let Some(value) = value else {
+        return Ok(Duration::from_secs(600));
+    };
+    if value.is_empty() || !value.bytes().all(|byte| byte.is_ascii_digit()) {
+        return Err(Error::new(
+            ErrorKind::InvalidRecord,
+            "cloud read timeout must be decimal seconds in 1..=3600",
+        ));
+    }
+    let seconds = value
+        .parse::<u64>()
+        .ok()
+        .filter(|v| (1..=3600).contains(v))
+        .ok_or_else(|| {
+            Error::new(
+                ErrorKind::InvalidRecord,
+                "cloud read timeout must be decimal seconds in 1..=3600",
+            )
+        })?;
+    Ok(Duration::from_secs(seconds))
+}
+
 trait ConditionalUpload: Send + Sync {
     fn upload(
         &self,
@@ -407,6 +435,7 @@ impl fmt::Debug for CloudBackend {
 impl CloudBackend {
     pub fn open(root: &str, options: CloudOptions) -> Result<Self> {
         let root = CloudRoot::parse(root)?;
+        let read_timeout = cloud_read_timeout(options.read_timeout_seconds.as_deref())?;
         if options.timeout.is_zero() || options.timeout > Duration::from_secs(3600) {
             return Err(Error::new(
                 ErrorKind::InvalidRecord,
@@ -475,6 +504,11 @@ impl CloudBackend {
                     };
                     builder = s3_endpoint(builder, &region)?;
                 }
+                let read_store = builder
+                    .clone()
+                    .with_client_options(clients.with_timeout(read_timeout))
+                    .build()
+                    .map_err(|e| remote_error(e, false))?;
                 let store = builder.build().map_err(|e| remote_error(e, false))?;
                 let writer = s3::S3Upload::new(
                     store.clone(),
@@ -483,10 +517,10 @@ impl CloudBackend {
                     single_put,
                     single_put_max_bytes,
                 )?;
-                let ranges = Some(S3RangeRead::new(store.clone(), options.timeout)?);
+                let ranges = Some(S3RangeRead::new(read_store.clone(), read_timeout)?);
                 Ok(Self {
                     root,
-                    store: Arc::new(store),
+                    store: Arc::new(read_store),
                     runtime,
                     writer: Arc::new(writer),
                     ranges,
@@ -507,7 +541,7 @@ impl CloudBackend {
                     .with_base_url("https://storage.googleapis.com")
                     .with_skip_signature(false)
                     .with_retry(retry)
-                    .with_client_options(clients.with_default_headers(headers));
+                    .with_client_options(clients.clone().with_default_headers(headers.clone()));
                 if let Some(account) = options.gcs_account {
                     if account.is_empty()
                         || account.len() > 320
@@ -523,6 +557,15 @@ impl CloudBackend {
                         project: options.gcs_project.clone(),
                     }));
                 }
+                let read_store = builder
+                    .clone()
+                    .with_client_options(
+                        clients
+                            .with_timeout(read_timeout)
+                            .with_default_headers(headers),
+                    )
+                    .build()
+                    .map_err(|e| remote_error(e, false))?;
                 let store = builder.build().map_err(|e| remote_error(e, false))?;
                 let writer = gcs::GcsUpload::new(
                     &root.bucket,
@@ -533,7 +576,7 @@ impl CloudBackend {
                 )?;
                 Ok(Self {
                     root,
-                    store: Arc::new(store),
+                    store: Arc::new(read_store),
                     runtime,
                     writer: Arc::new(writer),
                     ranges: None,
@@ -1089,6 +1132,38 @@ mod tests {
             Some(format!("s3://test-bucket/isolated/root/{}", key.as_str()))
         );
     }
+    #[test]
+    fn production_read_timeout_defaults_and_invalid_values_refuse_before_provider_access() {
+        assert_eq!(cloud_read_timeout(None).unwrap(), Duration::from_secs(600));
+        assert_eq!(
+            cloud_read_timeout(Some("1800")).unwrap(),
+            Duration::from_secs(1800)
+        );
+        assert_eq!(CloudOptions::default().timeout, Duration::from_secs(120));
+        for value in [
+            "",
+            "0",
+            "3601",
+            "-1",
+            "+1",
+            " 600",
+            "600s",
+            "１",
+            "18446744073709551616",
+        ] {
+            let error = CloudBackend::open(
+                "s3://synthetic-bucket",
+                CloudOptions {
+                    read_timeout_seconds: Some(value.into()),
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+            assert_eq!(error.kind, ErrorKind::InvalidRecord);
+            assert_eq!(error.effect, WriteEffect::NoEffect);
+        }
+    }
+
     #[test]
     fn cloud_root_is_pure_canonical_round_trippable_and_rejects_ambiguous_authorities() {
         for uri in [

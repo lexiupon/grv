@@ -64,6 +64,13 @@ its abort/list cleanup permissions are separate. Bucket policies, KMS encryption
 and other service restrictions can require additional permissions. The limited
 mode does not claim to inventory or reclaim preexisting multipart uploads.
 
+Cloud downloads (S3/GCS full-object reads and S3 range reads) default to a
+**600-second total request timeout**, allowing larger files on slower links.
+Set `GRV_CLOUD_READ_TIMEOUT_SECONDS` to an integer from 1 to 3600 to override it,
+for example `1800` for 30 minutes. This is a total deadline, not a throughput
+promise or idle timeout. Upload timeouts remain 120 seconds; no write retry or
+conditional-write safety rule changes.
+
 Salesforce uses existing local CLI authentication, API v66.0 and REST-first `auto`. See [its helper and credential requirements](crates/grv-adapter-salesforce/README.md). Credentials stay in local configuration and private helper pipes.
 
 Native builds advertise snapshot extraction, transactional local and S3-view pulls, managed and external builds, and read-only inspection after their conformance gates. External preparation fixes held S3 input views independently of later tracking refreshes. Accepted exports and terminal outcomes replay without their source; a pending post-publication acknowledgement retries only its fixed idempotent hook. Platform execution and complete native dependency notices remain release gates. Local and production GCS lifecycles have passed on the previous clean candidate.

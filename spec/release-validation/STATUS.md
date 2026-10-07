@@ -48,9 +48,9 @@ under ignored evidence rather than staged or deleted. No active suite is assumed
 5. Strict bundle/notice/secret audit, fresh-HOME directory/tar installation,
    relocation/local production flow and archived canonical compatibility replay.
    Generate final tar/checksums/candidate dossier and review exact claims.
-6. Seal private evidence, verify remote archive synchronization/access and agree
-   retention. Review final publication destination/tag and request separate
-   external push/tag/upload authorization only after qualification.
+6. Seal private evidence. Remote archive synchronization and retention are
+   delegated to a separate user-managed process, not GRV release blockers.
+   Review publication destination/tag and request separate push/tag/upload approval.
 
 ## Gate board
 
@@ -89,7 +89,8 @@ under ignored evidence rather than staged or deleted. No active suite is assumed
 `artifacts` is an ignored alias to one run-specific child of the user-approved
 private archive root. All 17,707 prior files were moved by same-filesystem rename;
 106 retained receipt log digests still match. Local move does **not** prove remote
-synchronization or permanent retention. Raw evidence can contain private account
+synchronization or permanent retention; the user delegates those to a separate
+process and does not require GRV to verify them. Raw evidence can contain private account
 coordinates and must not be publicly redistributed without review.
 
 Old identity-bound baselines remain unchanged; an alias is not authority to
@@ -97,5 +98,8 @@ rewrite identities. A new canonical-path archived baseline was created and
 immutable push/pull replay passed. Final candidate must replay that baseline.
 Per-run UUID receipts retain failures/timeouts, UTC intervals, source snapshots,
 binary hashes and cleanup evidence. Checkers validate structure/digests, not
-release readiness. Former account coordinates remain in old Git commits;
-no history rewrite is authorized or claimed.
+release readiness. A complete local Git-history privacy rewrite is now explicitly required by the
+user, including former account coordinates, company-specific examples and commit
+identity metadata. Keep original evidence/old-to-new mappings privately outside
+Git; no external force-push is authorized. A new post-rewrite candidate identity
+and impact qualification are required.

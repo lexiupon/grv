@@ -5,7 +5,7 @@
   "live_execution_authorized": true,
   "source_sha256": {
     "spec/grv-v1-release-validation.md": "daee718ed180d3cdf1da980d5b25d34fc7cd7f68d5eb5cc6f396bfa41184d4ee",
-    "spec/grv-client-v1.md": "5029d099f1206bd4f001365e70d5e7190f272f75f24f2101f4d33ec77c59826d",
+    "spec/grv-client-v1.md": "fda37dad8e5b94005cda2923bd02b0e25acf01d58a1052b74e81f788df45c211",
     "spec/grv-client-v1-execution.md": "ed0356cfaa9c2da37c44624738dea1b4141c3763031160fb66ffb871f416e49f",
     "spec/grv-adapter-protocol-v1.md": "c9ac36e6d166409933f558ba28e7bde3c631513802a3f2b872ea62c1e5e1b182",
     "spec/grv-storage-v2.md": "6e1389a74a54772b4d3d7ce542b96962bd0f262c81f5bc8f5ca53ed5038d228a",

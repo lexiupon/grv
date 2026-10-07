@@ -67,6 +67,10 @@ Final download/checksum/installation destinations must be approved separately.
   principal qualification is not currently claimed; KMS/bucket policies may
   require more permissions. Single-PUT mode does not inventory preexisting
   multipart uploads.
+- Cloud downloads default to a 600-second total request timeout, independently
+  configurable with `GRV_CLOUD_READ_TIMEOUT_SECONDS` (1..3600 seconds). Full
+  S3/GCS downloads and S3 range reads use it; upload timeouts remain 120 seconds.
+  Slow links may need a larger download setting; this is not a throughput promise.
 - Service-fault tests include synthetic response suppression and controlled
   process exits. They do not establish exhaustive network-loss/cancel schedules
   or performance capacity.

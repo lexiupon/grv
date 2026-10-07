@@ -1,0 +1,1776 @@
+SOURCE FILES: adler32.c
+/* adler32.c -- compute the Adler-32 checksum of a data stream
+ * Copyright (C) 1995-2011, 2016 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/* @(#) $Id$ */
+
+SOURCE FILES: compress.c
+/* compress.c -- compress a memory buffer
+ * Copyright (C) 1995-2005, 2014, 2016 Jean-loup Gailly, Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/* @(#) $Id$ */
+
+SOURCE FILES: contrib/blast/blast.c
+/* blast.c
+ * Copyright (C) 2003, 2012, 2013 Mark Adler
+ * For conditions of distribution and use, see copyright notice in blast.h
+ * version 1.3, 24 Aug 2013
+ *
+ * blast.c decompresses data compressed by the PKWare Compression Library.
+ * This function provides functionality similar to the explode() function of
+ * the PKWare library, hence the name "blast".
+ *
+ * This decompressor is based on the excellent format description provided by
+ * Ben Rudiak-Gould in comp.compression on August 13, 2001.  Interestingly, the
+ * example Ben provided in the post is incorrect.  The distance 110001 should
+ * instead be 111000.  When corrected, the example byte stream becomes:
+ *
+ *    00 04 82 24 25 8f 80 7f
+ *
+ * which decompresses to "AIAIAIAIAIAIA" (without the quotes).
+ */
+
+/*
+ * Change history:
+ *
+ * 1.0  12 Feb 2003     - First version
+ * 1.1  16 Feb 2003     - Fixed distance check for > 4 GB uncompressed data
+ * 1.2  24 Oct 2012     - Add note about using binary mode in stdio
+ *                      - Fix comparisons of differently signed integers
+ * 1.3  24 Aug 2013     - Return unused input from blast()
+ *                      - Fix test code to correctly report unused input
+ *                      - Enable the provision of initial input to blast()
+ */
+
+SOURCE FILES: contrib/blast/blast.h
+/* blast.h -- interface for blast.c
+  Copyright (C) 2003, 2012, 2013 Mark Adler
+  version 1.3, 24 Aug 2013
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the author be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+
+  Mark Adler    madler@alumni.caltech.edu
+ */
+
+
+/*
+ * blast() decompresses the PKWare Data Compression Library (DCL) compressed
+ * format.  It provides the same functionality as the explode() function in
+ * that library.  (Note: PKWare overused the "implode" verb, and the format
+ * used by their library implode() function is completely different and
+ * incompatible with the implode compression method supported by PKZIP.)
+ *
+ * The binary mode for stdio functions should be used to assure that the
+ * compressed data is not corrupted when read or written.  For example:
+ * fopen(..., "rb") and fopen(..., "wb").
+ */
+
+SOURCE FILES: contrib/infback9/infback9.c
+/* infback9.c -- inflate deflate64 data using a call-back interface
+ * Copyright (C) 1995-2008 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+SOURCE FILES: contrib/infback9/infback9.h
+/* infback9.h -- header for using inflateBack9 functions
+ * Copyright (C) 2003 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/*
+ * This header file and associated patches provide a decoder for PKWare's
+ * undocumented deflate64 compression method (method 9).  Use with infback9.c,
+ * inftree9.h, inftree9.c, and inffix9.h.  These patches are not supported.
+ * This should be compiled with zlib, since it uses zutil.h and zutil.o.
+ * This code has not yet been tested on 16-bit architectures.  See the
+ * comments in zlib.h for inflateBack() usage.  These functions are used
+ * identically, except that there is no windowBits parameter, and a 64K
+ * window must be provided.  Also if int's are 16 bits, then a zero for
+ * the third parameter of the "out" function actually means 65536UL.
+ * zlib.h must be included before this header file.
+ */
+
+SOURCE FILES: contrib/infback9/inflate9.h
+/* inflate9.h -- internal inflate state definition
+ * Copyright (C) 1995-2003 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/* WARNING: this file should *not* be used by applications. It is
+   part of the implementation of the compression library and is
+   subject to change. Applications should only use zlib.h.
+ */
+
+/* Possible inflate modes between inflate() calls */
+
+SOURCE FILES: contrib/infback9/inftree9.c
+/* inftree9.c -- generate Huffman trees for efficient decoding
+ * Copyright (C) 1995-2024 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+SOURCE FILES: contrib/infback9/inftree9.h
+/* inftree9.h -- header to use inftree9.c
+ * Copyright (C) 1995-2008 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/* WARNING: this file should *not* be used by applications. It is
+   part of the implementation of the compression library and is
+   subject to change. Applications should only use zlib.h.
+ */
+
+/* Structure for decoding tables.  Each entry provides either the
+   information needed to do the operation requested by the code that
+   indexed that table entry, or it provides a pointer to another
+   table that indexes more bits of the code.  op indicates whether
+   the entry is a pointer to another table, a literal, a length or
+   distance, an end-of-block, or an invalid code.  For a table
+   pointer, the low four bits of op is the number of index bits of
+   that table.  For a length or distance, the low four bits of op
+   is the number of extra bits to get after the code.  bits is
+   the number of bits in this code or part of the code to drop off
+   of the bit buffer.  val is the actual byte to output in the case
+   of a literal, the base length or distance, or the offset from
+   the current table to the next table.  Each entry is four bytes. */
+
+SOURCE FILES: contrib/iostream2/zstream.h
+/*
+ *
+ * Copyright (c) 1997
+ * Christian Michelsen Research AS
+ * Advanced Computing
+ * Fantoftvegen 38, 5036 BERGEN, Norway
+ * http://www.cmr.no
+ *
+ * Permission to use, copy, modify, distribute and sell this software
+ * and its documentation for any purpose is hereby granted without fee,
+ * provided that the above copyright notice appear in all copies and
+ * that both that copyright notice and this permission notice appear
+ * in supporting documentation.  Christian Michelsen Research AS makes no
+ * representations about the suitability of this software for any
+ * purpose.  It is provided "as is" without express or implied warranty.
+ *
+ */
+
+SOURCE FILES: contrib/minizip/crypt.h
+/* crypt.h -- base code for crypt/uncrypt ZIPfile
+
+
+   Version 1.01e, February 12th, 2005
+
+   Copyright (C) 1998-2005 Gilles Vollant
+
+   This code is a modified version of crypting code in Infozip distribution
+
+   The encryption/decryption parts of this source code (as opposed to the
+   non-echoing password parts) were originally written in Europe.  The
+   whole source package can be freely distributed, including from the USA.
+   (Prior to January 2000, re-export from the US was a violation of US law.)
+
+   This encryption code is a direct transcription of the algorithm from
+   Roger Schlafly, described by Phil Katz in the file appnote.txt.  This
+   file (appnote.txt) is distributed with the PKZIP program (even in the
+   version without encryption capabilities).
+
+   If you don't need crypting in your application, just define symbols
+   NOCRYPT and NOUNCRYPT.
+
+   This code support the "Traditional PKWARE Encryption".
+
+   The new AES encryption added on Zip format by Winzip (see the page
+   http://www.winzip.com/aes_info.htm ) and PKWare PKZip 5.x Strong
+   Encryption is not supported.
+*/
+
+SOURCE FILES: contrib/minizip/ioapi.c
+/* ioapi.h -- IO base function header for compress/uncompress .zip
+   part of the MiniZip project - ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Copyright (C) 1998-2010 Gilles Vollant (minizip) ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Modifications for Zip64 support
+         Copyright (C) 2009-2010 Mathias Svensson ( http://result42.com )
+
+         For more info read MiniZip_info.txt
+
+*/
+
+SOURCE FILES: contrib/minizip/ioapi.h
+/* ioapi.h -- IO base function header for compress/uncompress .zip
+   part of the MiniZip project - ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Copyright (C) 1998-2010 Gilles Vollant (minizip) ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Modifications for Zip64 support
+         Copyright (C) 2009-2010 Mathias Svensson ( http://result42.com )
+
+         For more info read MiniZip_info.txt
+
+         Changes
+
+    Oct-2009 - Defined ZPOS64_T to fpos_t on windows and u_int64_t on linux. (might need to find a better why for this)
+    Oct-2009 - Change to fseeko64, ftello64 and fopen64 so large files would work on linux.
+               More if/def section may be needed to support other platforms
+    Oct-2009 - Defined fxxxx64 calls to normal fopen/ftell/fseek so they would compile on windows.
+                          (but you should use iowin32.c for windows instead)
+
+*/
+
+SOURCE FILES: contrib/minizip/iowin32.c
+/* iowin32.c -- IO base function header for compress/uncompress .zip
+     Version 1.1, February 14h, 2010
+     part of the MiniZip project - ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Copyright (C) 1998-2010 Gilles Vollant (minizip) ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Modifications for Zip64 support
+         Copyright (C) 2009-2010 Mathias Svensson ( http://result42.com )
+
+     For more info read MiniZip_info.txt
+
+*/
+
+SOURCE FILES: contrib/minizip/iowin32.h
+/* iowin32.h -- IO base function header for compress/uncompress .zip
+     Version 1.1, February 14h, 2010
+     part of the MiniZip project - ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Copyright (C) 1998-2010 Gilles Vollant (minizip) ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Modifications for Zip64 support
+         Copyright (C) 2009-2010 Mathias Svensson ( http://result42.com )
+
+         For more info read MiniZip_info.txt
+
+*/
+
+SOURCE FILES: contrib/minizip/miniunz.c
+/*
+   miniunz.c
+   Version 1.1, February 14h, 2010
+   sample part of the MiniZip project - ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Copyright (C) 1998-2010 Gilles Vollant (minizip) ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Modifications of Unzip for Zip64
+         Copyright (C) 2007-2008 Even Rouault
+
+         Modifications for Zip64 support on both zip and unzip
+         Copyright (C) 2009-2010 Mathias Svensson ( http://result42.com )
+*/
+
+SOURCE FILES: contrib/minizip/minizip.c
+/*
+   minizip.c
+   Version 1.1, February 14h, 2010
+   sample part of the MiniZip project - ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Copyright (C) 1998-2010 Gilles Vollant (minizip) ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Modifications of Unzip for Zip64
+         Copyright (C) 2007-2008 Even Rouault
+
+         Modifications for Zip64 support on both zip and unzip
+         Copyright (C) 2009-2010 Mathias Svensson ( http://result42.com )
+*/
+
+SOURCE FILES: contrib/minizip/mztools.c
+/*
+  Additional tools for Minizip
+  Code: Xavier Roche '2004
+  License: Same as ZLIB (www.gzip.org)
+*/
+
+/* Code */
+
+SOURCE FILES: contrib/minizip/mztools.h
+/*
+  Additional tools for Minizip
+  Code: Xavier Roche '2004
+  License: Same as ZLIB (www.gzip.org)
+*/
+
+SOURCE FILES: contrib/minizip/unzip.c
+/* unzip.c -- IO for uncompress .zip files using zlib
+   Version 1.1, February 14h, 2010
+   part of the MiniZip project - ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Copyright (C) 1998-2010 Gilles Vollant (minizip) ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Modifications of Unzip for Zip64
+         Copyright (C) 2007-2008 Even Rouault
+
+         Modifications for Zip64 support on both zip and unzip
+         Copyright (C) 2009-2010 Mathias Svensson ( http://result42.com )
+
+         For more info read MiniZip_info.txt
+
+
+  ------------------------------------------------------------------------------------
+  Decryption code comes from crypt.c by Info-ZIP but has been greatly reduced in terms of
+  compatibility with older software. The following is from the original crypt.c.
+  Code woven in by Terry Thorsen 1/2003.
+
+  Copyright (c) 1990-2000 Info-ZIP.  All rights reserved.
+
+  See the accompanying file LICENSE, version 2000-Apr-09 or later
+  (the contents of which are also included in zip.h) for terms of use.
+  If, for some reason, all these files are missing, the Info-ZIP license
+  also may be found at:  ftp://ftp.info-zip.org/pub/infozip/license.html
+
+        crypt.c (full version) by Info-ZIP.      Last revised:  [see crypt.h]
+
+  The encryption/decryption parts of this source code (as opposed to the
+  non-echoing password parts) were originally written in Europe.  The
+  whole source package can be freely distributed, including from the USA.
+  (Prior to January 2000, re-export from the US was a violation of US law.)
+
+        This encryption code is a direct transcription of the algorithm from
+  Roger Schlafly, described by Phil Katz in the file appnote.txt.  This
+  file (appnote.txt) is distributed with the PKZIP program (even in the
+  version without encryption capabilities).
+
+        ------------------------------------------------------------------------------------
+
+        Changes in unzip.c
+
+        2007-2008 - Even Rouault - Addition of cpl_unzGetCurrentFileZStreamPos
+  2007-2008 - Even Rouault - Decoration of symbol names unz* -> cpl_unz*
+  2007-2008 - Even Rouault - Remove old C style function prototypes
+  2007-2008 - Even Rouault - Add unzip support for ZIP64
+
+        Copyright (C) 2007-2008 Even Rouault
+
+
+  Oct-2009 - Mathias Svensson - Removed cpl_* from symbol names (Even Rouault added them but since this is now moved to a new project (minizip64) I renamed them again).
+  Oct-2009 - Mathias Svensson - Fixed problem if uncompressed size was > 4G and compressed size was <4G
+                                should only read the compressed/uncompressed size from the Zip64 format if
+                                the size from normal header was 0xFFFFFFFF
+  Oct-2009 - Mathias Svensson - Applied some bug fixes from patches received from Gilles Vollant
+  Oct-2009 - Mathias Svensson - Applied support to unzip files with compression method BZIP2 (bzip2 lib is required)
+                                Patch created by Daniel Borca
+
+  Jan-2010 - back to unzip and minizip 1.0 name scheme, with compatibility layer
+
+  Copyright (C) 1998 - 2010 Gilles Vollant, Even Rouault, Mathias Svensson
+
+*/
+
+SOURCE FILES: contrib/minizip/unzip.h
+/* unzip.h -- IO for uncompress .zip files using zlib
+   Version 1.1, February 14h, 2010
+   part of the MiniZip project - ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Copyright (C) 1998-2010 Gilles Vollant (minizip) ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Modifications of Unzip for Zip64
+         Copyright (C) 2007-2008 Even Rouault
+
+         Modifications for Zip64 support on both zip and unzip
+         Copyright (C) 2009-2010 Mathias Svensson ( http://result42.com )
+
+         For more info read MiniZip_info.txt
+
+         ---------------------------------------------------------------------------------
+
+        Condition of use and distribution are the same than zlib :
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+
+  ---------------------------------------------------------------------------------
+
+        Changes
+
+        See header of unzip64.c
+
+*/
+
+SOURCE FILES: contrib/minizip/zip.c
+/* zip.c -- IO on .zip files using zlib
+   Version 1.1, February 14h, 2010
+   part of the MiniZip project - ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Copyright (C) 1998-2010 Gilles Vollant (minizip) ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Modifications for Zip64 support
+         Copyright (C) 2009-2010 Mathias Svensson ( http://result42.com )
+
+         For more info read MiniZip_info.txt
+
+         Changes
+   Oct-2009 - Mathias Svensson - Remove old C style function prototypes
+   Oct-2009 - Mathias Svensson - Added Zip64 Support when creating new file archives
+   Oct-2009 - Mathias Svensson - Did some code cleanup and refactoring to get better overview of some functions.
+   Oct-2009 - Mathias Svensson - Added zipRemoveExtraInfoBlock to strip extra field data from its ZIP64 data
+                                 It is used when recreating zip archive with RAW when deleting items from a zip.
+                                 ZIP64 data is automatically added to items that needs it, and existing ZIP64 data need to be removed.
+   Oct-2009 - Mathias Svensson - Added support for BZIP2 as compression mode (bzip2 lib is required)
+   Jan-2010 - back to unzip and minizip 1.0 name scheme, with compatibility layer
+
+*/
+
+SOURCE FILES: contrib/minizip/zip.h
+/* zip.h -- IO on .zip files using zlib
+   Version 1.1, February 14h, 2010
+   part of the MiniZip project - ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Copyright (C) 1998-2010 Gilles Vollant (minizip) ( http://www.winimage.com/zLibDll/minizip.html )
+
+         Modifications for Zip64 support
+         Copyright (C) 2009-2010 Mathias Svensson ( http://result42.com )
+
+         For more info read MiniZip_info.txt
+
+         ---------------------------------------------------------------------------
+
+   Condition of use and distribution are the same than zlib :
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+
+        ---------------------------------------------------------------------------
+
+        Changes
+
+        See header of zip.h
+
+*/
+
+SOURCE FILES: contrib/puff/puff.c
+/*
+ * puff.c
+ * Copyright (C) 2002-2013 Mark Adler
+ * For conditions of distribution and use, see copyright notice in puff.h
+ * version 2.3, 21 Jan 2013
+ *
+ * puff.c is a simple inflate written to be an unambiguous way to specify the
+ * deflate format.  It is not written for speed but rather simplicity.  As a
+ * side benefit, this code might actually be useful when small code is more
+ * important than speed, such as bootstrap applications.  For typical deflate
+ * data, zlib's inflate() is about four times as fast as puff().  zlib's
+ * inflate compiles to around 20K on my machine, whereas puff.c compiles to
+ * around 4K on my machine (a PowerPC using GNU cc).  If the faster decode()
+ * function here is used, then puff() is only twice as slow as zlib's
+ * inflate().
+ *
+ * All dynamically allocated memory comes from the stack.  The stack required
+ * is less than 2K bytes.  This code is compatible with 16-bit int's and
+ * assumes that long's are at least 32 bits.  puff.c uses the short data type,
+ * assumed to be 16 bits, for arrays in order to conserve memory.  The code
+ * works whether integers are stored big endian or little endian.
+ *
+ * In the comments below are "Format notes" that describe the inflate process
+ * and document some of the less obvious aspects of the format.  This source
+ * code is meant to supplement RFC 1951, which formally describes the deflate
+ * format:
+ *
+ *    http://www.zlib.org/rfc-deflate.html
+ */
+
+/*
+ * Change history:
+ *
+ * 1.0  10 Feb 2002     - First version
+ * 1.1  17 Feb 2002     - Clarifications of some comments and notes
+ *                      - Update puff() dest and source pointers on negative
+ *                        errors to facilitate debugging deflators
+ *                      - Remove longest from struct huffman -- not needed
+ *                      - Simplify offs[] index in construct()
+ *                      - Add input size and checking, using longjmp() to
+ *                        maintain easy readability
+ *                      - Use short data type for large arrays
+ *                      - Use pointers instead of long to specify source and
+ *                        destination sizes to avoid arbitrary 4 GB limits
+ * 1.2  17 Mar 2002     - Add faster version of decode(), doubles speed (!),
+ *                        but leave simple version for readability
+ *                      - Make sure invalid distances detected if pointers
+ *                        are 16 bits
+ *                      - Fix fixed codes table error
+ *                      - Provide a scanning mode for determining size of
+ *                        uncompressed data
+ * 1.3  20 Mar 2002     - Go back to lengths for puff() parameters [Gailly]
+ *                      - Add a puff.h file for the interface
+ *                      - Add braces in puff() for else do [Gailly]
+ *                      - Use indexes instead of pointers for readability
+ * 1.4  31 Mar 2002     - Simplify construct() code set check
+ *                      - Fix some comments
+ *                      - Add FIXLCODES #define
+ * 1.5   6 Apr 2002     - Minor comment fixes
+ * 1.6   7 Aug 2002     - Minor format changes
+ * 1.7   3 Mar 2003     - Added test code for distribution
+ *                      - Added zlib-like license
+ * 1.8   9 Jan 2004     - Added some comments on no distance codes case
+ * 1.9  21 Feb 2008     - Fix bug on 16-bit integer architectures [Pohland]
+ *                      - Catch missing end-of-block symbol error
+ * 2.0  25 Jul 2008     - Add #define to permit distance too far back
+ *                      - Add option in TEST code for puff to write the data
+ *                      - Add option in TEST code to skip input bytes
+ *                      - Allow TEST code to read from piped stdin
+ * 2.1   4 Apr 2010     - Avoid variable initialization for happier compilers
+ *                      - Avoid unsigned comparisons for even happier compilers
+ * 2.2  25 Apr 2010     - Fix bug in variable initializations [Oberhumer]
+ *                      - Add const where appropriate [Oberhumer]
+ *                      - Split if's and ?'s for coverage testing
+ *                      - Break out test code to separate file
+ *                      - Move NIL to puff.h
+ *                      - Allow incomplete code only if single code length is 1
+ *                      - Add full code coverage test to Makefile
+ * 2.3  21 Jan 2013     - Check for invalid code length codes in dynamic blocks
+ */
+
+SOURCE FILES: contrib/puff/puff.h
+/* puff.h
+  Copyright (C) 2002-2013 Mark Adler, all rights reserved
+  version 2.3, 21 Jan 2013
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the author be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+
+  Mark Adler    madler@alumni.caltech.edu
+ */
+
+
+/*
+ * See puff.c for purpose and usage.
+ */
+
+SOURCE FILES: contrib/puff/pufftest.c
+/*
+ * pufftest.c
+ * Copyright (C) 2002-2013 Mark Adler
+ * For conditions of distribution and use, see copyright notice in puff.h
+ * version 2.3, 21 Jan 2013
+ */
+
+/* Example of how to use puff().
+
+   Usage: puff [-w] [-f] [-nnn] file
+          ... | puff [-w] [-f] [-nnn]
+
+   where file is the input file with deflate data, nnn is the number of bytes
+   of input to skip before inflating (e.g. to skip a zlib or gzip header), and
+   -w is used to write the decompressed data to stdout.  -f is for coverage
+   testing, and causes pufftest to fail with not enough output space (-f does
+   a write like -w, so -w is not required). */
+
+SOURCE FILES: contrib/untgz/untgz.c
+/*
+ * untgz.c -- Display contents and extract files from a gzip'd TAR file
+ *
+ * written by Pedro A. Aranda Gutierrez <paag@tid.es>
+ * adaptation to Unix by Jean-loup Gailly <jloup@gzip.org>
+ * various fixes by Cosmin Truta <cosmint@cs.ubbcluj.ro>
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty.  In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ */
+
+SOURCE FILES: crc32.c
+/* crc32.c -- compute the CRC-32 of a data stream
+ * Copyright (C) 1995-2022 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ *
+ * This interleaved implementation of a CRC makes use of pipelined multiple
+ * arithmetic-logic units, commonly found in modern CPU cores. It is due to
+ * Kadatch and Jenkins (2010). See doc/crc-doc.1.0.pdf in this distribution.
+ */
+
+/* @(#) $Id$ */
+
+/*
+  Note on the use of DYNAMIC_CRC_TABLE: there is no mutex or semaphore
+  protection on the static variables used to control the first-use generation
+  of the crc tables. Therefore, if you #define DYNAMIC_CRC_TABLE, you should
+  first call get_crc_table() to initialize the tables before allowing more than
+  one thread to use crc32().
+
+  MAKECRCH can be #defined to write out crc32.h. A main() routine is also
+  produced, so that this one source file can be compiled to an executable.
+ */
+
+SOURCE FILES: deflate.c
+/* deflate.c -- compress data using the deflation algorithm
+ * Copyright (C) 1995-2024 Jean-loup Gailly and Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/*
+ *  ALGORITHM
+ *
+ *      The "deflation" process depends on being able to identify portions
+ *      of the input text which are identical to earlier input (within a
+ *      sliding window trailing behind the input currently being processed).
+ *
+ *      The most straightforward technique turns out to be the fastest for
+ *      most input files: try all possible matches and select the longest.
+ *      The key feature of this algorithm is that insertions into the string
+ *      dictionary are very simple and thus fast, and deletions are avoided
+ *      completely. Insertions are performed at each input character, whereas
+ *      string matches are performed only when the previous match ends. So it
+ *      is preferable to spend more time in matches to allow very fast string
+ *      insertions and avoid deletions. The matching algorithm for small
+ *      strings is inspired from that of Rabin & Karp. A brute force approach
+ *      is used to find longer strings when a small match has been found.
+ *      A similar algorithm is used in comic (by Jan-Mark Wams) and freeze
+ *      (by Leonid Broukhis).
+ *         A previous version of this file used a more sophisticated algorithm
+ *      (by Fiala and Greene) which is guaranteed to run in linear amortized
+ *      time, but has a larger average cost, uses more memory and is patented.
+ *      However the F&G algorithm may be faster for some highly redundant
+ *      files if the parameter max_chain_length (described below) is too large.
+ *
+ *  ACKNOWLEDGEMENTS
+ *
+ *      The idea of lazy evaluation of matches is due to Jan-Mark Wams, and
+ *      I found it in 'freeze' written by Leonid Broukhis.
+ *      Thanks to many people for bug reports and testing.
+ *
+ *  REFERENCES
+ *
+ *      Deutsch, L.P.,"DEFLATE Compressed Data Format Specification".
+ *      Available in http://tools.ietf.org/html/rfc1951
+ *
+ *      A description of the Rabin and Karp algorithm is given in the book
+ *         "Algorithms" by R. Sedgewick, Addison-Wesley, p252.
+ *
+ *      Fiala,E.R., and Greene,D.H.
+ *         Data Compression with Finite Windows, Comm.ACM, 32,4 (1989) 490-595
+ *
+ */
+
+/* @(#) $Id$ */
+
+SOURCE FILES: deflate.h
+/* deflate.h -- internal compression state
+ * Copyright (C) 1995-2024 Jean-loup Gailly
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/* WARNING: this file should *not* be used by applications. It is
+   part of the implementation of the compression library and is
+   subject to change. Applications should only use zlib.h.
+ */
+
+/* @(#) $Id$ */
+
+SOURCE FILES: examples/enough.c
+/* enough.c -- determine the maximum size of inflate's Huffman code tables over
+ * all possible valid and complete prefix codes, subject to a length limit.
+ * Copyright (C) 2007, 2008, 2012, 2018 Mark Adler
+ * Version 1.5  5 August 2018  Mark Adler
+ */
+
+/* Version history:
+   1.0   3 Jan 2007  First version (derived from codecount.c version 1.4)
+   1.1   4 Jan 2007  Use faster incremental table usage computation
+                     Prune examine() search on previously visited states
+   1.2   5 Jan 2007  Comments clean up
+                     As inflate does, decrease root for short codes
+                     Refuse cases where inflate would increase root
+   1.3  17 Feb 2008  Add argument for initial root table size
+                     Fix bug for initial root table size == max - 1
+                     Use a macro to compute the history index
+   1.4  18 Aug 2012  Avoid shifts more than bits in type (caused endless loop!)
+                     Clean up comparisons of different types
+                     Clean up code indentation
+   1.5   5 Aug 2018  Clean up code style, formatting, and comments
+                     Show all the codes for the maximum, and only the maximum
+ */
+
+/*
+   Examine all possible prefix codes for a given number of symbols and a
+   maximum code length in bits to determine the maximum table size for zlib's
+   inflate. Only complete prefix codes are counted.
+
+   Two codes are considered distinct if the vectors of the number of codes per
+   length are not identical. So permutations of the symbol assignments result
+   in the same code for the counting, as do permutations of the assignments of
+   the bit values to the codes (i.e. only canonical codes are counted).
+
+   We build a code from shorter to longer lengths, determining how many symbols
+   are coded at each length. At each step, we have how many symbols remain to
+   be coded, what the last code length used was, and how many bit patterns of
+   that length remain unused. Then we add one to the code length and double the
+   number of unused patterns to graduate to the next code length. We then
+   assign all portions of the remaining symbols to that code length that
+   preserve the properties of a correct and eventually complete code. Those
+   properties are: we cannot use more bit patterns than are available; and when
+   all the symbols are used, there are exactly zero possible bit patterns left
+   unused.
+
+   The inflate Huffman decoding algorithm uses two-level lookup tables for
+   speed. There is a single first-level table to decode codes up to root bits
+   in length (root == 9 for literal/length codes and root == 6 for distance
+   codes, in the current inflate implementation). The base table has 1 << root
+   entries and is indexed by the next root bits of input. Codes shorter than
+   root bits have replicated table entries, so that the correct entry is
+   pointed to regardless of the bits that follow the short code. If the code is
+   longer than root bits, then the table entry points to a second-level table.
+   The size of that table is determined by the longest code with that root-bit
+   prefix. If that longest code has length len, then the table has size 1 <<
+   (len - root), to index the remaining bits in that set of codes. Each
+   subsequent root-bit prefix then has its own sub-table. The total number of
+   table entries required by the code is calculated incrementally as the number
+   of codes at each bit length is populated. When all of the codes are shorter
+   than root bits, then root is reduced to the longest code length, resulting
+   in a single, smaller, one-level table.
+
+   The inflate algorithm also provides for small values of root (relative to
+   the log2 of the number of symbols), where the shortest code has more bits
+   than root. In that case, root is increased to the length of the shortest
+   code. This program, by design, does not handle that case, so it is verified
+   that the number of symbols is less than 1 << (root + 1).
+
+   In order to speed up the examination (by about ten orders of magnitude for
+   the default arguments), the intermediate states in the build-up of a code
+   are remembered and previously visited branches are pruned. The memory
+   required for this will increase rapidly with the total number of symbols and
+   the maximum code length in bits. However this is a very small price to pay
+   for the vast speedup.
+
+   First, all of the possible prefix codes are counted, and reachable
+   intermediate states are noted by a non-zero count in a saved-results array.
+   Second, the intermediate states that lead to (root + 1) bit or longer codes
+   are used to look at all sub-codes from those junctures for their inflate
+   memory usage. (The amount of memory used is not affected by the number of
+   codes of root bits or less in length.)  Third, the visited states in the
+   construction of those sub-codes and the associated calculation of the table
+   size is recalled in order to avoid recalculating from the same juncture.
+   Beginning the code examination at (root + 1) bit codes, which is enabled by
+   identifying the reachable nodes, accounts for about six of the orders of
+   magnitude of improvement for the default arguments. About another four
+   orders of magnitude come from not revisiting previous states. Out of
+   approximately 2x10^16 possible prefix codes, only about 2x10^6 sub-codes
+   need to be examined to cover all of the possible table memory usage cases
+   for the default arguments of 286 symbols limited to 15-bit codes.
+
+   Note that the uintmax_t type is used for counting. It is quite easy to
+   exceed the capacity of an eight-byte integer with a large number of symbols
+   and a large maximum code length, so multiple-precision arithmetic would need
+   to replace the integer arithmetic in that case. This program will abort if
+   an overflow occurs. The big_t type identifies where the counting takes
+   place.
+
+   The uintmax_t type is also used for calculating the number of possible codes
+   remaining at the maximum length. This limits the maximum code length to the
+   number of bits in a long long minus the number of bits needed to represent
+   the symbols in a flat code. The code_t type identifies where the bit-pattern
+   counting takes place.
+ */
+
+SOURCE FILES: examples/fitblk.c
+/* fitblk.c: example of fitting compressed output to a specified size
+   Not copyrighted -- provided to the public domain
+   Version 1.1  25 November 2004  Mark Adler */
+
+/* Version history:
+   1.0  24 Nov 2004  First version
+   1.1  25 Nov 2004  Change deflateInit2() to deflateInit()
+                     Use fixed-size, stack-allocated raw buffers
+                     Simplify code moving compression to subroutines
+                     Use assert() for internal errors
+                     Add detailed description of approach
+ */
+
+/* Approach to just fitting a requested compressed size:
+
+   fitblk performs three compression passes on a portion of the input
+   data in order to determine how much of that input will compress to
+   nearly the requested output block size.  The first pass generates
+   enough deflate blocks to produce output to fill the requested
+   output size plus a specified excess amount (see the EXCESS define
+   below).  The last deflate block may go quite a bit past that, but
+   is discarded.  The second pass decompresses and recompresses just
+   the compressed data that fit in the requested plus excess sized
+   buffer.  The deflate process is terminated after that amount of
+   input, which is less than the amount consumed on the first pass.
+   The last deflate block of the result will be of a comparable size
+   to the final product, so that the header for that deflate block and
+   the compression ratio for that block will be about the same as in
+   the final product.  The third compression pass decompresses the
+   result of the second step, but only the compressed data up to the
+   requested size minus an amount to allow the compressed stream to
+   complete (see the MARGIN define below).  That will result in a
+   final compressed stream whose length is less than or equal to the
+   requested size.  Assuming sufficient input and a requested size
+   greater than a few hundred bytes, the shortfall will typically be
+   less than ten bytes.
+
+   If the input is short enough that the first compression completes
+   before filling the requested output size, then that compressed
+   stream is return with no recompression.
+
+   EXCESS is chosen to be just greater than the shortfall seen in a
+   two pass approach similar to the above.  That shortfall is due to
+   the last deflate block compressing more efficiently with a smaller
+   header on the second pass.  EXCESS is set to be large enough so
+   that there is enough uncompressed data for the second pass to fill
+   out the requested size, and small enough so that the final deflate
+   block of the second pass will be close in size to the final deflate
+   block of the third and final pass.  MARGIN is chosen to be just
+   large enough to assure that the final compression has enough room
+   to complete in all cases.
+ */
+
+SOURCE FILES: examples/gun.c
+/* gun.c -- simple gunzip to give an example of the use of inflateBack()
+ * Copyright (C) 2003, 2005, 2008, 2010, 2012 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+   Version 1.7  12 August 2012  Mark Adler */
+
+/* Version history:
+   1.0  16 Feb 2003  First version for testing of inflateBack()
+   1.1  21 Feb 2005  Decompress concatenated gzip streams
+                     Remove use of "this" variable (C++ keyword)
+                     Fix return value for in()
+                     Improve allocation failure checking
+                     Add typecasting for void * structures
+                     Add -h option for command version and usage
+                     Add a bunch of comments
+   1.2  20 Mar 2005  Add Unix compress (LZW) decompression
+                     Copy file attributes from input file to output file
+   1.3  12 Jun 2005  Add casts for error messages [Oberhumer]
+   1.4   8 Dec 2006  LZW decompression speed improvements
+   1.5   9 Feb 2008  Avoid warning in latest version of gcc
+   1.6  17 Jan 2010  Avoid signed/unsigned comparison warnings
+   1.7  12 Aug 2012  Update for z_const usage in zlib 1.2.8
+ */
+
+/*
+   gun [ -t ] [ name ... ]
+
+   decompresses the data in the named gzip files.  If no arguments are given,
+   gun will decompress from stdin to stdout.  The names must end in .gz, -gz,
+   .z, -z, _z, or .Z.  The uncompressed data will be written to a file name
+   with the suffix stripped.  On success, the original file is deleted.  On
+   failure, the output file is deleted.  For most failures, the command will
+   continue to process the remaining names on the command line.  A memory
+   allocation failure will abort the command.  If -t is specified, then the
+   listed files or stdin will be tested as gzip files for integrity (without
+   checking for a proper suffix), no output will be written, and no files
+   will be deleted.
+
+   Like gzip, gun allows concatenated gzip streams and will decompress them,
+   writing all of the uncompressed data to the output.  Unlike gzip, gun allows
+   an empty file on input, and will produce no error writing an empty output
+   file.
+
+   gun will also decompress files made by Unix compress, which uses LZW
+   compression.  These files are automatically detected by virtue of their
+   magic header bytes.  Since the end of Unix compress stream is marked by the
+   end-of-file, they cannot be concatenated.  If a Unix compress stream is
+   encountered in an input file, it is the last stream in that file.
+
+   Like gunzip and uncompress, the file attributes of the original compressed
+   file are maintained in the final uncompressed file, to the extent that the
+   user permissions allow it.
+
+   On my Mac OS X PowerPC G4, gun is almost twice as fast as gunzip (version
+   1.2.4) is on the same file, when gun is linked with zlib 1.2.2.  Also the
+   LZW decompression provided by gun is about twice as fast as the standard
+   Unix uncompress command.
+ */
+
+/* external functions and related types and constants */
+
+SOURCE FILES: examples/gzappend.c
+/* gzappend -- command to append to a gzip file
+
+  Copyright (C) 2003, 2012 Mark Adler, all rights reserved
+  version 1.2, 11 Oct 2012
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the author be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+
+  Mark Adler    madler@alumni.caltech.edu
+ */
+
+/*
+ * Change history:
+ *
+ * 1.0  19 Oct 2003     - First version
+ * 1.1   4 Nov 2003     - Expand and clarify some comments and notes
+ *                      - Add version and copyright to help
+ *                      - Send help to stdout instead of stderr
+ *                      - Add some preemptive typecasts
+ *                      - Add L to constants in lseek() calls
+ *                      - Remove some debugging information in error messages
+ *                      - Use new data_type definition for zlib 1.2.1
+ *                      - Simplify and unify file operations
+ *                      - Finish off gzip file in gztack()
+ *                      - Use deflatePrime() instead of adding empty blocks
+ *                      - Keep gzip file clean on appended file read errors
+ *                      - Use in-place rotate instead of auxiliary buffer
+ *                        (Why you ask?  Because it was fun to write!)
+ * 1.2  11 Oct 2012     - Fix for proper z_const usage
+ *                      - Check for input buffer malloc failure
+ */
+
+/*
+   gzappend takes a gzip file and appends to it, compressing files from the
+   command line or data from stdin.  The gzip file is written to directly, to
+   avoid copying that file, in case it's large.  Note that this results in the
+   unfriendly behavior that if gzappend fails, the gzip file is corrupted.
+
+   This program was written to illustrate the use of the new Z_BLOCK option of
+   zlib 1.2.x's inflate() function.  This option returns from inflate() at each
+   block boundary to facilitate locating and modifying the last block bit at
+   the start of the final deflate block.  Also whether using Z_BLOCK or not,
+   another required feature of zlib 1.2.x is that inflate() now provides the
+   number of unused bits in the last input byte used.  gzappend will not work
+   with versions of zlib earlier than 1.2.1.
+
+   gzappend first decompresses the gzip file internally, discarding all but
+   the last 32K of uncompressed data, and noting the location of the last block
+   bit and the number of unused bits in the last byte of the compressed data.
+   The gzip trailer containing the CRC-32 and length of the uncompressed data
+   is verified.  This trailer will be later overwritten.
+
+   Then the last block bit is cleared by seeking back in the file and rewriting
+   the byte that contains it.  Seeking forward, the last byte of the compressed
+   data is saved along with the number of unused bits to initialize deflate.
+
+   A deflate process is initialized, using the last 32K of the uncompressed
+   data from the gzip file to initialize the dictionary.  If the total
+   uncompressed data was less than 32K, then all of it is used to initialize
+   the dictionary.  The deflate output bit buffer is also initialized with the
+   last bits from the original deflate stream.  From here on, the data to
+   append is simply compressed using deflate, and written to the gzip file.
+   When that is complete, the new CRC-32 and uncompressed length are written
+   as the trailer of the gzip file.
+ */
+
+SOURCE FILES: examples/gzjoin.c
+/* gzjoin -- command to join gzip files into one gzip file
+
+  Copyright (C) 2004, 2005, 2012 Mark Adler, all rights reserved
+  version 1.2, 14 Aug 2012
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the author be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+
+  Mark Adler    madler@alumni.caltech.edu
+ */
+
+/*
+ * Change history:
+ *
+ * 1.0  11 Dec 2004     - First version
+ * 1.1  12 Jun 2005     - Changed ssize_t to long for portability
+ * 1.2  14 Aug 2012     - Clean up for z_const usage
+ */
+
+/*
+   gzjoin takes one or more gzip files on the command line and writes out a
+   single gzip file that will uncompress to the concatenation of the
+   uncompressed data from the individual gzip files.  gzjoin does this without
+   having to recompress any of the data and without having to calculate a new
+   crc32 for the concatenated uncompressed data.  gzjoin does however have to
+   decompress all of the input data in order to find the bits in the compressed
+   data that need to be modified to concatenate the streams.
+
+   gzjoin does not do an integrity check on the input gzip files other than
+   checking the gzip header and decompressing the compressed data.  They are
+   otherwise assumed to be complete and correct.
+
+   Each joint between gzip files removes at least 18 bytes of previous trailer
+   and subsequent header, and inserts an average of about three bytes to the
+   compressed data in order to connect the streams.  The output gzip file
+   has a minimal ten-byte gzip header with no file name or modification time.
+
+   This program was written to illustrate the use of the Z_BLOCK option of
+   inflate() and the crc32_combine() function.  gzjoin will not compile with
+   versions of zlib earlier than 1.2.3.
+ */
+
+SOURCE FILES: examples/gzlog.c
+/*
+ * gzlog.c
+ * Copyright (C) 2004, 2008, 2012, 2016, 2019 Mark Adler, all rights reserved
+ * For conditions of distribution and use, see copyright notice in gzlog.h
+ * version 2.3, 25 May 2019
+ */
+
+/*
+   gzlog provides a mechanism for frequently appending short strings to a gzip
+   file that is efficient both in execution time and compression ratio.  The
+   strategy is to write the short strings in an uncompressed form to the end of
+   the gzip file, only compressing when the amount of uncompressed data has
+   reached a given threshold.
+
+   gzlog also provides protection against interruptions in the process due to
+   system crashes.  The status of the operation is recorded in an extra field
+   in the gzip file, and is only updated once the gzip file is brought to a
+   valid state.  The last data to be appended or compressed is saved in an
+   auxiliary file, so that if the operation is interrupted, it can be completed
+   the next time an append operation is attempted.
+
+   gzlog maintains another auxiliary file with the last 32K of data from the
+   compressed portion, which is preloaded for the compression of the subsequent
+   data.  This minimizes the impact to the compression ratio of appending.
+ */
+
+/*
+   Operations Concept:
+
+   Files (log name "foo"):
+   foo.gz -- gzip file with the complete log
+   foo.add -- last message to append or last data to compress
+   foo.dict -- dictionary of the last 32K of data for next compression
+   foo.temp -- temporary dictionary file for compression after this one
+   foo.lock -- lock file for reading and writing the other files
+   foo.repairs -- log file for log file recovery operations (not compressed)
+
+   gzip file structure:
+   - fixed-length (no file name) header with extra field (see below)
+   - compressed data ending initially with empty stored block
+   - uncompressed data filling out originally empty stored block and
+     subsequent stored blocks as needed (16K max each)
+   - gzip trailer
+   - no junk at end (no other gzip streams)
+
+   When appending data, the information in the first three items above plus the
+   foo.add file are sufficient to recover an interrupted append operation.  The
+   extra field has the necessary information to restore the start of the last
+   stored block and determine where to append the data in the foo.add file, as
+   well as the crc and length of the gzip data before the append operation.
+
+   The foo.add file is created before the gzip file is marked for append, and
+   deleted after the gzip file is marked as complete.  So if the append
+   operation is interrupted, the data to add will still be there.  If due to
+   some external force, the foo.add file gets deleted between when the append
+   operation was interrupted and when recovery is attempted, the gzip file will
+   still be restored, but without the appended data.
+
+   When compressing data, the information in the first two items above plus the
+   foo.add file are sufficient to recover an interrupted compress operation.
+   The extra field has the necessary information to find the end of the
+   compressed data, and contains both the crc and length of just the compressed
+   data and of the complete set of data including the contents of the foo.add
+   file.
+
+   Again, the foo.add file is maintained during the compress operation in case
+   of an interruption.  If in the unlikely event the foo.add file with the data
+   to be compressed is missing due to some external force, a gzip file with
+   just the previous compressed data will be reconstructed.  In this case, all
+   of the data that was to be compressed is lost (approximately one megabyte).
+   This will not occur if all that happened was an interruption of the compress
+   operation.
+
+   The third state that is marked is the replacement of the old dictionary with
+   the new dictionary after a compress operation.  Once compression is
+   complete, the gzip file is marked as being in the replace state.  This
+   completes the gzip file, so an interrupt after being so marked does not
+   result in recompression.  Then the dictionary file is replaced, and the gzip
+   file is marked as completed.  This state prevents the possibility of
+   restarting compression with the wrong dictionary file.
+
+   All three operations are wrapped by a lock/unlock procedure.  In order to
+   gain exclusive access to the log files, first a foo.lock file must be
+   exclusively created.  When all operations are complete, the lock is
+   released by deleting the foo.lock file.  If when attempting to create the
+   lock file, it already exists and the modify time of the lock file is more
+   than five minutes old (set by the PATIENCE define below), then the old
+   lock file is considered stale and deleted, and the exclusive creation of
+   the lock file is retried.  To assure that there are no false assessments
+   of the staleness of the lock file, the operations periodically touch the
+   lock file to update the modified date.
+
+   Following is the definition of the extra field with all of the information
+   required to enable the above append and compress operations and their
+   recovery if interrupted.  Multi-byte values are stored little endian
+   (consistent with the gzip format).  File pointers are eight bytes long.
+   The crc's and lengths for the gzip trailer are four bytes long.  (Note that
+   the length at the end of a gzip file is used for error checking only, and
+   for large files is actually the length modulo 2^32.)  The stored block
+   length is two bytes long.  The gzip extra field two-byte identification is
+   "ap" for append.  It is assumed that writing the extra field to the file is
+   an "atomic" operation.  That is, either all of the extra field is written
+   to the file, or none of it is, if the operation is interrupted right at the
+   point of updating the extra field.  This is a reasonable assumption, since
+   the extra field is within the first 52 bytes of the file, which is smaller
+   than any expected block size for a mass storage device (usually 512 bytes or
+   larger).
+
+   Extra field (35 bytes):
+   - Pointer to first stored block length -- this points to the two-byte length
+     of the first stored block, which is followed by the two-byte, one's
+     complement of that length.  The stored block length is preceded by the
+     three-bit header of the stored block, which is the actual start of the
+     stored block in the deflate format.  See the bit offset field below.
+   - Pointer to the last stored block length.  This is the same as above, but
+     for the last stored block of the uncompressed data in the gzip file.
+     Initially this is the same as the first stored block length pointer.
+     When the stored block gets to 16K (see the MAX_STORE define), then a new
+     stored block as added, at which point the last stored block length pointer
+     is different from the first stored block length pointer.  When they are
+     different, the first bit of the last stored block header is eight bits, or
+     one byte back from the block length.
+   - Compressed data crc and length.  This is the crc and length of the data
+     that is in the compressed portion of the deflate stream.  These are used
+     only in the event that the foo.add file containing the data to compress is
+     lost after a compress operation is interrupted.
+   - Total data crc and length.  This is the crc and length of all of the data
+     stored in the gzip file, compressed and uncompressed.  It is used to
+     reconstruct the gzip trailer when compressing, as well as when recovering
+     interrupted operations.
+   - Final stored block length.  This is used to quickly find where to append,
+     and allows the restoration of the original final stored block state when
+     an append operation is interrupted.
+   - First stored block start as the number of bits back from the final stored
+     block first length byte.  This value is in the range of 3..10, and is
+     stored as the low three bits of the final byte of the extra field after
+     subtracting three (0..7).  This allows the last-block bit of the stored
+     block header to be updated when a new stored block is added, for the case
+     when the first stored block and the last stored block are the same.  (When
+     they are different, the numbers of bits back is known to be eight.)  This
+     also allows for new compressed data to be appended to the old compressed
+     data in the compress operation, overwriting the previous first stored
+     block, or for the compressed data to be terminated and a valid gzip file
+     reconstructed on the off chance that a compression operation was
+     interrupted and the data to compress in the foo.add file was deleted.
+   - The operation in process.  This is the next two bits in the last byte (the
+     bits under the mask 0x18).  The are interpreted as 0: nothing in process,
+     1: append in process, 2: compress in process, 3: replace in process.
+   - The top three bits of the last byte in the extra field are reserved and
+     are currently set to zero.
+
+   Main procedure:
+   - Exclusively create the foo.lock file using the O_CREAT and O_EXCL modes of
+     the system open() call.  If the modify time of an existing lock file is
+     more than PATIENCE seconds old, then the lock file is deleted and the
+     exclusive create is retried.
+   - Load the extra field from the foo.gz file, and see if an operation was in
+     progress but not completed.  If so, apply the recovery procedure below.
+   - Perform the append procedure with the provided data.
+   - If the uncompressed data in the foo.gz file is 1MB or more, apply the
+     compress procedure.
+   - Delete the foo.lock file.
+
+   Append procedure:
+   - Put what to append in the foo.add file so that the operation can be
+     restarted if this procedure is interrupted.
+   - Mark the foo.gz extra field with the append operation in progress.
+   + Restore the original last-block bit and stored block length of the last
+     stored block from the information in the extra field, in case a previous
+     append operation was interrupted.
+   - Append the provided data to the last stored block, creating new stored
+     blocks as needed and updating the stored blocks last-block bits and
+     lengths.
+   - Update the crc and length with the new data, and write the gzip trailer.
+   - Write over the extra field (with a single write operation) with the new
+     pointers, lengths, and crc's, and mark the gzip file as not in process.
+     Though there is still a foo.add file, it will be ignored since nothing
+     is in process.  If a foo.add file is leftover from a previously
+     completed operation, it is truncated when writing new data to it.
+   - Delete the foo.add file.
+
+   Compress and replace procedures:
+   - Read all of the uncompressed data in the stored blocks in foo.gz and write
+     it to foo.add.  Also write foo.temp with the last 32K of that data to
+     provide a dictionary for the next invocation of this procedure.
+   - Rewrite the extra field marking foo.gz with a compression in process.
+   * If there is no data provided to compress (due to a missing foo.add file
+     when recovering), reconstruct and truncate the foo.gz file to contain
+     only the previous compressed data and proceed to the step after the next
+     one.  Otherwise ...
+   - Compress the data with the dictionary in foo.dict, and write to the
+     foo.gz file starting at the bit immediately following the last previously
+     compressed block.  If there is no foo.dict, proceed anyway with the
+     compression at slightly reduced efficiency.  (For the foo.dict file to be
+     missing requires some external failure beyond simply the interruption of
+     a compress operation.)  During this process, the foo.lock file is
+     periodically touched to assure that that file is not considered stale by
+     another process before we're done.  The deflation is terminated with a
+     non-last empty static block (10 bits long), that is then located and
+     written over by a last-bit-set empty stored block.
+   - Append the crc and length of the data in the gzip file (previously
+     calculated during the append operations).
+   - Write over the extra field with the updated stored block offsets, bits
+     back, crc's, and lengths, and mark foo.gz as in process for a replacement
+     of the dictionary.
+   @ Delete the foo.add file.
+   - Replace foo.dict with foo.temp.
+   - Write over the extra field, marking foo.gz as complete.
+
+   Recovery procedure:
+   - If not a replace recovery, read in the foo.add file, and provide that data
+     to the appropriate recovery below.  If there is no foo.add file, provide
+     a zero data length to the recovery.  In that case, the append recovery
+     restores the foo.gz to the previous compressed + uncompressed data state.
+     For the compress recovery, a missing foo.add file results in foo.gz being
+     restored to the previous compressed-only data state.
+   - Append recovery:
+     - Pick up append at + step above
+   - Compress recovery:
+     - Pick up compress at * step above
+   - Replace recovery:
+     - Pick up compress at @ step above
+   - Log the repair with a date stamp in foo.repairs
+ */
+
+SOURCE FILES: examples/gzlog.h
+/* gzlog.h
+  Copyright (C) 2004, 2008, 2012 Mark Adler, all rights reserved
+  version 2.2, 14 Aug 2012
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the author be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+
+  Mark Adler    madler@alumni.caltech.edu
+ */
+
+/* Version History:
+   1.0  26 Nov 2004  First version
+   2.0  25 Apr 2008  Complete redesign for recovery of interrupted operations
+                     Interface changed slightly in that now path is a prefix
+                     Compression now occurs as needed during gzlog_write()
+                     gzlog_write() now always leaves the log file as valid gzip
+   2.1   8 Jul 2012  Fix argument checks in gzlog_compress() and gzlog_write()
+   2.2  14 Aug 2012  Clean up signed comparisons
+ */
+
+/*
+   The gzlog object allows writing short messages to a gzipped log file,
+   opening the log file locked for small bursts, and then closing it.  The log
+   object works by appending stored (uncompressed) data to the gzip file until
+   1 MB has been accumulated.  At that time, the stored data is compressed, and
+   replaces the uncompressed data in the file.  The log file is truncated to
+   its new size at that time.  After each write operation, the log file is a
+   valid gzip file that can decompressed to recover what was written.
+
+   The gzlog operations can be interrupted at any point due to an application or
+   system crash, and the log file will be recovered the next time the log is
+   opened with gzlog_open().
+ */
+
+SOURCE FILES: examples/gznorm.c
+/* gznorm.c -- normalize a gzip stream
+ * Copyright (C) 2018 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ * Version 1.0  7 Oct 2018  Mark Adler */
+
+// gznorm takes a gzip stream, potentially containing multiple members, and
+// converts it to a gzip stream with a single member. In addition the gzip
+// header is normalized, removing the file name and time stamp, and setting the
+// other header contents (XFL, OS) to fixed values. gznorm does not recompress
+// the data, so it is fast, but no advantage is gained from the history that
+// could be available across member boundaries.
+
+SOURCE FILES: examples/zpipe.c
+/* zpipe.c: example of proper use of zlib's inflate() and deflate()
+   Not copyrighted -- provided to the public domain
+   Version 1.4  11 December 2005  Mark Adler */
+
+/* Version history:
+   1.0  30 Oct 2004  First version
+   1.1   8 Nov 2004  Add void casting for unused return values
+                     Use switch statement for inflate() return values
+   1.2   9 Nov 2004  Add assertions to document zlib guarantees
+   1.3   6 Apr 2005  Remove incorrect assertion in inf()
+   1.4  11 Dec 2005  Add hack to avoid MSDOS end-of-line conversions
+                     Avoid some compiler warnings for input and output buffers
+ */
+
+SOURCE FILES: examples/zran.c
+/* zran.c -- example of deflate stream indexing and random access
+ * Copyright (C) 2005, 2012, 2018, 2023 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ * Version 1.4  13 Apr 2023  Mark Adler */
+
+/* Version History:
+ 1.0  29 May 2005  First version
+ 1.1  29 Sep 2012  Fix memory reallocation error
+ 1.2  14 Oct 2018  Handle gzip streams with multiple members
+                   Add a header file to facilitate usage in applications
+ 1.3  18 Feb 2023  Permit raw deflate streams as well as zlib and gzip
+                   Permit crossing gzip member boundaries when extracting
+                   Support a size_t size when extracting (was an int)
+                   Do a binary search over the index for an access point
+                   Expose the access point type to enable save and load
+ 1.4  13 Apr 2023  Add a NOPRIME define to not use inflatePrime()
+ */
+
+// Illustrate the use of Z_BLOCK, inflatePrime(), and inflateSetDictionary()
+// for random access of a compressed file. A file containing a raw deflate
+// stream is provided on the command line. The compressed stream is decoded in
+// its entirety, and an index built with access points about every SPAN bytes
+// in the uncompressed output. The compressed file is left open, and can then
+// be read randomly, having to decompress on the average SPAN/2 uncompressed
+// bytes before getting to the desired block of data.
+//
+// An access point can be created at the start of any deflate block, by saving
+// the starting file offset and bit of that block, and the 32K bytes of
+// uncompressed data that precede that block. Also the uncompressed offset of
+// that block is saved to provide a reference for locating a desired starting
+// point in the uncompressed stream. deflate_index_build() decompresses the
+// input raw deflate stream a block at a time, and at the end of each block
+// decides if enough uncompressed data has gone by to justify the creation of a
+// new access point. If so, that point is saved in a data structure that grows
+// as needed to accommodate the points.
+//
+// To use the index, an offset in the uncompressed data is provided, for which
+// the latest access point at or preceding that offset is located in the index.
+// The input file is positioned to the specified location in the index, and if
+// necessary the first few bits of the compressed data is read from the file.
+// inflate is initialized with those bits and the 32K of uncompressed data, and
+// decompression then proceeds until the desired offset in the file is reached.
+// Then decompression continues to read the requested uncompressed data from
+// the file.
+//
+// There is some fair bit of overhead to starting inflation for the random
+// access, mainly copying the 32K byte dictionary. If small pieces of the file
+// are being accessed, it would make sense to implement a cache to hold some
+// lookahead to avoid many calls to deflate_index_extract() for small lengths.
+//
+// Another way to build an index would be to use inflateCopy(). That would not
+// be constrained to have access points at block boundaries, but would require
+// more memory per access point, and could not be saved to a file due to the
+// use of pointers in the state. The approach here allows for storage of the
+// index in a file.
+
+SOURCE FILES: examples/zran.h
+/* zran.h -- example of deflated stream indexing and random access
+ * Copyright (C) 2005, 2012, 2018, 2023 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ * Version 1.3  18 Feb 2023  Mark Adler */
+
+SOURCE FILES: gzclose.c
+/* gzclose.c -- zlib gzclose() function
+ * Copyright (C) 2004, 2010 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+SOURCE FILES: gzguts.h
+/* gzguts.h -- zlib internal header definitions for gz* operations
+ * Copyright (C) 2004-2024 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+SOURCE FILES: gzlib.c
+/* gzlib.c -- zlib functions common to reading and writing gzip files
+ * Copyright (C) 2004-2024 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+SOURCE FILES: gzread.c
+/* gzread.c -- zlib functions for reading gzip files
+ * Copyright (C) 2004-2017 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+SOURCE FILES: gzwrite.c
+/* gzwrite.c -- zlib functions for writing gzip files
+ * Copyright (C) 2004-2019 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+SOURCE FILES: infback.c
+/* infback.c -- inflate using a call-back interface
+ * Copyright (C) 1995-2022 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/*
+   This code is largely copied from inflate.c.  Normally either infback.o or
+   inflate.o would be linked into an application--not both.  The interface
+   with inffast.c is retained so that optimized assembler-coded versions of
+   inflate_fast() can be used with either inflate.c or infback.c.
+ */
+
+SOURCE FILES: inffast.c
+/* inffast.c -- fast decoding
+ * Copyright (C) 1995-2017 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+SOURCE FILES: inffast.h
+/* inffast.h -- header to use inffast.c
+ * Copyright (C) 1995-2003, 2010 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/* WARNING: this file should *not* be used by applications. It is
+   part of the implementation of the compression library and is
+   subject to change. Applications should only use zlib.h.
+ */
+
+SOURCE FILES: inflate.c
+/* inflate.c -- zlib decompression
+ * Copyright (C) 1995-2022 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/*
+ * Change history:
+ *
+ * 1.2.beta0    24 Nov 2002
+ * - First version -- complete rewrite of inflate to simplify code, avoid
+ *   creation of window when not needed, minimize use of window when it is
+ *   needed, make inffast.c even faster, implement gzip decoding, and to
+ *   improve code readability and style over the previous zlib inflate code
+ *
+ * 1.2.beta1    25 Nov 2002
+ * - Use pointers for available input and output checking in inffast.c
+ * - Remove input and output counters in inffast.c
+ * - Change inffast.c entry and loop from avail_in >= 7 to >= 6
+ * - Remove unnecessary second byte pull from length extra in inffast.c
+ * - Unroll direct copy to three copies per loop in inffast.c
+ *
+ * 1.2.beta2    4 Dec 2002
+ * - Change external routine names to reduce potential conflicts
+ * - Correct filename to inffixed.h for fixed tables in inflate.c
+ * - Make hbuf[] unsigned char to match parameter type in inflate.c
+ * - Change strm->next_out[-state->offset] to *(strm->next_out - state->offset)
+ *   to avoid negation problem on Alphas (64 bit) in inflate.c
+ *
+ * 1.2.beta3    22 Dec 2002
+ * - Add comments on state->bits assertion in inffast.c
+ * - Add comments on op field in inftrees.h
+ * - Fix bug in reuse of allocated window after inflateReset()
+ * - Remove bit fields--back to byte structure for speed
+ * - Remove distance extra == 0 check in inflate_fast()--only helps for lengths
+ * - Change post-increments to pre-increments in inflate_fast(), PPC biased?
+ * - Add compile time option, POSTINC, to use post-increments instead (Intel?)
+ * - Make MATCH copy in inflate() much faster for when inflate_fast() not used
+ * - Use local copies of stream next and avail values, as well as local bit
+ *   buffer and bit count in inflate()--for speed when inflate_fast() not used
+ *
+ * 1.2.beta4    1 Jan 2003
+ * - Split ptr - 257 statements in inflate_table() to avoid compiler warnings
+ * - Move a comment on output buffer sizes from inffast.c to inflate.c
+ * - Add comments in inffast.c to introduce the inflate_fast() routine
+ * - Rearrange window copies in inflate_fast() for speed and simplification
+ * - Unroll last copy for window match in inflate_fast()
+ * - Use local copies of window variables in inflate_fast() for speed
+ * - Pull out common wnext == 0 case for speed in inflate_fast()
+ * - Make op and len in inflate_fast() unsigned for consistency
+ * - Add FAR to lcode and dcode declarations in inflate_fast()
+ * - Simplified bad distance check in inflate_fast()
+ * - Added inflateBackInit(), inflateBack(), and inflateBackEnd() in new
+ *   source file infback.c to provide a call-back interface to inflate for
+ *   programs like gzip and unzip -- uses window as output buffer to avoid
+ *   window copying
+ *
+ * 1.2.beta5    1 Jan 2003
+ * - Improved inflateBack() interface to allow the caller to provide initial
+ *   input in strm.
+ * - Fixed stored blocks bug in inflateBack()
+ *
+ * 1.2.beta6    4 Jan 2003
+ * - Added comments in inffast.c on effectiveness of POSTINC
+ * - Typecasting all around to reduce compiler warnings
+ * - Changed loops from while (1) or do {} while (1) to for (;;), again to
+ *   make compilers happy
+ * - Changed type of window in inflateBackInit() to unsigned char *
+ *
+ * 1.2.beta7    27 Jan 2003
+ * - Changed many types to unsigned or unsigned short to avoid warnings
+ * - Added inflateCopy() function
+ *
+ * 1.2.0        9 Mar 2003
+ * - Changed inflateBack() interface to provide separate opaque descriptors
+ *   for the in() and out() functions
+ * - Changed inflateBack() argument and in_func typedef to swap the length
+ *   and buffer address return values for the input function
+ * - Check next_in and next_out for Z_NULL on entry to inflate()
+ *
+ * The history for versions after 1.2.0 are in ChangeLog in zlib distribution.
+ */
+
+SOURCE FILES: inflate.h
+/* inflate.h -- internal inflate state definition
+ * Copyright (C) 1995-2019 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/* WARNING: this file should *not* be used by applications. It is
+   part of the implementation of the compression library and is
+   subject to change. Applications should only use zlib.h.
+ */
+
+/* define NO_GZIP when compiling if you want to disable gzip header and
+   trailer decoding by inflate().  NO_GZIP would be used to avoid linking in
+   the crc code when it is not needed.  For shared libraries, gzip decoding
+   should be left enabled. */
+
+SOURCE FILES: inftrees.c
+/* inftrees.c -- generate Huffman trees for efficient decoding
+ * Copyright (C) 1995-2024 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+SOURCE FILES: inftrees.h
+/* inftrees.h -- header to use inftrees.c
+ * Copyright (C) 1995-2005, 2010 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/* WARNING: this file should *not* be used by applications. It is
+   part of the implementation of the compression library and is
+   subject to change. Applications should only use zlib.h.
+ */
+
+/* Structure for decoding tables.  Each entry provides either the
+   information needed to do the operation requested by the code that
+   indexed that table entry, or it provides a pointer to another
+   table that indexes more bits of the code.  op indicates whether
+   the entry is a pointer to another table, a literal, a length or
+   distance, an end-of-block, or an invalid code.  For a table
+   pointer, the low four bits of op is the number of index bits of
+   that table.  For a length or distance, the low four bits of op
+   is the number of extra bits to get after the code.  bits is
+   the number of bits in this code or part of the code to drop off
+   of the bit buffer.  val is the actual byte to output in the case
+   of a literal, the base length or distance, or the offset from
+   the current table to the next table.  Each entry is four bytes. */
+
+SOURCE FILES: test/example.c
+/* example.c -- usage example of the zlib compression library
+ * Copyright (C) 1995-2006, 2011, 2016 Jean-loup Gailly
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/* @(#) $Id$ */
+
+SOURCE FILES: test/infcover.c
+/* infcover.c -- test zlib's inflate routines with full code coverage
+ * Copyright (C) 2011, 2016 Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/* to use, do: ./configure --cover && make cover */
+
+SOURCE FILES: test/minigzip.c
+/* minigzip.c -- simulate gzip using the zlib compression library
+ * Copyright (C) 1995-2006, 2010, 2011, 2016 Jean-loup Gailly
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/*
+ * minigzip is a minimal implementation of the gzip utility. This is
+ * only an example of using zlib and isn't meant to replace the
+ * full-featured gzip. No attempt is made to deal with file systems
+ * limiting names to 14 or 8+3 characters, etc... Error checking is
+ * very limited. So use minigzip only for testing; use gzip for the
+ * real thing. On MSDOS, use only on file names without extension
+ * or in pipe mode.
+ */
+
+/* @(#) $Id$ */
+
+SOURCE FILES: trees.c
+/* trees.c -- output deflated data using Huffman coding
+ * Copyright (C) 1995-2024 Jean-loup Gailly
+ * detect_data_type() function provided freely by Cosmin Truta, 2006
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/*
+ *  ALGORITHM
+ *
+ *      The "deflation" process uses several Huffman trees. The more
+ *      common source values are represented by shorter bit sequences.
+ *
+ *      Each code tree is stored in a compressed form which is itself
+ * a Huffman encoding of the lengths of all the code strings (in
+ * ascending order by source values).  The actual code strings are
+ * reconstructed from the lengths in the inflate process, as described
+ * in the deflate specification.
+ *
+ *  REFERENCES
+ *
+ *      Deutsch, L.P.,"'Deflate' Compressed Data Format Specification".
+ *      Available in ftp.uu.net:/pub/archiving/zip/doc/deflate-1.1.doc
+ *
+ *      Storer, James A.
+ *          Data Compression:  Methods and Theory, pp. 49-50.
+ *          Computer Science Press, 1988.  ISBN 0-7167-8156-5.
+ *
+ *      Sedgewick, R.
+ *          Algorithms, p290.
+ *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
+ */
+
+/* @(#) $Id$ */
+
+/* #define GEN_TREES_H */
+
+SOURCE FILES: uncompr.c
+/* uncompr.c -- decompress a memory buffer
+ * Copyright (C) 1995-2003, 2010, 2014, 2016 Jean-loup Gailly, Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/* @(#) $Id$ */
+
+SOURCE FILES: zconf.h
+/* zconf.h -- configuration of the zlib compression library
+ * Copyright (C) 1995-2024 Jean-loup Gailly, Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/* @(#) $Id$ */
+
+SOURCE FILES: zlib.h
+/* zlib.h -- interface of the 'zlib' general purpose compression library
+  version 1.3.1, January 22nd, 2024
+
+  Copyright (C) 1995-2024 Jean-loup Gailly and Mark Adler
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+
+  Jean-loup Gailly        Mark Adler
+  jloup@gzip.org          madler@alumni.caltech.edu
+
+
+  The data format used by the zlib library is described by RFCs (Request for
+  Comments) 1950 to 1952 in the files http://tools.ietf.org/html/rfc1950
+  (zlib format), rfc1951 (deflate format) and rfc1952 (gzip format).
+*/
+
+SOURCE FILES: zutil.c
+/* zutil.c -- target dependent utility functions for the compression library
+ * Copyright (C) 1995-2017 Jean-loup Gailly
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/* @(#) $Id$ */
+
+SOURCE FILES: zutil.h
+/* zutil.h -- internal interface and configuration of the compression library
+ * Copyright (C) 1995-2024 Jean-loup Gailly, Mark Adler
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/* WARNING: this file should *not* be used by applications. It is
+   part of the implementation of the compression library and is
+   subject to change. Applications should only use zlib.h.
+ */
+
+/* @(#) $Id$ */

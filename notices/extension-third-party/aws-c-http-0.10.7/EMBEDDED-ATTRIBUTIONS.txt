@@ -1,0 +1,14 @@
+SOURCE FILES: bin/elasticurl/main.c, bin/h2benchmark/main.c, source/connection.c, source/connection_manager.c, source/connection_monitor.c, source/h1_connection.c, source/h1_decoder.c, source/h1_encoder.c, source/h1_stream.c, source/h2_connection.c, source/h2_decoder.c, source/h2_frames.c, source/h2_stream.c, source/hpack.c, source/hpack_decoder.c, source/hpack_encoder.c, source/http.c, source/http2_stream_manager.c, source/no_proxy.c, source/proxy_connection.c, source/proxy_strategy.c, source/random_access_set.c, source/request_response.c, source/statistics.c, source/strutil.c, source/websocket.c, source/websocket_bootstrap.c, source/websocket_decoder.c, source/websocket_encoder.c, tests/fuzz/fuzz_h2_decoder_correct.c, tests/fuzz/fuzz_h2_decoder_random.c, tests/h2_test_helper.c, tests/proxy_test_helper.c, tests/stream_test_helper.c, tests/test_connection.c, tests/test_connection_manager.c, tests/test_connection_monitor.c, tests/test_h1_client.c, tests/test_h1_decoder.c, tests/test_h1_encoder.c, tests/test_h1_server.c, tests/test_h2_client.c, tests/test_h2_decoder.c, tests/test_h2_encoder.c, tests/test_h2_headers.c, tests/test_hpack.c, tests/test_localhost_integ.c, tests/test_message.c, tests/test_no_proxy.c, tests/test_proxy.c, tests/test_random_access_set.c, tests/test_stream_manager.c, tests/test_strutil.c, tests/test_tls.c, tests/test_websocket_bootstrap.c, tests/test_websocket_decoder.c, tests/test_websocket_encoder.c, tests/test_websocket_handler.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+SOURCE FILES: source/hpack_huffman_static.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+/* WARNING: THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT. */
+/* clang-format off */

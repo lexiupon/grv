@@ -1,0 +1,245 @@
+{
+  "version": 1,
+  "status": "pre-freeze-production-provider-evidence",
+  "runs": [
+    {
+      "version": 1,
+      "run_id": "production-gcs-1",
+      "catalog_id": "production-gcs",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": 1,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/production-gcs-1.log",
+          "sha256": "7b69f614864403221723ee54f5d2dc1da957b1874b8e2a2fbfe96b0bc9e2c96c"
+        },
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/production-gcs-1/result.json",
+          "sha256": "ff42f2c2b9525a493fbf0b48e993351ae2c411a473816ceeaa83ad11eddf864c"
+        }
+      ],
+      "assertions": [
+        "Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."
+      ],
+      "limitations": [
+        "Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."
+      ],
+      "cleanup": {
+        "deleted_objects": 18,
+        "absence_proved": true
+      },
+      "owned_root": "gs://validation-gcs-bucket/validation/8df14f5e-1dc5-4fde-a078-abcf3a4054c6"
+    },
+    {
+      "version": 1,
+      "run_id": "production-gcs-2",
+      "catalog_id": "production-gcs",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": 1,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/production-gcs-2.log",
+          "sha256": "b0d7bb28dc8e9d617bf08cd475610bdda391c22ca5f121740abcbc65a1fbf5d8"
+        },
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/production-gcs-2/result.json",
+          "sha256": "3b2beb9e3982e636b7478738909fd60c707fedbf640d7758c72bd19527647093"
+        }
+      ],
+      "assertions": [
+        "Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."
+      ],
+      "limitations": [
+        "Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."
+      ],
+      "cleanup": {
+        "deleted_objects": 20,
+        "absence_proved": true
+      },
+      "owned_root": "gs://validation-gcs-bucket/validation/4a7ef87d-6945-4271-8a7b-7806e128d04e"
+    },
+    {
+      "version": 1,
+      "run_id": "production-gcs-3",
+      "catalog_id": "production-gcs",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": 1,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/production-gcs-3.log",
+          "sha256": "11dccedde01dd3c6def476fa36579a6015bb1a85738d9505821ed937c343722e"
+        },
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/production-gcs-3/result.json",
+          "sha256": "0769f1dbc93cd8e544965a293b3c4049da254ad5e96dbb8d267554001ea5ef60"
+        }
+      ],
+      "assertions": [
+        "Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."
+      ],
+      "limitations": [
+        "Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."
+      ],
+      "cleanup": {
+        "deleted_objects": 20,
+        "absence_proved": true
+      },
+      "owned_root": "gs://validation-gcs-bucket/validation/a6b93bf5-7ea8-458b-881e-d809d6df1696"
+    },
+    {
+      "version": 1,
+      "run_id": "production-gcs-4",
+      "catalog_id": "production-gcs",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": 1,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/production-gcs-4.log",
+          "sha256": "7eb07293c0f314c68de3396594bc023d95b7d39619b6be437a2f672caa79f962"
+        },
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/production-gcs-4/result.json",
+          "sha256": "5456213f65b5917eeeba3453375538c37bbd8881764e71525262367aa750de56"
+        }
+      ],
+      "assertions": [
+        "Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."
+      ],
+      "limitations": [
+        "Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."
+      ],
+      "cleanup": {
+        "deleted_objects": 20,
+        "absence_proved": true
+      },
+      "owned_root": "gs://validation-gcs-bucket/validation/f8322953-2880-4768-b8db-a0314349ac8b"
+    },
+    {
+      "version": 1,
+      "run_id": "production-gcs-5",
+      "catalog_id": "production-gcs",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": 1,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/production-gcs-5.log",
+          "sha256": "66653624d3d64709a9077636e83505eda0da77fbea12f3272548cf163720ceac"
+        },
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/production-gcs-5/result.json",
+          "sha256": "6f227cd65ce46aea6574da0501000ecfac69d3edd7c738bf85befd10e0ccef4e"
+        }
+      ],
+      "assertions": [
+        "Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."
+      ],
+      "limitations": [
+        "Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."
+      ],
+      "cleanup": {
+        "deleted_objects": 39,
+        "absence_proved": true
+      },
+      "owned_root": "gs://validation-gcs-bucket/validation/2cea4540-71d0-4453-8f5a-be81c7b75f7f"
+    },
+    {
+      "version": 1,
+      "run_id": "production-gcs-6",
+      "catalog_id": "production-gcs",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/production-gcs-6.log",
+          "sha256": "6a96991c6bbed04290fc63e21ce860be6eb67a404e2b012d617dba64a23243bf"
+        },
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/production-gcs-6/result.json",
+          "sha256": "c62fcc30164641f8714bbda43e5cc475a2ec089cf9f437db02d291823e62d477"
+        }
+      ],
+      "assertions": [
+        "Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."
+      ],
+      "limitations": [
+        "Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."
+      ],
+      "cleanup": {
+        "deleted_objects": 0,
+        "absence_proved": true
+      },
+      "owned_root": "gs://validation-gcs-bucket/validation/9632fdf1-a898-422f-a834-1f0cd780b27e"
+    },
+    {
+      "version": 1,
+      "run_id": "production-gcs-7",
+      "catalog_id": "production-gcs",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/production-gcs-7.log",
+          "sha256": "bcf07991f6e59601247f2a7d2cb04622cfec13e7d82fdd97f52310d33da248e1"
+        },
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/production-gcs-7/result.json",
+          "sha256": "fca70f21a9290c7acf6064e2fc9ca557926f5a8cc318e527902c604828ee612c"
+        }
+      ],
+      "assertions": [
+        "Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."
+      ],
+      "limitations": [
+        "Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."
+      ],
+      "cleanup": {
+        "deleted_objects": 0,
+        "absence_proved": true
+      },
+      "owned_root": "gs://validation-gcs-bucket/validation/73790505-f65c-4b38-8e17-ecfffde670d8"
+    }
+  ],
+  "supporting_files": []
+}

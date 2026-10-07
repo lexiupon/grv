@@ -1,0 +1,392 @@
+{
+  "version": 1,
+  "status": "mutable-source-followup-not-candidate",
+  "runs": [
+    {
+      "version": 1,
+      "run_id": "followup-msrv-check",
+      "catalog_id": "msrv-check",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "assertions": [
+        "Recorded outcome in retained log; no frozen candidate qualification."
+      ],
+      "limitations": [
+        "Recorded retrospectively; exact execution source interval unavailable.",
+        "Mutation tests failed reset, not counted as complete passed gates."
+      ],
+      "logs": [
+        {
+          "path": "artifacts/release-validation/operations-setup/msrv-check.log",
+          "sha256": "00193c7e43a280b30be4f372d1864c15f7d293de292e57e62905caea0ce3e9c3"
+        }
+      ],
+      "test_summary": null,
+      "cleanup": "No service effects"
+    },
+    {
+      "version": 1,
+      "run_id": "followup-msrv-lib-tests",
+      "catalog_id": "msrv-libs",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "assertions": [
+        "Recorded outcome in retained log; no frozen candidate qualification."
+      ],
+      "limitations": [
+        "Recorded retrospectively; exact execution source interval unavailable.",
+        "Mutation tests failed reset, not counted as complete passed gates."
+      ],
+      "logs": [
+        {
+          "path": "artifacts/release-validation/operations-setup/msrv-lib-tests.log",
+          "sha256": "2d8c9e78726c06ef47ef7951e69e23cb6e7510daa66b5a6851457c05ab5a6b2d"
+        }
+      ],
+      "test_summary": {
+        "passed": 298,
+        "failed": 0,
+        "ignored": 6
+      },
+      "cleanup": "No service effects"
+    },
+    {
+      "version": 1,
+      "run_id": "followup-release-package",
+      "catalog_id": "release-package",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "assertions": [
+        "Recorded outcome in retained log; no frozen candidate qualification."
+      ],
+      "limitations": [
+        "Recorded retrospectively; exact execution source interval unavailable.",
+        "Mutation tests failed reset, not counted as complete passed gates."
+      ],
+      "logs": [
+        {
+          "path": "artifacts/release-validation/operations-setup/release-package.log",
+          "sha256": "b1540040973db1bdb4209bf5ef8b44e2270ac362eb26d8c651ef967ff910b354"
+        }
+      ],
+      "test_summary": null,
+      "cleanup": "No service effects"
+    },
+    {
+      "version": 1,
+      "run_id": "followup-release-package-rpath",
+      "catalog_id": "release-package",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "assertions": [
+        "Recorded outcome in retained log; no frozen candidate qualification."
+      ],
+      "limitations": [
+        "Recorded retrospectively; exact execution source interval unavailable.",
+        "Mutation tests failed reset, not counted as complete passed gates."
+      ],
+      "logs": [
+        {
+          "path": "artifacts/release-validation/operations-setup/release-package-rpath.log",
+          "sha256": "3ba2ce5c7173c73e4231ded364fe01420b81001a4ed8cc859c5439b43b269e0a"
+        }
+      ],
+      "test_summary": null,
+      "cleanup": "No service effects"
+    },
+    {
+      "version": 1,
+      "run_id": "followup-release-relocation",
+      "catalog_id": "release-relocation",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "assertions": [
+        "Recorded outcome in retained log; no frozen candidate qualification."
+      ],
+      "limitations": [
+        "Recorded retrospectively; exact execution source interval unavailable.",
+        "Mutation tests failed reset, not counted as complete passed gates."
+      ],
+      "logs": [
+        {
+          "path": "artifacts/release-validation/operations-setup/release-relocation.log",
+          "sha256": "310d50bb3c9c6c26367e5392a0af022c304feb9fb132bbedac5789f86b225059"
+        }
+      ],
+      "test_summary": null,
+      "cleanup": "No service effects"
+    },
+    {
+      "version": 1,
+      "run_id": "followup-sf-mutation-reset",
+      "catalog_id": "sf-mutation",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": 1,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "assertions": [
+        "Recorded outcome in retained log; no frozen candidate qualification."
+      ],
+      "limitations": [
+        "Recorded retrospectively; exact execution source interval unavailable.",
+        "Mutation tests failed reset, not counted as complete passed gates."
+      ],
+      "logs": [
+        {
+          "path": "artifacts/release-validation/operations-setup/sf-mutation-reset.log",
+          "sha256": "120c5fe0d3b65257f106b3ecd99f80126464eeab14bf6b6e6c2fcfbcce5663a4"
+        }
+      ],
+      "test_summary": null,
+      "cleanup": "See log/current state: Salesforce strict fixture restore incomplete; no active worker/service test left running."
+    },
+    {
+      "version": 1,
+      "run_id": "followup-sf-mutation-reset-retry1",
+      "catalog_id": "sf-mutation",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": 1,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "assertions": [
+        "Recorded outcome in retained log; no frozen candidate qualification."
+      ],
+      "limitations": [
+        "Recorded retrospectively; exact execution source interval unavailable.",
+        "Mutation tests failed reset, not counted as complete passed gates."
+      ],
+      "logs": [
+        {
+          "path": "artifacts/release-validation/operations-setup/sf-mutation-reset-retry1.log",
+          "sha256": "b5f33fed1c8e57cafeb82fa20b3096257ab9c77e875a9ec956063f619f3d738f"
+        }
+      ],
+      "test_summary": null,
+      "cleanup": "See log/current state: Salesforce strict fixture restore incomplete; no active worker/service test left running."
+    },
+    {
+      "version": 1,
+      "run_id": "followup-sf-reset-recovery",
+      "catalog_id": "sf-reset",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "assertions": [
+        "Recorded outcome in retained log; no frozen candidate qualification."
+      ],
+      "limitations": [
+        "Recorded retrospectively; exact execution source interval unavailable.",
+        "Mutation tests failed reset, not counted as complete passed gates."
+      ],
+      "logs": [
+        {
+          "path": "artifacts/release-validation/operations-setup/sf-reset-recovery.log",
+          "sha256": "9e7d4156ac157c4e945a196352980a913296ec47310b0acbf4c6edcf018c3ef3"
+        }
+      ],
+      "test_summary": null,
+      "cleanup": "See log/current state: Salesforce strict fixture restore incomplete; no active worker/service test left running."
+    },
+    {
+      "version": 1,
+      "run_id": "followup-sf-missing-rows-recovery",
+      "catalog_id": "sf-reset",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": 1,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "assertions": [
+        "Recorded outcome in retained log; no frozen candidate qualification."
+      ],
+      "limitations": [
+        "Recorded retrospectively; exact execution source interval unavailable.",
+        "Mutation tests failed reset, not counted as complete passed gates."
+      ],
+      "logs": [
+        {
+          "path": "artifacts/release-validation/operations-setup/sf-missing-rows-recovery.log",
+          "sha256": "12127166de6a962646fad54440b21bf41bc742d2a6de2a69d8ded4ed5d128776"
+        }
+      ],
+      "test_summary": null,
+      "cleanup": "See log/current state: Salesforce strict fixture restore incomplete; no active worker/service test left running."
+    },
+    {
+      "version": 1,
+      "run_id": "followup-workspace-clippy-followup",
+      "catalog_id": "workspace-clippy",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": 1,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "assertions": [
+        "Recorded outcome in retained log; no frozen candidate qualification."
+      ],
+      "limitations": [
+        "Recorded retrospectively; exact execution source interval unavailable.",
+        "Mutation tests failed reset, not counted as complete passed gates."
+      ],
+      "logs": [
+        {
+          "path": "artifacts/release-validation/operations-setup/workspace-clippy-followup.log",
+          "sha256": "19f6065fc6617ebf70e720350b981edbcf43718743844c5e906f7cfde76267fe"
+        }
+      ],
+      "test_summary": null,
+      "cleanup": "No service effects"
+    },
+    {
+      "version": 1,
+      "run_id": "followup-workspace-clippy-followup-retry1",
+      "catalog_id": "workspace-clippy",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "assertions": [
+        "Recorded outcome in retained log; no frozen candidate qualification."
+      ],
+      "limitations": [
+        "Recorded retrospectively; exact execution source interval unavailable.",
+        "Mutation tests failed reset, not counted as complete passed gates."
+      ],
+      "logs": [
+        {
+          "path": "artifacts/release-validation/operations-setup/workspace-clippy-followup-retry1.log",
+          "sha256": "501574cafba055883d8d03956b96e49b4e26fb35c51cfa207f5e5d08e8b3305a"
+        }
+      ],
+      "test_summary": null,
+      "cleanup": "No service effects"
+    },
+    {
+      "version": 1,
+      "run_id": "followup-packaging-gates-tests-rpath",
+      "catalog_id": "scripts",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "assertions": [
+        "Recorded outcome in retained log; no frozen candidate qualification."
+      ],
+      "limitations": [
+        "Recorded retrospectively; exact execution source interval unavailable.",
+        "Mutation tests failed reset, not counted as complete passed gates."
+      ],
+      "logs": [
+        {
+          "path": "artifacts/release-validation/operations-setup/packaging-gates-tests-rpath.log",
+          "sha256": "faaacc97bb9e86b952d3925624567bbb9efbe191adf8e0d70b7f0dce596de520"
+        }
+      ],
+      "test_summary": null,
+      "cleanup": "No service effects"
+    },
+    {
+      "version": 1,
+      "run_id": "followup-sf-fixture-offline",
+      "catalog_id": "fixture-offline",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "assertions": [
+        "Recorded outcome in retained log; no frozen candidate qualification."
+      ],
+      "limitations": [
+        "Recorded retrospectively; exact execution source interval unavailable.",
+        "Mutation tests failed reset, not counted as complete passed gates."
+      ],
+      "logs": [
+        {
+          "path": "artifacts/release-validation/operations-setup/sf-fixture-offline.log",
+          "sha256": "5374636a7288f7f7d3aba5b63f1a87b11829caa4b6ee2d571a7bfc7e9bb364f9"
+        }
+      ],
+      "test_summary": null,
+      "cleanup": "No service effects"
+    }
+  ],
+  "supporting_files": [
+    {
+      "path": "artifacts/release-validation/operations-setup/sf-current-state.json",
+      "sha256": "45a6253135c481be695721c558f98ab97af8471ce1316497a2c4075cdff2ebca"
+    },
+    {
+      "path": "artifacts/release-validation/operations-setup/sf-deleted-fixture-purge.log",
+      "sha256": "f09440afb0b03fd62327e3fb8d4302a8584619c7277d60dae4e0c3cd77f0547e"
+    },
+    {
+      "path": "artifacts/release-validation/operations-setup/sf-bulk-pages-compile.log",
+      "sha256": "1ded8319c93df061b98f6a2664447d36ed7360182bb6890e6712e6bd6368134c"
+    },
+    {
+      "path": "artifacts/release-validation/operations-setup/distribution-refusal.log",
+      "sha256": "24ee9282aee03f8154a36023105ad306a275a299083c438fcf61ac346a89a8f2"
+    }
+  ]
+}

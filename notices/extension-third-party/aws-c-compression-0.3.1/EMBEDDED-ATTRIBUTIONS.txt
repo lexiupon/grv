@@ -1,0 +1,23 @@
+SOURCE FILES: source/compression.c, source/huffman.c, source/huffman_generator/generator.c, tests/fuzz/decode.c, tests/fuzz/transitive.c, tests/fuzz/transitive_chunked.c, tests/huffman_test.c, tests/library_test.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+SOURCE FILES: source/huffman_testing.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+/**
+ * See aws/testing/compression/huffman.h for docs.
+ */
+
+SOURCE FILES: tests/test_huffman_static.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+/* WARNING: THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT. */

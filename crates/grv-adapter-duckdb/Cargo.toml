@@ -1,0 +1,37 @@
+[package]
+name = "grv-adapter-duckdb"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = []
+# Requires the patched, pinned native library built by native/build.py.
+native = []
+
+[dependencies]
+libc.workspace = true
+arrow-schema.workspace = true
+arrow-array.workspace = true
+arrow-ipc.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+chrono.workspace = true
+sha2.workspace = true
+grv-adapter-api.workspace = true
+grv-adapter-sdk.workspace = true
+grv-adapter-wire.workspace = true
+grv-types.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+grv-adapter-host.workspace = true
+parquet = { version = "=58.3.0", default-features = false, features = ["arrow"] }
+
+[package.metadata.grv]
+duckdb-version = "1.5.6"
+native-guard-revision = 1
+duckdb-memory-bytes = 536870912
+source-budget-bytes = 33554432
+scratch-budget-bytes = 33554432

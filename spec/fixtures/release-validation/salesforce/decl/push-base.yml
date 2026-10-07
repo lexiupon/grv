@@ -1,0 +1,42 @@
+# GRV Salesforce fixture — canonical filtered push.
+#
+# Captures the 900 rows with GrvStatus__c = 'Active' (all rows with
+# i % 10 == 7 are excluded) from the disposable-org fixture. This is the
+# base selection used by the live REST/Bulk/auto transport cases; expected
+# counts, partition months, page sizes and per-row values are in
+# manifest/value-manifest.json (selections.base).
+#
+# The _month_ partition column is derived from the partition date column,
+# so the published dataset is partitioned 2026-07/08/09.
+declaration_version: 1
+kind: push
+dataset: grv_sf_fixture
+adapter: salesforce
+connection:
+  org: grv-fixture
+options:
+  transport: auto
+tables:
+  - name: grvfix
+    source:
+      object: GrvFix__c
+      filter: GrvStatus__c = 'Active'
+    partition_keys: [month]
+    columns:
+      - {name: id, source: Id, type: utf8}
+      - {name: name, source: Name, type: utf8}
+      - {name: text, source: GrvText__c, type: utf8}
+      - {name: long_text, source: GrvLongText__c, type: utf8}
+      - {name: int_value, source: GrvInt__c, type: int64}
+      - {name: decimal_value, source: GrvDecimal__c, type: 'decimal128(38,10)'}
+      - {name: date_value, source: GrvDate__c, type: date32}
+      - {name: datetime_value, source: GrvDateTime__c, type: 'timestamp(us,UTC)'}
+      - {name: picklist, source: GrvPicklist__c, type: utf8}
+      - {name: bool_value, source: GrvBool__c, type: bool}
+      - {name: formula, source: GrvFormula__c, type: utf8}
+      - {name: partition_date, source: GrvPartitionDate__c, type: date32}
+      - {name: status, source: GrvStatus__c, type: utf8}
+      - {name: rel_id, source: GrvRel__c, type: utf8}
+      - {name: _month_, type: utf8, derive: {from: partition_date, format: month}}
+checks:
+  - {table: grvfix, not_null: [id, name, _month_]}

@@ -1,0 +1,26 @@
+[package]
+name = "grv-adapter-salesforce"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json = { workspace = true, features = ["arbitrary_precision"] }
+sha2.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+libc.workspace = true
+grv-adapter-api.workspace = true
+grv-adapter-sdk.workspace = true
+grv-types.workspace = true
+grv-adapter-wire.workspace = true
+arrow-array.workspace = true
+arrow-schema.workspace = true
+arrow-ipc.workspace = true
+base64.workspace = true
+ryu-js = "0.2.2"
+
+[dev-dependencies]
+tempfile.workspace = true

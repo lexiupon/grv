@@ -247,13 +247,20 @@
         "materializations": {
           "type": "array",
           "items": {
-            "$ref": "../grv-client-v1-command-output.schema.json#/$defs/materialization"
+            "anyOf": [
+              {
+                "$ref": "#/$defs/engine_materialization"
+              },
+              {
+                "$ref": "../grv-client-v1-command-output.schema.json#/$defs/materialization"
+              }
+            ]
           }
         },
         "sessions": {
           "type": "array",
           "items": {
-            "$ref": "../grv-client-v1-command-output.schema.json#/$defs/session"
+            "$ref": "#/$defs/engine_session"
           }
         },
         "imports": {
@@ -279,11 +286,59 @@
         "database": {
           "type": "string",
           "minLength": 1
+        },
+        "input_mappings": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "properties": {
+              "alias": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              },
+              "engine_table": {
+                "type": "string",
+                "pattern": "^_grv_session_[0-9a-f]{32}\\.input_[0-9]+$"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "alias",
+              "engine_table"
+            ]
+          }
+        },
+        "self_mappings": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "properties": {
+              "table": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              },
+              "engine_table": {
+                "type": "string",
+                "pattern": "^_grv_session_[0-9a-f]{32}\\.self_[0-9]+$"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "table",
+              "engine_table"
+            ]
+          }
         }
       },
       "additionalProperties": false,
       "required": [
-        "database"
+        "database",
+        "input_mappings",
+        "self_mappings"
       ]
     },
     "push_options": {
@@ -433,6 +488,220 @@
         "obsolete_targets"
       ],
       "$comment": "Transactional adapter: PullResolution.recovery is always null, so this point validates only PullPlan.adapter_details. prior_* describe the committed checkpoint the diff was planned against; obsolete_targets are owned targets cleared by a mapping change."
+    },
+    "engine_materialization": {
+      "type": "object",
+      "properties": {
+        "dataset": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "target_schema": {
+          "type": "string",
+          "pattern": "^[a-z0-9_][a-z0-9_-]*$"
+        },
+        "revision_mode": {
+          "enum": [
+            "latest",
+            "fixed"
+          ]
+        },
+        "materialization_mode": {
+          "enum": [
+            "local",
+            "s3-view"
+          ]
+        },
+        "committed_revision": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)$"
+        },
+        "generation_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"
+        },
+        "mappings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "grv_table": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+              },
+              "target_table": {
+                "type": "string",
+                "pattern": "^[a-z0-9_][a-z0-9_-]*\\.[a-z0-9_][a-z0-9_-]*$"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "grv_table",
+              "target_table"
+            ]
+          }
+        },
+        "adapter": {
+          "const": "duckdb"
+        },
+        "write_mode": {
+          "const": "replace"
+        },
+        "transform_mode": {
+          "const": "identity"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "dataset",
+        "target_schema",
+        "revision_mode",
+        "materialization_mode",
+        "committed_revision",
+        "generation_id",
+        "mappings",
+        "adapter",
+        "write_mode",
+        "transform_mode"
+      ]
+    },
+    "engine_session": {
+      "type": "object",
+      "properties": {
+        "dataset": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"
+        },
+        "attempt_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"
+        },
+        "session_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"
+        },
+        "workspace_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"
+        },
+        "base_revision": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)$"
+        },
+        "input_revisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "dataset": {
+                "type": "string"
+              },
+              "revision": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            },
+            "required": [
+              "dataset",
+              "revision"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "state": {
+          "enum": [
+            "prepared",
+            "executing",
+            "completed",
+            "aborted"
+          ]
+        },
+        "completion_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "published",
+                    "no-op",
+                    "aborted"
+                  ]
+                },
+                "revision": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]*)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "operation_id": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "revision",
+                "operation_id"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "run": {
+          "anyOf": [
+            {
+              "$ref": "../grv-client-v1-command-output.schema.json#/$defs/run_observation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "dataset",
+        "run_id",
+        "attempt_id",
+        "session_id",
+        "workspace_id",
+        "base_revision",
+        "input_revisions",
+        "state",
+        "completion_sha256",
+        "outcome"
+      ]
     }
   }
 }

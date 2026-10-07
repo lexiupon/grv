@@ -26,6 +26,7 @@
         "recover",
         "unknown",
         "adapter list",
+        "adapter install",
         "adapter capabilities",
         "adapter command"
       ]
@@ -435,7 +436,7 @@
       "if": {"properties": {"command": {"const": "adapter list"}}},
       "then": {
         "if": {"properties": {"ok": {"const": true}}},
-        "then": {"properties": {"result": {"allOf": [{"$ref": "#/$defs/result_adapter_list"}, {"required": ["adapters"]}]}}},
+        "then": {"properties": {"result": {"allOf": [{"$ref": "#/$defs/result_adapter_list"}, {"required": ["search_roots", "adapters"]}]}}},
         "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_adapter_list"}, {"type": "null"}]}}}
       }
     },
@@ -467,7 +468,56 @@
       }
     },
     {
-      "if": {"properties": {"command": {"enum": ["adapter list", "adapter capabilities", "adapter command"]}}},
+      "if": {
+        "properties": {
+          "command": {
+            "const": "adapter install"
+          }
+        }
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "ok": {
+              "const": true
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "result": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/result_adapter_install"
+                },
+                {
+                  "required": [
+                    "adapter",
+                    "replaced"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "else": {
+          "properties": {
+            "result": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/result_adapter_install"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"command": {"enum": ["adapter list", "adapter install", "adapter capabilities", "adapter command"]}}},
       "then": {"properties": {"root": {"type": "null"}}},
       "else": {
         "if": {"properties": {"ok": {"const": true}}},
@@ -890,7 +940,7 @@
       "properties": {
         "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
         "run_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
-        "workspace_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
+        "workspace_id": {"anyOf": [{"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"}, {"type": "null"}]},
         "base_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
         "declaration_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "input_revisions": {"type": "array", "items": {"$ref": "#/$defs/input_revision"}},
@@ -936,6 +986,7 @@
             "properties": {
               "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
               "capture": {"type": "null"},
+              "workspace_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
               "mappings": {"$ref": "#/$defs/session_mappings"}
             }
           },
@@ -943,6 +994,7 @@
             "properties": {
               "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
               "mappings": {"type": "null"},
+              "workspace_id": {"type": "null"},
               "input_revisions": {"maxItems": 0}
             }
           }
@@ -1577,9 +1629,77 @@
       "additionalProperties": false,
       "required": ["name", "package_version", "interface_version", "capabilities", "binding_schema_version"]
     },
+    "adapter_manifest_entry": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "package_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "interface_versions": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "binding_schema_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "manifest": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "package_version",
+        "interface_versions",
+        "binding_schema_version",
+        "manifest"
+      ]
+    },
     "result_adapter_list": {
       "type": "object",
-      "properties": {"adapters": {"type": "array", "items": {"$ref": "#/$defs/adapter_descriptor"}}},
+      "properties": {
+        "search_roots": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "adapters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/adapter_manifest_entry"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": []
+    },
+    "result_adapter_install": {
+      "type": "object",
+      "properties": {
+        "adapter": {
+          "$ref": "#/$defs/adapter_manifest_entry"
+        },
+        "replaced": {
+          "type": "boolean"
+        }
+      },
       "additionalProperties": false,
       "required": []
     },

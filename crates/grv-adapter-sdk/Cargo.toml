@@ -1,0 +1,15 @@
+[package]
+name = "grv-adapter-sdk"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+grv-types.workspace = true
+grv-adapter-api.workspace = true
+grv-adapter-wire.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+libc.workspace = true
+base64.workspace = true

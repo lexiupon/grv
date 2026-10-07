@@ -103,7 +103,11 @@ installation must pass before the parent spawns it.
 - There are no per-adapter environment overrides.
 - Otherwise, an installation may configure one explicit system root at lower
   search priority. The user entry shadows the system entry.
-- `adapter list` shows the effective roots and the winning manifest.
+- `adapter list` reports `search_roots` in search-priority order and `adapters`
+  ordered by canonical name. Each winning manifest entry contains exactly
+  `name`, `package_version` (the manifest `version`), `interface_versions`,
+  `binding_schema_version`, and `manifest` (the resolved manifest path). It starts
+  no adapter process and reports no handshake-derived capability.
 
 ### Manifest
 
@@ -147,7 +151,16 @@ The manifest is closed. All fields except `entrypoint_sha256` are required.
   MUST agree with `identified`. A mismatch is `ADAPTER_FAILURE` before binding.
 - Transfers do not install or download. `grv adapter install <path|tarball>`
   is an out-of-band installation operation that applies these checks and
-  smoke-tests the handshake. `adapter list` is manifest-only; capabilities and
+  smoke-tests the handshake. Installation accepts a directory or a tarball
+  containing one adapter directory, installs into the user root (or the sole
+  `GRV_ADAPTERS_DIR` root), and refuses an existing name unless `--replace` is
+  explicit. Tar entries cannot escape the staging directory through absolute
+  paths, traversal, symlinks, hard links, or special files. Validate and
+  smoke-test the protected staging installation before atomically replacing
+  the final directory. Successful output has `adapter` (the same manifest
+  entry as listing) and `replaced`; failed installation leaves the prior
+  installation usable. All adapter administration commands report `root: null`.
+  `adapter list` is manifest-only; capabilities and
   namespaced commands use the handshake.
 
 ## 2. Transport, grammar, and channel state
@@ -382,8 +395,8 @@ request.
 `Resources` is closed:
 `{slots: Req, max_batch_bytes: U64, max_source_unit_bytes: U64, max_scratch_bytes: U64}`.
 
-- Defaults are 8 slots, 67108864 batch bytes, 67108864 source-unit bytes, and
-  67108864 scratch bytes.
+- Defaults are 4 slots, 8388608 batch bytes, 33554432 source-unit bytes, and
+  33554432 scratch bytes.
 - Slots are `1..64`.
 - Batch size is a multiple of 8 in `262144..67108864`.
 - Source and scratch budgets are positive and no larger than 67108864 bytes
@@ -397,7 +410,7 @@ Parent-owned metadata, Parquet, and consumer budgets are accounted separately
 For example, this is a complete bootstrap request (no `req` field):
 
 ```json
-{"msg":"hello","interface_versions":[1],"core":{"name":"grv","version":"0.3.0"},"attempt":"359c6d0f-a9c1-4ae6-b804-0742a5e2b9de","resources":{"slots":8,"max_batch_bytes":"67108864","max_source_unit_bytes":"67108864","max_scratch_bytes":"67108864"}}
+{"msg":"hello","interface_versions":[1],"core":{"name":"grv","version":"0.3.0"},"attempt":"359c6d0f-a9c1-4ae6-b804-0742a5e2b9de","resources":{"slots":4,"max_batch_bytes":"8388608","max_source_unit_bytes":"33554432","max_scratch_bytes":"33554432"}}
 ```
 
 `Capabilities` is closed and contains:
@@ -409,6 +422,12 @@ For example, this is a complete bootstrap request (no `req` field):
 - `pull_materializations` (unique array of `"local" | "s3-view"`);
 - `pull_recovery` (`"transactional" | "journaled" | null`);
 - and `data_plane` (array of strings).
+
+Wire and public consistency are separate types. Public output projects
+`"snapshot"` to `"transaction-snapshot"`, `"capture_window"` to
+`"capture-window"`, and `"none"` to `"adapter-defined"`. The last value means
+no generic consistency guarantee; it does not imply an adapter-specific
+guarantee.
 
 Unsupported directions have empty corresponding mode arrays and null recovery.
 Build capabilities require `push`. Pull requires a recovery contract. V1 accepts
@@ -549,12 +568,17 @@ the execution companion, the section names that rule instead of restating it.
   File schema is that file's logical prefix schema, not a later table baseline.
 - **RequestRecord:** `{attempt_id: UUID, root: string, dataset: Name,
   workspace_id: UUID, adapter_identity: AdapterIdentity,
-  connection_identity: string, effective_declaration: J,
+  connection_identity: string, effective_declaration: J, validation_input: J,
   declaration_sha256: Digest, request_sha256: Digest, registry: Registry,
   requested_revision: "latest" | Revision}`. The effective declaration follows
   the common and recorded adapter schemas. The registry is the recorded
   normalization and result-validation evidence, not a new execution
   registration.
+  `validation_input` records the parent-normalized declaration after descriptor
+  whole-point defaults and before pure nested validation. Comparing it with the
+  effective declaration identifies the defaults actually supplied by validation;
+  a replay cannot inherit a formerly explicit mapping simply because it is now
+  omitted. This evidence is excluded from both identity hash inputs.
 - **Receipt:** `{request: RequestRecord, committed_revision: Revision,
   generation_id: UUID, pulled_at: Time, row_counts: [{table: Name, rows: U64}],
   source_contracts: [{table: Name, contract: TableContract}],
@@ -567,19 +591,24 @@ the execution companion, the section names that rule instead of restating it.
 - **BuildIdentity:** `{attempt_id: UUID, root: string, dataset: Name,
   run_id: RunId, workspace_id: UUID, declaration_sha256: Digest,
   adapter_identity: AdapterIdentity, connection_identity: string}`.
-- **InputBinding:** `{alias: Name, relation: J, dataset: Name, revision: Revision,
+- **InputBinding:** `{alias: Name, relation: J, dataset: Name, table: Name, revision: Revision,
   generation_id: UUID, contract: TableContract,
   materialization: "local" | "s3-view"}`. Relation validates against
-  `build_input` for the selected mode. Revision is positive. Metadata must
+  `build_input` for the selected mode. `table` is the recorded GRV source table,
+  independent of the authored physical relation; the parent verifies that exact
+  table in the fixed dataset and revision. Revision is positive. Metadata must
   establish a complete eligible identity materialization in the same bound root.
-- **OutputBinding:** `{table: Name, source: J, engine_table: string,
+- **OutputBinding:** `{table: Name, source: J, columns: J, engine_table: string,
   contract: TableContract}`. Source is the fixed mode-specific table source.
+  Columns carry the ordered authored mappings unchanged, excluding core-derived
+  columns, and match the logical input contract exactly. Each source selector
+  validates against the selected build mode’s `column_source` registry point.
   V1 completion mappings use the existing build-completion schema's
   qualified-name grammar; the adapter supplies and validates its physical
   mappings.
-- **BuildSession:** `{session_id: UUID, identity: BuildIdentity,
+- **BuildSession:** `{session_id: UUID, identity: BuildIdentity, options: J,
   execution: "managed" | "external", base_revision: Revision,
-  inputs: [InputBinding], outputs: [OutputBinding], selected_outputs: [Name],
+  base_contracts: [{table: Name, contract: TableContract}], inputs: [InputBinding], outputs: [OutputBinding], selected_outputs: [Name],
   self_input: boolean, adapter_details: J}`. Details validate at
   `session_details` for the execution mode. The session ID is durable, unlike a
   connection handle. Names and aliases are unique. Selected outputs are exactly
@@ -685,12 +714,15 @@ result.
 `ExtractRequest` is `{attempt_id: UUID, stream_id: UUID, root: string,
 dataset: Name, run_id: RunId, declaration_sha256: Digest,
 adapter_identity: AdapterIdentity, connection_identity: string,
-selection: {policy: "changed" | "all"},
+selection: {policy: "changed" | "all"}, options: J,
 tables: [{name: Name, source: J, columns: J, contract: TableContract}],
 resume: Checkpoint | null}`.
 
 - Source and column selectors retain their effective declaration shapes and
   validate at their extraction points.
+- `options` retains the effective declaration's options object and validates
+  at the extraction `options` point. Resolved transport and source facts are
+  recorded separately; they do not replace explicit authoring values.
 - Partition columns declared with `derive` are computed by the parent after it
   receives batches. They are omitted from `columns` and `contract`, and the
   adapter never emits them.
@@ -714,22 +746,31 @@ Nonterminal adapter events:
 
 `Checkpoint` is `{attempt_id: UUID, adapter_identity: AdapterIdentity,
 connection_identity: string,
-tables: [{table: Name, snapshot_id: string, source_identity: J, capture_start: Time}],
+tables: [{table: Name, snapshot_id: string, reopenable: boolean, source_identity: J, capture_start: Time}],
 job: J}`. Snapshot IDs are nonempty durable source identities, not timestamps
-invented to label unrelated acquisitions. Source identity and job objects
+invented to label unrelated acquisitions. `reopenable: false` identifies one
+durably recorded acquisition and grants no authority to restart or re-query
+it. This applies to nonresumable acquisitions, including empty tables.
+`reopenable: true` promises the recorded source can be reopened exactly; it
+never authorizes a new acquisition. Source identity and job objects
 validate at the served points.
 
-1. The adapter durably records source-job creation and resumable identity
-   before fetching and before sending the checkpoint. If job creation itself is
-   ambiguous, the adapter preserves its request identity and resolves it; it
-   does not silently start another source job for the same attempt.
+1. The adapter durably records acquisition intent and source identity before
+   sending the checkpoint. It may fetch private REST bootstrap rows to learn
+   the locator and snapshot identity before checkpoint acknowledgement; those
+   rows remain inside its source budget and cannot be emitted until ACK.
+   A REST response without a locator may have an empty `job_ids` array.
+   If Bulk creation is unresolved, it may also have empty `job_ids`: persist
+   the ambiguous creation intent and return `OUTCOME_UNKNOWN` without
+   repeating the creation POST. An incomplete nonresumable acquisition cannot
+   be restarted under the same attempt.
 2. The parent persists and verifies the checkpoint facts in its locked attempt
    state.
 3. The parent sends `checkpoint_ack {req, checkpoint_id}`.
 
 No table batch or completion is sent before an acknowledged checkpoint covers
 that table. A later checkpoint can add tables or monotone job facts; it cannot
-replace a fixed snapshot identity.
+replace a fixed snapshot identity or change its `reopenable` promise.
 
 The adapter's own checkpoint store is outside GRV, keyed by attempt and by
 adapter and connection identity; a fresh process reopens it. Stores are
@@ -787,13 +828,23 @@ execution companion's single resolution obligation without guessing receipt
 versions, defaults, or source facts before reading durable evidence.
 
 `PullResolution` is `{state: "committed" | "not_committed" | "busy" | "unknown",
-request: RequestRecord | null, receipt: Receipt | null, recovery: J | null}`.
+request: RequestRecord | null, receipt: Receipt | null, recovery: J | null,
+prior_source_contracts: [{table: Name, contract: TableContract}]}`.
 
 - Receipt is present exactly for `committed`, and its request equals the
   returned request.
 - `recovery` is null for transactional destinations. Otherwise it is the
   registered journal or repair evidence, validated at `pull_plan`.
 - A persisted unfinished request is returned when present.
+- `prior_source_contracts` is empty for lookup and for every state except a
+  successful compare returning `not_committed`. In that case the adapter may
+  return unique declared-table source contracts from trustworthy durable
+  evidence of the same destination binding. It verifies binding and scope
+  against the fixed request before returning them. These are resolved source
+  facts, not a substitute for the fixed request or a new hash input. The parent
+  may use them for an empty selected source under the empty-source contract;
+  an empty array means no prior evidence is available. No source acquisition,
+  source authentication, or SQL evaluation is permitted to discover them.
 - Absence in a new workspace is distinguished from missing or corrupt history
   in an initialized workspace.
 
@@ -912,15 +963,25 @@ companion (*DuckDB build session preparation and context*).
 | `discover_build` | `handle: Handle, payload: Doc<DiscoverBuildRequest>` | `build_discovered` | `discovery: Doc<BuildDiscovery>` |
 | `prepare_build` | `handle: Handle, payload: Doc<PrepareBuildRequest>` | `build_prepared` | `session: Doc<BuildSession>` |
 
-`DiscoverBuildRequest` is `{identity: BuildIdentity, execution: "managed" | "external",
+`DiscoverBuildRequest` is `{identity: BuildIdentity, options: J, execution: "managed" | "external",
 inputs: [{alias: Name, relation: J}],
-outputs: [{table: Name, source: J, contract: TableContract}],
-selected_outputs: [Name], self_input: boolean}`.
+outputs: [{table: Name, source: J, columns: J, contract: TableContract}],
+selected_outputs: [Name], self_input: boolean}`. `options` is the effective
+options object, validates against the selected build-mode `options` point, and
+is retained unchanged in `BuildSession`; pure validation has no execution side
+effects that can substitute for carrying those options.
 `BuildDiscovery` is `{discovery_id: UUID, identity: BuildIdentity,
 inputs: [InputBinding], outputs: [OutputBinding]}`.
 `PrepareBuildRequest` is `{discovery: BuildDiscovery, base_revision: Revision,
-self_input: boolean, base_files: [File], input_files: [File],
+self_input: boolean, base_contracts: [{table: Name, contract: TableContract}],
+base_files: [File], input_files: [{alias: Name, files: [File]}],
 holds_confirmed: boolean}`; confirmation must be true, even for an empty input set.
+Input file groups have unique aliases and cover every discovered alias exactly,
+including an explicit empty file list for zero-row inputs. File table names alone
+never identify an input alias. Base contracts cover the whole fixed target base,
+including zero-file tables, and are retained unchanged in the prepared session.
+Without self-input both base contracts and files are empty; revision 0 also has
+no base contracts or files.
 
 #### Discovery
 
@@ -1171,6 +1232,19 @@ rejection. No binding, receipt creation, repair, authentication renewal, or GRV
 renewal occurs. The adapter still acquires workspace ownership before engine
 reads. An unsupported inspection is `UNSUPPORTED_CAPABILITY`, not empty
 invented data.
+
+
+DuckDB inspection registers local `engine_materialization` and `engine_session`
+summaries. Engine materializations carry the committed revision, selector mode,
+generation and mappings; they omit the public `state`, which requires observing
+GRV. Engine sessions carry fixed IDs, base and input revisions, durable engine
+state, accepted completion digest and recorded outcome. They carry no GRV owner
+or claim tokens, hold IDs, credentials or inferred publication/run facts. The
+parent may project public materialization state and observed run facts into
+`status` details using separately observed GRV state; those projections also
+validate against the registered inspection schema. A missing engine session
+store is an empty observation only when the recognized workspace metadata has
+never recorded a build; malformed existing metadata is an error, never repair.
 
 ### 4.11 Post-publication acknowledgement
 

@@ -1,0 +1,314 @@
+{
+  "version": 1,
+  "status": "0.1.0-prep-not-release-approved",
+  "runs": [
+    {
+      "version": 1,
+      "run_id": "prep-pull-commit-advance-replay",
+      "catalog_id": "pull-commit-advance",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/pull-commit-advance-replay.log",
+          "sha256": "c04b11d876862ec528a679d2fa6cb93ef72cc8ff0da64253f1ec04b8f619358c"
+        }
+      ],
+      "limitations": [
+        "Pre-freeze baseline;exactUTC/source executioninterval unavailable;qualification rerun required."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "prep-compatibility-create",
+      "catalog_id": "release-relocation",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/compatibility-create.log",
+          "sha256": "310d50bb3c9c6c26367e5392a0af022c304feb9fb132bbedac5789f86b225059"
+        }
+      ],
+      "limitations": [
+        "Pre-freeze baseline;exactUTC/source executioninterval unavailable;qualification rerun required."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "prep-clippy",
+      "catalog_id": "workspace-clippy",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/clippy.log",
+          "sha256": "684db94e8c3630dd009ad1ef72def6ad156329a606e3d1f3a78729bc08bffe99"
+        }
+      ],
+      "limitations": [
+        "Pre-freeze baseline;exactUTC/source executioninterval unavailable;qualification rerun required."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "prep-scripts-latest",
+      "catalog_id": "scripts",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/scripts-latest.log",
+          "sha256": "bc9b8460901b0b2615ea998fb35b09aa2512f5b6cc9932b2f53de68a98d5529e"
+        }
+      ],
+      "limitations": [
+        "Pre-freeze baseline;exactUTC/source executioninterval unavailable;qualification rerun required."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "notice-policy-audit-tests",
+      "catalog_id": "scripts",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": 1,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/audit-tests.log",
+          "sha256": "1c9669228ac71e25867e5db03b333b6c37de84effd4946863d5de29897e81316"
+        }
+      ],
+      "limitations": [
+        "Prefreeze policies/tooling only; commands/time/sourceinterval unavailable; firstauditfile API failed unresolved /var symlink root, corrected; retry1 tests passed but later baselineaudit found standalone native PEM parser literals, not keys; fixed payload-only detection."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "notice-policy-audit-tests-retry1",
+      "catalog_id": "scripts",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/audit-tests-retry1.log",
+          "sha256": "33e1c2dc4135c2244e0114afe6a2db171f13f919364ee4cb24894dca8cb1ed95"
+        }
+      ],
+      "limitations": [
+        "Prefreeze policies/tooling only; commands/time/sourceinterval unavailable; firstauditfile API failed unresolved /var symlink root, corrected; retry1 tests passed but later baselineaudit found standalone native PEM parser literals, not keys; fixed payload-only detection."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "notice-policy-audit-tests-retry2",
+      "catalog_id": "scripts",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/audit-tests-retry2.log",
+          "sha256": "bee65285d5744d68e28b9d457bea7c6dad03378874922d0ba7648e8b43b55166"
+        }
+      ],
+      "limitations": [
+        "Prefreeze policies/tooling only; commands/time/sourceinterval unavailable; firstauditfile API failed unresolved /var symlink root, corrected; retry1 tests passed but later baselineaudit found standalone native PEM parser literals, not keys; fixed payload-only detection."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "notice-policy-policy-and-audit-tests",
+      "catalog_id": "scripts",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/policy-and-audit-tests.log",
+          "sha256": "69cde6ef810b80269179c2a351432afa485b31a651f4bc11709d791429a4cc33"
+        }
+      ],
+      "limitations": [
+        "Prefreeze policies/tooling only; commands/time/sourceinterval unavailable; firstauditfile API failed unresolved /var symlink root, corrected; retry1 tests passed but later baselineaudit found standalone native PEM parser literals, not keys; fixed payload-only detection."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "policy-baseline-installation",
+      "catalog_id": "installation",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/baseline-installation.log",
+          "sha256": "d8e9232680f24251a781c9812ffe2a295530069afde355ea131598d6221ed972"
+        }
+      ],
+      "limitations": [
+        "Pre-freeze baseline; exactUTC/sourceinterval unavailable. Installationexplicitallow-unqualified currenthost freshHOME/env only."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "policy-native-policy-baseline",
+      "catalog_id": "native-guard",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/native-policy-baseline.log",
+          "sha256": "e82b3f70059fcf97f54b7288edfd7588a2b2b42b23392e571335cba9fe941368"
+        }
+      ],
+      "limitations": [
+        "Pre-freeze baseline; exactUTC/sourceinterval unavailable. Installationexplicitallow-unqualified currenthost freshHOME/env only."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "policy-macos-policy-tests",
+      "catalog_id": "scripts",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/macos-policy-tests.log",
+          "sha256": "0b285ef58466d416ac39aec4b0288b678b8f01a3f8b0cb7e73fb61ca829e2d29"
+        }
+      ],
+      "limitations": [
+        "Pre-freeze baseline; exactUTC/sourceinterval unavailable. Installationexplicitallow-unqualified currenthost freshHOME/env only."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "policy-notice-policy-package",
+      "catalog_id": "release-relocation",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/notice-policy-package.log",
+          "sha256": "433df83ad9401a47c08e7cce2bdc729e33f6e86a5f20ff55117d3bd667990f35"
+        }
+      ],
+      "limitations": [
+        "Unqualifieddirtycheckout+existingreleasebytes,notfrozencandidate. ExactUTC/sourceinterval unavailable. Newuserreviewed conservativepolicy notperfectlinkedgraph."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "policy-notice-policy-bundle-verify",
+      "catalog_id": "release-relocation",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-prep/notice-policy-bundle-verify.log",
+          "sha256": "2b73c632f42dfd5722d30822cb910c9f8a9cb2b3666ee2fd7e456f30d5546042"
+        }
+      ],
+      "limitations": [
+        "Unqualifieddirtycheckout+existingreleasebytes,notfrozencandidate. ExactUTC/sourceinterval unavailable. Newuserreviewed conservativepolicy notperfectlinkedgraph."
+      ]
+    }
+  ],
+  "supporting_files": [
+    {
+      "path": "artifacts/release-validation/0.1.0-prep/compatibility-selfcheck.json",
+      "sha256": "3e84f1da08a46ac2673fed18bbe235b6b56981b88a5f8a67d549468e84afb0c1"
+    },
+    {
+      "path": "artifacts/release-validation/0.1.0-prep/native-source-notices/inventory.json",
+      "sha256": "8e274708d8d467e4b420842fb33747a3dead99c54c08d0d91015c9c31b9f6002"
+    },
+    {
+      "path": "artifacts/release-validation/0.1.0-prep/baseline-artifact-audit.json",
+      "sha256": "71f883f19edea9d4848e97258fa61b7bd6df197791b44fb308b0971bf710dd43"
+    },
+    {
+      "path": "artifacts/release-validation/0.1.0-prep/baseline-installation.json",
+      "sha256": "8ba0da631e45f29ade0c6c6a7d98b3271ed832d536a732d4f3effed90e4079b2"
+    },
+    {
+      "path": "artifacts/release-validation/0.1.0-prep/notice-policy-bundle-audit.json",
+      "sha256": "5f0fc13d7a1693475df94a47e1d3c97eed5e182e96a362f5f9fb6dbe0eb7330c"
+    }
+  ]
+}

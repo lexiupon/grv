@@ -1,0 +1,2238 @@
+{
+  "version": 1,
+  "status": "historical-development-evidence-not-frozen-candidate",
+  "archive": {
+    "location": null,
+    "status": "local-only; durable archive required before approval"
+  },
+  "notes": [
+    "Preserved failures and retries independently; missing provenance intentionally null.",
+    "Native CTest 8 and packaging scripts 9 previously reported in transcript, but no dedicated logs here; these are not promoted to indexed passes and must rerun on candidate.",
+    "PAUSE/RESUME are historical supporting narratives, not immutable candidate certificates."
+  ],
+  "runs": [
+    {
+      "version": 1,
+      "run_id": "historical-changed-clippy-retry1",
+      "catalog_id": "changed-clippy",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "changed-clippy",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": null,
+      "observed_selectors": [],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "not recorded / not applicable in this offline family",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/changed-clippy-retry1.log",
+          "sha256": "a7c9b9c417270e6c47e0fb3d3b49fd9201d5dfa8b5fbd43d862c8ad2a85df4ad"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-changed-clippy",
+      "catalog_id": "changed-clippy",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "changed-clippy",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": null,
+      "observed_selectors": [],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "not recorded / not applicable in this offline family",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/changed-clippy.log",
+          "sha256": "c1934ffe71118dc998d45f208a1f7f791f9b2e901dca9f8fb71fb3b5e505b816"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-core-protocol",
+      "catalog_id": "core-protocol",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "core-protocol",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": {
+        "passed": 189,
+        "failed": 0,
+        "ignored": 1
+      },
+      "observed_selectors": [
+        "registry::tests::business_property_names_and_default_annotations_are_not_schema_references",
+        "registry::tests::schema_references_cannot_escape_or_expand_without_bound",
+        "transport_tests::adapter_transport_failure_is_distinct_from_malformed_protocol",
+        "json::tests::numbers_keep_numeric_semantics_with_unified_features",
+        "json::tests::rejects_duplicate_nested_keys_and_trailing_values",
+        "admin::tests::current_and_pinned_versions_refuse_prune_without_tombstones",
+        "admin::tests::gc_tests::gc_apply_rechecks_new_pins_after_preview_and_only_reclaims_after_release",
+        "admin::tests::gc_tests::gc_exact_stopped_epoch_recovery_is_journaled_before_cas_then_seals_and_prunes_orphan",
+        "admin::tests::gc_tests::gc_expired_allocated_claim_without_stopped_writer_evidence_remains_waiting",
+        "admin::tests::gc_tests::gc_pending_replay_operation_identity_is_durable_before_clear_and_survives_crash",
+        "admin::tests::gc_tests::gc_preview_missing_receipt_is_readonly_protected_and_apply_starts_fresh_grace",
+        "admin::tests::gc_tests::gc_recovery_does_not_touch_live_runs_and_repairs_missing_sealed_files",
+        "admin::tests::gc_tests::gc_refuses_stopped_writer_proof_for_another_run_epoch_before_takeover",
+        "admin::tests::gc_tests::gc_releases_only_proven_source_holds_and_terminal_result_replay_is_sourcefree",
+        "admin::tests::gc_tests::gc_replays_release_and_prune_journals_at_each_committed_callback_boundary",
+        "admin::tests::gc_tests::gc_reports_external_consumer_recovery_without_taking_over_another_dataset",
+        "admin::tests::gc_tests::gc_safe_expired_run_recovery_resumes_exact_journaled_owner_after_takeover",
+        "admin::tests::gc_tests::grace_past_supported_timestamp_horizon_is_protected_without_panicking",
+        "admin::tests::hold_arriving_after_durable_prune_intent_is_relisted_and_cannot_confirm",
+        "admin::tests::hold_release_checks_stable_consumer_evidence_and_replays_every_write",
+        "admin::tests::intent_description_and_private_progress_never_authorize_deletion",
+        "admin::tests::journal_callbacks_precede_operation_effects_and_terminal_replay_is_source_free",
+        "admin::tests::lost_conditional_responses_are_adopted_and_known_pin_survives_cleanup_failure",
+        "admin::tests::missing_scoped_unpin_and_pruned_revision_pin_fail_without_new_operation_effects",
+        "admin::tests::pin_write_crashes_replay_description_cas_marker_and_clear_without_changing_pin_identity",
+        "admin::tests::protected_prune_commits_intent_then_tombstones_clears_then_deletes_exact_files",
+        "admin::tests::prune_write_crashes_and_lost_responses_replay_all_conditional_boundaries",
+        "admin::tests::remaining_protections_reports_actual_current_pin_grace_and_holds_without_writes",
+        "admin::tests::revision_pin_unpin_are_durable_scoped_idempotent_and_do_not_change_revision_counters",
+        "admin::tests::unapplied_pin_cas_resolution_fences_old_request_and_reuses_scoped_pin_id",
+        "admin::tests::unknown_committed_pin_is_fenced_then_resolved_from_marker_without_reading_source_data",
+        "admin::tests::unknown_prune_decision_is_fenced_and_resolved_from_original_tombstone",
+        "admin::tests::unpin_write_crashes_and_lost_responses_replay_every_phase",
+        "build::tests::dependency_cycle_reports_shortest_observable_path_before_any_run_or_hold",
+        "build::tests::dependency_walk_uses_current_states_and_visits_shared_upstream_once",
+        "build::tests::external_s3_build_uses_verified_held_uris_even_for_locally_materialized_inputs",
+        "build::tests::missing_or_wrong_immutable_run_is_an_error_not_a_missing_graph_edge",
+        "build::tests::pure_build_intent_deduplicates_whole_revision_holds_and_verifies_exact_alias_files",
+        "build_abort::tests::abort_partial_claim_phases_never_allocate_and_replay_journal_failures",
+        "build_abort::tests::abort_resolves_publication_without_new_commit_or_engine_for_known_result",
+        "build_abort::tests::changed_owner_creation_or_metadata_cannot_release_claim",
+        "build_abort::tests::committed_manifest_with_lost_or_corrupt_data_never_becomes_abandoned",
+        "build_abort::tests::finalized_carried_release_proof_preserves_entry_and_new_holder",
+        "build_abort::tests::lost_release_ack_replays_fixed_mutation_before_sealing",
+        "build_abort::tests::lost_seal_terminal_ack_adopts_exact_seal_without_engine_access",
+        "build_abort::tests::recovered_owner_epoch_cannot_release_or_seal",
+        "build_abort::tests::sealing_intent_cannot_skip_stopped_claim_cleanup",
+        "build_export::tests::accepted_export_canonicalizes_without_adapter_preserving_duplicates_and_explicit_empty_table",
+        "build_export::tests::omission_only_capture_has_no_fake_source_checkpoint_or_empty_table",
+        "build_export::tests::partial_unstopped_wrong_digest_counts_and_corrupt_build_artifacts_cannot_be_accepted",
+        "build_publication::tests::build_selection_orders_groups_preserves_unexported_base_and_commits_omission_only_changes",
+        "build_publication::tests::derived_manifest_cites_all_whole_inputs_and_replays_commit_after_journal_failure",
+        "build_publication::tests::explicit_empty_partition_is_materialized_and_conflicts_fail_before_allocation",
+        "canonical::tests::decimal_timestamp_binary_and_empty_schema_round_trip_exactly",
+        "canonical::tests::multi_pass_merge_has_bounded_fan_in_and_keeps_duplicates",
+        "canonical::tests::oversized_row_and_contract_mismatch_fail_before_adoption",
+        "canonical::tests::parquet_bytes_are_identical_across_batch_spill_and_file_boundaries",
+        "canonical::tests::total_order_preserves_null_signed_zero_nan_bits_and_duplicate_rows",
+        "capture::tests::missing_checkpoint_partial_acquisition_count_mismatch_and_corrupt_capture_are_refused",
+        "capture::tests::source_free_canonicalization_groups_derived_partitions_and_retains_duplicates",
+        "capture::tests::zero_row_completion_creates_only_unpartitioned_empty_version",
+        "clock::tests::excessive_expiry_is_bounded_by_two_equal_validator_observations",
+        "clock::tests::lease_expiry_rejects_unrepresentable_years_without_panicking",
+        "clock::tests::run_ids_have_the_exact_ulid_timestamp_and_random_tail",
+        "contract::tests::authoring_types_have_one_exact_mapping",
+        "declaration::tests::descriptor_defaults_and_parent_revalidation_preserve_explicit_values",
+        "declaration::tests::duplicate_mappings_invalid_derive_and_checks_fail_in_core",
+        "declaration::tests::inline_and_ipc_schema_references_use_the_same_logical_mapping",
+        "declaration::tests::local_column_and_sql_references_expand_once_before_identity",
+        "declaration::tests::strict_yaml12_rejects_duplicates_aliases_tags_nonstring_keys_and_nonfinite",
+        "holds::tests::canonical_derived_version_publishes_and_keeps_historic_input_after_latest_changes",
+        "holds::tests::confirmed_derived_run_cannot_use_direct_writer_with_omitted_citations",
+        "holds::tests::corrupt_committed_versions_never_confirm_a_hold",
+        "holds::tests::derived_manifest_journal_replays_exact_time_and_citations_after_commit_boundary_crash",
+        "holds::tests::durable_hold_creation_and_confirmation_adopt_lost_ack_without_reusing_identity",
+        "holds::tests::earlier_prune_intent_blocks_confirmation_even_after_gc_lease_expires",
+        "holds::tests::expired_or_unconfirmed_derived_run_cannot_allocate_or_commit_output",
+        "holds::tests::expired_target_run_keeps_hold_until_irreversible_seal",
+        "holds::tests::hold_release_after_data_write_refuses_manifest_commit_and_publication",
+        "holds::tests::identical_hold_ids_in_different_consumer_folders_have_independent_release_markers",
+        "holds::tests::invalid_or_inactive_citations_fail_before_claim_layout_schema_or_output_effects",
+        "holds::tests::later_prune_intent_relisting_observes_confirmed_and_unconfirmed_holds",
+        "holds::tests::lost_derived_manifest_ack_adopts_exact_durable_citations",
+        "holds::tests::malformed_hold_paths_abort_gc_protection_scan",
+        "holds::tests::missing_or_mismatched_hold_records_refuse_derived_allocation",
+        "holds::tests::ownership_confirmation_rejects_missing_and_other_backend_proofs_before_allocations",
+        "holds::tests::pruned_committed_versions_reject_holds_even_while_data_remains_present",
+        "holds::tests::publisher_rejects_missing_mismatched_or_released_cited_hold",
+        "holds::tests::recovery_or_expiry_fences_confirmation_and_tokens_cannot_be_forged",
+        "holds::tests::sealed_cited_entry_keeps_hold_until_tombstone_and_missing_manifest_is_not_release_proof",
+        "holds::tests::storage_allows_valid_citation_subset_while_v1_build_helper_cites_all_inputs",
+        "holds::tests::unconfirmed_derived_run_recovery_seals_empty_and_makes_partial_holds_releasable",
+        "inspection::tests::default_and_latest_selectors_sample_once_and_never_invoke_mutating_backend_primitives",
+        "journal::tests::actual_process_crash_after_journal_install_retains_complete_evidence_and_releases_lock",
+        "journal::tests::crash_worker",
+        "journal::tests::duplicate_unknown_missing_null_and_nonfinite_evidence_is_refused_without_logging_contents",
+        "journal::tests::fixed_intent_accepted_capture_and_terminal_result_are_immutable_and_private",
+        "journal::tests::journal_generation_cas_serializes_threads_and_session_aliases_share_lock",
+        "journal::tests::private_immutable_artifacts_are_streamed_durable_and_cannot_replace_coordination",
+        "journal::tests::state_overlap_unsafe_ancestors_symlinks_and_replaced_lock_inode_are_refused",
+        "normalize::tests::dates_and_wall_clock_timestamps_derive_in_output_order_including_before_epoch",
+        "normalize::tests::declared_checks_ignore_arrow_nullability_and_use_renamed_outputs",
+        "normalize::tests::nulls_out_of_range_dates_and_noncanonical_partition_values_fail",
+        "ownership::tests::allocation_finalized_after_seal_is_orphaned_and_never_added_to_run",
+        "ownership::tests::canonical_version_commits_releases_and_seals_with_exact_control_fence",
+        "ownership::tests::crash_after_reservation_never_reuses_number_even_without_version_directory",
+        "ownership::tests::data_collision_abandons_reservation_and_never_seals_an_entry",
+        "ownership::tests::expired_allocation_without_manifest_abandons_without_requiring_unwritten_baseline",
+        "ownership::tests::expired_manifest_without_finalized_release_abandons_missing_or_corrupt_data",
+        "ownership::tests::expired_transfer_cannot_revive_an_open_run_but_storage_renewal_remains_token_fenced",
+        "ownership::tests::extensions_and_unconfirmed_dependency_runs_are_refused_before_claims",
+        "ownership::tests::irreversible_run_materialization_rejects_mismatched_existing_commit_marker",
+        "ownership::tests::live_claim_blocks_sealing_and_expired_committed_task_can_be_recovered",
+        "ownership::tests::lost_ack_at_each_conditional_transition_is_adopted_by_durable_record_proof",
+        "ownership::tests::overwritten_acquisition_intent_returns_unknown_and_never_reuses_token",
+        "ownership::tests::partition_duplicate_values_must_match_path_before_destination_file_creation",
+        "ownership::tests::prepared_owner_is_pure_persistable_and_commit_replays_exact_identity",
+        "ownership::tests::prepared_retry_adopts_hold_confirmation_but_never_revives_expired_or_sealed_runs",
+        "ownership::tests::recorded_number_survives_takeover_before_allocation_record_creation",
+        "ownership::tests::release_ack_lost_after_takeover_is_proven_by_last_release",
+        "ownership::tests::released_takeover_reconciles_predecessor_allocation_before_evidence_changes",
+        "ownership::tests::required_coordination_corruption_never_releases_or_resolves_allocation",
+        "ownership::tests::reservation_journal_replays_each_crash_boundary_without_burning_another_number",
+        "ownership::tests::stale_claim_cannot_write_or_finalize_under_successor_claim",
+        "ownership::tests::terminal_release_evidence_survives_data_damage_and_never_salvages_abandonment",
+        "ownership::tests::transient_data_backend_failure_preserves_allocation_for_successful_retry",
+        "ownership::tests::valid_pruning_marker_abandons_only_unfinalized_allocation",
+        "publication::tests::blocking_intent_fsync_renews_lease_and_commit_uses_only_its_returned_validator",
+        "publication::tests::consumer_intent_must_be_durable_before_description_revision_or_commit",
+        "publication::tests::dataset_initialization_adopts_only_observed_creation_and_preserves_coordination",
+        "publication::tests::dataset_initialization_refuses_lost_latest_with_revision_evidence",
+        "publication::tests::known_commit_survives_receipt_failure_and_replay_repairs_receipt",
+        "publication::tests::lease_journal_retries_exact_cas_and_rejects_overwritten_acquisition",
+        "publication::tests::lost_commit_ack_is_adopted_or_resolved_by_chain_and_unapplied_commit_is_fenced",
+        "publication::tests::publication_commits_empty_and_canonical_runs_then_explicit_omission",
+        "publication::tests::publication_rejects_conflicting_runs_unsealed_versions_and_corrupt_new_data",
+        "publication::tests::short_publication_combines_acquisition_and_reservation_into_exactly_two_latest_cas",
+        "publication::tests::takeover_fences_old_candidate_and_never_reuses_reserved_number",
+        "push::tests::acquisition_and_allocation_effects_require_durable_whole_progress",
+        "push::tests::changed_deduplicates_complete_groups_all_allocates_and_empty_table_publishes",
+        "push::tests::equality_compares_every_file_name_size_hash_and_count",
+        "push::tests::intervening_revision_rejects_changed_noop_without_implicit_rebase",
+        "push::tests::lost_seal_ack_adopts_exact_durable_run_without_capture_or_new_allocation",
+        "push::tests::no_op_outcome_is_durable_before_lease_release_and_failed_fsync_is_retryable",
+        "push::tests::partitioned_zero_rows_omit_base_groups_and_publish_complete_empty_snapshot",
+        "push::tests::recorded_publication_is_fenced_before_retry_and_known_commit_precedes_capture_checks",
+        "push::tests::sealed_replay_does_not_read_capture_and_requires_exact_expected_entries",
+        "push::tests::uncommitted_publication_is_fenced_and_replaced_with_fresh_identity_after_proof",
+        "push::tests::undeclared_base_membership_rejected_before_new_run_and_missing_drop_is_noop",
+        "push::tests::unfinished_identity_gate_runs_before_allocation_and_preserves_the_fixed_plan",
+        "push::tests::written_evidence_replays_release_without_capture_and_sealed_work_survives_pruned_capture",
+        "recovery::tests::every_durable_recovery_progress_boundary_replays_exact_owned_seal",
+        "recovery::tests::live_claim_waits_even_with_stopped_writer_and_exact_epoch_seals_after_claim_expiry",
+        "recovery::tests::missing_claim_becomes_unproven_without_salvaging_an_allocated_version",
+        "recovery::tests::pending_completion_survives_lost_clear_journal_and_foreign_lease_without_overwriting_new_work",
+        "recovery::tests::sealed_control_without_payload_is_materialized_after_crash_and_lost_response_is_proven",
+        "recovery::tests::targeted_scope_leaves_pending_and_unrelated_corrupt_controls_untouched",
+        "renewal::tests::blocking_work_renews_and_returns_updated_authority",
+        "renewal::tests::renewal_failure_prevents_success_and_panics_stop_scope_workers",
+        "retention::tests::all_committed_retention_kinds_replay_exact_paths_without_lease_or_data_mutation",
+        "retention::tests::committed_proof_survives_lost_lease_and_prune_intent_never_authorizes_effects",
+        "retention::tests::existing_pin_and_release_facts_ignore_operation_timestamps_actor_and_reason",
+        "retention::tests::lost_marker_ack_is_adopted_only_by_durable_read_and_failed_barrier_stays_pending",
+        "retention::tests::mismatched_pin_fact_is_rejected_but_any_existing_retirement_or_pruning_is_durable",
+        "retention::tests::orphan_descriptions_modified_payloads_and_publish_pending_authorize_no_markers",
+        "revision::tests::aba_versions_absent_pairs_and_removed_tables_still_conflict",
+        "revision::tests::committed_chain_ignores_orphans_and_needs_no_version_files",
+        "revision::tests::empty_revision_keeps_all_metadata_and_exact_row_schema",
+        "revision::tests::missing_latest_is_a_violation_when_revision_objects_exist",
+        "source::tests::embedded_arrow_schema_preflight_limits_expansion_and_rejects_malformed_metadata",
+        "source::tests::footer_reader_forbids_body_and_decoder_budget_rejects_huge_list_before_allocating",
+        "source::tests::s3_conditional_ranges_fail_closed_for_changed_missing_inconsistent_and_bad_lengths",
+        "source::tests::s3_large_copied_footer_is_chunked_without_body_reads_and_keeps_noncanonical_writer_metadata",
+        "source::tests::s3_matching_manifest_validator_reads_only_header_footer_and_never_stages_data_or_writes",
+        "source::tests::s3_matching_validator_still_rejects_malformed_header_footer_and_size",
+        "source::tests::s3_metadata_fastpath_preserves_commitment_manifest_schema_rows_and_pruning_fences",
+        "source::tests::s3_retagged_changed_same_size_body_fails_sha",
+        "source::tests::s3_retagged_identical_bytes_require_full_sha_and_report_current_validator",
+        "source::tests::s3_unsupported_ranges_conservatively_verify_complete_sha_and_local_always_does",
+        "store::tests::ambiguous_init_is_adopted_only_after_durable_readback",
+        "store::tests::damaged_root_and_invalid_new_parameters_are_refused",
+        "store::tests::init_is_idempotent_and_explicit_parameters_must_match",
+        "store::tests::readonly_open_never_initializes_or_creates_missing_paths",
+        "canonical::tests::arbitrary_precision_numbers_do_not_panic_and_integer_precision_is_explicit",
+        "canonical::tests::nonfinite_floats_fail_in_nested_structures_instead_of_becoming_null",
+        "canonical::tests::rfc8785_number_samples_and_ecmascript_exponent_thresholds",
+        "canonical::tests::rfc8785_property_names_sort_raw_utf16_recursively_without_normalization",
+        "logical::authoring_tests::client_authoring_aliases_have_one_exact_logical_projection",
+        "tests::identity_golden_vectors",
+        "tests::scalars_reject_noncanonical_forms"
+      ],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "not recorded / not applicable in this offline family",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/core-protocol.log",
+          "sha256": "a4a2466832a20f000941055c351ad432fcc0d70fbd6c10725de11c878a77ca66"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-fmt",
+      "catalog_id": "format",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "format",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": null,
+      "observed_selectors": [],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "not recorded / not applicable in this offline family",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/fmt.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-gcs-cli-lifecycle-retry1",
+      "catalog_id": "gcs-cli",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "gcs-cli",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [],
+      "assertions": [
+        "Independently read manifest/schema/Parquet bytes and rows; publication/no-op and source-free/reconstructed terminal replay (on passing retry)."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
+        "Fixture CLI, not production DuckDB; reconstructed window, not OS kill. Initial failure corrected high-water assumption."
+      ],
+      "fault": null,
+      "cleanup": "Log proves owned UUID prefix absent, including failed initial run.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/gcs-cli-lifecycle-retry1.log",
+          "sha256": "f334bf030ef175ca0a2de54b660a5dd857accb36be6f039d899d648cfd638b27"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-gcs-cli-lifecycle",
+      "catalog_id": "gcs-cli",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "gcs-cli",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": {
+        "passed": 0,
+        "failed": 1,
+        "ignored": 0
+      },
+      "observed_selectors": [],
+      "assertions": [
+        "Independently read manifest/schema/Parquet bytes and rows; publication/no-op and source-free/reconstructed terminal replay (on passing retry)."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
+        "Fixture CLI, not production DuckDB; reconstructed window, not OS kill. Initial failure corrected high-water assumption."
+      ],
+      "fault": null,
+      "cleanup": "Log proves owned UUID prefix absent, including failed initial run.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/gcs-cli-lifecycle.log",
+          "sha256": "8b58a6d3c434793cc85c8da3c5a50f6373cc4a5d0607884b3e3b8d78faf6d01e"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-gcs-stream-failure",
+      "catalog_id": "gcs-stream-failure",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "gcs-stream-failure",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
+        "Test-level synthetic response suppression and orchestrated races are not physical network faults or exhaustive schedules."
+      ],
+      "fault": null,
+      "cleanup": "Passing harness reports owned prefix cleanup/absence; compile failure made no service effects.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/gcs-stream-failure.log",
+          "sha256": "78bfcaec345ac871fa87a646ed2d420cb5ea09f2108d1eff99d53eeabf876c7e"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-gcs-write-fault-race-retry1",
+      "catalog_id": "gcs-race",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "gcs-race",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
+        "Test-level synthetic response suppression and orchestrated races are not physical network faults or exhaustive schedules."
+      ],
+      "fault": null,
+      "cleanup": "Passing harness reports owned prefix cleanup/absence; compile failure made no service effects.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/gcs-write-fault-race-retry1.log",
+          "sha256": "620af1246f2409d4e77e789981eb610acabe6f6925327b4fbfff91489faaba4c"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-gcs-write-fault-race",
+      "catalog_id": "gcs-race",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "gcs-race",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": null,
+      "observed_selectors": [],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
+        "Test-level synthetic response suppression and orchestrated races are not physical network faults or exhaustive schedules."
+      ],
+      "fault": null,
+      "cleanup": "Passing harness reports owned prefix cleanup/absence; compile failure made no service effects.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/gcs-write-fault-race.log",
+          "sha256": "b69223f7528d3fee3aeef3ebfd43fa6e04baf110c47ac8e075e86537ce00a3d9"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-local-lifecycle",
+      "catalog_id": "local-lifecycle",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "local-lifecycle",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": {
+        "passed": 16,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [
+        "accepted_partial_export_restarts_with_fresh_stream_without_reexecuting_managed_sql",
+        "confirmed_build_input_hold_survives_new_source_revision_and_actual_gc",
+        "source_pruned_after_discovery_refuses_preparation_before_destination_allocations",
+        "external_lifecycle_driver_probe",
+        "external_missing_second_completion_cannot_publish_untouched_self_seeded_output",
+        "managed_discovery_reconstitutes_held_input_after_tracking_rows_were_edited",
+        "managed_self_replaces_old_rows_and_all_queries_read_the_same_immutable_base",
+        "second_managed_output_sql_or_not_null_failure_creates_no_allocation_or_publication",
+        "gc_cli_preview_pin_release_prune_cleanup_and_repeat_keep_history_and_current_version",
+        "cli_pulls_verified_published_files_and_replays_old_receipts_without_source_or_private_state",
+        "cli_revision_zero_requires_an_explicit_or_checked_prior_source_contract",
+        "recovery_dry_run_reports_unpublished_expired_run_without_adapter_journal_or_mutation",
+        "recovery_replays_only_committed_pending_effects_reports_ids_and_preserves_data",
+        "recovery_retains_claims_waiting_without_attestation_but_finishes_other_eligible_work",
+        "recovery_seals_unpublished_runs_materializes_missing_payload_and_repeats_without_rewrite",
+        "requested_live_run_is_busy_and_pending_unrelated_corruption_is_isolated"
+      ],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "not recorded / not applicable in this offline family",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/local-lifecycle.log",
+          "sha256": "fceb7de087f78aed0bfbd9557c990cd7a452f869e0079d5d5d9dff0956d5c8fd"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-native-crash",
+      "catalog_id": "native-crash",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "native-crash",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [
+        "killed_managed_cli_stops_native_work_and_never_reexecutes_incomplete_attempt"
+      ],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "not recorded / not applicable in this offline family",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/native-crash.log",
+          "sha256": "085389454fb5d3af8753807bd6cfb3bf81ac6c856ecbc62000597b8bd01edb5d"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-salesforce-seams",
+      "catalog_id": "sf-seams",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-seams",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": {
+        "passed": 23,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [
+        "bulk_ambiguous_creation_never_repeats_post_on_retry",
+        "bulk_cancellation_stops_http_poll_and_descendants_before_acknowledging",
+        "bulk_count_mismatch_never_completes_or_requeries_attempt",
+        "bulk_unproven_text_refuses_before_creation_and_does_not_turn_into_unknown_creation",
+        "production_helpers_sdk_bulk_pages_credits_empty_table_and_retry_evidence_integrate",
+        "production_helpers_sdk_rest_pages_credits_empty_table_and_retry_evidence_integrate",
+        "acquisition_table_names_follow_grv_names_and_persisted_duplicate_keys_are_rejected",
+        "ambiguous_bulk_creation_persists_empty_job_ids_and_never_repeats_post",
+        "changed_org_identity_fails_before_acquisition",
+        "count_mismatch_does_not_create_terminal_evidence",
+        "crash_after_bulk_intent_is_unknown_and_completed_evidence_reopens_without_source",
+        "exact_decimals_keep_more_than_binary_float_precision_and_reject_rounding",
+        "incomplete_nonresumable_rest_never_queries_again_under_same_attempt",
+        "malformed_successful_bulk_job_id_is_durably_ambiguous_instead_of_authorizing_recreation",
+        "offline_location_does_not_authenticate_and_authentication_verifies_fixed_identity_once",
+        "protected_journal_locks_and_rejects_identity_changes_corruption_and_symlinks",
+        "pure_defaults_preserve_alias_auto_and_common_authoring_values",
+        "rest_bootstrap_is_private_until_checkpoint_ack_then_pages_and_counts_complete",
+        "schema_descriptors_supply_whole_point_defaults_and_closed_fragments",
+        "soql_predicates_allow_unexported_fields_relationships_functions_dates_and_picklists",
+        "soql_predicates_reject_relation_reads_trailing_clauses_and_malformed_grammar",
+        "timestamps_preserve_offsets_pre_epoch_values_and_reject_any_precision_loss",
+        "zero_row_rest_has_empty_job_ids_and_still_requires_checkpoint_ack"
+      ],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "not recorded / not applicable in this offline family",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/salesforce-seams.log",
+          "sha256": "7d6a41b7eb00e061aabf15c5406b9c40dee376f0d5260a7e65bba14e5b9b39a0"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-sf-all-targets",
+      "catalog_id": "sf-all-targets",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-all-targets",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": {
+        "passed": 56,
+        "failed": 0,
+        "ignored": 2
+      },
+      "observed_selectors": [
+        "acquisition::resource_tests::decoded_mock_rows_honor_offered_source_budget_before_emission",
+        "keychain::tests::bridge_material_is_only_private_stdin_and_no_files_are_created",
+        "keychain::tests::native_key_is_bounded_single_line_and_errors_are_redacted",
+        "keychain::tests::package_and_content_mismatches_are_refused",
+        "bulk_ambiguous_creation_never_repeats_post_on_retry",
+        "bulk_cancellation_stops_http_poll_and_descendants_before_acknowledging",
+        "bulk_count_mismatch_never_completes_or_requeries_attempt",
+        "bulk_unproven_text_refuses_before_creation_and_does_not_turn_into_unknown_creation",
+        "production_helpers_sdk_bulk_pages_credits_empty_table_and_retry_evidence_integrate",
+        "production_helpers_sdk_rest_pages_credits_empty_table_and_retry_evidence_integrate",
+        "bootstrap_eof_missing_key_and_module_mismatch_return_without_leaking_key",
+        "cancelled_private_input_node_worker_stops_before_return",
+        "escaped_detached_child_creation_is_refused_under_real_helper_containment",
+        "getter_is_exact_and_mutation_is_refused_without_canary_output",
+        "mismatched_key_cannot_decode_credentials_or_fall_back_to_key_creation",
+        "live_bulk_response_loss_never_reposts_or_adopts_after_restart",
+        "named_org_authentication_metadata_and_read_only_rest_query",
+        "api_names_match_case_insensitively_and_ambiguous_descriptors_are_refused",
+        "both_transports_prove_decimal_widths_and_forbid_cross_domain_casts_without_rows",
+        "custom_number_scale_zero_has_exact_int64_descriptor_proof",
+        "failed_projection_records_intent_and_never_queries_zero_or_all_null_attempts",
+        "formula_and_nonnullable_text_are_proven_nullable_numeric_is_exact_and_describe_is_cached",
+        "nullable_text_and_nullable_parent_text_refuse_only_the_unproven_csv_representation",
+        "polymorphic_relationships_require_all_target_representations_to_agree",
+        "rest_preserves_nullable_text_encodings_and_checks_every_polymorphic_target_width",
+        "salesforce_executable_advertises_only_conformant_extraction_and_closes",
+        "cancellation_stops_helper_and_pipe_holding_descendants_before_return",
+        "cli_authentication_disables_file_logs_and_verifies_org_using_private_session",
+        "curl_credentials_use_private_stdin_and_tls_retry_redirect_controls_are_present",
+        "http_query_all_bulk_create_and_results_are_exactly_scoped_and_never_retry_post",
+        "offline_reader_reads_aliases_only_and_never_opens_auth_files",
+        "redacted_cli_token_is_refused_before_any_authentication_http_call",
+        "response_parsing_rejects_duplicate_source_facts_and_rest_duplicate_fields",
+        "supervised_helper_bounds_output_drains_stderr_and_redacts_failures",
+        "all_client_primitives_decode_to_exact_logical_arrow_and_valid_ipc",
+        "bulk_csv_exact_quote_newline_numeric_boolean_null_policy_and_count_decoding",
+        "bulk_encoded_and_decoded_buffers_share_source_budget_and_ipc_output_is_bounded",
+        "canonical_api_field_case_matches_authored_rest_and_bulk_selectors_unambiguously",
+        "primitive_decoders_reject_rounding_overflow_lossy_casts_and_missing_fields",
+        "acquisition_table_names_follow_grv_names_and_persisted_duplicate_keys_are_rejected",
+        "ambiguous_bulk_creation_persists_empty_job_ids_and_never_repeats_post",
+        "changed_org_identity_fails_before_acquisition",
+        "count_mismatch_does_not_create_terminal_evidence",
+        "crash_after_bulk_intent_is_unknown_and_completed_evidence_reopens_without_source",
+        "exact_decimals_keep_more_than_binary_float_precision_and_reject_rounding",
+        "incomplete_nonresumable_rest_never_queries_again_under_same_attempt",
+        "malformed_successful_bulk_job_id_is_durably_ambiguous_instead_of_authorizing_recreation",
+        "offline_location_does_not_authenticate_and_authentication_verifies_fixed_identity_once",
+        "protected_journal_locks_and_rejects_identity_changes_corruption_and_symlinks",
+        "pure_defaults_preserve_alias_auto_and_common_authoring_values",
+        "rest_bootstrap_is_private_until_checkpoint_ack_then_pages_and_counts_complete",
+        "schema_descriptors_supply_whole_point_defaults_and_closed_fragments",
+        "soql_predicates_allow_unexported_fields_relationships_functions_dates_and_picklists",
+        "soql_predicates_reject_relation_reads_trailing_clauses_and_malformed_grammar",
+        "timestamps_preserve_offsets_pre_epoch_values_and_reject_any_precision_loss",
+        "zero_row_rest_has_empty_job_ids_and_still_requires_checkpoint_ack",
+        "encoded_and_decoded_source_data_are_charged_together_before_tree_adoption",
+        "source_json_keeps_numeric_tokens_utf8_and_rejects_duplicate_or_reserved_keys"
+      ],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "Read-only source acquisition or exact test-owned job cleanup as asserted by harness; no source fixture mutations.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/sf-all-targets.log",
+          "sha256": "b6d517f772f3bf46afd5929521e52c8bb71b34435d35302926a749787a536702"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-sf-bulk-production_cli_relationship_acquisition_or_precise_bulk_refusal-retry2",
+      "catalog_id": "sf-live-rel",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-live-rel",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": "bulk"
+      },
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
+        "Precise nullable-text refusal is NOT successful rich Bulk acquisition/paging."
+      ],
+      "fault": null,
+      "cleanup": "Read-only source acquisition or exact test-owned job cleanup as asserted by harness; no source fixture mutations.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/sf-bulk-production_cli_relationship_acquisition_or_precise_bulk_refusal-retry2.log",
+          "sha256": "e3d47078c6032439b6e983985b15242665e392466207ae1494cdf5f0010f3f0f"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-sf-bulk-production_cli_rich_bulk_contract_refusal-retry1",
+      "catalog_id": "sf-live-refusal",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-live-refusal",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": "bulk"
+      },
+      "test_summary": {
+        "passed": 0,
+        "failed": 1,
+        "ignored": 0
+      },
+      "observed_selectors": [],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
+        "Precise nullable-text refusal is NOT successful rich Bulk acquisition/paging."
+      ],
+      "fault": null,
+      "cleanup": "Read-only source acquisition or exact test-owned job cleanup as asserted by harness; no source fixture mutations.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/sf-bulk-production_cli_rich_bulk_contract_refusal-retry1.log",
+          "sha256": "afd940ed0a7c06379363087d78772da3c2b3adf0d961aeaa435c7e60407652c3"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-sf-bulk-production_cli_rich_bulk_contract_refusal-retry2",
+      "catalog_id": "sf-live-refusal",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-live-refusal",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": "bulk"
+      },
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
+        "Precise nullable-text refusal is NOT successful rich Bulk acquisition/paging."
+      ],
+      "fault": null,
+      "cleanup": "Read-only source acquisition or exact test-owned job cleanup as asserted by harness; no source fixture mutations.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/sf-bulk-production_cli_rich_bulk_contract_refusal-retry2.log",
+          "sha256": "a1d8878bcc04eab6097dc05c76b11ce68aca29ca954ce618f1bc89a7a873e15f"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-sf-bulk-production_cli_rich_bulk_contract_refusal",
+      "catalog_id": "sf-live-refusal",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-live-refusal",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": "bulk"
+      },
+      "test_summary": {
+        "passed": 0,
+        "failed": 1,
+        "ignored": 0
+      },
+      "observed_selectors": [],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
+        "Precise nullable-text refusal is NOT successful rich Bulk acquisition/paging."
+      ],
+      "fault": null,
+      "cleanup": "Read-only source acquisition or exact test-owned job cleanup as asserted by harness; no source fixture mutations.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/sf-bulk-production_cli_rich_bulk_contract_refusal.log",
+          "sha256": "ad997a83184d13c3a2b801ce32b836564e4ffb87109f3cc17ade3fc6e753a4cc"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-sf-bulk-response-loss",
+      "catalog_id": "sf-fault",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-fault",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [
+        "live_bulk_response_loss_never_reposts_or_adopts_after_restart"
+      ],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
+        "One successful real POST then synthetic loss; journal reopen, not process kill."
+      ],
+      "fault": null,
+      "cleanup": "Passing test asserts deletion of exact out-of-band private Bulk job.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/sf-bulk-response-loss.log",
+          "sha256": "2c204472bfb3e9438a07f1259c6c33bf6eb4845a3309d986f11e4c71ee1044e8"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-sf-empty-retry1",
+      "catalog_id": "sf-live-empty",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-live-empty",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": "rest"
+      },
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [
+        "production_cli_empty_capture_noop_and_source_free_terminal_replay"
+      ],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "Read-only source acquisition or exact test-owned job cleanup as asserted by harness; no source fixture mutations.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/sf-empty-retry1.log",
+          "sha256": "32b8e64d22f05656f25c32e71d44b279d3566eabeed06dacde2da99766b8f5a3"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-sf-number-regression",
+      "catalog_id": "sf-metadata",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-metadata",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": {
+        "passed": 8,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [
+        "polymorphic_relationships_require_all_target_representations_to_agree",
+        "formula_and_nonnullable_text_are_proven_nullable_numeric_is_exact_and_describe_is_cached",
+        "api_names_match_case_insensitively_and_ambiguous_descriptors_are_refused",
+        "nullable_text_and_nullable_parent_text_refuse_only_the_unproven_csv_representation",
+        "rest_preserves_nullable_text_encodings_and_checks_every_polymorphic_target_width",
+        "custom_number_scale_zero_has_exact_int64_descriptor_proof",
+        "both_transports_prove_decimal_widths_and_forbid_cross_domain_casts_without_rows",
+        "failed_projection_records_intent_and_never_queries_zero_or_all_null_attempts"
+      ],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "Read-only source acquisition or exact test-owned job cleanup as asserted by harness; no source fixture mutations.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/sf-number-regression.log",
+          "sha256": "bfdca1577438b6ca472b1474cf9b46a4c5bee474c37bfe329ceeee41f36d2b66"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-sf-production_cli_empty_capture_noop_and_source_free_terminal_replay",
+      "catalog_id": "sf-live-empty",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-live-empty",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": "rest"
+      },
+      "test_summary": {
+        "passed": 0,
+        "failed": 1,
+        "ignored": 0
+      },
+      "observed_selectors": [],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "Read-only source acquisition or exact test-owned job cleanup as asserted by harness; no source fixture mutations.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/sf-production_cli_empty_capture_noop_and_source_free_terminal_replay.log",
+          "sha256": "fc7f87a5537a910bd0284bbc89d59ea8fa4da7a9d6b1f7755b851c2a6ad2af95"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-sf-production_cli_relationship_acquisition_or_precise_bulk_refusal",
+      "catalog_id": "sf-live-rel",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-live-rel",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": "rest"
+      },
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [
+        "production_cli_relationship_acquisition_or_precise_bulk_refusal"
+      ],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "Read-only source acquisition or exact test-owned job cleanup as asserted by harness; no source fixture mutations.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/sf-production_cli_relationship_acquisition_or_precise_bulk_refusal.log",
+          "sha256": "3f3a8644f3fc3b290611d7e31f6ea55734e79e6a083b05e0281cbf92e1639948"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-sf-production_wrong_expected_org_authentication_exposes_no_source_session",
+      "catalog_id": "sf-live-wrong",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-live-wrong",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": "rest"
+      },
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [
+        "production_wrong_expected_org_authentication_exposes_no_source_session"
+      ],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "Read-only source acquisition or exact test-owned job cleanup as asserted by harness; no source fixture mutations.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/sf-production_wrong_expected_org_authentication_exposes_no_source_session.log",
+          "sha256": "d01f6d0b5d063eaad85cd311166f5eaecea5605fc5cd35f964de179777176194"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-sf-rich-auto",
+      "catalog_id": "sf-live-base",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-live-base",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": "auto"
+      },
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [
+        "production_cli_org_capture_publication_and_source_free_terminal_replay"
+      ],
+      "assertions": [
+        "Exact independent 9000 Active-row oracle, published schema and bytes, fresh-attempt no-op and source-free terminal replay."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "Read-only source acquisition or exact test-owned job cleanup as asserted by harness; no source fixture mutations.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/sf-rich-auto.log",
+          "sha256": "c298943c68abd7d2405d50de0ca1db9bb30f8f95dfc2b3cc6ce5336cafcd84bd"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-sf-rich-rest-retry1",
+      "catalog_id": "sf-live-base",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-live-base",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": "rest"
+      },
+      "test_summary": {
+        "passed": 0,
+        "failed": 1,
+        "ignored": 0
+      },
+      "observed_selectors": [],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "Read-only source acquisition or exact test-owned job cleanup as asserted by harness; no source fixture mutations.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/sf-rich-rest-retry1.log",
+          "sha256": "9be4b5ef251b44d893ae2f7d45c3363c15bfeaac1bf6ff7ff115b8857f762d24"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-sf-rich-rest-retry2",
+      "catalog_id": "sf-live-base",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-live-base",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": "rest"
+      },
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [
+        "production_cli_org_capture_publication_and_source_free_terminal_replay"
+      ],
+      "assertions": [
+        "Exact independent 9000 Active-row oracle, published schema and bytes, fresh-attempt no-op and source-free terminal replay."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "Read-only source acquisition or exact test-owned job cleanup as asserted by harness; no source fixture mutations.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/sf-rich-rest-retry2.log",
+          "sha256": "cd80e2a414bea07c36fa6e2fdc611fd90dceaa06fc7e5856a0b3ed01c855982b"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-sf-rich-rest",
+      "catalog_id": "sf-live-base",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "sf-live-base",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": "rest"
+      },
+      "test_summary": {
+        "passed": 0,
+        "failed": 1,
+        "ignored": 0
+      },
+      "observed_selectors": [],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "Read-only source acquisition or exact test-owned job cleanup as asserted by harness; no source fixture mutations.",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/sf-rich-rest.log",
+          "sha256": "3d94627367725be6aee83f796798f5aef9826bdc800b20b009b506ca333b1f6d"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-storage-cloud-regression",
+      "catalog_id": "cloud-regression",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "cloud-regression",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": {
+        "passed": 25,
+        "failed": 0,
+        "ignored": 4
+      },
+      "observed_selectors": [
+        "cloud::gcs::tests::gcs_commit_evidence_requires_exact_coordinates_count_and_generation",
+        "cloud::gcs::tests::gcs_final_full_and_empty_chunks_commit_without_an_extra_request",
+        "cloud::gcs::tests::gcs_lost_final_response_stale_condition_and_bad_partial_ack_are_not_retried",
+        "cloud::gcs::tests::gcs_rejects_cross_origin_session_and_wrong_bucket_before_sending_bytes",
+        "cloud::gcs::tests::gcs_streams_bounded_chunks_with_fixed_condition_and_exact_acknowledgements",
+        "cloud::s3::tests::s3_completion_requires_a_real_success_document_and_escapes_part_etags",
+        "cloud::s3::tests::s3_conditional_commit_headers_are_signed_and_applied_at_completion",
+        "cloud::s3::tests::s3_lost_completion_and_200_error_preserve_ambiguity_and_never_retry_commit",
+        "cloud::tests::cloud_errors_cannot_expose_credentials_or_signed_urls_and_preserve_ambiguity",
+        "cloud::tests::cloud_listing_streams_with_a_budget_for_recursive_and_child_modes",
+        "cloud::tests::cloud_root_is_pure_canonical_round_trippable_and_rejects_ambiguous_authorities",
+        "cloud::tests::cloud_six_operations_preserve_conditions_validators_prefix_isolation_and_idempotent_delete",
+        "cloud::tests::conditional_range_headers_require_exact_validator_span_length_and_full_size",
+        "cloud::tests::live_gcs_conditional_streaming_response_loss_and_race_contract",
+        "cloud::tests::live_gcs_read_only_contract",
+        "cloud::tests::live_gcs_streaming_read_failure_contract",
+        "cloud::tests::live_s3_conditional_multipart_contract",
+        "cloud::tests::s3_object_locations_are_exact_pure_and_escape_prefixes_once",
+        "cloud::tests::s3_range_failures_do_not_retry_redirect_disclose_response_or_fill_sink",
+        "cloud::tests::s3_range_get_signs_exact_condition_and_range_and_returns_only_admitted_bytes",
+        "cloud::tests::source_read_failure_has_no_completed_object_or_replacement",
+        "cloud::tests::suppressed_successful_return_and_ordered_races_have_durable_evidence",
+        "cloud::tests::unavailable_range_backend_is_explicit_and_box_delegation_preserves_it",
+        "model::tests::closed_records_reject_duplicate_keys_and_missing_required_nulls",
+        "model::tests::ownership_tokens_are_redacted_and_not_wire_scalar_types",
+        "model::tests::partition_representations_match_declared_order",
+        "model::tests::release_proof_requires_token_version_and_finalization_evidence",
+        "model::tests::retirement_marker_matches_the_v2_record_without_an_invented_actor_field",
+        "model::tests::storage_int64_json_is_exact_and_exhaustion_refuses"
+      ],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "not recorded / not applicable in this offline family",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/storage-cloud-regression.log",
+          "sha256": "9f2fc94249bf346624746b82d02c43bf52813011404b8af4005483b7e636b693"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-workspace-all-targets",
+      "catalog_id": "workspace-native",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "workspace-native",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": {
+        "passed": 510,
+        "failed": 0,
+        "ignored": 19
+      },
+      "observed_selectors": [
+        "writer_attester::tests::cloud_writer_evidence_never_comes_from_a_local_process_lock",
+        "writer_attester::tests::live_journal_lock_never_attests_a_writer_or_fails_recovery",
+        "cli_local_init_canonical_root_idempotence_parameters_and_damage_checks",
+        "cli_manifest_only_list_override_and_unknown_command_envelopes",
+        "pull::file_tests::s3_verified_files_require_exact_credential_free_locations",
+        "tests::consistency_projection_is_explicit",
+        "tests::documents_and_frames_are_closed",
+        "tests::exact_logical_types_reject_lossy_and_unknown_shapes",
+        "tests::inspection_scope_is_closed_and_nullable_members_are_required",
+        "tests::offered_resources_validate",
+        "tests::uninitialized_binding_never_claims_a_reserved_workspace_is_established",
+        "alias_grouped_files_disambiguate_table_names_and_explicit_empty_inputs",
+        "build_authoring_type_aliases_are_preserved_while_contracts_stay_logical",
+        "build_column_mappings_are_required_ordered_exact_and_immutable",
+        "completion_exact_schema_identity_selected_coverage_stopped_writers_and_digest",
+        "managed_execution_exact_queries_and_failed_result_never_claims_success",
+        "preparation_keeps_options_execution_selection_base_and_mappings_fixed",
+        "reopen_preserves_completion_digest_candidate_and_terminal_outcomes",
+        "self_input_keeps_whole_base_contracts_including_unmapped_zero_tables",
+        "terminal_outcomes_require_accepted_completion_or_recorded_abort",
+        "binding::tests::malformed_column_returns_error_without_panicking",
+        "binding::tests::offline_location_canonicalizes_without_opening_engine_or_creating_metadata",
+        "binding::tests::pure_validation_fills_only_missing_column_source_and_preserves_authoring",
+        "build::tests::build_history_witness_refuses_deleted_or_emptied_session_store",
+        "build::tests::empty_external_s3_self_inputs_are_private_views_and_cleanup_needs_no_reader",
+        "build::tests::native_build_crash_probe",
+        "build::tests::native_crashes_preserve_only_closed_durable_candidates_and_accepted_completions",
+        "build::tests::preparation_marker_restores_exact_previous_state_only_for_proved_rollback",
+        "conversion::tests::decimals_widen_without_float_and_preserve_precision_boundaries",
+        "conversion::tests::integer_and_float_widening_preserves_values_and_negative_zero",
+        "conversion::tests::native_positive_and_negative_infinity_are_not_finite_values",
+        "conversion::tests::timestamps_require_exact_unit_and_utc_and_checked_multiplication",
+        "conversion::tests::variable_values_remain_borrowed_and_utf8_is_checked",
+        "inspection::tests::inspection_refuses_foreign_root_lost_marker_and_metadata_views_without_repair",
+        "inspection::tests::inspection_refuses_lost_build_history_without_mutation",
+        "inspection::tests::inspection_refuses_small_metadata_budgets_before_acquiring_engine",
+        "inspection::tests::readonly_inspection_never_initializes_or_executes_declared_sql_and_drop_releases_owner",
+        "journal::tests::immutable_checkpoint_covers_empty_table_and_same_snapshot",
+        "journal::tests::partial_marker_and_symlinked_directory_never_authorize_source",
+        "journal::tests::removed_intent_is_not_authority_to_enter_a_source_snapshot",
+        "journal::tests::restart_never_reacquires_even_without_completed_checkpoint",
+        "native::descriptor_tests::independently_configured_signed_s3_reader_initializes_without_source_access",
+        "native::descriptor_tests::relation_schema_observes_persisted_views_without_binding_callbacks",
+        "native::descriptor_tests::s3_uri_roundtrip_preserves_exact_percent_keys_and_rejects_aliases",
+        "native::descriptor_tests::standalone_c_api_static_parquet_initializer_is_idempotent",
+        "native::descriptor_tests::verified_descriptor_scans_unlinked_files_without_path_lookup_and_rejects_widening",
+        "pull::tests::destination_names_follow_registered_duckdb_grammar",
+        "pull::tests::native_append_bindings_share_exact_table_and_remain_managed_sources",
+        "pull::tests::native_append_refuses_replacement_ownership_and_role_switch",
+        "pull::tests::native_append_second_target_failure_rolls_back_existing_rows_and_receipt",
+        "pull::tests::native_full_rebuild_recovers_mutable_metadata_and_empties_obsolete_mapping",
+        "pull::tests::native_identity_preserves_every_v1_parquet_mapping_exactly",
+        "pull::tests::native_identity_transaction_replays_without_files_and_refuses_lost_receipts",
+        "pull::tests::native_initial_rollback_reuses_fixed_workspace_and_lost_all_metadata_refuses",
+        "pull::tests::native_local_nested_views_macros_and_guarded_sql_boundaries",
+        "pull::tests::native_materialization_provenance_advances_omitted_tables_and_preserves_app_attempts",
+        "pull::tests::native_oversized_receipt_cannot_commit_an_unreplayable_outcome",
+        "pull::tests::native_precommit_and_postcommit_process_exit_resolve_without_reapplying",
+        "pull::tests::native_prior_contracts_require_matching_scope_and_immutable_receipt_without_source_access",
+        "pull::tests::native_pull_commit_crash_probe",
+        "pull::tests::native_pull_owner_cancellation_joins_and_fences_before_outcome_resolution",
+        "pull::tests::native_s3_empty_refresh_replaces_old_rows_and_omitted_targets_atomically_and_replays",
+        "pull::tests::native_s3_missing_reader_rolls_back_initial_binding_and_all_targets",
+        "pull::tests::native_s3_resource_admission_precedes_extension_staging_and_authentication",
+        "pull::tests::native_second_target_failure_rolls_back_rows_binding_and_receipt",
+        "pull::tests::native_selected_partition_uses_stored_values_and_refuses_metadata_mismatch",
+        "pull::tests::native_source_verification_reserves_hash_state_and_obeys_one_byte_source_budget",
+        "pull::tests::native_sql_append_stages_all_queries_against_prewrite_snapshot_and_replays",
+        "pull::tests::native_sql_rejects_submillisecond_utc_values_and_infinite_dates",
+        "pull::tests::pure_file_projection_preserves_prefix_and_never_infers_hive_values",
+        "pull::tests::pure_preparation_rejects_schema_changes_partition_inference_and_destination_aliases",
+        "pull::tests::s3_fixed_view_projects_each_historical_file_and_typed_empty_contract",
+        "pull::tests::s3_pure_preparation_refuses_application_modes_and_non_s3_roots",
+        "pull::tests::s3_pure_preparation_requires_exact_closed_evidence_without_opening_sources",
+        "s3_config::tests::closed_private_configuration_refuses_secrets_duplicates_aliases_and_untrusted_files",
+        "s3_config::tests::offline_configuration_selects_longest_complete_scope_without_creating_engine",
+        "s3_config::tests::sql_filename_decodes_once_without_percent_aliases_or_glob_authority",
+        "worker::tests::fetch_is_demand_driven_and_stop_joins_owner",
+        "abandoned_driver_children_are_stopped_but_cannot_attest_success",
+        "destroyed_discovery_transaction_never_selects_new_inputs_under_same_attempt",
+        "discovery_refuses_a_view_with_forged_old_materialization_metadata_without_binding_it",
+        "escaped_writer_keeps_workspace_busy_and_preserves_unresolved_evidence",
+        "external_fixed_mapping_accepts_only_stopped_exact_completion_and_exports_after_reopen",
+        "external_omission_only_completion_has_no_inferred_outputs",
+        "external_supervised_driver_probe",
+        "failed_external_spawn_preserves_intent_and_never_restarts_the_same_session",
+        "fixed_held_alias_files_and_whole_self_base_survive_new_generation_and_source_removal",
+        "lost_or_inconsistent_session_history_and_substituted_output_views_refuse_recovery",
+        "managed_build_exports_every_exact_grv_native_type_with_nulls_and_typed_empty_output",
+        "managed_guard_rejects_mutable_private_and_external_dependencies_through_nested_macros",
+        "managed_lossy_schema_and_infinite_temporal_values_never_create_completion",
+        "managed_mappings_repeat_selectors_and_use_extraction_lossless_conversion_before_adoption",
+        "managed_zero_rows_completion_acceptance_reopen_export_and_cleanup_preserve_evidence",
+        "ownership_loss_abort_and_drop_stop_ignored_cancellation_before_unlocking",
+        "protected_completion_reader_rejects_duplicates_unknowns_links_sizes_and_permissions",
+        "second_query_failure_is_incomplete_without_candidate_or_reexecution",
+        "supervised_external_completion_is_durable_immutable_and_exportable_with_zero_output",
+        "cancellation_and_eof_interrupt_native_invocation_join_owner_and_refuse_reexecution",
+        "eof_closes_retained_discovery_transaction_before_any_session_exists",
+        "cancellation_before_checkpoint_ack_joins_owner_and_refuses_same_attempt",
+        "cancelled_with_exhausted_credit_stops_owner_before_ack",
+        "eof_before_checkpoint_ack_joins_native_owner",
+        "negotiated_default_budgets_transport_a_five_mib_row_without_half_batch_restriction",
+        "partial_member_failure_emits_no_checkpoint_and_cannot_reacquire",
+        "sdk_shared_snapshot_durable_all_member_checkpoint_credits_and_empty_table",
+        "sdk_source_projects_all_grv_types_with_exact_values",
+        "source_projection_over_256_fields_is_byte_bounded_and_empty_members_complete",
+        "unmanaged_source_only_and_filter_no_other_relation",
+        "interrupt_remains_safe_during_query_and_after_owner_shutdown",
+        "pinned_native_worker_streams_only_demanded_bounded_chunks",
+        "staged_acquisition_supports_exact_native_types_and_refuses_reacquisition",
+        "staged_windows_split_variable_values_before_materialization_and_handle_empty_sources",
+        "child_lock_reference_probe",
+        "child_retains_shared_lock_after_parent_owner_closes",
+        "engine_inode_replacement_is_rejected_under_lock",
+        "hard_link_engine_aliases_are_rejected",
+        "replacement_and_symlink_helpers_are_rejected",
+        "symlink_aliases_share_nonblocking_persistent_lock",
+        "workspace_helper_permission_changes_are_refused_before_reuse",
+        "duckdb_executable_handshakes_without_claiming_ungated_capabilities_and_closes",
+        "sdk_pull_cancel_and_eof_join_owner_before_acknowledgement_and_fenced_retry",
+        "sdk_pull_lookup_compare_pure_prepare_atomic_apply_and_source_free_restart_replay",
+        "typed_host_advertises_gated_transactional_pull_and_replays_each_local_write_mode",
+        "registry::tests::business_property_names_and_default_annotations_are_not_schema_references",
+        "registry::tests::schema_references_cannot_escape_or_expand_without_bound",
+        "transport_tests::adapter_transport_failure_is_distinct_from_malformed_protocol",
+        "canonical_immutable_publication_and_same_value_replay_are_protected_and_durable",
+        "excluded_roots_and_engine_files_cannot_be_bypassed_by_parent_aliases",
+        "strict_closed_reader_refuses_duplicate_keys_unknowns_bad_utf8_trailing_values_and_sizes",
+        "symlinks_hardlinks_permission_changes_and_unsafe_ancestors_are_refused",
+        "hardlinks_and_engine_replacement_do_not_authorize_a_second_session_owner",
+        "session_helper_substitution_and_unprotected_paths_are_refused",
+        "session_mutations_serialize_across_aliases_but_independent_runs_do_not",
+        "acquisition::resource_tests::decoded_mock_rows_honor_offered_source_budget_before_emission",
+        "keychain::tests::bridge_material_is_only_private_stdin_and_no_files_are_created",
+        "keychain::tests::native_key_is_bounded_single_line_and_errors_are_redacted",
+        "keychain::tests::package_and_content_mismatches_are_refused",
+        "bulk_ambiguous_creation_never_repeats_post_on_retry",
+        "bulk_cancellation_stops_http_poll_and_descendants_before_acknowledging",
+        "bulk_count_mismatch_never_completes_or_requeries_attempt",
+        "bulk_unproven_text_refuses_before_creation_and_does_not_turn_into_unknown_creation",
+        "production_helpers_sdk_bulk_pages_credits_empty_table_and_retry_evidence_integrate",
+        "production_helpers_sdk_rest_pages_credits_empty_table_and_retry_evidence_integrate",
+        "bootstrap_eof_missing_key_and_module_mismatch_return_without_leaking_key",
+        "cancelled_private_input_node_worker_stops_before_return",
+        "escaped_detached_child_creation_is_refused_under_real_helper_containment",
+        "getter_is_exact_and_mutation_is_refused_without_canary_output",
+        "mismatched_key_cannot_decode_credentials_or_fall_back_to_key_creation",
+        "live_bulk_response_loss_never_reposts_or_adopts_after_restart",
+        "named_org_authentication_metadata_and_read_only_rest_query",
+        "api_names_match_case_insensitively_and_ambiguous_descriptors_are_refused",
+        "both_transports_prove_decimal_widths_and_forbid_cross_domain_casts_without_rows",
+        "custom_number_scale_zero_has_exact_int64_descriptor_proof",
+        "failed_projection_records_intent_and_never_queries_zero_or_all_null_attempts",
+        "formula_and_nonnullable_text_are_proven_nullable_numeric_is_exact_and_describe_is_cached",
+        "nullable_text_and_nullable_parent_text_refuse_only_the_unproven_csv_representation",
+        "polymorphic_relationships_require_all_target_representations_to_agree",
+        "rest_preserves_nullable_text_encodings_and_checks_every_polymorphic_target_width",
+        "salesforce_executable_advertises_only_conformant_extraction_and_closes",
+        "cancellation_stops_helper_and_pipe_holding_descendants_before_return",
+        "cli_authentication_disables_file_logs_and_verifies_org_using_private_session",
+        "curl_credentials_use_private_stdin_and_tls_retry_redirect_controls_are_present",
+        "http_query_all_bulk_create_and_results_are_exactly_scoped_and_never_retry_post",
+        "offline_reader_reads_aliases_only_and_never_opens_auth_files",
+        "redacted_cli_token_is_refused_before_any_authentication_http_call",
+        "response_parsing_rejects_duplicate_source_facts_and_rest_duplicate_fields",
+        "supervised_helper_bounds_output_drains_stderr_and_redacts_failures",
+        "all_client_primitives_decode_to_exact_logical_arrow_and_valid_ipc",
+        "bulk_csv_exact_quote_newline_numeric_boolean_null_policy_and_count_decoding",
+        "bulk_encoded_and_decoded_buffers_share_source_budget_and_ipc_output_is_bounded",
+        "canonical_api_field_case_matches_authored_rest_and_bulk_selectors_unambiguously",
+        "primitive_decoders_reject_rounding_overflow_lossy_casts_and_missing_fields",
+        "acquisition_table_names_follow_grv_names_and_persisted_duplicate_keys_are_rejected",
+        "ambiguous_bulk_creation_persists_empty_job_ids_and_never_repeats_post",
+        "changed_org_identity_fails_before_acquisition",
+        "count_mismatch_does_not_create_terminal_evidence",
+        "crash_after_bulk_intent_is_unknown_and_completed_evidence_reopens_without_source",
+        "exact_decimals_keep_more_than_binary_float_precision_and_reject_rounding",
+        "incomplete_nonresumable_rest_never_queries_again_under_same_attempt",
+        "malformed_successful_bulk_job_id_is_durably_ambiguous_instead_of_authorizing_recreation",
+        "offline_location_does_not_authenticate_and_authentication_verifies_fixed_identity_once",
+        "protected_journal_locks_and_rejects_identity_changes_corruption_and_symlinks",
+        "pure_defaults_preserve_alias_auto_and_common_authoring_values",
+        "rest_bootstrap_is_private_until_checkpoint_ack_then_pages_and_counts_complete",
+        "schema_descriptors_supply_whole_point_defaults_and_closed_fragments",
+        "soql_predicates_allow_unexported_fields_relationships_functions_dates_and_picklists",
+        "soql_predicates_reject_relation_reads_trailing_clauses_and_malformed_grammar",
+        "timestamps_preserve_offsets_pre_epoch_values_and_reject_any_precision_loss",
+        "zero_row_rest_has_empty_job_ids_and_still_requires_checkpoint_ack",
+        "encoded_and_decoded_source_data_are_charged_together_before_tree_adoption",
+        "source_json_keeps_numeric_tokens_utf8_and_rejects_duplicate_or_reserved_keys",
+        "tests::after_publish_cancel_stops_descendants_before_acknowledgement",
+        "tests::after_publish_eof_stops_descendants_without_acknowledgement",
+        "tests::after_publish_known_acknowledgement_wins_late_cancel",
+        "tests::after_publish_rebind_replay_needs_no_extraction_and_rejects_changed_fixed_hook",
+        "tests::cancellation_ack_waits_for_child_exit",
+        "tests::cancellation_during_checkpoint_upload_stops_without_checkpoint_or_rows",
+        "tests::cancellation_wakes_exhausted_credit_wait",
+        "tests::command_executes_once_and_clean_close_stops_work",
+        "tests::eof_waits_for_child_exit",
+        "tests::inspection_dispatch_requires_bound_handle_and_does_not_authenticate_or_execute_commands",
+        "tests::large_known_command_result_survives_cancel_during_document_upload",
+        "tests::malformed_document_hash_utf8_and_duplicate_keys_close_before_ack",
+        "tests::prepared_command_cannot_execute_twice",
+        "tests::pull_requires_lookup_comparison_and_exact_single_use_plan",
+        "cancel_exhausted_export_and_eof_wait_for_stopped_adapter",
+        "changed_preparation_repeated_execution_changed_acceptance_and_inspect_only_refuse",
+        "retained_discovery_execute_once_acceptance_and_credited_empty_export_reopen",
+        "json::tests::numbers_keep_numeric_semantics_with_unified_features",
+        "json::tests::rejects_duplicate_nested_keys_and_trailing_values",
+        "after_publish_is_closed_true_only_and_correlated",
+        "build_export_credit_drain_zero_completion_and_bound_terminal_identity",
+        "build_export_rejects_extraction_checkpoint_and_completion_fields",
+        "build_rows_only_after_accepted_completion_and_never_during_execution",
+        "checkpoint_ack_precedes_rows_and_empty_table_completion",
+        "completion_wins_cancellation_race_and_duplicate_terminal_is_rejected",
+        "document_hash_ack_canonicality_consumption_and_reuse",
+        "eof_transport_errors_and_malformed_truncation_remain_distinct",
+        "exhausted_credits_accept_cancel_but_freeze_new_acknowledgements",
+        "fragmented_and_coalesced_frames_payloads_and_partial_writes",
+        "inspection_has_exact_request_result_correlation_and_required_null_scope",
+        "ipc_two_message_validation_rejects_eos_trailing_and_bad_row_counts",
+        "malformed_frames_reject_utf8_duplicates_unknown_fields_sizes_and_truncation",
+        "oversized_adapter_document_has_distinct_typed_failure",
+        "request_correlation_role_and_resource_identity",
+        "semantically_invalid_ipc_type_is_rejected_before_arrow_conversion_panics",
+        "aborted_hook_can_release_private_state_without_advancing_cursor",
+        "hook_death_before_and_after_private_completion_keeps_publication_known",
+        "no_op_hook_and_changed_adapter_refusal_preserve_fixed_pending_result",
+        "offline_unknown_identity_defers_comparison_until_authentication",
+        "published_hook_failure_retries_only_fixed_acknowledgement_then_replays_offline",
+        "pull_binding_cannot_defer_its_required_offline_identity",
+        "known_build_outcome_pending_hook_replays_without_engine_declaration_or_grv",
+        "native_process_core_build_preparation_acceptance_credited_empty_export_publication_and_source_free_replay",
+        "killed_managed_cli_stops_native_work_and_never_reexecutes_incomplete_attempt",
+        "managed_build_cli_executes_once_publishes_empty_noop_and_replays_without_engine_or_root",
+        "managed_build_cli_fixes_identity_pull_inputs_and_publishes_whole_revision_provenance",
+        "accepted_partial_export_restarts_with_fresh_stream_without_reexecuting_managed_sql",
+        "confirmed_build_input_hold_survives_new_source_revision_and_actual_gc",
+        "source_pruned_after_discovery_refuses_preparation_before_destination_allocations",
+        "external_lifecycle_driver_probe",
+        "external_missing_second_completion_cannot_publish_untouched_self_seeded_output",
+        "managed_discovery_reconstitutes_held_input_after_tracking_rows_were_edited",
+        "managed_self_replaces_old_rows_and_all_queries_read_the_same_immutable_base",
+        "second_managed_output_sql_or_not_null_failure_creates_no_allocation_or_publication",
+        "process_capture_durable_acceptance_canonical_versions_sealed_run_publication_and_terminal_replay",
+        "native_duckdb_shared_snapshot_exact_capture_publication_and_source_free_replay",
+        "abort_resolves_exact_allocated_claim_without_allocating_pending_export_work",
+        "accepted_capture_retries_publish_after_adapter_and_authoring_disappear_without_source_query",
+        "expired_preparation_stops_capture_and_renewal_but_exact_stopped_abort_remains_safe",
+        "incomplete_capture_and_tampered_context_fail_closed_without_adapter_or_mutations",
+        "local_recovery_requires_unlocked_complete_capture_and_exact_original_owner",
+        "lost_abort_journal_after_sealed_run_materializes_same_result_without_backend_rewrite",
+        "preparation_queries_no_source_and_show_renew_use_only_locked_backend_evidence",
+        "prepared_abort_seals_empty_run_replays_and_permanently_refuses_finalization",
+        "session_publication_and_terminal_attempt_replay_need_neither_declaration_adapter_nor_backend",
+        "gc_cli_preview_pin_release_prune_cleanup_and_repeat_keep_history_and_current_version",
+        "bounded_documents_support_large_command_metadata",
+        "cancellation_stops_descendant_before_acknowledging_and_clean_close",
+        "cli_preserves_validated_result_when_close_fails",
+        "directory_install_handshake_replace_and_failed_candidate_preserve_winner",
+        "established_command_result_survives_abnormal_shutdown",
+        "extraction_checkpoint_credited_rows_empty_completion_and_bounded_sink",
+        "fixture_capabilities_and_pure_prepare_validate_execute_close",
+        "ignored_cancel_escalates_with_bounded_process_group_shutdown",
+        "manifest_and_handshake_identity_must_agree",
+        "manifest_only_listing_no_child_and_deterministic_shadowing",
+        "runnable_cli_list_capabilities_echo_slice_and_environment_isolation",
+        "shutdown_acknowledgement_cannot_leave_supervised_descendants",
+        "stderr_flood_does_not_block_protocol_or_render_raw_credentials",
+        "tarball_install_and_path_escape_rejection",
+        "untrusted_manifest_executable_and_ancestors_are_rejected",
+        "all_inspections_are_schema_valid_read_only_without_adapter_and_keep_historic_schema",
+        "committed_history_survives_pruning_and_orphan_paths_never_become_endpoints",
+        "retention_distinguishes_live_releasable_and_durably_released_dependency_holds",
+        "verification_distinguishes_hash_corruption_malformed_coordination_and_missing_data",
+        "zero_revision_missing_coordination_pending_and_released_pins_are_observed_without_repair",
+        "status_decl_combines_durable_session_outcome_with_backend_run_and_redacts_authority",
+        "status_decl_is_readonly_uninitialized_busy_scoped_and_unsupported_inspection_preserves_backend_facts",
+        "status_decl_projects_current_behind_fixed_and_successful_sql_append_imports_without_repair",
+        "cli_pulls_verified_published_files_and_replays_old_receipts_without_source_or_private_state",
+        "cli_revision_zero_requires_an_explicit_or_checked_prior_source_contract",
+        "live_cli_s3_capture_publication_deduplication_and_source_free_terminal_replay",
+        "real_cli_push_publishes_empty_table_deduplicates_and_replays_without_source_or_grv",
+        "complete_published_fixture_is_verified_without_backend_mutations",
+        "live_gcs_complete_published_fixture_read_only",
+        "recovery_dry_run_reports_unpublished_expired_run_without_adapter_journal_or_mutation",
+        "recovery_replays_only_committed_pending_effects_reports_ids_and_preserves_data",
+        "recovery_retains_claims_waiting_without_attestation_but_finishes_other_eligible_work",
+        "recovery_seals_unpublished_runs_materializes_missing_payload_and_repeats_without_rewrite",
+        "requested_live_run_is_busy_and_pending_unrelated_corruption_is_isolated",
+        "external_s3_build_driver",
+        "live_external_s3_build_fixed_view_inputs_self_base_accepted_export_restart_and_terminal_replay",
+        "live_s3_native_reader_exact_uri_validator_hash_fallback_and_changed_hash_refusal",
+        "live_s3_views_multifile_refresh_atomic_checks_and_source_free_receipts",
+        "production_cli_empty_capture_noop_and_source_free_terminal_replay",
+        "production_cli_org_capture_publication_and_source_free_terminal_replay",
+        "production_cli_relationship_acquisition_or_precise_bulk_refusal",
+        "production_cli_rich_bulk_contract_refusal",
+        "production_wrong_expected_org_authentication_exposes_no_source_session",
+        "external_driver_fixture_probe",
+        "external_nonempty_driver_results_export_exact_sorted_rows_and_reject_wrong_attestation_before_allocation",
+        "external_session_renew_during_driver_accept_empty_export_and_terminal_source_free_replay",
+        "external_session_requires_completion_protects_context_and_abort_is_durable",
+        "admin::tests::current_and_pinned_versions_refuse_prune_without_tombstones",
+        "admin::tests::gc_tests::gc_apply_rechecks_new_pins_after_preview_and_only_reclaims_after_release",
+        "admin::tests::gc_tests::gc_exact_stopped_epoch_recovery_is_journaled_before_cas_then_seals_and_prunes_orphan",
+        "admin::tests::gc_tests::gc_expired_allocated_claim_without_stopped_writer_evidence_remains_waiting",
+        "admin::tests::gc_tests::gc_pending_replay_operation_identity_is_durable_before_clear_and_survives_crash",
+        "admin::tests::gc_tests::gc_preview_missing_receipt_is_readonly_protected_and_apply_starts_fresh_grace",
+        "admin::tests::gc_tests::gc_recovery_does_not_touch_live_runs_and_repairs_missing_sealed_files",
+        "admin::tests::gc_tests::gc_refuses_stopped_writer_proof_for_another_run_epoch_before_takeover",
+        "admin::tests::gc_tests::gc_releases_only_proven_source_holds_and_terminal_result_replay_is_sourcefree",
+        "admin::tests::gc_tests::gc_replays_release_and_prune_journals_at_each_committed_callback_boundary",
+        "admin::tests::gc_tests::gc_reports_external_consumer_recovery_without_taking_over_another_dataset",
+        "admin::tests::gc_tests::gc_safe_expired_run_recovery_resumes_exact_journaled_owner_after_takeover",
+        "admin::tests::gc_tests::grace_past_supported_timestamp_horizon_is_protected_without_panicking",
+        "admin::tests::hold_arriving_after_durable_prune_intent_is_relisted_and_cannot_confirm",
+        "admin::tests::hold_release_checks_stable_consumer_evidence_and_replays_every_write",
+        "admin::tests::intent_description_and_private_progress_never_authorize_deletion",
+        "admin::tests::journal_callbacks_precede_operation_effects_and_terminal_replay_is_source_free",
+        "admin::tests::lost_conditional_responses_are_adopted_and_known_pin_survives_cleanup_failure",
+        "admin::tests::missing_scoped_unpin_and_pruned_revision_pin_fail_without_new_operation_effects",
+        "admin::tests::pin_write_crashes_replay_description_cas_marker_and_clear_without_changing_pin_identity",
+        "admin::tests::protected_prune_commits_intent_then_tombstones_clears_then_deletes_exact_files",
+        "admin::tests::prune_write_crashes_and_lost_responses_replay_all_conditional_boundaries",
+        "admin::tests::remaining_protections_reports_actual_current_pin_grace_and_holds_without_writes",
+        "admin::tests::revision_pin_unpin_are_durable_scoped_idempotent_and_do_not_change_revision_counters",
+        "admin::tests::unapplied_pin_cas_resolution_fences_old_request_and_reuses_scoped_pin_id",
+        "admin::tests::unknown_committed_pin_is_fenced_then_resolved_from_marker_without_reading_source_data",
+        "admin::tests::unknown_prune_decision_is_fenced_and_resolved_from_original_tombstone",
+        "admin::tests::unpin_write_crashes_and_lost_responses_replay_every_phase",
+        "build::tests::dependency_cycle_reports_shortest_observable_path_before_any_run_or_hold",
+        "build::tests::dependency_walk_uses_current_states_and_visits_shared_upstream_once",
+        "build::tests::external_s3_build_uses_verified_held_uris_even_for_locally_materialized_inputs",
+        "build::tests::missing_or_wrong_immutable_run_is_an_error_not_a_missing_graph_edge",
+        "build::tests::pure_build_intent_deduplicates_whole_revision_holds_and_verifies_exact_alias_files",
+        "build_abort::tests::abort_partial_claim_phases_never_allocate_and_replay_journal_failures",
+        "build_abort::tests::abort_resolves_publication_without_new_commit_or_engine_for_known_result",
+        "build_abort::tests::changed_owner_creation_or_metadata_cannot_release_claim",
+        "build_abort::tests::committed_manifest_with_lost_or_corrupt_data_never_becomes_abandoned",
+        "build_abort::tests::finalized_carried_release_proof_preserves_entry_and_new_holder",
+        "build_abort::tests::lost_release_ack_replays_fixed_mutation_before_sealing",
+        "build_abort::tests::lost_seal_terminal_ack_adopts_exact_seal_without_engine_access",
+        "build_abort::tests::recovered_owner_epoch_cannot_release_or_seal",
+        "build_abort::tests::sealing_intent_cannot_skip_stopped_claim_cleanup",
+        "build_export::tests::accepted_export_canonicalizes_without_adapter_preserving_duplicates_and_explicit_empty_table",
+        "build_export::tests::omission_only_capture_has_no_fake_source_checkpoint_or_empty_table",
+        "build_export::tests::partial_unstopped_wrong_digest_counts_and_corrupt_build_artifacts_cannot_be_accepted",
+        "build_publication::tests::build_selection_orders_groups_preserves_unexported_base_and_commits_omission_only_changes",
+        "build_publication::tests::derived_manifest_cites_all_whole_inputs_and_replays_commit_after_journal_failure",
+        "build_publication::tests::explicit_empty_partition_is_materialized_and_conflicts_fail_before_allocation",
+        "canonical::tests::decimal_timestamp_binary_and_empty_schema_round_trip_exactly",
+        "canonical::tests::multi_pass_merge_has_bounded_fan_in_and_keeps_duplicates",
+        "canonical::tests::oversized_row_and_contract_mismatch_fail_before_adoption",
+        "canonical::tests::parquet_bytes_are_identical_across_batch_spill_and_file_boundaries",
+        "canonical::tests::total_order_preserves_null_signed_zero_nan_bits_and_duplicate_rows",
+        "capture::tests::missing_checkpoint_partial_acquisition_count_mismatch_and_corrupt_capture_are_refused",
+        "capture::tests::source_free_canonicalization_groups_derived_partitions_and_retains_duplicates",
+        "capture::tests::zero_row_completion_creates_only_unpartitioned_empty_version",
+        "clock::tests::excessive_expiry_is_bounded_by_two_equal_validator_observations",
+        "clock::tests::lease_expiry_rejects_unrepresentable_years_without_panicking",
+        "clock::tests::run_ids_have_the_exact_ulid_timestamp_and_random_tail",
+        "contract::tests::authoring_types_have_one_exact_mapping",
+        "declaration::tests::descriptor_defaults_and_parent_revalidation_preserve_explicit_values",
+        "declaration::tests::duplicate_mappings_invalid_derive_and_checks_fail_in_core",
+        "declaration::tests::inline_and_ipc_schema_references_use_the_same_logical_mapping",
+        "declaration::tests::local_column_and_sql_references_expand_once_before_identity",
+        "declaration::tests::strict_yaml12_rejects_duplicates_aliases_tags_nonstring_keys_and_nonfinite",
+        "holds::tests::canonical_derived_version_publishes_and_keeps_historic_input_after_latest_changes",
+        "holds::tests::confirmed_derived_run_cannot_use_direct_writer_with_omitted_citations",
+        "holds::tests::corrupt_committed_versions_never_confirm_a_hold",
+        "holds::tests::derived_manifest_journal_replays_exact_time_and_citations_after_commit_boundary_crash",
+        "holds::tests::durable_hold_creation_and_confirmation_adopt_lost_ack_without_reusing_identity",
+        "holds::tests::earlier_prune_intent_blocks_confirmation_even_after_gc_lease_expires",
+        "holds::tests::expired_or_unconfirmed_derived_run_cannot_allocate_or_commit_output",
+        "holds::tests::expired_target_run_keeps_hold_until_irreversible_seal",
+        "holds::tests::hold_release_after_data_write_refuses_manifest_commit_and_publication",
+        "holds::tests::identical_hold_ids_in_different_consumer_folders_have_independent_release_markers",
+        "holds::tests::invalid_or_inactive_citations_fail_before_claim_layout_schema_or_output_effects",
+        "holds::tests::later_prune_intent_relisting_observes_confirmed_and_unconfirmed_holds",
+        "holds::tests::lost_derived_manifest_ack_adopts_exact_durable_citations",
+        "holds::tests::malformed_hold_paths_abort_gc_protection_scan",
+        "holds::tests::missing_or_mismatched_hold_records_refuse_derived_allocation",
+        "holds::tests::ownership_confirmation_rejects_missing_and_other_backend_proofs_before_allocations",
+        "holds::tests::pruned_committed_versions_reject_holds_even_while_data_remains_present",
+        "holds::tests::publisher_rejects_missing_mismatched_or_released_cited_hold",
+        "holds::tests::recovery_or_expiry_fences_confirmation_and_tokens_cannot_be_forged",
+        "holds::tests::sealed_cited_entry_keeps_hold_until_tombstone_and_missing_manifest_is_not_release_proof",
+        "holds::tests::storage_allows_valid_citation_subset_while_v1_build_helper_cites_all_inputs",
+        "holds::tests::unconfirmed_derived_run_recovery_seals_empty_and_makes_partial_holds_releasable",
+        "inspection::tests::default_and_latest_selectors_sample_once_and_never_invoke_mutating_backend_primitives",
+        "journal::tests::actual_process_crash_after_journal_install_retains_complete_evidence_and_releases_lock",
+        "journal::tests::crash_worker",
+        "journal::tests::duplicate_unknown_missing_null_and_nonfinite_evidence_is_refused_without_logging_contents",
+        "journal::tests::fixed_intent_accepted_capture_and_terminal_result_are_immutable_and_private",
+        "journal::tests::journal_generation_cas_serializes_threads_and_session_aliases_share_lock",
+        "journal::tests::private_immutable_artifacts_are_streamed_durable_and_cannot_replace_coordination",
+        "journal::tests::state_overlap_unsafe_ancestors_symlinks_and_replaced_lock_inode_are_refused",
+        "normalize::tests::dates_and_wall_clock_timestamps_derive_in_output_order_including_before_epoch",
+        "normalize::tests::declared_checks_ignore_arrow_nullability_and_use_renamed_outputs",
+        "normalize::tests::nulls_out_of_range_dates_and_noncanonical_partition_values_fail",
+        "ownership::tests::allocation_finalized_after_seal_is_orphaned_and_never_added_to_run",
+        "ownership::tests::canonical_version_commits_releases_and_seals_with_exact_control_fence",
+        "ownership::tests::crash_after_reservation_never_reuses_number_even_without_version_directory",
+        "ownership::tests::data_collision_abandons_reservation_and_never_seals_an_entry",
+        "ownership::tests::expired_allocation_without_manifest_abandons_without_requiring_unwritten_baseline",
+        "ownership::tests::expired_manifest_without_finalized_release_abandons_missing_or_corrupt_data",
+        "ownership::tests::expired_transfer_cannot_revive_an_open_run_but_storage_renewal_remains_token_fenced",
+        "ownership::tests::extensions_and_unconfirmed_dependency_runs_are_refused_before_claims",
+        "ownership::tests::irreversible_run_materialization_rejects_mismatched_existing_commit_marker",
+        "ownership::tests::live_claim_blocks_sealing_and_expired_committed_task_can_be_recovered",
+        "ownership::tests::lost_ack_at_each_conditional_transition_is_adopted_by_durable_record_proof",
+        "ownership::tests::overwritten_acquisition_intent_returns_unknown_and_never_reuses_token",
+        "ownership::tests::partition_duplicate_values_must_match_path_before_destination_file_creation",
+        "ownership::tests::prepared_owner_is_pure_persistable_and_commit_replays_exact_identity",
+        "ownership::tests::prepared_retry_adopts_hold_confirmation_but_never_revives_expired_or_sealed_runs",
+        "ownership::tests::recorded_number_survives_takeover_before_allocation_record_creation",
+        "ownership::tests::release_ack_lost_after_takeover_is_proven_by_last_release",
+        "ownership::tests::released_takeover_reconciles_predecessor_allocation_before_evidence_changes",
+        "ownership::tests::required_coordination_corruption_never_releases_or_resolves_allocation",
+        "ownership::tests::reservation_journal_replays_each_crash_boundary_without_burning_another_number",
+        "ownership::tests::stale_claim_cannot_write_or_finalize_under_successor_claim",
+        "ownership::tests::terminal_release_evidence_survives_data_damage_and_never_salvages_abandonment",
+        "ownership::tests::transient_data_backend_failure_preserves_allocation_for_successful_retry",
+        "ownership::tests::valid_pruning_marker_abandons_only_unfinalized_allocation",
+        "publication::tests::blocking_intent_fsync_renews_lease_and_commit_uses_only_its_returned_validator",
+        "publication::tests::consumer_intent_must_be_durable_before_description_revision_or_commit",
+        "publication::tests::dataset_initialization_adopts_only_observed_creation_and_preserves_coordination",
+        "publication::tests::dataset_initialization_refuses_lost_latest_with_revision_evidence",
+        "publication::tests::known_commit_survives_receipt_failure_and_replay_repairs_receipt",
+        "publication::tests::lease_journal_retries_exact_cas_and_rejects_overwritten_acquisition",
+        "publication::tests::lost_commit_ack_is_adopted_or_resolved_by_chain_and_unapplied_commit_is_fenced",
+        "publication::tests::publication_commits_empty_and_canonical_runs_then_explicit_omission",
+        "publication::tests::publication_rejects_conflicting_runs_unsealed_versions_and_corrupt_new_data",
+        "publication::tests::short_publication_combines_acquisition_and_reservation_into_exactly_two_latest_cas",
+        "publication::tests::takeover_fences_old_candidate_and_never_reuses_reserved_number",
+        "push::tests::acquisition_and_allocation_effects_require_durable_whole_progress",
+        "push::tests::changed_deduplicates_complete_groups_all_allocates_and_empty_table_publishes",
+        "push::tests::equality_compares_every_file_name_size_hash_and_count",
+        "push::tests::intervening_revision_rejects_changed_noop_without_implicit_rebase",
+        "push::tests::lost_seal_ack_adopts_exact_durable_run_without_capture_or_new_allocation",
+        "push::tests::no_op_outcome_is_durable_before_lease_release_and_failed_fsync_is_retryable",
+        "push::tests::partitioned_zero_rows_omit_base_groups_and_publish_complete_empty_snapshot",
+        "push::tests::recorded_publication_is_fenced_before_retry_and_known_commit_precedes_capture_checks",
+        "push::tests::sealed_replay_does_not_read_capture_and_requires_exact_expected_entries",
+        "push::tests::uncommitted_publication_is_fenced_and_replaced_with_fresh_identity_after_proof",
+        "push::tests::undeclared_base_membership_rejected_before_new_run_and_missing_drop_is_noop",
+        "push::tests::unfinished_identity_gate_runs_before_allocation_and_preserves_the_fixed_plan",
+        "push::tests::written_evidence_replays_release_without_capture_and_sealed_work_survives_pruned_capture",
+        "recovery::tests::every_durable_recovery_progress_boundary_replays_exact_owned_seal",
+        "recovery::tests::live_claim_waits_even_with_stopped_writer_and_exact_epoch_seals_after_claim_expiry",
+        "recovery::tests::missing_claim_becomes_unproven_without_salvaging_an_allocated_version",
+        "recovery::tests::pending_completion_survives_lost_clear_journal_and_foreign_lease_without_overwriting_new_work",
+        "recovery::tests::sealed_control_without_payload_is_materialized_after_crash_and_lost_response_is_proven",
+        "recovery::tests::targeted_scope_leaves_pending_and_unrelated_corrupt_controls_untouched",
+        "renewal::tests::blocking_work_renews_and_returns_updated_authority",
+        "renewal::tests::renewal_failure_prevents_success_and_panics_stop_scope_workers",
+        "retention::tests::all_committed_retention_kinds_replay_exact_paths_without_lease_or_data_mutation",
+        "retention::tests::committed_proof_survives_lost_lease_and_prune_intent_never_authorizes_effects",
+        "retention::tests::existing_pin_and_release_facts_ignore_operation_timestamps_actor_and_reason",
+        "retention::tests::lost_marker_ack_is_adopted_only_by_durable_read_and_failed_barrier_stays_pending",
+        "retention::tests::mismatched_pin_fact_is_rejected_but_any_existing_retirement_or_pruning_is_durable",
+        "retention::tests::orphan_descriptions_modified_payloads_and_publish_pending_authorize_no_markers",
+        "revision::tests::aba_versions_absent_pairs_and_removed_tables_still_conflict",
+        "revision::tests::committed_chain_ignores_orphans_and_needs_no_version_files",
+        "revision::tests::empty_revision_keeps_all_metadata_and_exact_row_schema",
+        "revision::tests::missing_latest_is_a_violation_when_revision_objects_exist",
+        "source::tests::embedded_arrow_schema_preflight_limits_expansion_and_rejects_malformed_metadata",
+        "source::tests::footer_reader_forbids_body_and_decoder_budget_rejects_huge_list_before_allocating",
+        "source::tests::s3_conditional_ranges_fail_closed_for_changed_missing_inconsistent_and_bad_lengths",
+        "source::tests::s3_large_copied_footer_is_chunked_without_body_reads_and_keeps_noncanonical_writer_metadata",
+        "source::tests::s3_matching_manifest_validator_reads_only_header_footer_and_never_stages_data_or_writes",
+        "source::tests::s3_matching_validator_still_rejects_malformed_header_footer_and_size",
+        "source::tests::s3_metadata_fastpath_preserves_commitment_manifest_schema_rows_and_pruning_fences",
+        "source::tests::s3_retagged_changed_same_size_body_fails_sha",
+        "source::tests::s3_retagged_identical_bytes_require_full_sha_and_report_current_validator",
+        "source::tests::s3_unsupported_ranges_conservatively_verify_complete_sha_and_local_always_does",
+        "store::tests::ambiguous_init_is_adopted_only_after_durable_readback",
+        "store::tests::damaged_root_and_invalid_new_parameters_are_refused",
+        "store::tests::init_is_idempotent_and_explicit_parameters_must_match",
+        "store::tests::readonly_open_never_initializes_or_creates_missing_paths",
+        "cloud::gcs::tests::gcs_commit_evidence_requires_exact_coordinates_count_and_generation",
+        "cloud::gcs::tests::gcs_final_full_and_empty_chunks_commit_without_an_extra_request",
+        "cloud::gcs::tests::gcs_lost_final_response_stale_condition_and_bad_partial_ack_are_not_retried",
+        "cloud::gcs::tests::gcs_rejects_cross_origin_session_and_wrong_bucket_before_sending_bytes",
+        "cloud::gcs::tests::gcs_streams_bounded_chunks_with_fixed_condition_and_exact_acknowledgements",
+        "cloud::s3::tests::s3_completion_requires_a_real_success_document_and_escapes_part_etags",
+        "cloud::s3::tests::s3_conditional_commit_headers_are_signed_and_applied_at_completion",
+        "cloud::s3::tests::s3_lost_completion_and_200_error_preserve_ambiguity_and_never_retry_commit",
+        "cloud::tests::cloud_errors_cannot_expose_credentials_or_signed_urls_and_preserve_ambiguity",
+        "cloud::tests::cloud_listing_streams_with_a_budget_for_recursive_and_child_modes",
+        "cloud::tests::cloud_root_is_pure_canonical_round_trippable_and_rejects_ambiguous_authorities",
+        "cloud::tests::cloud_six_operations_preserve_conditions_validators_prefix_isolation_and_idempotent_delete",
+        "cloud::tests::conditional_range_headers_require_exact_validator_span_length_and_full_size",
+        "cloud::tests::live_gcs_conditional_streaming_response_loss_and_race_contract",
+        "cloud::tests::live_gcs_read_only_contract",
+        "cloud::tests::live_gcs_streaming_read_failure_contract",
+        "cloud::tests::live_s3_conditional_multipart_contract",
+        "cloud::tests::s3_object_locations_are_exact_pure_and_escape_prefixes_once",
+        "cloud::tests::s3_range_failures_do_not_retry_redirect_disclose_response_or_fill_sink",
+        "cloud::tests::s3_range_get_signs_exact_condition_and_range_and_returns_only_admitted_bytes",
+        "cloud::tests::source_read_failure_has_no_completed_object_or_replacement",
+        "cloud::tests::suppressed_successful_return_and_ordered_races_have_durable_evidence",
+        "cloud::tests::unavailable_range_backend_is_explicit_and_box_delegation_preserves_it",
+        "model::tests::closed_records_reject_duplicate_keys_and_missing_required_nulls",
+        "model::tests::ownership_tokens_are_redacted_and_not_wire_scalar_types",
+        "model::tests::partition_representations_match_declared_order",
+        "model::tests::release_proof_requires_token_version_and_finalization_evidence",
+        "model::tests::retirement_marker_matches_the_v2_record_without_an_invented_actor_field",
+        "model::tests::storage_int64_json_is_exact_and_exhaustion_refuses",
+        "competing_cas_on_same_backend_has_one_winner_and_stale_mutation_never_returns",
+        "competing_conditional_creates_install_exactly_one_complete_object",
+        "crash_worker",
+        "durability_errors_are_failed_reads_and_never_absence",
+        "interrupted_source_never_installs_partial_content_and_reads_are_bounded",
+        "listings_are_sorted_delimited_and_ignore_private_temporary_names",
+        "lost_create_and_cas_acknowledgements_are_proved_by_durable_reread",
+        "missing_open_put_and_delete_preserve_absence",
+        "pre_install_failures_are_no_effect_and_leave_no_layout_object_or_temp",
+        "traversal_symlinks_fifo_and_replaced_roots_are_refused_without_following",
+        "writer_process_crash_is_adopted_through_durable_get",
+        "canonical::tests::arbitrary_precision_numbers_do_not_panic_and_integer_precision_is_explicit",
+        "canonical::tests::nonfinite_floats_fail_in_nested_structures_instead_of_becoming_null",
+        "canonical::tests::rfc8785_number_samples_and_ecmascript_exponent_thresholds",
+        "canonical::tests::rfc8785_property_names_sort_raw_utf16_recursively_without_normalization",
+        "logical::authoring_tests::client_authoring_aliases_have_one_exact_logical_projection",
+        "tests::identity_golden_vectors",
+        "tests::scalars_reject_noncanonical_forms"
+      ],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "not recorded / not applicable in this offline family",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/workspace-all-targets.log",
+          "sha256": "dfa3c4d79459a7e0908b0948daffb13813d13f6f1d1422d0a9c2690f0d2bed79"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-workspace-clippy",
+      "catalog_id": "workspace-clippy",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "workspace-clippy",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": null,
+      "observed_selectors": [],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "not recorded / not applicable in this offline family",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/workspace-clippy.log",
+          "sha256": "e31601f7e89318fcae1386aa89ee989866f18cdb19c4b7ccdff51c8a7b38b79f"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "historical-workspace-doc",
+      "catalog_id": "workspace-doc",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_commit": null,
+      "source_dirty": true,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "command": null,
+      "rerun_command_catalog_id": "workspace-doc",
+      "environment": {
+        "platform": "macOS ARM64",
+        "rust_reported": "1.99.0",
+        "profile": "development",
+        "transport": null
+      },
+      "test_summary": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      "observed_selectors": [],
+      "assertions": [
+        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
+      ],
+      "limitations": [
+        "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
+        "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
+      ],
+      "fault": null,
+      "cleanup": "not recorded / not applicable in this offline family",
+      "logs": [
+        {
+          "path": "artifacts/release-validation-macos/workspace-doc.log",
+          "sha256": "72ed05aad52de5ba325d9c6d2d50b3af4759784c92fb070ab77748e73139ee5e"
+        }
+      ]
+    }
+  ],
+  "supporting_files": [
+    {
+      "path": "artifacts/release-validation-macos/PAUSE.md",
+      "sha256": "18703398b5ac872fafdb97ee087368386b482ef54599fd9357e6af2bbefd74fd"
+    },
+    {
+      "path": "artifacts/release-validation-macos/RESUME.md",
+      "sha256": "f26c1569979e479ba9a046c6983b1e1ad7991eafff0806b03370f37589fc227a"
+    },
+    {
+      "path": "artifacts/release-validation-macos/core-mapping-research.txt",
+      "sha256": "54b0ad92df502e0abc9ca8914e5044e14f648bd07576fcef65d7752f86d1118a"
+    },
+    {
+      "path": "artifacts/release-validation-macos/sf-adapter-build.log",
+      "sha256": "a1eb89f1d9d4f6c58e044664c84c6a0c2c8fb4fb69ddb93b36dd95762bdae2b8"
+    },
+    {
+      "path": "artifacts/release-validation-macos/sf-compile.log",
+      "sha256": "75b33038d70dc125523f3f1ee7428af39dc13df616c502577111b858ada31fff"
+    },
+    {
+      "path": "artifacts/release-validation-macos/sf-fault-compile.log",
+      "sha256": "dcc0a50fb9807587e8fed2e1df3465c834d43078cff04bc0a58fc38cd2b75daf"
+    }
+  ]
+}

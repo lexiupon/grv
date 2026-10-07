@@ -1,0 +1,108 @@
+[
+  {
+    "kind": "declaration",
+    "input": {
+      "effective_declaration": {
+        "declaration_version": 1,
+        "kind": "push",
+        "adapter": "salesforce",
+        "dataset": "cases",
+        "connection": {
+          "org": "prod-alias",
+          "api_version": "v66.0"
+        },
+        "options": {
+          "transport": "auto",
+          "all_rows": false
+        },
+        "selection": {
+          "policy": "changed",
+          "drop": []
+        },
+        "tables": [
+          {
+            "name": "cases",
+            "source": {
+              "object": "Case"
+            },
+            "columns": [
+              {
+                "name": "id",
+                "source": "Id",
+                "type": "utf8"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      },
+      "adapter_identity": {
+        "name": "salesforce",
+        "package_version": "1.0.0",
+        "interface_version": 1,
+        "binding_schema_version": 1
+      },
+      "connection_identity": "00D000000000001",
+      "canonical_connection": {
+        "org_id": "00D000000000001",
+        "api_version": "v66.0"
+      }
+    },
+    "canonical": "{\"adapter_identity\":{\"binding_schema_version\":1,\"interface_version\":1,\"name\":\"salesforce\",\"package_version\":\"1.0.0\"},\"canonical_connection\":{\"api_version\":\"v66.0\",\"org_id\":\"00D000000000001\"},\"connection_identity\":\"00D000000000001\",\"effective_declaration\":{\"adapter\":\"salesforce\",\"checks\":[],\"connection\":{\"api_version\":\"v66.0\",\"org\":\"prod-alias\"},\"dataset\":\"cases\",\"declaration_version\":1,\"kind\":\"push\",\"options\":{\"all_rows\":false,\"transport\":\"auto\"},\"selection\":{\"drop\":[],\"policy\":\"changed\"},\"tables\":[{\"columns\":[{\"name\":\"id\",\"source\":\"Id\",\"type\":\"utf8\"}],\"name\":\"cases\",\"source\":{\"object\":\"Case\"}}]}}",
+    "sha256": "34b31cd3e77bdc107dceab1b187fb80017799dcbb5e3e59f3f36ea6daf596fbd"
+  },
+  {
+    "kind": "declaration",
+    "input": {
+      "effective_declaration": {
+        "declaration_version": 1,
+        "kind": "pull",
+        "adapter": "duckdb",
+        "dataset": "cases",
+        "connection": {
+          "database": "/srv/db/destination.duckdb"
+        },
+        "options": {
+          "materialization": "local",
+          "refresh": "auto"
+        },
+        "write": "replace",
+        "target": {
+          "schema": "crm"
+        },
+        "tables": [
+          {
+            "name": "cases",
+            "target": {
+              "table": "case_data"
+            }
+          }
+        ],
+        "checks": []
+      },
+      "adapter_identity": {
+        "name": "duckdb",
+        "package_version": "1.0.0",
+        "interface_version": 1,
+        "binding_schema_version": 1
+      },
+      "connection_identity": "db-id",
+      "canonical_connection": {
+        "database": "/srv/db/destination.duckdb"
+      }
+    },
+    "canonical": "{\"adapter_identity\":{\"binding_schema_version\":1,\"interface_version\":1,\"name\":\"duckdb\",\"package_version\":\"1.0.0\"},\"canonical_connection\":{\"database\":\"/srv/db/destination.duckdb\"},\"connection_identity\":\"db-id\",\"effective_declaration\":{\"adapter\":\"duckdb\",\"checks\":[],\"connection\":{\"database\":\"/srv/db/destination.duckdb\"},\"dataset\":\"cases\",\"declaration_version\":1,\"kind\":\"pull\",\"options\":{\"materialization\":\"local\",\"refresh\":\"auto\"},\"tables\":[{\"name\":\"cases\",\"target\":{\"table\":\"case_data\"}}],\"target\":{\"schema\":\"crm\"},\"write\":\"replace\"}}",
+    "sha256": "fe4f8c1d7019f1d88243ee261d986be3f64e69c8e6c82647f60e37307558aea9"
+  },
+  {
+    "kind": "pull_request",
+    "input": {
+      "root": "s3://example/grv",
+      "workspace_id": "359c6d0f-a9c1-4ae6-b804-0742a5e2b9de",
+      "declaration_sha256": "fe4f8c1d7019f1d88243ee261d986be3f64e69c8e6c82647f60e37307558aea9",
+      "requested_revision": "latest"
+    },
+    "canonical": "{\"declaration_sha256\":\"fe4f8c1d7019f1d88243ee261d986be3f64e69c8e6c82647f60e37307558aea9\",\"requested_revision\":\"latest\",\"root\":\"s3://example/grv\",\"workspace_id\":\"359c6d0f-a9c1-4ae6-b804-0742a5e2b9de\"}",
+    "sha256": "d2a36ab7e43b9be84489d486a7d1da050fa9709c5ef07af14afbded5af962fa8"
+  }
+]

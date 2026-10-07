@@ -1,0 +1,200 @@
+{
+  "manifest_version": 1,
+  "duckdb_version": "v1.5.6",
+  "platforms": [
+    "osx_arm64",
+    "osx_amd64",
+    "linux_amd64",
+    "linux_arm64"
+  ],
+  "signature": {
+    "algorithm": "RSA-2048-PKCS1-v1_5-SHA256",
+    "digest": "SHA256(concat(SHA256(each 1MiB chunk of extension except final 256-byte signature)))",
+    "public_key": {
+      "path": "native/duckdb-1.5.6-extension-key.pem",
+      "sha256": "5041ff31a9803f3225c5ad33ee4d7707d7cf2db97e43d008f2dd93492e3ce068",
+      "source_url": "https://raw.githubusercontent.com/duckdb/duckdb/v1.5.6/src/main/extension/extension_helper.cpp",
+      "source_sha256": "31b5b95314a98537a2eed7553a89fedfb6fd96688c376bbdff1154914115dae1"
+    },
+    "signing_source_license": {
+      "path": "native/duckdb-1.5.6/LICENSE",
+      "url": "https://raw.githubusercontent.com/duckdb/duckdb/v1.5.6/LICENSE",
+      "sha256": "7e17fd31249fa875cb3b1c5e05c6c3e99b75509f6a2804ca176c217834de1dcb"
+    }
+  },
+  "extensions": [
+    {
+      "name": "httpfs",
+      "source_commit": "4bc690dba4496c765777a0269d48fdbaff7cdc11",
+      "source_url": "https://github.com/duckdb/duckdb-httpfs/commit/4bc690dba4496c765777a0269d48fdbaff7cdc11",
+      "source_archive": {
+        "url": "https://codeload.github.com/duckdb/duckdb-httpfs/tar.gz/4bc690dba4496c765777a0269d48fdbaff7cdc11",
+        "sha256": "094aef2364bdfb2fe69dca03b6a53723a25e8cc5ccd08b057cf797892d487e6f"
+      },
+      "license_expression": "MIT",
+      "files": [
+        {
+          "path": "native/duckdb-httpfs-4bc690d/LICENSE",
+          "url": "https://raw.githubusercontent.com/duckdb/duckdb-httpfs/4bc690dba4496c765777a0269d48fdbaff7cdc11/LICENSE",
+          "sha256": "7e17fd31249fa875cb3b1c5e05c6c3e99b75509f6a2804ca176c217834de1dcb"
+        }
+      ]
+    },
+    {
+      "name": "aws",
+      "source_commit": "28c853c084a6e3acd36d7b8018c42438bb8c5a33",
+      "source_url": "https://github.com/duckdb/duckdb-aws/commit/28c853c084a6e3acd36d7b8018c42438bb8c5a33",
+      "source_archive": {
+        "url": "https://codeload.github.com/duckdb/duckdb-aws/tar.gz/28c853c084a6e3acd36d7b8018c42438bb8c5a33",
+        "sha256": "9c16f599dab3a55f1f43d9c45ac45c6c71d49199fade64d1ad3b47aa73fe34df"
+      },
+      "license_expression": "MIT",
+      "files": [
+        {
+          "path": "native/duckdb-aws-28c853c/LICENSE",
+          "url": "https://raw.githubusercontent.com/duckdb/duckdb-aws/28c853c084a6e3acd36d7b8018c42438bb8c5a33/LICENSE",
+          "sha256": "a457b2e4e0dafab867e52b8deeaac344681706c5020b91556f69d90dbc973894"
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "platform": "osx_arm64",
+      "name": "httpfs",
+      "compressed_bytes": 5569617,
+      "compressed_sha256": "b9f9ca8e64d913a80d6666a370e0e518ee4cc8ecb9990a2b9d2273204d8caad4",
+      "bytes": 16030718,
+      "sha256": "0cde1f5acd1970bfd414b11f5e945a1eddd8425e96e273f6411538d8fe3d951d",
+      "footer": {
+        "magic": "4",
+        "platform": "osx_arm64",
+        "duckdb_version": "v1.5.6",
+        "extension_version": "4bc690d",
+        "abi": "CPP"
+      },
+      "url": "https://extensions.duckdb.org/v1.5.6/osx_arm64/httpfs.duckdb_extension.gz",
+      "source_commit": "4bc690dba4496c765777a0269d48fdbaff7cdc11"
+    },
+    {
+      "platform": "osx_arm64",
+      "name": "aws",
+      "compressed_bytes": 6401508,
+      "compressed_sha256": "fa7a74da760c8a609b81704942817f9599cac1c9efbc8c9a7a3ee8691dddeb85",
+      "bytes": 20084718,
+      "sha256": "911b68461fdd989e0c9e74926b197c8a05727bfafc05df38baa47ece42174f1c",
+      "footer": {
+        "magic": "4",
+        "platform": "osx_arm64",
+        "duckdb_version": "v1.5.6",
+        "extension_version": "28c853c",
+        "abi": "CPP"
+      },
+      "url": "https://extensions.duckdb.org/v1.5.6/osx_arm64/aws.duckdb_extension.gz",
+      "source_commit": "28c853c084a6e3acd36d7b8018c42438bb8c5a33"
+    },
+    {
+      "platform": "osx_amd64",
+      "name": "httpfs",
+      "compressed_bytes": 5703620,
+      "compressed_sha256": "788e9be58359aef4cf9ecc58ea053ba4cdb8d802729f1adbd5101c85ad36247f",
+      "bytes": 17551102,
+      "sha256": "acf7f025758c71069a97507659ba890f90b7e5ce96f45acc71f3d9391c92b86b",
+      "footer": {
+        "magic": "4",
+        "platform": "osx_amd64",
+        "duckdb_version": "v1.5.6",
+        "extension_version": "4bc690d",
+        "abi": "CPP"
+      },
+      "url": "https://extensions.duckdb.org/v1.5.6/osx_amd64/httpfs.duckdb_extension.gz",
+      "source_commit": "4bc690dba4496c765777a0269d48fdbaff7cdc11"
+    },
+    {
+      "platform": "osx_amd64",
+      "name": "aws",
+      "compressed_bytes": 6610118,
+      "compressed_sha256": "839ffb975568fe2c431be48b3b814acdcde7b3736bd48f71726a31ae41e2c99d",
+      "bytes": 22204054,
+      "sha256": "5d5beb7fec779dd1b2d61ce5c2490f8c744ce9f99618cb4329f6607ccd9f527b",
+      "footer": {
+        "magic": "4",
+        "platform": "osx_amd64",
+        "duckdb_version": "v1.5.6",
+        "extension_version": "28c853c",
+        "abi": "CPP"
+      },
+      "url": "https://extensions.duckdb.org/v1.5.6/osx_amd64/aws.duckdb_extension.gz",
+      "source_commit": "28c853c084a6e3acd36d7b8018c42438bb8c5a33"
+    },
+    {
+      "platform": "linux_amd64",
+      "name": "httpfs",
+      "compressed_bytes": 7422100,
+      "compressed_sha256": "19e6906934a845487c96f9c94beee250c71e32bb9be260eb27ad96939a1df5f0",
+      "bytes": 21580734,
+      "sha256": "ff36e7d2561e21b958c243c6bd5f6a10cfc055a98ea76c0280b94728b57588e2",
+      "footer": {
+        "magic": "4",
+        "platform": "linux_amd64",
+        "duckdb_version": "v1.5.6",
+        "extension_version": "4bc690d",
+        "abi": "CPP"
+      },
+      "url": "https://extensions.duckdb.org/v1.5.6/linux_amd64/httpfs.duckdb_extension.gz",
+      "source_commit": "4bc690dba4496c765777a0269d48fdbaff7cdc11"
+    },
+    {
+      "platform": "linux_amd64",
+      "name": "aws",
+      "compressed_bytes": 9408169,
+      "compressed_sha256": "9d9bbd40e131f5e1314d6a7a82584b680f64a38fe771d4048275d48aa405852e",
+      "bytes": 28466502,
+      "sha256": "582a2753fe2870199c6dc0325e215c54515a77b15f43b5c96c118e62f8e08708",
+      "footer": {
+        "magic": "4",
+        "platform": "linux_amd64",
+        "duckdb_version": "v1.5.6",
+        "extension_version": "28c853c",
+        "abi": "CPP"
+      },
+      "url": "https://extensions.duckdb.org/v1.5.6/linux_amd64/aws.duckdb_extension.gz",
+      "source_commit": "28c853c084a6e3acd36d7b8018c42438bb8c5a33"
+    },
+    {
+      "platform": "linux_arm64",
+      "name": "httpfs",
+      "compressed_bytes": 7264048,
+      "compressed_sha256": "b18472a0e85cbf15ca4ebbe335173f87b62a074cd0f26072d4c756205c6239d0",
+      "bytes": 19864758,
+      "sha256": "ae940d800b7f938a4848d0eebcffb28dda0bbed76987f11dc55faa6d1a86db0d",
+      "footer": {
+        "magic": "4",
+        "platform": "linux_arm64",
+        "duckdb_version": "v1.5.6",
+        "extension_version": "4bc690d",
+        "abi": "CPP"
+      },
+      "url": "https://extensions.duckdb.org/v1.5.6/linux_arm64/httpfs.duckdb_extension.gz",
+      "source_commit": "4bc690dba4496c765777a0269d48fdbaff7cdc11"
+    },
+    {
+      "platform": "linux_arm64",
+      "name": "aws",
+      "compressed_bytes": 9028853,
+      "compressed_sha256": "7be5627a03495959bc033755fe4184db6cbc1d391c16790d3dad06fc14c79606",
+      "bytes": 25848334,
+      "sha256": "2f19aa1213bb15091282cbcee498a742980c0b625e0a2ae370ec4f335986ef27",
+      "footer": {
+        "magic": "4",
+        "platform": "linux_arm64",
+        "duckdb_version": "v1.5.6",
+        "extension_version": "28c853c",
+        "abi": "CPP"
+      },
+      "url": "https://extensions.duckdb.org/v1.5.6/linux_arm64/aws.duckdb_extension.gz",
+      "source_commit": "28c853c084a6e3acd36d7b8018c42438bb8c5a33"
+    }
+  ],
+  "notice_inventory_scope": "Pinned extension project licenses and DuckDB signing-source license. Bundled third-party dependency notice inventory is not yet complete; this manifest does not declare a release bundle license-complete."
+}

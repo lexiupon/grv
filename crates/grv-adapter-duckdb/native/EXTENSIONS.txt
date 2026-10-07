@@ -1,0 +1,114 @@
+Pinned HTTP/S3 extension packaging inputs
+======================================
+
+scripts/fetch-duckdb-extensions.py fetches the official DuckDB 1.5.6 httpfs and
+aws binary pair for osx_arm64, osx_amd64, linux_amd64 and linux_arm64. Every
+compressed and uncompressed artifact has an exact SHA-256 and byte count in
+notices/native-extensions.json. No network install or extension auto-loading is
+needed in a packaged adapter. Artifact fetching is not capability enablement.
+
+Example, from a protected workspace path (all ancestors must be owned by this
+user or root and not writable by group/other; symlinks are rejected):
+
+  python3 scripts/fetch-duckdb-extensions.py --output /protected/extensions \
+    --platform osx_arm64
+  python3 scripts/fetch-duckdb-extensions.py --output /protected/extensions \
+    --platform osx_arm64 --verify-only
+
+Repeat --platform to fetch multiple platforms. --cache points to offline input
+with <platform>/<name>.duckdb_extension.gz files. It receives the same hash,
+footer and RSA signature checks as a download. Output files are mode 0600;
+creation is no-replace and retries adopt only identical protected contents.
+Existing conflicting files require an explicit user-managed replacement.
+
+The fetcher uses bounded HTTPS GET (not HEAD), fixed official URLs, three bounded
+attempts for transient network/status failures, no redirects, 20-second request
+timeouts and exact-size admission. It streams gzip with an exact uncompressed
+bound. No archive paths are extracted. No credentials are read, passed or
+written. It does not change the native build, install plugins, write any cloud
+service, run user SQL or publish a release.
+
+Compatibility and signing
+-------------------------
+
+Every footer has magic 4, exact platform, v1.5.6, CPP ABI and the reviewed source
+revision: httpfs 4bc690dba4496c765777a0269d48fdbaff7cdc11 and aws
+28c853c084a6e3acd36d7b8018c42438bb8c5a33. Official release artifacts are RSA-2048
+PKCS#1 v1.5/SHA-256 signed. The verifier reproduces pinned DuckDB's two-level
+hash: SHA256 of concatenated SHA256 digests of each 1MiB chunk excluding only
+the last 256-byte signature. OpenSSL verifies that digest against the exact
+reviewed official key in notices/native/duckdb-1.5.6-extension-key.pem. All eight
+pinned artifacts passed signature verification. The macOS ARM64 pair also
+loaded successfully into GRV's existing patched 1.5.6 engine with unsigned
+extensions forbidden and automatic install/load disabled. The other platforms
+need their native load/release gates; footer/signature checks do not replace an
+ABI execution test on those hosts.
+
+Source-build fallback
+---------------------
+
+The pinned engine archive contains core_functions/parquet, not httpfs/aws.
+Exact extension source archives and SHA-256 are recorded in the registry.
+httpfs's CMake requires OpenSSL and CURL. aws additionally requires ZLIB and AWS
+SDK core/sso/sts/identity-management/rds. A static fallback must pin those
+sources/toolchains and license inventories rather than follow floating branches
+or silently enable unsigned runtime loading. Official signed artifacts avoid
+that additional source-build dependency chain for current supported platforms.
+
+Notice scope and remaining native integration
+---------------------------------------------
+
+The registry and checked-in files include hash-proved extension project MIT
+licenses and the DuckDB signing-source license. Bundled third-party dependency
+notice inventory (OpenSSL, curl, AWS SDK, compression dependencies, etc.) remains
+incomplete. This registry does not assert that a release bundle is license-
+complete. scripts/package.py requires --extensions-dir and includes the verified
+pair; relocation verification checks their signatures and loads them
+without authenticating or contacting S3.
+
+Bounded release provenance review
+---------------------------------
+
+The exact engine v1.5.6 extension configuration pins the two full source commits
+above. Its .github/workflows/_extension_distribution.yml enables a merged
+vcpkg manifest and calls extension-ci-tools at the v1.5-variegata ref. The
+reviewed reusable workflow defaults to vcpkg commit
+84bab45d415d22042bd0b9081aea57f362da3f35, permits explicit dependency/version
+overrides, uses platform-specific triplets and overlay ports, and uploads only
+extension binaries. It does not upload installed dependency status, notices or
+an SBOM. A moving CI ref and a default baseline are not exact release-run proof.
+
+The osx_arm64 artifacts contain source build paths identifying curl 8.17.0 and
+aws-sdk-cpp 1.11.702, plus OpenSSL 3.6.0 and v1.3.1 version strings. These agree
+with selected baseline versions; strings do not prove the full linked dependency
+inventory, patched sources or corresponding notices. otool shows only platform
+frameworks and libc++/libSystem dependencies, so bundled static dependencies
+cannot be enumerated from dynamic linkage alone. No release notice inventory
+was found in the reviewed v1.5.6 GitHub release assets or extension workflow.
+
+Before declaring this inventory complete, obtain provenance for the exact
+signed release run: resolved merged manifest and triplets/overlays, installed
+vcpkg status, each installed share/<port>/copyright and SPDX/source records,
+and notices for generated or vendored sources outside vcpkg. Alternatively,
+build from separately pinned dependency sources/toolchains and produce that
+inventory under controlled packaging. Neither the observed version strings nor
+the extension project MIT license alone closes this release gate.
+
+Primary review sources:
+  https://github.com/duckdb/duckdb/blob/v1.5.6/.github/workflows/_extension_distribution.yml
+  https://github.com/duckdb/duckdb/blob/v1.5.6/.github/config/extensions/httpfs.cmake
+  https://github.com/duckdb/duckdb/blob/v1.5.6/.github/config/extensions/aws.cmake
+  https://github.com/duckdb/extension-ci-tools/blob/v1.5-variegata/.github/workflows/_extension_distribution.yml
+  https://github.com/microsoft/vcpkg/blob/84bab45d415d22042bd0b9081aea57f362da3f35/versions/baseline.json
+
+The fetcher alone advertises no capability. Production native adapters support
+S3 views after their named conformance gates. Production loading validates
+packaged file hashes/platforms and signatures, then loads only those trusted
+paths before capturing native callback identities. Keep automatic
+install/load off and unsigned extensions forbidden. Native S3 scanners require
+exact verified URI read-only filesystem capabilities, no globs or credential
+query parameters, and guarded initial/nested/rebind execution. allowed_paths
+alone permits writes and is insufficient. Managed builds materialize held remote
+files locally before running user SQL with the existing guard. External private
+S3 views require fixed held file sets and independent adapter-private credentials.
+A secret's SCOPE selects credentials; it is not a file-access or read-only fence.

@@ -1,0 +1,50 @@
+[package]
+name = "grv-conformance"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+[features]
+native-duckdb = ["dep:grv-adapter-duckdb", "grv-adapter-duckdb/native"]
+[dependencies]
+grv-adapter-duckdb = { path = "../grv-adapter-duckdb", optional = true }
+grv = { path = "../grv" }
+grv-types.workspace = true
+grv-adapter-api.workspace = true
+grv-adapter-wire.workspace = true
+grv-adapter-sdk.workspace = true
+grv-adapter-host.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+libc.workspace = true
+arrow-array.workspace = true
+arrow-schema.workspace = true
+arrow-ipc.workspace = true
+[dev-dependencies]
+grv-adapter-salesforce = { path = "../grv-adapter-salesforce" }
+grv-core.workspace = true
+grv-storage = { workspace = true, features = ["cloud"] }
+tempfile.workspace = true
+jsonschema.workspace = true
+tar.workspace = true
+parquet = { workspace = true, default-features = false, features = ["arrow"] }
+
+[[test]]
+name = "salesforce_capture"
+path = "tests/salesforce_capture.rs"
+harness = false
+
+[[bin]]
+name = "fixture-duckdb"
+path = "src/bin/fixture-duckdb.rs"
+required-features = ["native-duckdb"]
+
+[[test]]
+name = "duckdb_capture"
+path = "tests/duckdb_capture.rs"
+required-features = ["native-duckdb"]
+
+[[bin]]
+name = "fixture-duckdb-build"
+path = "src/bin/fixture-duckdb-build.rs"
+required-features = ["native-duckdb"]

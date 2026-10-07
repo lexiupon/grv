@@ -1,0 +1,1553 @@
+{
+  "manifest_version": 3,
+  "validation_scale": "Correctness fixture: 1000 main + 10 related; not a performance benchmark.",
+  "source_semantics": {
+    "text": "Empty CSV text becomes null; no non-null empty-string acquisition coverage.",
+    "checkbox": "Omitted CSV checkbox uses false default; no nullable-boolean acquisition coverage.",
+    "datetime": "This Bulk load path stores whole seconds; input milliseconds are explicit in enumerated input rows, not promised as stored values.",
+    "decimal": "Exact numeric comparison; large 8-integer-digit .125 is representable; arbitrary decimal(18,10) maxima are not claimed to survive Salesforce numeric APIs.",
+    "paging": "Scaled fixture requires test-requested REST batchSize=200 and Bulk maxRecords=100 to exercise real locators; default-page CLI acquisition is separately checked. Paging is evidence only after live execution."
+  },
+  "fixture": "salesforce",
+  "note": "Independent value oracle for the disposable-org Salesforce fixture. grvfix_values(i)/grvfixrel_values(i) in generate.py are the single source of truth for every value; enumerated_rows and aggregates are snapshots of that function. The org is disposable; provisioning a replacement org is described in README.md.",
+  "generator": {
+    "path": "generate.py",
+    "sha256": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97"
+  },
+  "org": {
+    "requirements": "disposable org, Developer Edition or above (custom objects required); authorized in the local sf store as alias grv-fixture; the concrete identity (org id, url, api version) is recorded in manifest/provision-evidence.json at provisioning time",
+    "disposable": true
+  },
+  "csv": {
+    "grvfixrel": {
+      "sha256": "4b3c6eeb402c9d1969344fc74fe50fc7b556717b72c206ddc2aa7af257d4a9e9",
+      "rows": 10
+    },
+    "grvfix": {
+      "sha256": "85266d79e07110f2e9039dc5d7870b21ee0d4e16e623747eb81932aa66849496",
+      "rows": 1000,
+      "note": "GrvRel__c is empty in the generated file; provision.py resolves it to the loaded GrvFixRel__c Ids for i < 10 and records the resolved file hash in the run evidence."
+    }
+  },
+  "objects": {
+    "GrvFix__c": {
+      "row_count": 1000,
+      "fields": {
+        "Name": "text(80)",
+        "GrvText__c": "text(255), nullable",
+        "GrvLongText__c": "longtextarea(32000), nullable",
+        "GrvInt__c": "number(10,0), nullable",
+        "GrvDecimal__c": "number(18,10), nullable",
+        "GrvDate__c": "date, nullable",
+        "GrvDateTime__c": "datetime(UTC), nullable; CSV milliseconds explicitly expected to truncate to seconds",
+        "GrvPicklist__c": "picklist[Alpha,Beta,Gamma], nullable",
+        "GrvBool__c": "checkbox, non-null; omitted CSV value defaults to false",
+        "GrvFormula__c": "formula text = TEXT(GrvInt__c or 'null') & ':' & IF(GrvBool__c = NULL, '?', IF(GrvBool__c, 'T', 'F'))",
+        "GrvPartitionDate__c": "date, nullable",
+        "GrvStatus__c": "picklist[Active,Inactive], required",
+        "GrvRel__c": "lookup GrvFixRel__c, nullable"
+      },
+      "special_rows": {
+        "GrvInt__c": {
+          "0": 0,
+          "1": 1,
+          "2": -1,
+          "3": 9999999999,
+          "4": null
+        },
+        "GrvDecimal__c": {
+          "5": "99999999.1250000000",
+          "6": null
+        },
+        "GrvDate__c": {
+          "7": null,
+          "8": "1970-01-01",
+          "9": "4000-07-31"
+        },
+        "GrvDateTime__c": {
+          "10": null,
+          "11": "1970-01-01T00:00:00.000Z",
+          "12": "4000-07-31T23:59:59.000Z"
+        },
+        "GrvText__c_classes": {
+          "i%8==0": "null",
+          "i%8==1": "empty CSV text, stored as null",
+          "i%8==2": "ascii-value-{i:05d}",
+          "i%8==3": "unicode \\u00e9/\\u4e2d\\u6587",
+          "i%8==4": "emoji \\U0001F680",
+          "i%8==5": "long- + 200 x",
+          "i%8==6": "dup-a",
+          "i%8==7": "dup-b"
+        },
+        "GrvPicklist__c": "null/Alpha/Beta/Gamma by i%4",
+        "GrvBool__c": "TRUE/FALSE/omitted by i%3; stored true/false/false",
+        "GrvStatus__c": "Inactive iff i%10==7",
+        "GrvPartitionDate__c": "2026-{07+i%3}-{01+i%28}",
+        "GrvRel__c": "set for i<10, else null"
+      },
+      "enumerated_rows": [
+        {
+          "i": 0,
+          "input": {
+            "Name": "GRVFIX-00000",
+            "GrvPartitionDate__c": "2026-07-01",
+            "GrvStatus__c": "Active",
+            "GrvText__c": null,
+            "GrvLongText__c": "GRVLONG-00000::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 0,
+            "GrvDecimal__c": "0.000000000",
+            "GrvDate__c": "1969-12-31",
+            "GrvDateTime__c": "1969-12-31T23:59:59.000Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": "TRUE",
+            "GrvFormula__c": "0:T",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00000",
+            "GrvPartitionDate__c": "2026-07-01",
+            "GrvStatus__c": "Active",
+            "GrvText__c": null,
+            "GrvLongText__c": "GRVLONG-00000::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 0,
+            "GrvDecimal__c": "0.000000000",
+            "GrvDate__c": "1969-12-31",
+            "GrvDateTime__c": "1969-12-31T23:59:59.000Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": true,
+            "GrvFormula__c": "0:T",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00000",
+            "text": null,
+            "long_text": "GRVLONG-00000::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 0,
+            "decimal_value": "0.000000000",
+            "date_value": "1969-12-31",
+            "datetime_value": "1969-12-31T23:59:59.000Z",
+            "picklist": null,
+            "bool_value": true,
+            "formula": "0:T",
+            "partition_date": "2026-07-01",
+            "status": "Active",
+            "rel_id": "<org-assigned GrvFixRel__c Id>",
+            "_month_": "2026-07"
+          }
+        },
+        {
+          "i": 1,
+          "input": {
+            "Name": "GRVFIX-00001",
+            "GrvPartitionDate__c": "2026-08-02",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "",
+            "GrvLongText__c": "GRVLONG-00001::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 1,
+            "GrvDecimal__c": "0.000000007",
+            "GrvDate__c": "1970-01-01",
+            "GrvDateTime__c": "1969-12-31T23:59:59.137Z",
+            "GrvPicklist__c": "Alpha",
+            "GrvBool__c": "FALSE",
+            "GrvFormula__c": "1:F",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00001",
+            "GrvPartitionDate__c": "2026-08-02",
+            "GrvStatus__c": "Active",
+            "GrvText__c": null,
+            "GrvLongText__c": "GRVLONG-00001::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 1,
+            "GrvDecimal__c": "0.000000007",
+            "GrvDate__c": "1970-01-01",
+            "GrvDateTime__c": "1969-12-31T23:59:59.000Z",
+            "GrvPicklist__c": "Alpha",
+            "GrvBool__c": false,
+            "GrvFormula__c": "1:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00001",
+            "text": null,
+            "long_text": "GRVLONG-00001::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 1,
+            "decimal_value": "0.000000007",
+            "date_value": "1970-01-01",
+            "datetime_value": "1969-12-31T23:59:59.000Z",
+            "picklist": "Alpha",
+            "bool_value": false,
+            "formula": "1:F",
+            "partition_date": "2026-08-02",
+            "status": "Active",
+            "rel_id": "<org-assigned GrvFixRel__c Id>",
+            "_month_": "2026-08"
+          }
+        },
+        {
+          "i": 2,
+          "input": {
+            "Name": "GRVFIX-00002",
+            "GrvPartitionDate__c": "2026-09-03",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "ascii-value-00002",
+            "GrvLongText__c": "GRVLONG-00002::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": -1,
+            "GrvDecimal__c": "0.000000014",
+            "GrvDate__c": "1970-01-02",
+            "GrvDateTime__c": "1969-12-31T23:59:59.274Z",
+            "GrvPicklist__c": "Beta",
+            "GrvBool__c": null,
+            "GrvFormula__c": "-1:?",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00002",
+            "GrvPartitionDate__c": "2026-09-03",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "ascii-value-00002",
+            "GrvLongText__c": "GRVLONG-00002::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": -1,
+            "GrvDecimal__c": "0.000000014",
+            "GrvDate__c": "1970-01-02",
+            "GrvDateTime__c": "1969-12-31T23:59:59.000Z",
+            "GrvPicklist__c": "Beta",
+            "GrvBool__c": false,
+            "GrvFormula__c": "-1:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00002",
+            "text": "ascii-value-00002",
+            "long_text": "GRVLONG-00002::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": -1,
+            "decimal_value": "0.000000014",
+            "date_value": "1970-01-02",
+            "datetime_value": "1969-12-31T23:59:59.000Z",
+            "picklist": "Beta",
+            "bool_value": false,
+            "formula": "-1:F",
+            "partition_date": "2026-09-03",
+            "status": "Active",
+            "rel_id": "<org-assigned GrvFixRel__c Id>",
+            "_month_": "2026-09"
+          }
+        },
+        {
+          "i": 3,
+          "input": {
+            "Name": "GRVFIX-00003",
+            "GrvPartitionDate__c": "2026-07-04",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "unicode-é-中文-00003",
+            "GrvLongText__c": "GRVLONG-00003::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 9999999999,
+            "GrvDecimal__c": "0.000000021",
+            "GrvDate__c": "1970-01-03",
+            "GrvDateTime__c": "1969-12-31T23:59:59.411Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": "TRUE",
+            "GrvFormula__c": "9999999999:T",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00003",
+            "GrvPartitionDate__c": "2026-07-04",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "unicode-é-中文-00003",
+            "GrvLongText__c": "GRVLONG-00003::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 9999999999,
+            "GrvDecimal__c": "0.000000021",
+            "GrvDate__c": "1970-01-03",
+            "GrvDateTime__c": "1969-12-31T23:59:59.000Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": true,
+            "GrvFormula__c": "9999999999:T",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00003",
+            "text": "unicode-é-中文-00003",
+            "long_text": "GRVLONG-00003::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 9999999999,
+            "decimal_value": "0.000000021",
+            "date_value": "1970-01-03",
+            "datetime_value": "1969-12-31T23:59:59.000Z",
+            "picklist": "Gamma",
+            "bool_value": true,
+            "formula": "9999999999:T",
+            "partition_date": "2026-07-04",
+            "status": "Active",
+            "rel_id": "<org-assigned GrvFixRel__c Id>",
+            "_month_": "2026-07"
+          }
+        },
+        {
+          "i": 4,
+          "input": {
+            "Name": "GRVFIX-00004",
+            "GrvPartitionDate__c": "2026-08-05",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "emoji-🚀-00004",
+            "GrvLongText__c": "GRVLONG-00004::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": null,
+            "GrvDecimal__c": "0.000000028",
+            "GrvDate__c": "1970-01-04",
+            "GrvDateTime__c": "1969-12-31T23:59:59.548Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": "FALSE",
+            "GrvFormula__c": "null:F",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00004",
+            "GrvPartitionDate__c": "2026-08-05",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "emoji-🚀-00004",
+            "GrvLongText__c": "GRVLONG-00004::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": null,
+            "GrvDecimal__c": "0.000000028",
+            "GrvDate__c": "1970-01-04",
+            "GrvDateTime__c": "1969-12-31T23:59:59.000Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": false,
+            "GrvFormula__c": "null:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00004",
+            "text": "emoji-🚀-00004",
+            "long_text": "GRVLONG-00004::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": null,
+            "decimal_value": "0.000000028",
+            "date_value": "1970-01-04",
+            "datetime_value": "1969-12-31T23:59:59.000Z",
+            "picklist": null,
+            "bool_value": false,
+            "formula": "null:F",
+            "partition_date": "2026-08-05",
+            "status": "Active",
+            "rel_id": "<org-assigned GrvFixRel__c Id>",
+            "_month_": "2026-08"
+          }
+        },
+        {
+          "i": 5,
+          "input": {
+            "Name": "GRVFIX-00005",
+            "GrvPartitionDate__c": "2026-09-06",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "long-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "GrvLongText__c": "GRVLONG-00005::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 5,
+            "GrvDecimal__c": "99999999.1250000000",
+            "GrvDate__c": "1970-01-05",
+            "GrvDateTime__c": "1969-12-31T23:59:59.685Z",
+            "GrvPicklist__c": "Alpha",
+            "GrvBool__c": null,
+            "GrvFormula__c": "5:?",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00005",
+            "GrvPartitionDate__c": "2026-09-06",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "long-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "GrvLongText__c": "GRVLONG-00005::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 5,
+            "GrvDecimal__c": "99999999.1250000000",
+            "GrvDate__c": "1970-01-05",
+            "GrvDateTime__c": "1969-12-31T23:59:59.000Z",
+            "GrvPicklist__c": "Alpha",
+            "GrvBool__c": false,
+            "GrvFormula__c": "5:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00005",
+            "text": "long-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "long_text": "GRVLONG-00005::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 5,
+            "decimal_value": "99999999.1250000000",
+            "date_value": "1970-01-05",
+            "datetime_value": "1969-12-31T23:59:59.000Z",
+            "picklist": "Alpha",
+            "bool_value": false,
+            "formula": "5:F",
+            "partition_date": "2026-09-06",
+            "status": "Active",
+            "rel_id": "<org-assigned GrvFixRel__c Id>",
+            "_month_": "2026-09"
+          }
+        },
+        {
+          "i": 6,
+          "input": {
+            "Name": "GRVFIX-00006",
+            "GrvPartitionDate__c": "2026-07-07",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "dup-a",
+            "GrvLongText__c": "GRVLONG-00006::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 6,
+            "GrvDecimal__c": null,
+            "GrvDate__c": "1970-01-06",
+            "GrvDateTime__c": "1969-12-31T23:59:59.822Z",
+            "GrvPicklist__c": "Beta",
+            "GrvBool__c": "TRUE",
+            "GrvFormula__c": "6:T",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00006",
+            "GrvPartitionDate__c": "2026-07-07",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "dup-a",
+            "GrvLongText__c": "GRVLONG-00006::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 6,
+            "GrvDecimal__c": null,
+            "GrvDate__c": "1970-01-06",
+            "GrvDateTime__c": "1969-12-31T23:59:59.000Z",
+            "GrvPicklist__c": "Beta",
+            "GrvBool__c": true,
+            "GrvFormula__c": "6:T",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00006",
+            "text": "dup-a",
+            "long_text": "GRVLONG-00006::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 6,
+            "decimal_value": null,
+            "date_value": "1970-01-06",
+            "datetime_value": "1969-12-31T23:59:59.000Z",
+            "picklist": "Beta",
+            "bool_value": true,
+            "formula": "6:T",
+            "partition_date": "2026-07-07",
+            "status": "Active",
+            "rel_id": "<org-assigned GrvFixRel__c Id>",
+            "_month_": "2026-07"
+          }
+        },
+        {
+          "i": 7,
+          "input": {
+            "Name": "GRVFIX-00007",
+            "GrvPartitionDate__c": "2026-08-08",
+            "GrvStatus__c": "Inactive",
+            "GrvText__c": "dup-b",
+            "GrvLongText__c": "GRVLONG-00007::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 7,
+            "GrvDecimal__c": "0.000000049",
+            "GrvDate__c": null,
+            "GrvDateTime__c": "1969-12-31T23:59:59.959Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": "FALSE",
+            "GrvFormula__c": "7:F",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00007",
+            "GrvPartitionDate__c": "2026-08-08",
+            "GrvStatus__c": "Inactive",
+            "GrvText__c": "dup-b",
+            "GrvLongText__c": "GRVLONG-00007::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 7,
+            "GrvDecimal__c": "0.000000049",
+            "GrvDate__c": null,
+            "GrvDateTime__c": "1969-12-31T23:59:59.000Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": false,
+            "GrvFormula__c": "7:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00007",
+            "text": "dup-b",
+            "long_text": "GRVLONG-00007::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 7,
+            "decimal_value": "0.000000049",
+            "date_value": null,
+            "datetime_value": "1969-12-31T23:59:59.000Z",
+            "picklist": "Gamma",
+            "bool_value": false,
+            "formula": "7:F",
+            "partition_date": "2026-08-08",
+            "status": "Inactive",
+            "rel_id": "<org-assigned GrvFixRel__c Id>",
+            "_month_": "2026-08"
+          }
+        },
+        {
+          "i": 8,
+          "input": {
+            "Name": "GRVFIX-00008",
+            "GrvPartitionDate__c": "2026-09-09",
+            "GrvStatus__c": "Active",
+            "GrvText__c": null,
+            "GrvLongText__c": "GRVLONG-00008::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 8,
+            "GrvDecimal__c": "0.000000056",
+            "GrvDate__c": "1970-01-01",
+            "GrvDateTime__c": "1970-01-01T00:00:00.096Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": null,
+            "GrvFormula__c": "8:?",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00008",
+            "GrvPartitionDate__c": "2026-09-09",
+            "GrvStatus__c": "Active",
+            "GrvText__c": null,
+            "GrvLongText__c": "GRVLONG-00008::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 8,
+            "GrvDecimal__c": "0.000000056",
+            "GrvDate__c": "1970-01-01",
+            "GrvDateTime__c": "1970-01-01T00:00:00.000Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": false,
+            "GrvFormula__c": "8:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00008",
+            "text": null,
+            "long_text": "GRVLONG-00008::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 8,
+            "decimal_value": "0.000000056",
+            "date_value": "1970-01-01",
+            "datetime_value": "1970-01-01T00:00:00.000Z",
+            "picklist": null,
+            "bool_value": false,
+            "formula": "8:F",
+            "partition_date": "2026-09-09",
+            "status": "Active",
+            "rel_id": "<org-assigned GrvFixRel__c Id>",
+            "_month_": "2026-09"
+          }
+        },
+        {
+          "i": 9,
+          "input": {
+            "Name": "GRVFIX-00009",
+            "GrvPartitionDate__c": "2026-07-10",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "",
+            "GrvLongText__c": "GRVLONG-00009::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 9,
+            "GrvDecimal__c": "0.000000063",
+            "GrvDate__c": "4000-07-31",
+            "GrvDateTime__c": "1970-01-01T00:00:00.233Z",
+            "GrvPicklist__c": "Alpha",
+            "GrvBool__c": "TRUE",
+            "GrvFormula__c": "9:T",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00009",
+            "GrvPartitionDate__c": "2026-07-10",
+            "GrvStatus__c": "Active",
+            "GrvText__c": null,
+            "GrvLongText__c": "GRVLONG-00009::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 9,
+            "GrvDecimal__c": "0.000000063",
+            "GrvDate__c": "4000-07-31",
+            "GrvDateTime__c": "1970-01-01T00:00:00.000Z",
+            "GrvPicklist__c": "Alpha",
+            "GrvBool__c": true,
+            "GrvFormula__c": "9:T",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00009",
+            "text": null,
+            "long_text": "GRVLONG-00009::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 9,
+            "decimal_value": "0.000000063",
+            "date_value": "4000-07-31",
+            "datetime_value": "1970-01-01T00:00:00.000Z",
+            "picklist": "Alpha",
+            "bool_value": true,
+            "formula": "9:T",
+            "partition_date": "2026-07-10",
+            "status": "Active",
+            "rel_id": "<org-assigned GrvFixRel__c Id>",
+            "_month_": "2026-07"
+          }
+        },
+        {
+          "i": 10,
+          "input": {
+            "Name": "GRVFIX-00010",
+            "GrvPartitionDate__c": "2026-08-11",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "ascii-value-00010",
+            "GrvLongText__c": "GRVLONG-00010::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 10,
+            "GrvDecimal__c": "0.000000070",
+            "GrvDate__c": "1970-01-10",
+            "GrvDateTime__c": null,
+            "GrvPicklist__c": "Beta",
+            "GrvBool__c": "FALSE",
+            "GrvFormula__c": "10:F",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00010",
+            "GrvPartitionDate__c": "2026-08-11",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "ascii-value-00010",
+            "GrvLongText__c": "GRVLONG-00010::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 10,
+            "GrvDecimal__c": "0.000000070",
+            "GrvDate__c": "1970-01-10",
+            "GrvDateTime__c": null,
+            "GrvPicklist__c": "Beta",
+            "GrvBool__c": false,
+            "GrvFormula__c": "10:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00010",
+            "text": "ascii-value-00010",
+            "long_text": "GRVLONG-00010::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 10,
+            "decimal_value": "0.000000070",
+            "date_value": "1970-01-10",
+            "datetime_value": null,
+            "picklist": "Beta",
+            "bool_value": false,
+            "formula": "10:F",
+            "partition_date": "2026-08-11",
+            "status": "Active",
+            "rel_id": null,
+            "_month_": "2026-08"
+          }
+        },
+        {
+          "i": 11,
+          "input": {
+            "Name": "GRVFIX-00011",
+            "GrvPartitionDate__c": "2026-09-12",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "unicode-é-中文-00011",
+            "GrvLongText__c": "GRVLONG-00011::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 11,
+            "GrvDecimal__c": "0.000000077",
+            "GrvDate__c": "1970-01-11",
+            "GrvDateTime__c": "1970-01-01T00:00:00.000Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": null,
+            "GrvFormula__c": "11:?",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00011",
+            "GrvPartitionDate__c": "2026-09-12",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "unicode-é-中文-00011",
+            "GrvLongText__c": "GRVLONG-00011::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 11,
+            "GrvDecimal__c": "0.000000077",
+            "GrvDate__c": "1970-01-11",
+            "GrvDateTime__c": "1970-01-01T00:00:00.000Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": false,
+            "GrvFormula__c": "11:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00011",
+            "text": "unicode-é-中文-00011",
+            "long_text": "GRVLONG-00011::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 11,
+            "decimal_value": "0.000000077",
+            "date_value": "1970-01-11",
+            "datetime_value": "1970-01-01T00:00:00.000Z",
+            "picklist": "Gamma",
+            "bool_value": false,
+            "formula": "11:F",
+            "partition_date": "2026-09-12",
+            "status": "Active",
+            "rel_id": null,
+            "_month_": "2026-09"
+          }
+        },
+        {
+          "i": 12,
+          "input": {
+            "Name": "GRVFIX-00012",
+            "GrvPartitionDate__c": "2026-07-13",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "emoji-🚀-00012",
+            "GrvLongText__c": "GRVLONG-00012::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 12,
+            "GrvDecimal__c": "0.000000084",
+            "GrvDate__c": "1970-01-12",
+            "GrvDateTime__c": "4000-07-31T23:59:59.999Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": "TRUE",
+            "GrvFormula__c": "12:T",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00012",
+            "GrvPartitionDate__c": "2026-07-13",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "emoji-🚀-00012",
+            "GrvLongText__c": "GRVLONG-00012::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 12,
+            "GrvDecimal__c": "0.000000084",
+            "GrvDate__c": "1970-01-12",
+            "GrvDateTime__c": "4000-07-31T23:59:59.000Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": true,
+            "GrvFormula__c": "12:T",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00012",
+            "text": "emoji-🚀-00012",
+            "long_text": "GRVLONG-00012::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 12,
+            "decimal_value": "0.000000084",
+            "date_value": "1970-01-12",
+            "datetime_value": "4000-07-31T23:59:59.000Z",
+            "picklist": null,
+            "bool_value": true,
+            "formula": "12:T",
+            "partition_date": "2026-07-13",
+            "status": "Active",
+            "rel_id": null,
+            "_month_": "2026-07"
+          }
+        },
+        {
+          "i": 13,
+          "input": {
+            "Name": "GRVFIX-00013",
+            "GrvPartitionDate__c": "2026-08-14",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "long-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "GrvLongText__c": "GRVLONG-00013::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 13,
+            "GrvDecimal__c": "0.000000091",
+            "GrvDate__c": "1970-01-13",
+            "GrvDateTime__c": "1970-01-01T00:00:00.781Z",
+            "GrvPicklist__c": "Alpha",
+            "GrvBool__c": "FALSE",
+            "GrvFormula__c": "13:F",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00013",
+            "GrvPartitionDate__c": "2026-08-14",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "long-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "GrvLongText__c": "GRVLONG-00013::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 13,
+            "GrvDecimal__c": "0.000000091",
+            "GrvDate__c": "1970-01-13",
+            "GrvDateTime__c": "1970-01-01T00:00:00.000Z",
+            "GrvPicklist__c": "Alpha",
+            "GrvBool__c": false,
+            "GrvFormula__c": "13:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00013",
+            "text": "long-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "long_text": "GRVLONG-00013::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 13,
+            "decimal_value": "0.000000091",
+            "date_value": "1970-01-13",
+            "datetime_value": "1970-01-01T00:00:00.000Z",
+            "picklist": "Alpha",
+            "bool_value": false,
+            "formula": "13:F",
+            "partition_date": "2026-08-14",
+            "status": "Active",
+            "rel_id": null,
+            "_month_": "2026-08"
+          }
+        },
+        {
+          "i": 199,
+          "input": {
+            "Name": "GRVFIX-00199",
+            "GrvPartitionDate__c": "2026-08-04",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "dup-b",
+            "GrvLongText__c": "GRVLONG-00199::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 199,
+            "GrvDecimal__c": "0.000001393",
+            "GrvDate__c": "1970-07-18",
+            "GrvDateTime__c": "1970-01-01T00:00:26.263Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": "FALSE",
+            "GrvFormula__c": "199:F",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00199",
+            "GrvPartitionDate__c": "2026-08-04",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "dup-b",
+            "GrvLongText__c": "GRVLONG-00199::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 199,
+            "GrvDecimal__c": "0.000001393",
+            "GrvDate__c": "1970-07-18",
+            "GrvDateTime__c": "1970-01-01T00:00:26.000Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": false,
+            "GrvFormula__c": "199:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00199",
+            "text": "dup-b",
+            "long_text": "GRVLONG-00199::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 199,
+            "decimal_value": "0.000001393",
+            "date_value": "1970-07-18",
+            "datetime_value": "1970-01-01T00:00:26.000Z",
+            "picklist": "Gamma",
+            "bool_value": false,
+            "formula": "199:F",
+            "partition_date": "2026-08-04",
+            "status": "Active",
+            "rel_id": null,
+            "_month_": "2026-08"
+          }
+        },
+        {
+          "i": 200,
+          "input": {
+            "Name": "GRVFIX-00200",
+            "GrvPartitionDate__c": "2026-09-05",
+            "GrvStatus__c": "Active",
+            "GrvText__c": null,
+            "GrvLongText__c": "GRVLONG-00200::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 200,
+            "GrvDecimal__c": "0.000001400",
+            "GrvDate__c": "1970-07-19",
+            "GrvDateTime__c": "1970-01-01T00:00:26.400Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": null,
+            "GrvFormula__c": "200:?",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00200",
+            "GrvPartitionDate__c": "2026-09-05",
+            "GrvStatus__c": "Active",
+            "GrvText__c": null,
+            "GrvLongText__c": "GRVLONG-00200::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 200,
+            "GrvDecimal__c": "0.000001400",
+            "GrvDate__c": "1970-07-19",
+            "GrvDateTime__c": "1970-01-01T00:00:26.000Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": false,
+            "GrvFormula__c": "200:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00200",
+            "text": null,
+            "long_text": "GRVLONG-00200::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 200,
+            "decimal_value": "0.000001400",
+            "date_value": "1970-07-19",
+            "datetime_value": "1970-01-01T00:00:26.000Z",
+            "picklist": null,
+            "bool_value": false,
+            "formula": "200:F",
+            "partition_date": "2026-09-05",
+            "status": "Active",
+            "rel_id": null,
+            "_month_": "2026-09"
+          }
+        },
+        {
+          "i": 399,
+          "input": {
+            "Name": "GRVFIX-00399",
+            "GrvPartitionDate__c": "2026-07-08",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "dup-b",
+            "GrvLongText__c": "GRVLONG-00399::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 399,
+            "GrvDecimal__c": "0.000002793",
+            "GrvDate__c": "1971-02-03",
+            "GrvDateTime__c": "1970-01-01T00:00:53.663Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": "TRUE",
+            "GrvFormula__c": "399:T",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00399",
+            "GrvPartitionDate__c": "2026-07-08",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "dup-b",
+            "GrvLongText__c": "GRVLONG-00399::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 399,
+            "GrvDecimal__c": "0.000002793",
+            "GrvDate__c": "1971-02-03",
+            "GrvDateTime__c": "1970-01-01T00:00:53.000Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": true,
+            "GrvFormula__c": "399:T",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00399",
+            "text": "dup-b",
+            "long_text": "GRVLONG-00399::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 399,
+            "decimal_value": "0.000002793",
+            "date_value": "1971-02-03",
+            "datetime_value": "1970-01-01T00:00:53.000Z",
+            "picklist": "Gamma",
+            "bool_value": true,
+            "formula": "399:T",
+            "partition_date": "2026-07-08",
+            "status": "Active",
+            "rel_id": null,
+            "_month_": "2026-07"
+          }
+        },
+        {
+          "i": 400,
+          "input": {
+            "Name": "GRVFIX-00400",
+            "GrvPartitionDate__c": "2026-08-09",
+            "GrvStatus__c": "Active",
+            "GrvText__c": null,
+            "GrvLongText__c": "GRVLONG-00400::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 400,
+            "GrvDecimal__c": "0.000002800",
+            "GrvDate__c": "1969-12-31",
+            "GrvDateTime__c": "1970-01-01T00:00:53.800Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": "FALSE",
+            "GrvFormula__c": "400:F",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00400",
+            "GrvPartitionDate__c": "2026-08-09",
+            "GrvStatus__c": "Active",
+            "GrvText__c": null,
+            "GrvLongText__c": "GRVLONG-00400::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 400,
+            "GrvDecimal__c": "0.000002800",
+            "GrvDate__c": "1969-12-31",
+            "GrvDateTime__c": "1970-01-01T00:00:53.000Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": false,
+            "GrvFormula__c": "400:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00400",
+            "text": null,
+            "long_text": "GRVLONG-00400::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 400,
+            "decimal_value": "0.000002800",
+            "date_value": "1969-12-31",
+            "datetime_value": "1970-01-01T00:00:53.000Z",
+            "picklist": null,
+            "bool_value": false,
+            "formula": "400:F",
+            "partition_date": "2026-08-09",
+            "status": "Active",
+            "rel_id": null,
+            "_month_": "2026-08"
+          }
+        },
+        {
+          "i": 599,
+          "input": {
+            "Name": "GRVFIX-00599",
+            "GrvPartitionDate__c": "2026-09-12",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "dup-b",
+            "GrvLongText__c": "GRVLONG-00599::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 599,
+            "GrvDecimal__c": "0.000004193",
+            "GrvDate__c": "1970-07-18",
+            "GrvDateTime__c": "1970-01-01T00:01:21.063Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": null,
+            "GrvFormula__c": "599:?",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00599",
+            "GrvPartitionDate__c": "2026-09-12",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "dup-b",
+            "GrvLongText__c": "GRVLONG-00599::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 599,
+            "GrvDecimal__c": "0.000004193",
+            "GrvDate__c": "1970-07-18",
+            "GrvDateTime__c": "1970-01-01T00:01:21.000Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": false,
+            "GrvFormula__c": "599:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00599",
+            "text": "dup-b",
+            "long_text": "GRVLONG-00599::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 599,
+            "decimal_value": "0.000004193",
+            "date_value": "1970-07-18",
+            "datetime_value": "1970-01-01T00:01:21.000Z",
+            "picklist": "Gamma",
+            "bool_value": false,
+            "formula": "599:F",
+            "partition_date": "2026-09-12",
+            "status": "Active",
+            "rel_id": null,
+            "_month_": "2026-09"
+          }
+        },
+        {
+          "i": 600,
+          "input": {
+            "Name": "GRVFIX-00600",
+            "GrvPartitionDate__c": "2026-07-13",
+            "GrvStatus__c": "Active",
+            "GrvText__c": null,
+            "GrvLongText__c": "GRVLONG-00600::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 600,
+            "GrvDecimal__c": "0.000004200",
+            "GrvDate__c": "1970-07-19",
+            "GrvDateTime__c": "1970-01-01T00:01:21.200Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": "TRUE",
+            "GrvFormula__c": "600:T",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00600",
+            "GrvPartitionDate__c": "2026-07-13",
+            "GrvStatus__c": "Active",
+            "GrvText__c": null,
+            "GrvLongText__c": "GRVLONG-00600::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 600,
+            "GrvDecimal__c": "0.000004200",
+            "GrvDate__c": "1970-07-19",
+            "GrvDateTime__c": "1970-01-01T00:01:21.000Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": true,
+            "GrvFormula__c": "600:T",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00600",
+            "text": null,
+            "long_text": "GRVLONG-00600::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 600,
+            "decimal_value": "0.000004200",
+            "date_value": "1970-07-19",
+            "datetime_value": "1970-01-01T00:01:21.000Z",
+            "picklist": null,
+            "bool_value": true,
+            "formula": "600:T",
+            "partition_date": "2026-07-13",
+            "status": "Active",
+            "rel_id": null,
+            "_month_": "2026-07"
+          }
+        },
+        {
+          "i": 799,
+          "input": {
+            "Name": "GRVFIX-00799",
+            "GrvPartitionDate__c": "2026-08-16",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "dup-b",
+            "GrvLongText__c": "GRVLONG-00799::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 799,
+            "GrvDecimal__c": "0.000005593",
+            "GrvDate__c": "1971-02-03",
+            "GrvDateTime__c": "1970-01-01T00:01:48.463Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": "FALSE",
+            "GrvFormula__c": "799:F",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00799",
+            "GrvPartitionDate__c": "2026-08-16",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "dup-b",
+            "GrvLongText__c": "GRVLONG-00799::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 799,
+            "GrvDecimal__c": "0.000005593",
+            "GrvDate__c": "1971-02-03",
+            "GrvDateTime__c": "1970-01-01T00:01:48.000Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": false,
+            "GrvFormula__c": "799:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00799",
+            "text": "dup-b",
+            "long_text": "GRVLONG-00799::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 799,
+            "decimal_value": "0.000005593",
+            "date_value": "1971-02-03",
+            "datetime_value": "1970-01-01T00:01:48.000Z",
+            "picklist": "Gamma",
+            "bool_value": false,
+            "formula": "799:F",
+            "partition_date": "2026-08-16",
+            "status": "Active",
+            "rel_id": null,
+            "_month_": "2026-08"
+          }
+        },
+        {
+          "i": 800,
+          "input": {
+            "Name": "GRVFIX-00800",
+            "GrvPartitionDate__c": "2026-09-17",
+            "GrvStatus__c": "Active",
+            "GrvText__c": null,
+            "GrvLongText__c": "GRVLONG-00800::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 800,
+            "GrvDecimal__c": "0.000005600",
+            "GrvDate__c": "1969-12-31",
+            "GrvDateTime__c": "1970-01-01T00:01:48.600Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": null,
+            "GrvFormula__c": "800:?",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00800",
+            "GrvPartitionDate__c": "2026-09-17",
+            "GrvStatus__c": "Active",
+            "GrvText__c": null,
+            "GrvLongText__c": "GRVLONG-00800::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 800,
+            "GrvDecimal__c": "0.000005600",
+            "GrvDate__c": "1969-12-31",
+            "GrvDateTime__c": "1970-01-01T00:01:48.000Z",
+            "GrvPicklist__c": null,
+            "GrvBool__c": false,
+            "GrvFormula__c": "800:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00800",
+            "text": null,
+            "long_text": "GRVLONG-00800::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 800,
+            "decimal_value": "0.000005600",
+            "date_value": "1969-12-31",
+            "datetime_value": "1970-01-01T00:01:48.000Z",
+            "picklist": null,
+            "bool_value": false,
+            "formula": "800:F",
+            "partition_date": "2026-09-17",
+            "status": "Active",
+            "rel_id": null,
+            "_month_": "2026-09"
+          }
+        },
+        {
+          "i": 997,
+          "input": {
+            "Name": "GRVFIX-00997",
+            "GrvPartitionDate__c": "2026-08-18",
+            "GrvStatus__c": "Inactive",
+            "GrvText__c": "long-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "GrvLongText__c": "GRVLONG-00997::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 997,
+            "GrvDecimal__c": "0.000006979",
+            "GrvDate__c": "1970-07-16",
+            "GrvDateTime__c": "1970-01-01T00:02:15.589Z",
+            "GrvPicklist__c": "Alpha",
+            "GrvBool__c": "FALSE",
+            "GrvFormula__c": "997:F",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00997",
+            "GrvPartitionDate__c": "2026-08-18",
+            "GrvStatus__c": "Inactive",
+            "GrvText__c": "long-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "GrvLongText__c": "GRVLONG-00997::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 997,
+            "GrvDecimal__c": "0.000006979",
+            "GrvDate__c": "1970-07-16",
+            "GrvDateTime__c": "1970-01-01T00:02:15.000Z",
+            "GrvPicklist__c": "Alpha",
+            "GrvBool__c": false,
+            "GrvFormula__c": "997:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00997",
+            "text": "long-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "long_text": "GRVLONG-00997::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 997,
+            "decimal_value": "0.000006979",
+            "date_value": "1970-07-16",
+            "datetime_value": "1970-01-01T00:02:15.000Z",
+            "picklist": "Alpha",
+            "bool_value": false,
+            "formula": "997:F",
+            "partition_date": "2026-08-18",
+            "status": "Inactive",
+            "rel_id": null,
+            "_month_": "2026-08"
+          }
+        },
+        {
+          "i": 998,
+          "input": {
+            "Name": "GRVFIX-00998",
+            "GrvPartitionDate__c": "2026-09-19",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "dup-a",
+            "GrvLongText__c": "GRVLONG-00998::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 998,
+            "GrvDecimal__c": "0.000006986",
+            "GrvDate__c": "1970-07-17",
+            "GrvDateTime__c": "1970-01-01T00:02:15.726Z",
+            "GrvPicklist__c": "Beta",
+            "GrvBool__c": null,
+            "GrvFormula__c": "998:?",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00998",
+            "GrvPartitionDate__c": "2026-09-19",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "dup-a",
+            "GrvLongText__c": "GRVLONG-00998::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 998,
+            "GrvDecimal__c": "0.000006986",
+            "GrvDate__c": "1970-07-17",
+            "GrvDateTime__c": "1970-01-01T00:02:15.000Z",
+            "GrvPicklist__c": "Beta",
+            "GrvBool__c": false,
+            "GrvFormula__c": "998:F",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00998",
+            "text": "dup-a",
+            "long_text": "GRVLONG-00998::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 998,
+            "decimal_value": "0.000006986",
+            "date_value": "1970-07-17",
+            "datetime_value": "1970-01-01T00:02:15.000Z",
+            "picklist": "Beta",
+            "bool_value": false,
+            "formula": "998:F",
+            "partition_date": "2026-09-19",
+            "status": "Active",
+            "rel_id": null,
+            "_month_": "2026-09"
+          }
+        },
+        {
+          "i": 999,
+          "input": {
+            "Name": "GRVFIX-00999",
+            "GrvPartitionDate__c": "2026-07-20",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "dup-b",
+            "GrvLongText__c": "GRVLONG-00999::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 999,
+            "GrvDecimal__c": "0.000006993",
+            "GrvDate__c": "1970-07-18",
+            "GrvDateTime__c": "1970-01-01T00:02:15.863Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": "TRUE",
+            "GrvFormula__c": "999:T",
+            "GrvRel__c": null
+          },
+          "sf": {
+            "Name": "GRVFIX-00999",
+            "GrvPartitionDate__c": "2026-07-20",
+            "GrvStatus__c": "Active",
+            "GrvText__c": "dup-b",
+            "GrvLongText__c": "GRVLONG-00999::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "GrvInt__c": 999,
+            "GrvDecimal__c": "0.000006993",
+            "GrvDate__c": "1970-07-18",
+            "GrvDateTime__c": "1970-01-01T00:02:15.000Z",
+            "GrvPicklist__c": "Gamma",
+            "GrvBool__c": true,
+            "GrvFormula__c": "999:T",
+            "GrvRel__c": null
+          },
+          "grv": {
+            "id": "<org-assigned 18-char record Id>",
+            "name": "GRVFIX-00999",
+            "text": "dup-b",
+            "long_text": "GRVLONG-00999::0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "int_value": 999,
+            "decimal_value": "0.000006993",
+            "date_value": "1970-07-18",
+            "datetime_value": "1970-01-01T00:02:15.000Z",
+            "picklist": "Gamma",
+            "bool_value": true,
+            "formula": "999:T",
+            "partition_date": "2026-07-20",
+            "status": "Active",
+            "rel_id": null,
+            "_month_": "2026-07"
+          }
+        }
+      ],
+      "aggregates": {
+        "status": {
+          "Active": 900,
+          "Inactive": 100
+        },
+        "status_filtered": {
+          "Active": 900
+        },
+        "partition_month_all": {
+          "2026-07": 334,
+          "2026-08": 333,
+          "2026-09": 333
+        },
+        "partition_month_filtered": {
+          "2026-07": 301,
+          "2026-08": 299,
+          "2026-09": 300
+        },
+        "picklist_all": {
+          "Alpha": 250,
+          "Beta": 250,
+          "Gamma": 250,
+          "null": 250
+        },
+        "picklist_filtered": {
+          "Alpha": 200,
+          "Beta": 250,
+          "Gamma": 200,
+          "null": 250
+        },
+        "bool_all": {
+          "False": 666,
+          "True": 334
+        },
+        "bool_filtered": {
+          "False": 599,
+          "True": 301
+        },
+        "nulls_all": {
+          "GrvText__c": 250,
+          "GrvLongText__c": 0,
+          "GrvInt__c": 1,
+          "GrvDecimal__c": 1,
+          "GrvDate__c": 1,
+          "GrvDateTime__c": 1,
+          "GrvPicklist__c": 250,
+          "GrvBool__c": 0,
+          "GrvRel__c": 1000
+        },
+        "duplicates": {
+          "dup-a": 125,
+          "dup-b": 125
+        },
+        "long_text_utf8_bytes": {
+          "min": 143,
+          "max": 143,
+          "total": 143000
+        }
+      }
+    },
+    "GrvFixRel__c": {
+      "row_count": 10,
+      "fields": {
+        "Name": "text(80)",
+        "GrvRelText__c": "text(255), nullable",
+        "GrvRelDecimal__c": "number(18,6), nullable",
+        "GrvRelDate__c": "date, nullable"
+      },
+      "enumerated_rows": [
+        {
+          "i": 0,
+          "sf": {
+            "Name": "GRVFIXREL-000",
+            "GrvRelText__c": "rel-000-é-中",
+            "GrvRelDecimal__c": "0.00000",
+            "GrvRelDate__c": "2026-01-01"
+          }
+        },
+        {
+          "i": 1,
+          "sf": {
+            "Name": "GRVFIXREL-001",
+            "GrvRelText__c": "rel-001-é-中",
+            "GrvRelDecimal__c": "0.00013",
+            "GrvRelDate__c": "2026-01-02"
+          }
+        },
+        {
+          "i": 2,
+          "sf": {
+            "Name": "GRVFIXREL-002",
+            "GrvRelText__c": "rel-002-é-中",
+            "GrvRelDecimal__c": "0.00026",
+            "GrvRelDate__c": "2026-01-03"
+          }
+        },
+        {
+          "i": 3,
+          "sf": {
+            "Name": "GRVFIXREL-003",
+            "GrvRelText__c": "rel-003-é-中",
+            "GrvRelDecimal__c": "0.00039",
+            "GrvRelDate__c": "2026-01-04"
+          }
+        },
+        {
+          "i": 4,
+          "sf": {
+            "Name": "GRVFIXREL-004",
+            "GrvRelText__c": "rel-004-é-中",
+            "GrvRelDecimal__c": "0.00052",
+            "GrvRelDate__c": "2026-01-05"
+          }
+        },
+        {
+          "i": 5,
+          "sf": {
+            "Name": "GRVFIXREL-005",
+            "GrvRelText__c": "rel-005-é-中",
+            "GrvRelDecimal__c": "0.00065",
+            "GrvRelDate__c": "2026-01-06"
+          }
+        },
+        {
+          "i": 6,
+          "sf": {
+            "Name": "GRVFIXREL-006",
+            "GrvRelText__c": "rel-006-é-中",
+            "GrvRelDecimal__c": "0.00078",
+            "GrvRelDate__c": "2026-01-07"
+          }
+        },
+        {
+          "i": 7,
+          "sf": {
+            "Name": "GRVFIXREL-007",
+            "GrvRelText__c": "rel-007-é-中",
+            "GrvRelDecimal__c": "0.00091",
+            "GrvRelDate__c": "2026-01-08"
+          }
+        },
+        {
+          "i": 8,
+          "sf": {
+            "Name": "GRVFIXREL-008",
+            "GrvRelText__c": "rel-008-é-中",
+            "GrvRelDecimal__c": "0.00104",
+            "GrvRelDate__c": "2026-01-09"
+          }
+        },
+        {
+          "i": 9,
+          "sf": {
+            "Name": "GRVFIXREL-009",
+            "GrvRelText__c": "rel-009-é-中",
+            "GrvRelDecimal__c": "0.00117",
+            "GrvRelDate__c": "2026-01-10"
+          }
+        }
+      ]
+    }
+  },
+  "selections": {
+    "base": {
+      "declaration": "decl/push-base.yml",
+      "filter": "GrvStatus__c = 'Active'",
+      "row_count": 900,
+      "partition_month": {
+        "2026-07": 301,
+        "2026-08": 299,
+        "2026-09": 300
+      },
+      "rest_test_batch_size": 200,
+      "rest_page_sizes_example": [
+        200,
+        200,
+        200,
+        200,
+        100
+      ],
+      "rest_page_note": "Actual page sizes depend on selected fields/payload; traverse all nextRecordsUrl pages and verify count and unique Ids.",
+      "bulk": "all rows across one or more result files; total must equal row_count with unique Ids"
+    },
+    "all": {
+      "declaration": "decl/push-all.yml",
+      "filter": null,
+      "row_count": 1000,
+      "partition_month": {
+        "2026-07": 334,
+        "2026-08": 333,
+        "2026-09": 333
+      },
+      "rest_test_batch_size": 200,
+      "rest_page_sizes_example": [
+        200,
+        200,
+        200,
+        200,
+        200
+      ]
+    },
+    "empty": {
+      "declaration": "decl/push-empty.yml",
+      "filter": "GrvStatus__c = 'Active' AND Name = 'GRVFIX-EMPTY-NONEXISTENT'",
+      "row_count": 0
+    },
+    "rel": {
+      "declaration": "decl/push-rel.yml",
+      "filter": "GrvStatus__c = 'Active'",
+      "row_count": 900,
+      "note": "dot-notation relationship sources GrvRel__r.*; rows with i >= 10 have null relationship values"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+[package]
+name = "grv-adapter-wire"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+base64.workspace = true
+sha2.workspace = true
+grv-types.workspace = true
+grv-adapter-api.workspace = true
+arrow-array.workspace = true
+arrow-schema.workspace = true
+arrow-ipc.workspace = true
+arrow-buffer.workspace = true
+arrow-data.workspace = true
+arrow-select.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

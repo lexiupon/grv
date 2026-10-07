@@ -1,0 +1,5 @@
+SOURCE FILES: include/aws/sdkutils/aws_profile.h, include/aws/sdkutils/endpoints_rule_engine.h, include/aws/sdkutils/partitions.h, include/aws/sdkutils/private/endpoints_regex.h, include/aws/sdkutils/private/endpoints_types_impl.h, include/aws/sdkutils/private/endpoints_util.h, include/aws/sdkutils/resource_name.h, source/aws_profile.c, source/endpoints_regex.c, source/endpoints_rule_engine.c, source/endpoints_ruleset.c, source/endpoints_standard_lib.c, source/endpoints_types_impl.c, source/endpoints_util.c, source/partitions.c, source/resource_name.c, source/sdkutils.c, tests/aws_profile_parser_tests.c, tests/aws_profile_tests.c, tests/endpoints_regex_tests.c, tests/endpoints_rule_engine_tests.c, tests/endpoints_util_tests.c, tests/resource_name_tests.c, tests/sdkutils_test.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */

@@ -97,24 +97,45 @@ adapter; the adapter never produces or sees them.
 
 #### Declaration and request identity
 
-`declaration_sha256` hashes the canonical effective authoring configuration
-using [RFC 8785](https://www.rfc-editor.org/rfc/rfc8785). Before hashing:
+`declaration_sha256` is lowercase SHA-256 of the UTF-8 RFC 8785 JCS bytes
+of exactly this closed object (no LF, prefix, or domain separator):
 
-- expand defaults and local files;
-- normalize the source revision to `latest` or a decimal string; and
-- resolve paths.
+```json
+{"effective_declaration":{},"adapter_identity":{"name":"salesforce","package_version":"1.0.0","interface_version":1,"binding_schema_version":1},"connection_identity":"00D000000000001","canonical_connection":{"org_id":"00D000000000001","api_version":"v66.0"}}
+```
 
-The adapter identity (package, interface, and binding-schema versions) and the
-stable connection identity are hashed together with the canonical declaration
-into `declaration_sha256`, so a changed adapter version or connection changes
-the fixed request. Secrets are stored
-through adapter authentication, never in the declaration or the hash. A reused
-alias cannot retarget an unfinished attempt.
+The example's empty declaration is illustrative; the real value is the complete
+effective authoring configuration. Before hashing, expand whole-point defaults,
+pure adapter nested defaults and local files; normalize source revision to
+`latest` or a canonical decimal string; resolve path-bearing authoring fields.
+Preserve explicit authoring values, including aliases and `transport: auto`.
+Do not replace them with the stable identity or a chosen transport.
+`canonical_connection` contains non-secret canonical connection coordinates
+from offline location and authenticated resolution; `connection_identity` is
+the verified stable system identity. Canonical coordinates are recorded
+separately from the authoring connection fragment. Resolved transport and
+capture-time facts are acquisition evidence, excluded from this hash. Adapter
+identity is exactly the four-member object in the process protocol, not the
+manifest, executable path, resource budgets, or served registry.
 
-Pull request identity includes the root, workspace, destination mappings and
-role, selected partitions, output and expected contracts, effective adapter
-options, and requested source selector. It is hashed as `request_sha256`
-(*Consumer metadata*).
+`request_sha256` for a pull is lowercase SHA-256 of the JCS bytes of exactly
+`{root, workspace_id, declaration_sha256, requested_revision}`. `root` is the
+canonical root identity string, `workspace_id` the bound canonical UUID,
+`declaration_sha256` the digest above, and `requested_revision` exactly
+`"latest"` or a canonical decimal string. Mappings, destination role, selected
+partitions, declared output/expected contracts, and effective options are in
+the complete effective declaration and therefore covered by its digest. Do not
+add inferred source contracts, resolved revision, selected file metadata,
+automatically chosen diff plan, attempt ID, or run ID to this input. Persist
+both exact hash inputs with normalization evidence. Secrets never enter either
+input. A reused alias cannot retarget an unfinished attempt.
+
+[Identity golden vectors](fixtures/identity-v1.json) are normative: each entry
+provides `kind`, exact `input`, `canonical` UTF-8 text, and `sha256`. Declaration
+vectors retain explicit aliases and `auto`; request vectors retain `latest`.
+RFC 8785's UTF-16 property ordering, JSON string escaping, and ECMAScript number
+serialization apply. JSON numbers outside the interoperable exact range must
+be refused or represented by their contract's decimal strings before JCS.
 
 Generated attempt and run IDs, and source facts learned only during capture,
 are not declaration inputs. Inferred source schemas are output facts of a
@@ -258,7 +279,7 @@ JSON envelope, errors, and exit statuses.
 #### Roots and read-only commands
 
 - GRV-facing commands validate `grv.json` and use the backend contract.
-- Adapter registry, capability, and namespaced commands need no GRV root and
+- Adapter registry, installation, capability, and namespaced commands need no GRV root and
   report `root: null`. Login may modify adapter authentication state.
 - Only `init` initializes a root. Other commands report an uninitialized or
   damaged root rather than inventing configuration.
@@ -296,7 +317,7 @@ with `output_version: 1`, `command`, canonical `root` (null until known), `ok`,
 
 - Command names are `init`, `ls`, `show`, `status`, `log`, `diff`, `verify`,
   `pull`, `session prepare`, `session show`, `session renew`, `session abort`,
-  `push`, `adapter list`, `adapter capabilities`, `adapter command`, `pin`,
+  `push`, `adapter list`, `adapter install`, `adapter capabilities`, `adapter command`, `pin`,
   `unpin`, `gc`, and `recover`. An unrecognized command uses `unknown` in an
   error envelope.
 - Results identify resolved revisions and partial progress. Errors have stable
@@ -399,7 +420,9 @@ objects; client-defined result objects have no unspecified fields.
 | `session renew` | Dataset and run, open phase, renewed expiry, and `renewed: true` |
 | `session abort` | Dataset and run, known terminal outcome, and finalized entries |
 | `push` | Adapter and mode, nullable extraction attempt ID, dataset and run, completion digest, known published or no-op outcome, and `replayed` |
-| `adapter list`, `adapter capabilities` | Adapter identity and version, directions, consistency, supported write modes, and command names |
+| `adapter list` | Ordered search roots and manifest-derived winning installations; no child starts |
+| `adapter install` | Installed manifest entry and whether explicit replacement occurred |
+| `adapter capabilities` | Handshake-backed adapter identity, directions, consistency, write modes, and command names |
 | `adapter command` | Adapter identity, namespaced command name, and separately validated redacted adapter result |
 | `pin`, `unpin` | Fully scoped pin, audit, and release information, and `no_op`; unpin also reports remaining protections |
 | `gc` | Mode, per-version progress and reasons, releasable and released holds, completed operations, byte estimates, and waiting work |
@@ -1040,6 +1063,8 @@ source jobs remain adapter state.
 - `session prepare` accepts extraction or external DuckDB build declarations.
   Managed builds use the same internal preparation lifecycle through the
   runner.
+- Extraction session output has `workspace_id: null`; its attempt identifies
+  consumer state. Build session output carries the bound engine workspace UUID.
 - `session renew` uses only the context and the backend.
 - `session abort` resolves any recorded publication first, then abandons the
   session through the normal run and claim protocols. It cannot undo a

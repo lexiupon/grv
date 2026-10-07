@@ -1,0 +1,436 @@
+{
+  "version": 1,
+  "policy": "pinned-upstream-plus-conservative-third-party-notices",
+  "scope": "signed-extensions",
+  "reviewed": true,
+  "unresolved": [],
+  "artifacts": [
+    {
+      "platform": "osx_arm64",
+      "name": "httpfs",
+      "compressed_bytes": 5569617,
+      "compressed_sha256": "b9f9ca8e64d913a80d6666a370e0e518ee4cc8ecb9990a2b9d2273204d8caad4",
+      "bytes": 16030718,
+      "sha256": "0cde1f5acd1970bfd414b11f5e945a1eddd8425e96e273f6411538d8fe3d951d",
+      "footer": {
+        "magic": "4",
+        "platform": "osx_arm64",
+        "duckdb_version": "v1.5.6",
+        "extension_version": "4bc690d",
+        "abi": "CPP"
+      },
+      "url": "https://extensions.duckdb.org/v1.5.6/osx_arm64/httpfs.duckdb_extension.gz",
+      "source_commit": "4bc690dba4496c765777a0269d48fdbaff7cdc11"
+    },
+    {
+      "platform": "osx_arm64",
+      "name": "aws",
+      "compressed_bytes": 6401508,
+      "compressed_sha256": "fa7a74da760c8a609b81704942817f9599cac1c9efbc8c9a7a3ee8691dddeb85",
+      "bytes": 20084718,
+      "sha256": "911b68461fdd989e0c9e74926b197c8a05727bfafc05df38baa47ece42174f1c",
+      "footer": {
+        "magic": "4",
+        "platform": "osx_arm64",
+        "duckdb_version": "v1.5.6",
+        "extension_version": "28c853c",
+        "abi": "CPP"
+      },
+      "url": "https://extensions.duckdb.org/v1.5.6/osx_arm64/aws.duckdb_extension.gz",
+      "source_commit": "28c853c084a6e3acd36d7b8018c42438bb8c5a33"
+    }
+  ],
+  "vcpkg_baseline": "84bab45d415d22042bd0b9081aea57f362da3f35",
+  "components": [
+    {
+      "name": "aws-c-auth",
+      "version": "0.9.4",
+      "source_archive_sha256": "704b2f965c31d9d0fd8d9ab207bc8c838e3683c56bd8407e472bbc8fa9f9a209"
+    },
+    {
+      "name": "aws-c-cal",
+      "version": "0.9.13",
+      "source_archive_sha256": "80b7c6087b0af461b4483e4c9483aea2e0dac5d9fb2289b057159ea6032409e1"
+    },
+    {
+      "name": "aws-c-common",
+      "version": "0.12.6",
+      "source_archive_sha256": "138822ecdcaff1d702f37d4751f245847d088592724921cc6bf61c232b198d6b"
+    },
+    {
+      "name": "aws-c-compression",
+      "version": "0.3.1",
+      "source_archive_sha256": "d89fca17a37de762dc34f332d2da402343078da8dbd2224c46a11a88adddf754"
+    },
+    {
+      "name": "aws-c-event-stream",
+      "version": "0.5.9",
+      "source_archive_sha256": "e9371ffe050c24ca4eda439d58a06285db88b550e9cbec006d6ea21db02d424a"
+    },
+    {
+      "name": "aws-c-http",
+      "version": "0.10.7",
+      "source_archive_sha256": "ce9e71c3eae67b1c6c0149278e0d0929a7d928c3547de64999430c8592864ad4"
+    },
+    {
+      "name": "aws-c-io",
+      "version": "0.24.0",
+      "source_archive_sha256": "dc36644c1e1c10d6d604a9fcf386b42f16e5e85f73ea2b4b684dfde14d522f5a"
+    },
+    {
+      "name": "aws-c-mqtt",
+      "version": "0.13.3",
+      "source_archive_sha256": "1dfc11d6b3dc1a6d408df64073e8238739b4c50374078d36d3f2d30491d15527"
+    },
+    {
+      "name": "aws-c-s3",
+      "version": "0.11.3",
+      "source_archive_sha256": "b8350a10050015493345453167d619f1b407c4970fa3fe5aaaf2b42ab93b7b6b"
+    },
+    {
+      "name": "aws-c-sdkutils",
+      "version": "0.2.4",
+      "source_archive_sha256": "493cbed4fa57e0d4622fcff044e11305eb4fc12445f32c8861025597939175fc"
+    },
+    {
+      "name": "aws-checksums",
+      "version": "0.2.7",
+      "source_archive_sha256": "178e8398d98111f29150f7813a70c20ad97ab30be0de02525440355fe84ccb1d"
+    },
+    {
+      "name": "aws-crt-cpp",
+      "version": "0.36.0",
+      "source_archive_sha256": "6ef0781929ef2cba0b21f1e3f585491b6a656e48acf3cab041f8f82c569ab642"
+    },
+    {
+      "name": "aws-sdk-cpp",
+      "version": "1.11.702"
+    },
+    {
+      "name": "curl",
+      "version": "8.17.0",
+      "source_archive_sha256": "fd680a1b5378294d5c4df4387eec2e6d2a3b4708d3cff7de055db7ab81f8cde5"
+    },
+    {
+      "name": "openssl",
+      "version": "3.6.0",
+      "source_archive_sha256": "1535d184cbd04ea6b20485b98719fa8d609e45c3657f7c65b8299ae606f78159"
+    },
+    {
+      "name": "s2n",
+      "version": "1.6.2",
+      "source_archive_sha256": "b62c52ededd0b42e58fea660727141728cfb853c564083dbfc6fd027a1564582"
+    },
+    {
+      "name": "zlib",
+      "version": "1.3.1",
+      "source_archive_sha256": "17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c"
+    }
+  ],
+  "notice_files": [
+    {
+      "path": "extension-third-party/aws-c-auth-0.9.4/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "source": "https://github.com/awslabs/aws-c-auth/blob/v0.9.4/LICENSE"
+    },
+    {
+      "path": "extension-third-party/aws-c-auth-0.9.4/NOTICE",
+      "sha256": "f228f9b9f0405035d8bc2dbd9f018533b641136c7110f9e6a34edec7dd52e310",
+      "source": "https://github.com/awslabs/aws-c-auth/blob/v0.9.4/NOTICE"
+    },
+    {
+      "path": "extension-third-party/aws-c-auth-0.9.4/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "0a4af83e5a882757512fd5c4a21116efb8e5d1aa0b55b48a461c40d09593f537",
+      "source": "https://github.com/awslabs/aws-c-auth/blob/v0.9.4",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/aws-c-cal-0.9.13/LICENSE",
+      "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b",
+      "source": "https://github.com/awslabs/aws-c-cal/blob/v0.9.13/LICENSE"
+    },
+    {
+      "path": "extension-third-party/aws-c-cal-0.9.13/NOTICE",
+      "sha256": "06da05ec640017cc2bc80e4856cf14a9002efdd57b1ed4655714bfe5e777d216",
+      "source": "https://github.com/awslabs/aws-c-cal/blob/v0.9.13/NOTICE"
+    },
+    {
+      "path": "extension-third-party/aws-c-cal-0.9.13/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "18cee7bfa2c0ae79d26664c2d5d5d880c3e2f3909b6afa235aca515c6d0f744a",
+      "source": "https://github.com/awslabs/aws-c-cal/blob/v0.9.13",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/aws-c-common-0.12.6/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "source": "https://github.com/awslabs/aws-c-common/blob/v0.12.6/LICENSE"
+    },
+    {
+      "path": "extension-third-party/aws-c-common-0.12.6/NOTICE",
+      "sha256": "f43576ad8c3330cd2647c8e8dc3572d8bf7dfc47a13d56dbdb8c1abbef900367",
+      "source": "https://github.com/awslabs/aws-c-common/blob/v0.12.6/NOTICE"
+    },
+    {
+      "path": "extension-third-party/aws-c-common-0.12.6/THIRD-PARTY-LICENSES.txt",
+      "sha256": "f61f646e205572cfeac91f5fd01c193009b0c9d9e3eba7767f16657fa813e20c",
+      "source": "https://github.com/awslabs/aws-c-common/blob/v0.12.6/THIRD-PARTY-LICENSES.txt"
+    },
+    {
+      "path": "extension-third-party/aws-c-common-0.12.6/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "40ae0a0e0578e6b047137e1834dacd886d5e2576c2888ff3ac63085f655362ee",
+      "source": "https://github.com/awslabs/aws-c-common/blob/v0.12.6",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/aws-c-compression-0.3.1/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "source": "https://github.com/awslabs/aws-c-compression/blob/v0.3.1/LICENSE"
+    },
+    {
+      "path": "extension-third-party/aws-c-compression-0.3.1/NOTICE",
+      "sha256": "758db6c88293e55e9790adc73e9e58066405c408797afa9d48bef18d308eb49e",
+      "source": "https://github.com/awslabs/aws-c-compression/blob/v0.3.1/NOTICE"
+    },
+    {
+      "path": "extension-third-party/aws-c-compression-0.3.1/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "10297b870fd2127bbd0cf839e48bdc098438d6e3a1560f29f246c5ee8001bde8",
+      "source": "https://github.com/awslabs/aws-c-compression/blob/v0.3.1",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/aws-c-event-stream-0.5.9/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "source": "https://github.com/awslabs/aws-c-event-stream/blob/v0.5.9/LICENSE"
+    },
+    {
+      "path": "extension-third-party/aws-c-event-stream-0.5.9/NOTICE",
+      "sha256": "ca6098641e6982418933b0eb3973e56f544e94932f1244cb9352db60321a040f",
+      "source": "https://github.com/awslabs/aws-c-event-stream/blob/v0.5.9/NOTICE"
+    },
+    {
+      "path": "extension-third-party/aws-c-event-stream-0.5.9/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "b29919944a63d752b265c0ed2221ebfd21480a99785e40c29ca20b37b98ad7a4",
+      "source": "https://github.com/awslabs/aws-c-event-stream/blob/v0.5.9",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/aws-c-http-0.10.7/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "source": "https://github.com/awslabs/aws-c-http/blob/v0.10.7/LICENSE"
+    },
+    {
+      "path": "extension-third-party/aws-c-http-0.10.7/NOTICE",
+      "sha256": "2d1f498ef5ec8f71a7590ad3447688de6f0276434c619b5c4ce6e53c068ea33e",
+      "source": "https://github.com/awslabs/aws-c-http/blob/v0.10.7/NOTICE"
+    },
+    {
+      "path": "extension-third-party/aws-c-http-0.10.7/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "041dcf6051a1094d2fdd8080f2f26079e18967e377a3e4b544e356e97e2fb984",
+      "source": "https://github.com/awslabs/aws-c-http/blob/v0.10.7",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/aws-c-io-0.24.0/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "source": "https://github.com/awslabs/aws-c-io/blob/v0.24.0/LICENSE"
+    },
+    {
+      "path": "extension-third-party/aws-c-io-0.24.0/NOTICE",
+      "sha256": "f0604df9ed45fb474874f8b363700aa2e493705799ffd6e1362b899aa70653e4",
+      "source": "https://github.com/awslabs/aws-c-io/blob/v0.24.0/NOTICE"
+    },
+    {
+      "path": "extension-third-party/aws-c-io-0.24.0/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "ebce05f9f927fc6cac84c1e7a7ff4fde9f72a8e1802635813171b9d26a04f7ad",
+      "source": "https://github.com/awslabs/aws-c-io/blob/v0.24.0",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/aws-c-mqtt-0.13.3/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "source": "https://github.com/awslabs/aws-c-mqtt/blob/v0.13.3/LICENSE"
+    },
+    {
+      "path": "extension-third-party/aws-c-mqtt-0.13.3/NOTICE",
+      "sha256": "09211ec471e551c78cd57aba8344847091f297a6ae389288beb5d55076ab2c76",
+      "source": "https://github.com/awslabs/aws-c-mqtt/blob/v0.13.3/NOTICE"
+    },
+    {
+      "path": "extension-third-party/aws-c-mqtt-0.13.3/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "122edbb4be725ffb24747a5f04f29765e399549b81b9f80f41e184147221f227",
+      "source": "https://github.com/awslabs/aws-c-mqtt/blob/v0.13.3",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/aws-c-s3-0.11.3/LICENSE",
+      "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b",
+      "source": "https://github.com/awslabs/aws-c-s3/blob/v0.11.3/LICENSE"
+    },
+    {
+      "path": "extension-third-party/aws-c-s3-0.11.3/NOTICE",
+      "sha256": "d4290ed64c2edd0fce1d84e3f9dfb2881240fe534def76b8cd29ed6af683e287",
+      "source": "https://github.com/awslabs/aws-c-s3/blob/v0.11.3/NOTICE"
+    },
+    {
+      "path": "extension-third-party/aws-c-s3-0.11.3/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "fad7a137cd7950a3aedfa6657e02bf5d25736a0d98c6c9f56b80f4c940de3d0b",
+      "source": "https://github.com/awslabs/aws-c-s3/blob/v0.11.3",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/aws-c-sdkutils-0.2.4/LICENSE",
+      "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b",
+      "source": "https://github.com/awslabs/aws-c-sdkutils/blob/v0.2.4/LICENSE"
+    },
+    {
+      "path": "extension-third-party/aws-c-sdkutils-0.2.4/NOTICE",
+      "sha256": "d4290ed64c2edd0fce1d84e3f9dfb2881240fe534def76b8cd29ed6af683e287",
+      "source": "https://github.com/awslabs/aws-c-sdkutils/blob/v0.2.4/NOTICE"
+    },
+    {
+      "path": "extension-third-party/aws-c-sdkutils-0.2.4/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "c5bfd771265d42d678be08b67a71a4113fa4f487e6e8e66db05e56a0e42d9433",
+      "source": "https://github.com/awslabs/aws-c-sdkutils/blob/v0.2.4",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/aws-checksums-0.2.7/LICENSE",
+      "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+      "source": "https://github.com/awslabs/aws-checksums/blob/v0.2.7/LICENSE"
+    },
+    {
+      "path": "extension-third-party/aws-checksums-0.2.7/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "b221cdbbfc25792a856e131dab48c5737d811f9eb457466d47e8b7089d54c669",
+      "source": "https://github.com/awslabs/aws-checksums/blob/v0.2.7",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/aws-crt-cpp-0.36.0/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "source": "https://github.com/awslabs/aws-crt-cpp/blob/v0.36.0/LICENSE"
+    },
+    {
+      "path": "extension-third-party/aws-crt-cpp-0.36.0/NOTICE",
+      "sha256": "90f9b4a63a71d4a70420242c414b2fe24ee809c094c2dbac3b8871a646469293",
+      "source": "https://github.com/awslabs/aws-crt-cpp/blob/v0.36.0/NOTICE"
+    },
+    {
+      "path": "extension-third-party/aws-crt-cpp-0.36.0/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "b81f16e4fa7845663213cb437eb6dfaee63df06b0007b31efe429dad8739ccd7",
+      "source": "https://github.com/awslabs/aws-crt-cpp/blob/v0.36.0",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/aws-sdk-cpp-1.11.702/LICENSE",
+      "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+      "source": "https://raw.githubusercontent.com/aws/aws-sdk-cpp/1.11.702/LICENSE"
+    },
+    {
+      "path": "extension-third-party/aws-sdk-cpp-1.11.702/LICENSE.txt",
+      "sha256": "d721f7df04e3f82ff104de91a734c4e2ea40e8e4bb2f89dc4d4c7dd6ebbecb40",
+      "source": "https://raw.githubusercontent.com/aws/aws-sdk-cpp/1.11.702/LICENSE.txt"
+    },
+    {
+      "path": "extension-third-party/aws-sdk-cpp-1.11.702/NOTICE.txt",
+      "sha256": "8f43c4888a1e14f48c102b3f5556d581d02ea3afc9cbe31a2b714dae9383ef36",
+      "source": "https://raw.githubusercontent.com/aws/aws-sdk-cpp/1.11.702/NOTICE.txt"
+    },
+    {
+      "path": "extension-third-party/aws-sdk-cpp-1.11.702/attribution",
+      "sha256": "d444051b40013319c3b0903b5d3ab477a3d6a8e9a578f31f35e5abce6d77df4f",
+      "source": "https://raw.githubusercontent.com/aws/aws-sdk-cpp/1.11.702/attribution"
+    },
+    {
+      "path": "extension-third-party/curl-8.17.0/COPYING",
+      "sha256": "e18f1989333b70044b2adfb7dc2f905d0119dbdcac3bc9f4bc9d540e3a29de5b",
+      "source": "https://github.com/curl/curl/blob/curl-8_17_0/COPYING"
+    },
+    {
+      "path": "extension-third-party/curl-8.17.0/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "e5f0d3fb5396af9792a64d5b52fd4ae03cb9cb99175aa3defd71091d678d2686",
+      "source": "https://github.com/curl/curl/blob/curl-8_17_0",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/openssl-3.6.0/LICENSE.txt",
+      "sha256": "7d5450cb2d142651b8afa315b5f238efc805dad827d91ba367d8516bc9d49e7a",
+      "source": "https://github.com/openssl/openssl/blob/openssl-3.6.0/LICENSE.txt"
+    },
+    {
+      "path": "extension-third-party/openssl-3.6.0/external/perl/Text-Template-1.56/LICENSE",
+      "sha256": "9837f05336ef3cbacb6a96e1672a0426d81ad01191f214b8d48e22ca62338181",
+      "source": "https://github.com/openssl/openssl/blob/openssl-3.6.0/external/perl/Text-Template-1.56/LICENSE"
+    },
+    {
+      "path": "extension-third-party/openssl-3.6.0/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "6884195fab0abe815d0b3930e49e684a2f02f7fbd051d89a50828661333269ea",
+      "source": "https://github.com/openssl/openssl/blob/openssl-3.6.0",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/s2n-1.6.2/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "source": "https://github.com/aws/s2n-tls/blob/v1.6.2/LICENSE"
+    },
+    {
+      "path": "extension-third-party/s2n-1.6.2/NOTICE",
+      "sha256": "b009d59fea9a0d7fed87b24f6b174a6ac41e1cf94ce77a8160e29997a4c7883c",
+      "source": "https://github.com/aws/s2n-tls/blob/v1.6.2/NOTICE"
+    },
+    {
+      "path": "extension-third-party/s2n-1.6.2/tests/saw/spec/extras/HMAC/LICENSE",
+      "sha256": "1109850695a4b2bb5b6c74a7473ccf799d07960206050ef82a326fa20b72f65c",
+      "source": "https://github.com/aws/s2n-tls/blob/v1.6.2/tests/saw/spec/extras/HMAC/LICENSE"
+    },
+    {
+      "path": "extension-third-party/s2n-1.6.2/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "5df36ca6ad1c6184d83f12f9f5d30e2d4119c77245d529cdd4af341b8cecc50e",
+      "source": "https://github.com/aws/s2n-tls/blob/v1.6.2",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/zlib-1.3.1/LICENSE",
+      "sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243",
+      "source": "https://github.com/madler/zlib/blob/v1.3.1/LICENSE"
+    },
+    {
+      "path": "extension-third-party/zlib-1.3.1/contrib/dotzlib/LICENSE_1_0.txt",
+      "sha256": "36266a8fd073568394cb81cdb2b124f7fdae2c64c1a7ed09db34b4d22efa2951",
+      "source": "https://github.com/madler/zlib/blob/v1.3.1/contrib/dotzlib/LICENSE_1_0.txt"
+    },
+    {
+      "path": "extension-third-party/zlib-1.3.1/EMBEDDED-ATTRIBUTIONS.txt",
+      "sha256": "136c1468c35f8bf17c1c69f1fea05f43807cd38a1e3e11b14cede0714f6b7e0f",
+      "source": "https://github.com/madler/zlib/blob/v1.3.1",
+      "method": "Deduplicated leading source/header comment blocks with origin paths; conservative extras included."
+    },
+    {
+      "path": "extension-third-party/duckdb-1.5.6-httplib/LICENSE",
+      "sha256": "4b45cbe16d7b71b89ae6127e26e0d90a029198ca5e958ad8e3d0b8bbed364d8b",
+      "source": "https://github.com/duckdb/duckdb/blob/v1.5.6/third_party/httplib/LICENSE"
+    },
+    {
+      "path": "extension-third-party/duckdb-1.5.6-mbedtls/LICENSE",
+      "sha256": "9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b",
+      "source": "https://github.com/duckdb/duckdb/blob/v1.5.6/third_party/mbedtls/LICENSE"
+    },
+    {
+      "path": "extension-third-party/aws-sdk-cpp-1.11.702/VENDORED-ATTRIBUTIONS.txt",
+      "sha256": "a79ad14300eca8faa67041ce48c665d2bc163b313372af96c4e1dc9a53e111c2",
+      "source": "https://github.com/aws/aws-sdk-cpp/tree/1.11.702/src/aws-cpp-sdk-core",
+      "method": "Complete leadingcommentlicensefrompinnedtinyxml/cJSONfiles"
+    }
+  ],
+  "limitations": [
+    "Observed pinned manifest/baseline conservative dependency superset; exact upstream CI/linked graph not reconstructed.",
+    "Platform/test extras retained; not all listed components necessarily occur in signed binaries.",
+    "AWS C Common third-party licenses retained (ittapi/cJSON/libcbor).",
+    "AWS-LC submodule not inferred linked: inspected manifests use OpenSSL.",
+    "Only osx_arm64 1.5.6 signed artifacts reviewed by this payload."
+  ],
+  "review_basis": [
+    "Userapprovedengineeringpolicy:pinnedupstreamrelease+conservativebundledthirdpartynotices.",
+    "Sourcepayloads/licenseNOTICE+origincommentattributions inspected;knownmissingThriftParquetCatchandSDKvendoredtexts recovered;allpayloadhashesverified.",
+    "Exactgraphnotclaimed;thisreviewdoesnotcertify legalcomplianceorallplatforms."
+  ]
+}

@@ -1,0 +1,20 @@
+[package]
+name = "grv"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+[features]
+default = ["cloud"]
+cloud = ["grv-storage/cloud"]
+[dependencies]
+grv-types.workspace = true
+grv-adapter-api.workspace = true
+grv-adapter-host.workspace = true
+grv-core.workspace = true
+grv-storage.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+[dev-dependencies]
+tempfile.workspace = true

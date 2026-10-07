@@ -1,0 +1,339 @@
+DuckDB native guard and extraction seam
+
+Engine: DuckDB v1.5.6, native guard revision 1. The build requires the official
+source archive at https://github.com/duckdb/duckdb/archive/refs/tags/v1.5.6.tar.gz
+SHA-256: 1fadcbe9e69e1470f9093b6bcde08daf477d729c449e59a807f45c346622099b
+
+From the repository root:
+
+  python3 crates/grv-adapter-duckdb/native/build.py \
+    --archive /path/to/v1.5.6.tar.gz --build /tmp/grv-duckdb-native --jobs 4
+  GRV_DUCKDB_NATIVE_LIB_DIR=/tmp/grv-duckdb-native/cmake \
+    cargo test -p grv-adapter-duckdb --features native
+  GRV_DUCKDB_NATIVE_LIB_DIR=/tmp/grv-duckdb-native/cmake \
+    cargo clippy -p grv-adapter-duckdb --features native --all-targets --no-deps -- -D warnings
+
+The build hashes the archive, exact upstream binding-site files and reused
+unmodified source. An upstream change requires a reviewed guard revision.
+Guard checks precede catalog callbacks, direct scalar/aggregate/table binding,
+replacement scans and registered custom casts. Initial/nested binding and
+prepared-statement automatic rebind visit the same sites. Live callback canaries
+prove refusal before bind-time effects, including custom-cast bind/data-copy,
+type modifiers, replacement scans, forged callback identities and nested views
+and macros. A TABLE_ENTRY must be the pinned native DuckTableEntry class before
+virtual scan binding; extension table subclasses are rejected.
+
+Names alone never authorize callbacks. Each function is captured from the clean
+pinned system catalog before guard installation and compared with actual bind,
+execution, expression, lambda, statistics and initialization callbacks plus
+function_info. Custom casts are refused before their callbacks; built-in casts
+remain available. Type registrations match both logical type and bind callback.
+The generated scalar profile includes data-expression modules and their aliases
+from the pinned src/function/scalar and extension/core_functions/scalar sources.
+It excludes catalog/system, sequence, debug and generic modules, adding the
+reviewed generic data helpers explicitly (the exact set is in build.py). Functions
+with modified-database callbacks are excluded. Range/generate_series and native
+sort helpers support internal staging/proofs. Predicate parsing permits exactly
+one row expression; nested relation reads, FROM, multiple statements, windows,
+parameters and query clauses are refused. Native WHERE binding enforces the
+expression's validity. Unexported source fields may participate in predicates;
+no exported-type restriction is imposed on those fields.
+
+Production source binding is read-only and requires existing local native base
+tables. Exact source relation authorization fixes the owning database catalog.
+External access and extension auto-install/load are disabled, with one engine
+thread, 512MiB memory and a finite 16GiB temp spill quota. Engine-owned SQL-output
+staging uses that quota independently of the negotiated transfer budgets. A
+private generated ordinal avoids user rowid shadowing; private temp table scans
+require a guard scope inaccessible to user declarations. All selected members
+are acquired once in one retained transaction before sealing their snapshot.
+
+Extraction only reads existing ownership evidence. If _grv is absent it creates
+nothing. If present, _grv.metadata_header must contain exactly one BIGINT pair
+(version=1, ownership_version=1), and _grv.relation_ownership must provide VARCHAR
+(schema_name,table_name,kind) with no null rows. Any ownership match refuses the
+source; unknown metadata versions/formats refuse ambiguous ownership. This is
+an explicit versioned seam for future destination writers, not an inferred
+legacy migration or a permission to create metadata during extraction.
+
+Length-only windows precede native variable-width data materialization. Vector
+capacity and per-row source/encoding bounds are admitted before data fetch.
+Oversized rows fail before variable bytes enter transfer buffers. The borrowed
+single-window codec supports boolean, signed integers, floats, UTF-8/blob, dates,
+decimal128 and timestamp precisions/UTC forms. Rust validates exact widening and
+scratch admission before encoding Arrow58.3 schema plus one record batch, without
+EOS or compression; a bounded writer enforces the outbound batch allowance.
+The legacy fixed-int64 fetch is solely a guard/worker proof, not the GRV format.
+
+The SDK runtime locates paths offline, validates configuration purely, then binds
+one read-only worker. The native owner thread owns every connection, transaction,
+staging result and IPC conversion; it fetches only on demand. Safe interrupt uses
+a control-block mutex excluding concurrent close. Stop/cancel/EOF join the owner
+before acknowledgement and lock release. Retained interrupt handles become inert
+without retaining a live engine or its canonical persistent ownership lock.
+
+Before acquisition, <canonical database>.grv-acquisitions/<attempt UUID> receives
+an exclusive acquisition.json outside GRV, with fixed request digest/snapshot and
+reopenable:false. The owner-private directory and files use pinned nofollow fds,
+exclusive creation, file/directory fsync and inode rechecks. An immutable
+checkpoint.json covers all members before any parent emission. The SDK requires
+checkpoint ACK before batches or empty table completion. Existing, failed or
+partial attempts never authorize source reacquisition, even if their marker was
+removed. Journals attest acquisition; they are not resumable source archives.
+
+Named subprocess tests cover shared snapshots, durable all-member checkpoint
+ACK, credited streaming/empty completion, exact primitive conversions, partial
+member failure/restart refusal, pre-ACK cancel/EOF, exhausted-credit cancellation,
+managed/ambiguous sources and predicate relation boundaries. The trusted
+native fixture executable is a test initializer, not a packaged adapter.
+
+Native builds advertise transaction-snapshot push, transactional local/S3-view
+pull with replace and append, managed/external builds and read-only inspection
+after their conformance gates. Source extraction remains nonresumable. Default
+builds advertise no native lifecycle. Platform packaging and full release
+conformance remain separate release gates.
+Default Rust tests and process handshake require no native build. Native binaries
+must package the pinned guarded library; GRV_DUCKDB_NATIVE_LIB_DIR supplies its
+build output directory for Cargo linking and test runtime lookup. Bundle builds
+set GRV_DUCKDB_BUNDLE_ONLY_RPATH=1 to omit the original build-path fallback and
+retain only the loader-relative lib directory; relocated loading must still be
+proved independently.
+
+Local transactional pull
+
+pull::PullPlan is closed, pure file-metadata preparation. PullStore owns the
+native engine and canonical lock. resolve validates the versioned workspace/root
+binding and complete immutable pull_attempts store before any source file open.
+A matching receipt returns the original revision/generation; missing managed
+receipt metadata is OutcomeUnknown, never an empty history. Request and adapter
+identity mismatches refuse replay. Mutable checkpoints do not replace receipts.
+
+apply_identity retains its complete identity gate; apply also implements local SQL,
+partition-selected replacement and append transactions.
+It stages every verified file in one transaction with explicit prefix projection
+and null padding, checking actual Parquet types and storage-v2 partition columns.
+File hashing is streamed with 64KiB scratch; nofollow read-only descriptors pin the
+actual files, and size/hash/inode/mtime are rechecked after import. The embedded
+Parquet extension is loaded before clean callback capture. Only the trusted file
+loader temporarily approves its exact captured scanner callbacks and descriptor
+URI via DBConfig.allowed_paths; external access remains disabled throughout.
+User SQL never receives these scanner permissions or descriptor paths.
+
+Replacement targets require matching exclusive ownership or absence. An unowned
+application relation cannot be adopted. Append can attach to an exact ordered
+ordinary table, including several bindings, but refuses replacement ownership;
+shared append_import ownership also prevents later extraction as a raw source.
+Replacement role is fixed for the scope: identity and application cannot switch.
+DuckDB destination names use their registered grammar (including leading
+underscores and without GRV's 64-character name limit). The private session
+namespace prefix is _grv_session_; that prefix and the five specified reserved
+namespaces cannot be sources or targets. Unrelated underscore names remain valid.
+
+Sources and pre-write targets are copied inside one transaction. All SELECT/WITH
+queries are then fully evaluated into private TEMP outputs before target writes.
+A separate native user-query seam parses one SELECT, compares exact ordered
+names/types before execution, and temporarily authorizes default-catalog native
+local tables, nested views and macros. The same pre-callback/rebind guards apply;
+metadata, private TEMP/session namespaces, secret/catalog functions, scanners,
+registered custom casts and side-effecting callbacks remain inaccessible. Exact
+value checks reject sub-millisecond UTC values for UTC-ms contracts and native
+infinite dates/timestamps. File-scanner privilege is removed before user SQL.
+
+Data, initial workspace/root binding, ownership, per-table metadata, checks and
+immutable receipts commit once. Identity checkpoints remain distinct from
+application import metadata. Obsolete owned replacement targets are emptied in
+the same transaction. Lost mutable checkpoint/per-table stores can be recreated
+by a full refresh only after intact binding, ownership and receipt authority are
+validated. Source/target schemas exist only inside this transaction; explicit
+table drops precede schema drops because pinned DuckDB schema CASCADE alone
+leaves stale LocalStorage append undo records. Failed commit reports OutcomeUnknown
+requiring fenced receipt resolution.
+
+Initial binding returns workspace_id:null; the fixed parent request supplies its
+durably reserved UUID. Known first-write rollback leaves that UUID unbound and
+permits an exact retry. The protected persistent ownership helper records a
+managed-evidence marker before the first COMMIT. This is a corruption signal,
+not an external receipt or binding: it is cleared only after known rollback and
+retained after success or ambiguity. A marker with a missing _grv schema refuses
+OUTCOME_UNKNOWN. A crash immediately before an initial COMMIT may conservatively
+require recovery rather than claiming an empty trustworthy history.
+
+Current pull_meta includes exact target mapping, revision, generation and logical
+contract. Omitted tables advance with the completed generation, while remapping
+removes stale logical aliases to reused targets. Import bindings preserve source
+and output contract/identity evidence, and import_attempt_details retains one
+receipt per successful attempt, with a current-scope pointer for prior contracts.
+Immutable pull_attempts remains the terminal replay authority.
+
+Source verification reserves the fixed SHA-256 state within scratch and retains
+one hash buffer bounded by the remaining scratch and negotiated source limits,
+at most 64KiB. Too-small scratch fails before source acquisition; terminal replay
+precedes this admission. Native query/Parquet caches use the independent 512MiB
+engine and 16GiB spill quotas. Metadata has a separate 2MiB record allowance;
+receipt size is admitted before COMMIT so every accepted outcome fits subsequent
+source-free evidence lookup. DESCRIBE rows use a byte bound, not a field-count
+ban. Token-based qualification resolves a catalog/schema collision without
+rewriting string literals, recorded request JSON or explicit catalog names.
+
+PullWorker owns native connections and the canonical workspace lock on one thread.
+It performs outcome resolution before source file contact, has a bounded command
+queue, an independent safe interrupt, cancellation checks between 64KiB hashing
+chunks, joined stop and preservation of established results during cancellation.
+Stopped/ambiguous operations require fenced immutable receipt resolution.
+
+Native tests cover real Parquet replacement and append, all-selection pre-write
+snapshots, nested views/macros, query boundary and exact-output rejection,
+physical partition mismatch, receipt replay after source deletion/newer refresh,
+lost receipt refusal, mutable metadata rebuilding, obsolete mappings, shared
+append bindings, managed-source refusal, multi-table rollback, exact UTC-ms/date
+values and stopped-owner fencing. Process-exit tests immediately before and after
+COMMIT prove recovery, and fd3 cancellation/EOF tests prove joined native owners
+before acknowledgement/reopen. Typed Host Session tests validate both advertised
+write modes, transactional recovery, initial binding and source-free replay.
+Incremental optimization and supported platform release validation remain
+outstanding. External builds are advertised
+after the local and live S3 lifecycle/recovery gates described below.
+
+Typed pull wire integration
+
+The process implements resolve_pull, prepare_pull and apply_pull using the shared
+closed records. Lookup reads immutable attempt evidence before authentication or
+source contact. Compare requires the parent's fixed request. Preparation consumes
+only parent-verified file metadata, derives physical mappings and observed prior
+checkpoint/obsolete targets under the owner lock, and proposes a full refresh.
+The SDK validates the phase sequence and refuses altered, unknown or reused plans.
+The fixed RequestRecord is committed with the immutable receipt so restart lookup
+can return recorded normalization/registry evidence. The normative canonical root
+string and workspace UUID are the binding; there is no extra storage root UUID.
+
+Compare of a new fixed request can return typed prior source contracts for its
+declared tables, without source access. The latest matching scope checkpoint or
+import pointer must exactly equal an immutable committed receipt for the same
+workspace/root, dataset and target schema. Lookup and committed replies provide
+no separate prior-contract evidence. Missing mutable pointers make this evidence
+unavailable; historical receipt timestamps do not establish commit order. Unknown
+or altered pointer evidence refuses resolution. An empty selected source can use
+the recorded contract without adding expect.columns to an existing binding.
+
+A real fd3 subprocess test covers lookup, comparison, preparation, apply and clean
+close, then identical receipt/request replay from a fresh process after source
+file deletion without authentication or SQL re-evaluation. Full v1 Parquet mapping
+tests preserve all twelve primitive/decimal/timestamp combinations. The pinned
+Parquet scanner widens unadjusted millisecond timestamps to native microseconds;
+input values are checked for exact millisecond representability before projection
+to TIMESTAMP_MS. SQL outputs still require exact native names/types and values.
+
+Native parent capture/publication gate
+
+Conformance's optional native-duckdb feature builds fixture-duckdb, a supervised
+SDK entrypoint linked to this same adapter implementation. Its executable rpath
+is set at build time; the test does not rely on loader environment passthrough.
+
+  GRV_DUCKDB_NATIVE_LIB_DIR=/tmp/grv-duckdb-native/cmake \
+    cargo test -p grv-conformance --features native-duckdb --test duckdb_capture
+
+The gate proves the real process through parent durable checkpoint/batch ACKs,
+multi-table shared snapshot, filtered rows and explicit zero-row completion,
+exact all-type Parquet capture, canonical publication and terminal replay. Source,
+adapter installation and private acquisition journals are removed before replay
+of both complete raw capture and accepted capture and before publication. Native
+300-field tests use byte admission and credited streaming rather than a field
+ceiling; empty members never require row-transfer allocations.
+
+Build lifecycle and recovery
+
+Production managed_build and external_build are enabled after their complete
+local and S3 held-input lifecycle, publication and recovery gates.
+Conformance's separate fixture-duckdb-build executable overrides build flags, delegates every hook
+to the production adapter, and must never be installed as a production manifest.
+
+Build discovery retains one native transaction while the parent creates the run,
+confirms acquisition holds, and verifies exact alias-grouped files. Native
+relation kind and ordered schema are observed directly without binding callbacks; eligible inputs
+must also match original immutable identity receipts and current materialization
+facts. Preparation loads held verified files into private local tables or exact
+S3 views under an unguessable _grv_session_<32-hex-UUID> schema. Managed builds
+materialize held inputs locally; external S3 builds retain private file views.
+Mutable tracking rows never supply build data.
+Whole self input contracts include unmapped and empty tables. Discovery has an
+external durable attempt marker; losing its transaction never authorizes new
+input selection under the same attempt.
+
+Managed SELECTs can bind only actual grv_input/grv_self tables and pure local
+macros under the pinned native guard. Nested binding and automatic rebind retain
+that policy. Exact authored column mappings, including repeated source fields,
+are projected into logical outputs. Bounded native source-type metadata passes
+the same lossless conversion profile as extraction before any output is adopted.
+All selected SELECTs stage before one transaction replaces output contents.
+Invocation identity is recorded before work; failures or ambiguous interruption
+remain incomplete and cannot execute again. Every invocation connection closes
+before a successful candidate becomes durable. Acceptance fixes the exact JCS
+completion digest before credited export can start.
+
+External outputs have fixed private physical field mappings. A direct driver
+must close before its stopped-writer attestation; native recovery reacquires the
+workspace fence before accepting/exporting. Accepted completion, original
+candidate and terminal outcome survive output cleanup. Native subprocess tests
+prove cancellation/EOF interrupt and join the owner before acknowledgement and
+workspace-lock release, including completion/cancellation races. Production
+capability advertisement additionally requires parent publication/recovery and
+full external helper containment/session-lock gates.
+
+  GRV_DUCKDB_NATIVE_LIB_DIR=/tmp/grv-duckdb-native/cmake \
+    cargo test -p grv-adapter-duckdb --features native --test build
+  GRV_DUCKDB_NATIVE_LIB_DIR=/tmp/grv-duckdb-native/cmake \
+    cargo test -p grv-adapter-duckdb --features native --test build_process
+
+Independent S3 readers
+
+External S3 access uses an adapter-private protected engine-adjacent configuration:
+  <enginePath>.grv-s3-read.json
+  {"config_version":1,"readers":[{"scope":"s3://bucket/prefix",
+     "profile":"named-read-only-profile","region":"eu-west-1"}]}
+The file must be owner-only (0600), regular, single-link and beneath protected
+ancestors. Lookup is offline and picks the most-specific complete scope prefix.
+The signed AWS provider obtains only the explicit named profile; raw credential
+values never cross adapter protocol or enter public results. Packaged signed
+httpfs/aws files are pinned by full hashes and loaded from immutable private copies.
+Development may set GRV_DUCKDB_EXTENSIONS_DIR to a protected pinned extension pair.
+A packaged pair takes precedence and an invalid packaged artifact never falls back.
+
+The exact S3 filesystem issues HEAD and at most 64-KiB conditional ranged GETs,
+uses parent-verified matching opaque validators for normal scanner admission,
+and verifies full object SHA256 when the validator differs. It retains only
+bounded metadata per exact URI. It disables redirects, globbing, writes, automatic region
+selection and full-download fallback. Changed validators require full byte proof;
+subsequent reads pin the actual ETag and, when supplied, the object version ID.
+User-authored scanners remain forbidden by the native binding/rebind guard.
+
+Exact-file metadata has a separate 2-MiB admission limit. Each object is charged
+24 times its URI bytes, four times its offered validator bytes and 8192 fixed
+bytes for version/ETag/SHA storage, map/set allocations and transient scanner
+allowlists. Actual ETags are bounded to 1024 bytes and versions to 4096 bytes.
+Admission precedes HEAD or object adoption; exhausted metadata fails before any
+destination commit. TLS scratch and bounded read windows are admitted separately.
+
+DuckDB SQL filenames and canonical protocol URIs
+
+VerifiedFile.location and all persisted GRV identities use canonical percent-
+encoded URIs. Pinned HTTPFS expects opaque filenames, so generated DuckDB SQL
+decodes the key exactly once (s3_config::sql_filename). The guarded filesystem
+accepts only those decoded filenames and maps them injectively back to exact
+canonical authority; it never treats canonical spellings as alternate aliases.
+Ordinary external readers must load the signed extension pair, configure a
+separately selected named reader with the decoded scope, and set
+s3_url_compatibility_mode=true. That disables glob and query interpretation for
+literal object keys. Set both the secret option URL_COMPATIBILITY_MODE true and
+the trusted setting: HTTPFS 1.5.6 has a mismatch between the option's stored key
+and the reader's lookup key. Hive inference remains false at every read_parquet
+expression and projections remain explicit and ordered.
+
+The pinned library is built with DISABLE_BUILTIN_EXTENSIONS=ON. Its guarded
+Engine loads the compiled Parquet extension itself. An independent driver using
+this library's raw duckdb_open API must call the exclusive initialization helper
+grv_adapter_duckdb::native::load_static_extensions(database) before SQL that reads
+Parquet. The corresponding C initializer is
+grv_native_load_static_extensions(database, error, capacity), returning 0/-1.
+It only registers the compiled extension; it executes no SQL and changes no
+connection guard or setting. Calling it twice is safe. A normal official DuckDB
+standalone already registers its bundled Parquet extension.

@@ -1,0 +1,933 @@
+{
+  "version": 1,
+  "status": "scaled-correctness-development-pass-not-candidate",
+  "archive": {
+    "uri": null,
+    "status": "local-only"
+  },
+  "runs": [
+    {
+      "version": 1,
+      "run_id": "sf-scaled-adapter-regression",
+      "catalog_id": "sf-all-targets",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/adapter-regression.log",
+          "sha256": "595002491c1684957fff07e0bdf78e7f0d8c0a187e250fe082faa481056c9bdc"
+        }
+      ],
+      "observed_selectors": [
+        "acquisition::resource_tests::decoded_mock_rows_honor_offered_source_budget_before_emission",
+        "keychain::tests::bridge_material_is_only_private_stdin_and_no_files_are_created",
+        "keychain::tests::native_key_is_bounded_single_line_and_errors_are_redacted",
+        "keychain::tests::package_and_content_mismatches_are_refused",
+        "bulk_ambiguous_creation_never_repeats_post_on_retry",
+        "bulk_cancellation_stops_http_poll_and_descendants_before_acknowledging",
+        "bulk_count_mismatch_never_completes_or_requeries_attempt",
+        "bulk_unproven_text_refuses_before_creation_and_does_not_turn_into_unknown_creation",
+        "production_helpers_sdk_bulk_pages_credits_empty_table_and_retry_evidence_integrate",
+        "production_helpers_sdk_rest_pages_credits_empty_table_and_retry_evidence_integrate",
+        "bootstrap_eof_missing_key_and_module_mismatch_return_without_leaking_key",
+        "cancelled_private_input_node_worker_stops_before_return",
+        "escaped_detached_child_creation_is_refused_under_real_helper_containment",
+        "getter_is_exact_and_mutation_is_refused_without_canary_output",
+        "mismatched_key_cannot_decode_credentials_or_fall_back_to_key_creation",
+        "live_bulk_scaled_pages_exact_oracle_checkpoint_empty_and_cleanup",
+        "live_bulk_response_loss_never_reposts_or_adopts_after_restart",
+        "named_org_authentication_metadata_and_read_only_rest_query",
+        "api_names_match_case_insensitively_and_ambiguous_descriptors_are_refused",
+        "both_transports_prove_decimal_widths_and_forbid_cross_domain_casts_without_rows",
+        "custom_number_scale_zero_has_exact_int64_descriptor_proof",
+        "failed_projection_records_intent_and_never_queries_zero_or_all_null_attempts",
+        "formula_and_nonnullable_text_are_proven_nullable_numeric_is_exact_and_describe_is_cached",
+        "nullable_text_and_nullable_parent_text_refuse_only_the_unproven_csv_representation",
+        "polymorphic_relationships_require_all_target_representations_to_agree",
+        "rest_preserves_nullable_text_encodings_and_checks_every_polymorphic_target_width",
+        "salesforce_executable_advertises_only_conformant_extraction_and_closes",
+        "cancellation_stops_helper_and_pipe_holding_descendants_before_return",
+        "cli_authentication_disables_file_logs_and_verifies_org_using_private_session",
+        "curl_credentials_use_private_stdin_and_tls_retry_redirect_controls_are_present",
+        "http_query_all_bulk_create_and_results_are_exactly_scoped_and_never_retry_post",
+        "offline_reader_reads_aliases_only_and_never_opens_auth_files",
+        "redacted_cli_token_is_refused_before_any_authentication_http_call",
+        "response_parsing_rejects_duplicate_source_facts_and_rest_duplicate_fields",
+        "supervised_helper_bounds_output_drains_stderr_and_redacts_failures",
+        "all_client_primitives_decode_to_exact_logical_arrow_and_valid_ipc",
+        "bulk_csv_exact_quote_newline_numeric_boolean_null_policy_and_count_decoding",
+        "bulk_encoded_and_decoded_buffers_share_source_budget_and_ipc_output_is_bounded",
+        "canonical_api_field_case_matches_authored_rest_and_bulk_selectors_unambiguously",
+        "primitive_decoders_reject_rounding_overflow_lossy_casts_and_missing_fields",
+        "acquisition_table_names_follow_grv_names_and_persisted_duplicate_keys_are_rejected",
+        "ambiguous_bulk_creation_persists_empty_job_ids_and_never_repeats_post",
+        "changed_org_identity_fails_before_acquisition",
+        "count_mismatch_does_not_create_terminal_evidence",
+        "crash_after_bulk_intent_is_unknown_and_completed_evidence_reopens_without_source",
+        "exact_decimals_keep_more_than_binary_float_precision_and_reject_rounding",
+        "incomplete_nonresumable_rest_never_queries_again_under_same_attempt",
+        "malformed_successful_bulk_job_id_is_durably_ambiguous_instead_of_authorizing_recreation",
+        "offline_location_does_not_authenticate_and_authentication_verifies_fixed_identity_once",
+        "protected_journal_locks_and_rejects_identity_changes_corruption_and_symlinks",
+        "pure_defaults_preserve_alias_auto_and_common_authoring_values",
+        "rest_bootstrap_is_private_until_checkpoint_ack_then_pages_and_counts_complete",
+        "schema_descriptors_supply_whole_point_defaults_and_closed_fragments",
+        "soql_predicates_allow_unexported_fields_relationships_functions_dates_and_picklists",
+        "soql_predicates_reject_relation_reads_trailing_clauses_and_malformed_grammar",
+        "timestamps_preserve_offsets_pre_epoch_values_and_reject_any_precision_loss",
+        "zero_row_rest_has_empty_job_ids_and_still_requires_checkpoint_ack",
+        "encoded_and_decoded_source_data_are_charged_together_before_tree_adoption",
+        "source_json_keeps_numeric_tokens_utf8_and_rejects_duplicate_or_reserved_keys"
+      ],
+      "test_summary": {
+        "passed": 56,
+        "failed": 0,
+        "ignored": 3
+      },
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-auto-production_cli_org_capture_publication_and_source_free_terminal_replay-retry1",
+      "catalog_id": "sf-live-base",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/auto-production_cli_org_capture_publication_and_source_free_terminal_replay-retry1.log",
+          "sha256": "134a9915969c5b346c1017ae9db1c64c87f842f8f47343fc1f8e672cfeb7305d"
+        }
+      ],
+      "observed_selectors": [
+        "production_cli_org_capture_publication_and_source_free_terminal_replay"
+      ],
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-bulk-loss",
+      "catalog_id": "sf-fault",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/bulk-loss.log",
+          "sha256": "2c5800faab310bf69ca5b57ad92e1b9e8556916ab5bb75c1e54c3dd82d3a81b1"
+        }
+      ],
+      "observed_selectors": [
+        "live_bulk_response_loss_never_reposts_or_adopts_after_restart"
+      ],
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof.",
+        "Synthetic response loss after real POST; journal reopen not process kill."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-bulk-pages-renamed",
+      "catalog_id": "sf-bulk-scaled-pages",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/bulk-pages-renamed.log",
+          "sha256": "07b59052e4a85bca084b487f56489fc53bda03a3b0786f46a85a7d7937e7021a"
+        }
+      ],
+      "observed_selectors": [
+        "live_bulk_scaled_pages_exact_oracle_checkpoint_empty_and_cleanup"
+      ],
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof.",
+        "Test override maxRecords100, production default1000 unchanged. Journal/parser test driver, NOT SDK wire/credit."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-bulk-pages",
+      "catalog_id": "sf-bulk-scaled-pages",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/bulk-pages.log",
+          "sha256": "52179f2835dc3f818cf141b74ae682a961ea9b9a2d5f5492ed8d91fddda2253f"
+        }
+      ],
+      "observed_selectors": [
+        "live_bulk_default_pages_exact_oracle_checkpoint_empty_and_cleanup"
+      ],
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof.",
+        "Test override maxRecords100, production default1000 unchanged. Journal/parser test driver, NOT SDK wire/credit."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-bulk-production_cli_relationship_acquisition_or_precise_bulk_refusal-retry1",
+      "catalog_id": "sf-live-rel",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/bulk-production_cli_relationship_acquisition_or_precise_bulk_refusal-retry1.log",
+          "sha256": "baa13b3df82b1ed60b78d2da1684f7a255e97dadcfe72aaca189f8a2a3a63f65"
+        }
+      ],
+      "observed_selectors": [
+        "production_cli_relationship_acquisition_or_precise_bulk_refusal"
+      ],
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-bulk-production_cli_rich_bulk_contract_refusal-retry1",
+      "catalog_id": "sf-live-refusal",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/bulk-production_cli_rich_bulk_contract_refusal-retry1.log",
+          "sha256": "4458e45bd30c2ad609b224702910289868e6073f33d6be77b1cadb47ebf155ed"
+        }
+      ],
+      "observed_selectors": [
+        "production_cli_rich_bulk_contract_refusal"
+      ],
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-clippy",
+      "catalog_id": "changed-clippy",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/clippy.log",
+          "sha256": "0ebe30c419a47f6ddc2328ab91980fc6112c67c494767e42c2c08d24cb5a9ae2"
+        }
+      ],
+      "observed_selectors": [],
+      "test_summary": null,
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-final-verify",
+      "catalog_id": "sf-reset",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/final-verify.log",
+          "sha256": "29c265d078283d51e97aafbe382c753bc227e08209c1f4e8d1bbca592f89d7c1"
+        }
+      ],
+      "observed_selectors": [],
+      "test_summary": null,
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-mutation-reset",
+      "catalog_id": "sf-mutation",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/mutation-reset.log",
+          "sha256": "6b71703c9e54e6c2210e932c391643abb0ffc056c27d97443651c19a8ef2bcb5"
+        }
+      ],
+      "observed_selectors": [
+        "production_cli_fixture_mutation_omission_and_restored_oracle"
+      ],
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-offline",
+      "catalog_id": "fixture-offline",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/offline.log",
+          "sha256": "0b3af6a980f1f606fc7aec05933828c04022c170b740287c6684facce40da527"
+        }
+      ],
+      "observed_selectors": [],
+      "test_summary": null,
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-provision",
+      "catalog_id": "sf-reset",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/provision.log",
+          "sha256": "b5068ff6fbd29ae65c9c2dd4f6eb29a355c5b85bc8936023e01a9845e862d137"
+        }
+      ],
+      "observed_selectors": [],
+      "test_summary": null,
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-rest-production_cli_empty_capture_noop_and_source_free_terminal_replay-retry1",
+      "catalog_id": "sf-live-empty",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/rest-production_cli_empty_capture_noop_and_source_free_terminal_replay-retry1.log",
+          "sha256": "ab400a8c0e1ab6e537591c5af6b94a935020ae71d0eab0d0abd5c05b3d3b5ffe"
+        }
+      ],
+      "observed_selectors": [
+        "production_cli_empty_capture_noop_and_source_free_terminal_replay"
+      ],
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-rest-production_cli_org_capture_publication_and_source_free_terminal_replay-retry1",
+      "catalog_id": "sf-live-base",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/rest-production_cli_org_capture_publication_and_source_free_terminal_replay-retry1.log",
+          "sha256": "05ce57dbd537a709d55b2edc8f2aa34a5a917b81abf43b7b40f39b967c46f960"
+        }
+      ],
+      "observed_selectors": [
+        "production_cli_org_capture_publication_and_source_free_terminal_replay"
+      ],
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-rest-production_cli_org_capture_publication_and_source_free_terminal_replay",
+      "catalog_id": "sf-live-base",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": 101,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/rest-production_cli_org_capture_publication_and_source_free_terminal_replay.log",
+          "sha256": "fa00bbba333e5eb4d823042fe2b7ff29a7a96d2ee485a121f7df4580b3c030d0"
+        }
+      ],
+      "observed_selectors": [
+        "production_cli_org_capture_publication_and_source_free_terminal_replay"
+      ],
+      "test_summary": {
+        "passed": 0,
+        "failed": 1,
+        "ignored": 0
+      },
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-rest-production_cli_relationship_acquisition_or_precise_bulk_refusal-retry1",
+      "catalog_id": "sf-live-rel",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/rest-production_cli_relationship_acquisition_or_precise_bulk_refusal-retry1.log",
+          "sha256": "647d83f9f095820d6c992a208a60d79dc3f62fe3685a2eb0242dcf97f33063a8"
+        }
+      ],
+      "observed_selectors": [
+        "production_cli_relationship_acquisition_or_precise_bulk_refusal"
+      ],
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-rest-production_wrong_expected_org_authentication_exposes_no_source_session-retry1",
+      "catalog_id": "sf-live-wrong",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": {
+        "spec/fixtures/release-validation/salesforce/generate.py": "12ecbb2fd5b85009c082c473279e7796a54198bfdac12f1e0338cac551a1ae97",
+        "spec/fixtures/release-validation/salesforce/manifest/value-manifest.json": "2b5203a8fff80748f02ad00f1d136afd4e988a4deebcb732590ed320e73256b3",
+        "crates/grv-conformance/tests/salesforce_live_cli.rs": "8f392059dfbd7aafc230890309e00ac6cc70c3b9424c7ddef19d8c2c035211c9",
+        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs": "fd1e67fa1702c1e4360d01ed1285699d707cbaad254da8056e93bf9fcc51c8a7"
+      },
+      "source_hash_observation": "post-batch",
+      "binary_sha256": {
+        "release-baseline-salesforce-adapter": "40a1b8c5fbd5e8c58f8953b25c26b9ba95a09d3917a6ea38ceb43055c588ffd2"
+      },
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/rest-production_wrong_expected_org_authentication_exposes_no_source_session-retry1.log",
+          "sha256": "44e0c77784326415d493269f5eb80f69458709927674046ea8d3b3e45e2cdb04"
+        }
+      ],
+      "observed_selectors": [
+        "production_wrong_expected_org_authentication_exposes_no_source_session"
+      ],
+      "test_summary": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "environment": {
+        "org_id": "00D000000000001AAA",
+        "platform": "macOS ARM64",
+        "fixture_manifest_version": 3,
+        "main_rows": 1000,
+        "related_rows": 10
+      },
+      "assertions": [
+        "Exact assertions in retained selector/harness; passed fixtures900Active/1000main+10related. Earlier manifest-version assertion failure preserved."
+      ],
+      "limitations": [
+        "Retrospective import: exact UTC start/end unavailable; source hashes below captured after batch, not guaranteed execution-time snapshot.",
+        "Development conformance CLI harness with release-profile production SF adapter, not frozen candidate or performance proof."
+      ],
+      "cleanup": "Pinned source restored full1000+10 strict zero mismatches after mutation/reset; Bulk tests exact private job deletions asserted. No org permission/global changes."
+    },
+    {
+      "version": 1,
+      "run_id": "sf-scaled-auth-smoke",
+      "catalog_id": "sf-auth-smoke",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "command": null,
+      "started_at": null,
+      "finished_at": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "limitations": [
+        "Historical auth smoke only; not rich acquisition/candidate proof."
+      ],
+      "logs": [
+        {
+          "path": "artifacts/release-validation/sf-scaled/auth-smoke.log",
+          "sha256": "fcd03c758b6fb27d0ecb44afbbd892d98f935170936928c6f3ce7fc630125e08"
+        }
+      ]
+    }
+  ],
+  "supporting_files": [
+    {
+      "path": "artifacts/release-validation/sf-scaled/final-verify.json",
+      "sha256": "c5d3a952b7da6f17676caf30ef90c3321923e54774a3e0bcab8961904592166f"
+    },
+    {
+      "path": "artifacts/release-validation/sf-scaled/mutate.py-16a2f531-69a2-4927-a025-513221393aaa.log",
+      "sha256": "c4ece68a809552eeee76707fa571427fea0f999edfd702ed87def993d1cd5529"
+    },
+    {
+      "path": "artifacts/release-validation/sf-scaled/provision.py-598496fd-08e6-4435-bcd7-f317a55c5f77.log",
+      "sha256": "b027f29e69d8b77d98f5656c66accb803f9d86f0451f4eaba32735fa75cfb7f3"
+    }
+  ]
+}

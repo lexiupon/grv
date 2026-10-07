@@ -1,0 +1,343 @@
+SOURCE FILES: include/aws/common/external/ittnotify.h
+/*
+  Copyright (C) 2005-2019 Intel Corporation
+
+  SPDX-License-Identifier: GPL-2.0-only OR BSD-3-Clause
+*/
+/*
+  Amazon.com has chosen to use this file under the terms of the BSD-3-Clause license.
+*/
+
+SOURCE FILES: source/allocator.c, source/allocator_sba.c, source/android/logging.c, source/arch/intel/asm/cpuid.c, source/arch/intel/encoding_avx2.c, source/arch/intel/msvc/cpuid.c, source/array_list.c, source/assert.c, source/byte_buf.c, source/cache.c, source/command_line_parser.c, source/common.c, source/condition_variable.c, source/date_time.c, source/device_random.c, source/encoding.c, source/error.c, source/fifo_cache.c, source/file.c, source/host_utils.c, source/json.c, source/lifo_cache.c, source/linked_hash_table.c, source/linux/file_direct_io.c, source/linux/system_info.c, source/log_channel.c, source/log_formatter.c, source/log_writer.c, source/logging.c, source/lru_cache.c, source/math.c, source/memtrace.c, source/platform_fallback_stubs/file_direct_io.c, source/platform_fallback_stubs/system_info.c, source/posix/clock.c, source/posix/condition_variable.c, source/posix/cross_process_lock.c, source/posix/device_random.c, source/posix/environment.c, source/posix/file.c, source/posix/mutex.c, source/posix/process.c, source/posix/rw_lock.c, source/posix/system_info.c, source/posix/system_resource_utils.c, source/posix/thread.c, source/posix/time.c, source/priority_queue.c, source/process_common.c, source/ref_count.c, source/ring_buffer.c, source/statistics.c, source/string.c, source/system_info.c, source/task_scheduler.c, source/thread_scheduler.c, source/thread_shared.c, source/uri.c, source/uuid.c, source/windows/clock.c, source/windows/condition_variable.c, source/windows/cross_process_lock.c, source/windows/device_random.c, source/windows/environment.c, source/windows/file.c, source/windows/mutex.c, source/windows/process.c, source/windows/rw_lock.c, source/windows/system_info.c, source/windows/system_resource_utils.c, source/windows/thread.c, source/windows/time.c, source/xml_parser.c, tests/alloc_test.c, tests/array_list_test.c, tests/atomics_test.c, tests/byte_buf_test.c, tests/byte_cursor_find_test.c, tests/byte_order_test.c, tests/calloc_test.c, tests/cbor_test.c, tests/clock_test.c, tests/command_line_parser_test.c, tests/condition_variable_test.c, tests/cross_process_lock_tests.c, tests/cursor_test.c, tests/date_time_test.c, tests/device_random_test.c, tests/encoding_test.c, tests/environment_test.c, tests/file_test.c, tests/fuzz/base64_encoding_transitive.c, tests/fuzz/cbor_decoding_transitive.c, tests/fuzz/cbor_double_encode_decode.c, tests/fuzz/hex_encoding_transitive.c, tests/hash_table_test.c, tests/host_util_test.c, tests/json_test.c, tests/logging/log_channel_test.c, tests/logging/log_formatter_test.c, tests/logging/log_writer_test.c, tests/logging/logging_filter_debug_static_test.c, tests/logging/logging_filter_error_static_test.c, tests/logging/logging_filter_fatal_static_test.c, tests/logging/logging_filter_info_static_test.c, tests/logging/logging_filter_none_static_test.c, tests/logging/logging_filter_trace_static_test.c, tests/logging/logging_filter_warn_static_test.c, tests/logging/logging_general_test.c, tests/logging/logging_misc.c, tests/logging/logging_test_utilities.c, tests/logging/pipeline_logger_test.c, tests/logging/test_logger.c, tests/math_test.c, tests/memtrace_test.c, tests/priority_queue_test.c, tests/process_test.c, tests/realloc_test.c, tests/ring_buffer_test.c, tests/split_test.c, tests/string_test.c, tests/system_info_tests.c, tests/system_resource_util_test.c, tests/task_scheduler_test.c, tests/thread_scheduler_test.c, tests/thread_test.c, tests/uri_test.c, tests/uuid_test.c, tests/xml_parser_test.c, tests/zero_test.c, verification/cbmc/include/proof_helpers/aws_byte_cursor_read_common.h, verification/cbmc/include/proof_helpers/make_common_data_structures.h, verification/cbmc/include/proof_helpers/nondet.h, verification/cbmc/include/proof_helpers/ring_buffer_abstract_states.h, verification/cbmc/include/proof_helpers/utils.h, verification/cbmc/proofs/aws_array_eq/aws_array_eq_harness.c, verification/cbmc/proofs/aws_array_eq_c_str/aws_array_eq_c_str_harness.c, verification/cbmc/proofs/aws_array_eq_c_str_ignore_case/aws_array_eq_c_str_ignore_case_harness.c, verification/cbmc/proofs/aws_array_eq_ignore_case/aws_array_eq_ignore_case_harness.c, verification/cbmc/proofs/aws_array_list_back/aws_array_list_back_harness.c, verification/cbmc/proofs/aws_array_list_capacity/aws_array_list_capacity_harness.c, verification/cbmc/proofs/aws_array_list_clean_up/aws_array_list_clean_up_harness.c, verification/cbmc/proofs/aws_array_list_clear/aws_array_list_clear_harness.c, verification/cbmc/proofs/aws_array_list_comparator_string/aws_array_list_comparator_string_harness.c, verification/cbmc/proofs/aws_array_list_copy/aws_array_list_copy_harness.c, verification/cbmc/proofs/aws_array_list_ensure_capacity/aws_array_list_ensure_capacity_harness.c, verification/cbmc/proofs/aws_array_list_erase/aws_array_list_erase_harness.c, verification/cbmc/proofs/aws_array_list_front/aws_array_list_front_harness.c, verification/cbmc/proofs/aws_array_list_get_at/aws_array_list_get_at_harness.c, verification/cbmc/proofs/aws_array_list_get_at_ptr/aws_array_list_get_at_ptr_harness.c, verification/cbmc/proofs/aws_array_list_init_dynamic/aws_array_list_init_dynamic_harness.c, verification/cbmc/proofs/aws_array_list_init_static/aws_array_list_init_static_harness.c, verification/cbmc/proofs/aws_array_list_length/aws_array_list_length_harness.c, verification/cbmc/proofs/aws_array_list_pop_back/aws_array_list_pop_back_harness.c, verification/cbmc/proofs/aws_array_list_pop_front/aws_array_list_pop_front_harness.c, verification/cbmc/proofs/aws_array_list_pop_front_n/aws_array_list_pop_front_n_harness.c, verification/cbmc/proofs/aws_array_list_push_back/aws_array_list_push_back_harness.c, verification/cbmc/proofs/aws_array_list_push_front/aws_array_list_push_front_harness.c, verification/cbmc/proofs/aws_array_list_set_at/aws_array_list_set_at_harness.c, verification/cbmc/proofs/aws_array_list_shrink_to_fit/aws_array_list_shrink_to_fit_harness.c, verification/cbmc/proofs/aws_array_list_sort/aws_array_list_sort_harness.c, verification/cbmc/proofs/aws_array_list_swap/aws_array_list_swap_harness.c, verification/cbmc/proofs/aws_array_list_swap_contents/aws_array_list_swap_contents_harness.c, verification/cbmc/proofs/aws_byte_buf_advance/aws_byte_buf_advance_harness.c, verification/cbmc/proofs/aws_byte_buf_append/aws_byte_buf_append_harness.c, verification/cbmc/proofs/aws_byte_buf_append_and_update/aws_byte_buf_append_and_update_harness.c, verification/cbmc/proofs/aws_byte_buf_append_dynamic/aws_byte_buf_append_dynamic_harness.c, verification/cbmc/proofs/aws_byte_buf_append_with_lookup/aws_byte_buf_append_with_lookup_harness.c, verification/cbmc/proofs/aws_byte_buf_cat/aws_byte_buf_cat_harness.c, verification/cbmc/proofs/aws_byte_buf_clean_up/aws_byte_buf_clean_up_harness.c, verification/cbmc/proofs/aws_byte_buf_clean_up_secure/aws_byte_buf_clean_up_secure_harness.c, verification/cbmc/proofs/aws_byte_buf_eq/aws_byte_buf_eq_harness.c, verification/cbmc/proofs/aws_byte_buf_eq_c_str/aws_byte_buf_eq_c_str_harness.c, verification/cbmc/proofs/aws_byte_buf_eq_c_str_ignore_case/aws_byte_buf_eq_c_str_ignore_case_harness.c, verification/cbmc/proofs/aws_byte_buf_eq_ignore_case/aws_byte_buf_eq_ignore_case_harness.c, verification/cbmc/proofs/aws_byte_buf_from_array/aws_byte_buf_from_array_harness.c, verification/cbmc/proofs/aws_byte_buf_from_c_str/aws_byte_buf_from_c_str_harness.c, verification/cbmc/proofs/aws_byte_buf_from_empty_array/aws_byte_buf_from_empty_array_harness.c, verification/cbmc/proofs/aws_byte_buf_init/aws_byte_buf_init_harness.c, verification/cbmc/proofs/aws_byte_buf_init_copy/aws_byte_buf_init_copy_harness.c, verification/cbmc/proofs/aws_byte_buf_init_copy_from_cursor/aws_byte_buf_init_copy_from_cursor_harness.c, verification/cbmc/proofs/aws_byte_buf_reserve/aws_byte_buf_reserve_harness.c, verification/cbmc/proofs/aws_byte_buf_reserve_relative/aws_byte_buf_reserve_relative_harness.c, verification/cbmc/proofs/aws_byte_buf_reset/aws_byte_buf_reset_harness.c, verification/cbmc/proofs/aws_byte_buf_secure_zero/aws_byte_buf_secure_zero_harness.c, verification/cbmc/proofs/aws_byte_buf_write/aws_byte_buf_write_harness.c, verification/cbmc/proofs/aws_byte_buf_write_be16/aws_byte_buf_write_be16_harness.c, verification/cbmc/proofs/aws_byte_buf_write_be32/aws_byte_buf_write_be32_harness.c, verification/cbmc/proofs/aws_byte_buf_write_be64/aws_byte_buf_write_be64_harness.c, verification/cbmc/proofs/aws_byte_buf_write_from_whole_buffer/aws_byte_buf_write_from_whole_buffer_harness.c, verification/cbmc/proofs/aws_byte_buf_write_from_whole_cursor/aws_byte_buf_write_from_whole_cursor_harness.c, verification/cbmc/proofs/aws_byte_buf_write_from_whole_string/aws_byte_buf_write_from_whole_string_harness.c, verification/cbmc/proofs/aws_byte_buf_write_u8/aws_byte_buf_write_u8_harness.c, verification/cbmc/proofs/aws_byte_cursor_advance/aws_byte_cursor_advance_harness.c, verification/cbmc/proofs/aws_byte_cursor_advance_nospec/aws_byte_cursor_advance_nospec_harness.c, verification/cbmc/proofs/aws_byte_cursor_compare_lexical/aws_byte_cursor_compare_lexical_harness.c, verification/cbmc/proofs/aws_byte_cursor_compare_lookup/aws_byte_cursor_compare_lookup_harness.c, verification/cbmc/proofs/aws_byte_cursor_eq/aws_byte_cursor_eq_harness.c, verification/cbmc/proofs/aws_byte_cursor_eq_byte_buf/aws_byte_cursor_eq_byte_buf_harness.c, verification/cbmc/proofs/aws_byte_cursor_eq_byte_buf_ignore_case/aws_byte_cursor_eq_byte_buf_ignore_case_harness.c, verification/cbmc/proofs/aws_byte_cursor_eq_c_str/aws_byte_cursor_eq_c_str_harness.c, verification/cbmc/proofs/aws_byte_cursor_eq_c_str_ignore_case/aws_byte_cursor_eq_c_str_ignore_case_harness.c, verification/cbmc/proofs/aws_byte_cursor_eq_ignore_case/aws_byte_cursor_eq_ignore_case_harness.c, verification/cbmc/proofs/aws_byte_cursor_from_array/aws_byte_cursor_from_array_harness.c, verification/cbmc/proofs/aws_byte_cursor_from_buf/aws_byte_cursor_from_buf_harness.c, verification/cbmc/proofs/aws_byte_cursor_from_c_str/aws_byte_cursor_from_c_str_harness.c, verification/cbmc/proofs/aws_byte_cursor_from_string/aws_byte_cursor_from_string_harness.c, verification/cbmc/proofs/aws_byte_cursor_left_trim_pred/aws_byte_cursor_left_trim_pred_harness.c, verification/cbmc/proofs/aws_byte_cursor_read/aws_byte_cursor_read_harness.c, verification/cbmc/proofs/aws_byte_cursor_read_and_fill_buffer/aws_byte_cursor_read_and_fill_buffer_harness.c, verification/cbmc/proofs/aws_byte_cursor_read_be16/aws_byte_cursor_read_be16_harness.c, verification/cbmc/proofs/aws_byte_cursor_read_be32/aws_byte_cursor_read_be32_harness.c, verification/cbmc/proofs/aws_byte_cursor_read_be64/aws_byte_cursor_read_be64_harness.c, verification/cbmc/proofs/aws_byte_cursor_read_u8/aws_byte_cursor_read_u8_harness.c, verification/cbmc/proofs/aws_byte_cursor_right_trim_pred/aws_byte_cursor_right_trim_pred_harness.c, verification/cbmc/proofs/aws_byte_cursor_satisfies_pred/aws_byte_cursor_satisfies_pred_harness.c, verification/cbmc/proofs/aws_byte_cursor_trim_pred/aws_byte_cursor_trim_pred_harness.c, verification/cbmc/proofs/aws_hash_array_ignore_case/aws_hash_array_ignore_case_harness.c, verification/cbmc/proofs/aws_hash_byte_cursor_ptr/aws_hash_byte_cursor_ptr_harness.c, verification/cbmc/proofs/aws_hash_byte_cursor_ptr_ignore_case/aws_hash_byte_cursor_ptr_ignore_case_harness.c, verification/cbmc/proofs/aws_hash_c_string/aws_hash_c_string_harness.c, verification/cbmc/proofs/aws_hash_callback_c_str_eq/aws_hash_callback_c_str_eq_harness.c, verification/cbmc/proofs/aws_hash_callback_string_destroy/aws_hash_callback_string_destroy_harness.c, verification/cbmc/proofs/aws_hash_callback_string_eq/aws_hash_callback_string_eq_harness.c, verification/cbmc/proofs/aws_hash_iter_begin/aws_hash_iter_begin_harness.c, verification/cbmc/proofs/aws_hash_iter_delete/aws_hash_iter_delete_harness.c, verification/cbmc/proofs/aws_hash_iter_done/aws_hash_iter_done_harness.c, verification/cbmc/proofs/aws_hash_iter_next/aws_hash_iter_next_harness.c, verification/cbmc/proofs/aws_hash_ptr/aws_hash_ptr_harness.c, verification/cbmc/proofs/aws_hash_string/aws_hash_string_harness.c, verification/cbmc/proofs/aws_hash_table_clean_up/aws_hash_table_clean_up_harness.c, verification/cbmc/proofs/aws_hash_table_clear/aws_hash_table_clear_harness.c, verification/cbmc/proofs/aws_hash_table_create/aws_hash_table_create_harness.c, verification/cbmc/proofs/aws_hash_table_eq/aws_hash_table_eq_harness.c, verification/cbmc/proofs/aws_hash_table_find/aws_hash_table_find_harness.c, verification/cbmc/proofs/aws_hash_table_foreach/aws_hash_table_foreach_harness.c, verification/cbmc/proofs/aws_hash_table_get_entry_count/aws_hash_table_get_entry_count_harness.c, verification/cbmc/proofs/aws_hash_table_init_bounded/aws_hash_table_init_bounded_harness.c, verification/cbmc/proofs/aws_hash_table_init_unbounded/aws_hash_table_init_unbounded_harness.c, verification/cbmc/proofs/aws_hash_table_move/aws_hash_table_move_harness.c, verification/cbmc/proofs/aws_hash_table_put/aws_hash_table_put_harness.c, verification/cbmc/proofs/aws_hash_table_remove/aws_hash_table_remove_harness.c, verification/cbmc/proofs/aws_hash_table_swap/aws_hash_table_swap_harness.c, verification/cbmc/proofs/aws_is_power_of_two/aws_is_power_of_two_harness.c, verification/cbmc/proofs/aws_linked_list_back/aws_linked_list_back_harness.c, verification/cbmc/proofs/aws_linked_list_begin/aws_linked_list_begin_harness.c, verification/cbmc/proofs/aws_linked_list_end/aws_linked_list_end_harness.c, verification/cbmc/proofs/aws_linked_list_front/aws_linked_list_front_harness.c, verification/cbmc/proofs/aws_linked_list_init/aws_linked_list_init_harness.c, verification/cbmc/proofs/aws_linked_list_insert_after/aws_linked_list_insert_after_harness.c, verification/cbmc/proofs/aws_linked_list_insert_before/aws_linked_list_insert_before_harness.c, verification/cbmc/proofs/aws_linked_list_next/aws_linked_list_next_harness.c, verification/cbmc/proofs/aws_linked_list_node_reset/aws_linked_list_node_reset_harness.c, verification/cbmc/proofs/aws_linked_list_pop_back/aws_linked_list_pop_back_harness.c, verification/cbmc/proofs/aws_linked_list_pop_front/aws_linked_list_pop_front_harness.c, verification/cbmc/proofs/aws_linked_list_prev/aws_linked_list_prev_harness.c, verification/cbmc/proofs/aws_linked_list_push_back/aws_linked_list_push_back_harness.c, verification/cbmc/proofs/aws_linked_list_push_front/aws_linked_list_push_front_harness.c, verification/cbmc/proofs/aws_linked_list_rbegin/aws_linked_list_rbegin_harness.c, verification/cbmc/proofs/aws_linked_list_remove/aws_linked_list_remove_harness.c, verification/cbmc/proofs/aws_linked_list_rend/aws_linked_list_rend_harness.c, verification/cbmc/proofs/aws_linked_list_swap_contents/aws_linked_list_swap_contents_harness.c, verification/cbmc/proofs/aws_nospec_mask/aws_nospec_mask_harness.c, verification/cbmc/proofs/aws_priority_queue_capacity/aws_priority_queue_capacity_harness.c, verification/cbmc/proofs/aws_priority_queue_clean_up/aws_priority_queue_clean_up_harness.c, verification/cbmc/proofs/aws_priority_queue_init_dynamic/aws_priority_queue_init_dynamic_harness.c, verification/cbmc/proofs/aws_priority_queue_init_static/aws_priority_queue_init_static_harness.c, verification/cbmc/proofs/aws_priority_queue_pop/aws_priority_queue_pop_harness.c, verification/cbmc/proofs/aws_priority_queue_push/aws_priority_queue_push_harness.c, verification/cbmc/proofs/aws_priority_queue_push_ref/aws_priority_queue_push_ref_harness.c, verification/cbmc/proofs/aws_priority_queue_remove/aws_priority_queue_remove_harness.c, verification/cbmc/proofs/aws_priority_queue_s_remove_node/aws_priority_queue_s_remove_node_harness.c, verification/cbmc/proofs/aws_priority_queue_s_sift_down/aws_priority_queue_s_sift_down_harness.c, verification/cbmc/proofs/aws_priority_queue_s_sift_either/aws_priority_queue_s_sift_either_harness.c, verification/cbmc/proofs/aws_priority_queue_s_sift_up/aws_priority_queue_s_sift_up_harness.c, verification/cbmc/proofs/aws_priority_queue_s_swap/aws_priority_queue_s_swap_harness.c, verification/cbmc/proofs/aws_priority_queue_size/aws_priority_queue_size_harness.c, verification/cbmc/proofs/aws_priority_queue_top/aws_priority_queue_top_harness.c, verification/cbmc/proofs/aws_ptr_eq/aws_ptr_eq_harness.c, verification/cbmc/proofs/aws_ring_buffer_acquire/aws_ring_buffer_acquire_harness.c, verification/cbmc/proofs/aws_ring_buffer_acquire_up_to/aws_ring_buffer_acquire_up_to_harness.c, verification/cbmc/proofs/aws_ring_buffer_buf_belongs_to_pool/aws_ring_buffer_buf_belongs_to_pool_harness.c, verification/cbmc/proofs/aws_ring_buffer_clean_up/aws_ring_buffer_clean_up_harness.c, verification/cbmc/proofs/aws_ring_buffer_init/aws_ring_buffer_init_harness.c, verification/cbmc/proofs/aws_ring_buffer_release/aws_ring_buffer_release_harness.c, verification/cbmc/proofs/aws_round_up_to_power_of_two/aws_round_up_to_power_of_two_harness.c, verification/cbmc/proofs/aws_string_bytes/aws_string_bytes_harness.c, verification/cbmc/proofs/aws_string_compare/aws_string_compare_harness.c, verification/cbmc/proofs/aws_string_destroy/aws_string_destroy_harness.c, verification/cbmc/proofs/aws_string_destroy_secure/aws_string_destroy_secure_harness.c, verification/cbmc/proofs/aws_string_eq/aws_string_eq_harness.c, verification/cbmc/proofs/aws_string_eq_byte_buf/aws_string_eq_byte_buf_harness.c, verification/cbmc/proofs/aws_string_eq_byte_buf_ignore_case/aws_string_eq_byte_buf_ignore_case_harness.c, verification/cbmc/proofs/aws_string_eq_byte_cursor/aws_string_eq_byte_cursor_harness.c, verification/cbmc/proofs/aws_string_eq_byte_cursor_ignore_case/aws_string_eq_byte_cursor_ignore_case_harness.c, verification/cbmc/proofs/aws_string_eq_c_str/aws_string_eq_c_str_harness.c, verification/cbmc/proofs/aws_string_eq_c_str_ignore_case/aws_string_eq_c_str_ignore_case_harness.c, verification/cbmc/proofs/aws_string_eq_ignore_case/aws_string_eq_ignore_case_harness.c, verification/cbmc/proofs/aws_string_new_from_array/aws_string_new_from_array_harness.c, verification/cbmc/proofs/aws_string_new_from_c_str/aws_string_new_from_c_str_harness.c, verification/cbmc/proofs/aws_string_new_from_string/aws_string_new_from_string_harness.c, verification/cbmc/proofs/memcpy_using_uint64/memcpy_using_uint64_harness.c, verification/cbmc/proofs/memset_override_0/memset_override_0_harness.c, verification/cbmc/proofs/memset_using_uint64/memset_using_uint64_harness.c, verification/cbmc/sources/make_common_data_structures.c, verification/cbmc/sources/utils.c, verification/cbmc/stubs/aws_byte_cursor_read_be16_override.c, verification/cbmc/stubs/aws_hash_table_no_slots_override.c, verification/cbmc/stubs/aws_string_destroy_override.c, verification/cbmc/stubs/aws_string_new_from_array_override.c, verification/cbmc/stubs/error.c, verification/cbmc/stubs/hash_table_generators.c, verification/cbmc/stubs/memcpy_override_havoc.c, verification/cbmc/stubs/memmove_override.c, verification/cbmc/stubs/memmove_override_havoc.c, verification/cbmc/stubs/memmove_override_no_op.c, verification/cbmc/stubs/memset_override.c, verification/cbmc/stubs/memset_override_havoc.c, verification/cbmc/stubs/memset_override_no_op.c, verification/cbmc/stubs/qsort_override.c, verification/cbmc/uninline/array_list.c, verification/cbmc/uninline/atomics.c, verification/cbmc/uninline/byte_order.c, verification/cbmc/uninline/clock.c, verification/cbmc/uninline/encoding.c, verification/cbmc/uninline/error.c, verification/cbmc/uninline/linked_list.c, verification/cbmc/uninline/math.c, verification/cbmc/uninline/ring_buffer.c, verification/cbmc/uninline/string.c, verification/cbmc/uninline/zero.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+SOURCE FILES: source/arch/arm/auxv/cpuid.c, source/arch/arm/darwin/cpuid.c, source/arch/arm/windows/cpuid.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+SOURCE FILES: source/arch/generic/cpuid.c, source/arch/intel/cpuid.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+/*
+ * MSVC wants us to use the non-portable _dupenv_s instead; since we need
+ * to remain portable, tell MSVC to suppress this warning.
+ */
+
+SOURCE FILES: source/codegen.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+/*
+ * This file generates exportable implementations for inlineable functions.
+ */
+
+SOURCE FILES: source/external/cJSON.c
+/*
+  Copyright (c) 2009-2017 Dave Gamble and cJSON contributors
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
+*/
+
+/*
+ * This file has been modified from its original version by Amazon:
+ *   (1) Remove cJSON_GetErrorPtr and global_error as they are not thread-safe.
+ *   (2) Add NOLINTBEGIN/NOLINTEND so clang-tidy ignores file.
+ *   (3) Replace sprintf() with snprintf() to make compilers happier.
+ */
+/* NOLINTBEGIN */
+
+/* cJSON */
+/* JSON parser in C. */
+
+/* disable warnings about old C89 functions in MSVC */
+
+SOURCE FILES: source/external/cJSON.h
+/*
+  Copyright (c) 2009-2017 Dave Gamble and cJSON contributors
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
+*/
+
+/*
+ * This file has been modified from its original version by Amazon:
+ *   (1) Remove cJSON_GetErrorPtr and global_error as they are not thread-safe.
+ *   (2) Add NOLINTBEGIN/NOLINTEND so clang-tidy ignores file.
+ */
+/* NOLINTBEGIN */
+
+SOURCE FILES: source/external/libcbor/allocators.c, source/external/libcbor/cbor/arrays.c, source/external/libcbor/cbor/arrays.h, source/external/libcbor/cbor/bytestrings.c, source/external/libcbor/cbor/bytestrings.h, source/external/libcbor/cbor/callbacks.c, source/external/libcbor/cbor/callbacks.h, source/external/libcbor/cbor/common.c, source/external/libcbor/cbor/common.h, source/external/libcbor/cbor/data.h, source/external/libcbor/cbor/encoding.c, source/external/libcbor/cbor/encoding.h, source/external/libcbor/cbor/floats_ctrls.c, source/external/libcbor/cbor/floats_ctrls.h, source/external/libcbor/cbor/internal/builder_callbacks.c, source/external/libcbor/cbor/internal/builder_callbacks.h, source/external/libcbor/cbor/internal/encoders.c, source/external/libcbor/cbor/internal/encoders.h, source/external/libcbor/cbor/internal/loaders.c, source/external/libcbor/cbor/internal/loaders.h, source/external/libcbor/cbor/internal/memory_utils.c, source/external/libcbor/cbor/internal/memory_utils.h, source/external/libcbor/cbor/internal/stack.c, source/external/libcbor/cbor/internal/stack.h, source/external/libcbor/cbor/internal/unicode.c, source/external/libcbor/cbor/internal/unicode.h, source/external/libcbor/cbor/ints.c, source/external/libcbor/cbor/ints.h, source/external/libcbor/cbor/maps.c, source/external/libcbor/cbor/maps.h, source/external/libcbor/cbor/serialization.c, source/external/libcbor/cbor/serialization.h, source/external/libcbor/cbor/streaming.c, source/external/libcbor/cbor/streaming.h, source/external/libcbor/cbor/strings.c, source/external/libcbor/cbor/strings.h, source/external/libcbor/cbor/tags.c, source/external/libcbor/cbor/tags.h, source/external/libcbor/cbor.c, source/external/libcbor/cbor.h
+/*
+ * Copyright (c) 2014-2020 Pavel Kalvoda <me@pavelkalvoda.com>
+ *
+ * libcbor is free software; you can redistribute it and/or modify
+ * it under the terms of the MIT license. See LICENSE for details.
+ */
+
+SOURCE FILES: source/hash_table.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+/* For more information on how the RH hash works and in particular how we do
+ * deletions, see:
+ * http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/
+ */
+
+SOURCE FILES: tests/cache_test.c, tests/error_test.c, tests/linked_hash_table_test.c, tests/linked_list_test.c, tests/mutex_test.c, tests/rw_lock_test.c
+/*
+ *  Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License").
+ *  You may not use this file except in compliance with the License.
+ *  A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ *  or in the "license" file accompanying this file. This file is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ *  express or implied. See the License for the specific language governing
+ *  permissions and limitations under the License.
+ */
+
+SOURCE FILES: tests/cpuid_test.c
+/*
+ * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+SOURCE FILES: verification/cbmc/include/aws/common/config.h
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+// Disable all compiler, and go to bare C
+
+SOURCE FILES: verification/cbmc/stubs/abort_override_assert_false.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+/**
+ * FUNCTION: abort
+ *
+ * We override abort to be an assert(0) so that it is caught by CBMC
+ */
+
+SOURCE FILES: verification/cbmc/stubs/aws_array_list_swap_override.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+/**
+ * FUNCTION: aws_array_list_swap
+ *
+ * We override aws_array_list_swap because mem_swap makes CBMC
+ * struggle (because of the many memcpys) and because the
+ * array_list_get_at in before the mem_swap are unneccessary if we
+ * stub out mem_swap. Instead we add a havoc assumption on the two
+ * swapped byted to ensure that no assertion on the values of the two
+ * cells is made afterwards.
+ */
+
+SOURCE FILES: verification/cbmc/stubs/empty-source-file.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ *
+ * Empty source file. This is required because some proofs, like
+ * memset_using_uint64, do not link against any project files at all. This file
+ * is used to fill in the PROJECT_SOURCES array in such cases.
+ */
+
+SOURCE FILES: verification/cbmc/stubs/memcpy_override.c, verification/cbmc/stubs/memcpy_override_no_op.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+/**
+ * FUNCTION: memcpy
+ *
+ * This function overrides the original implementation of the memcpy function
+ * from string.h. It copies the values of n bytes from the *src to the *dst.
+ * It also checks if the size of the arrays pointed to by both the *dst and
+ * *src parameters are at least n bytes and if they overlap.
+ */
+
+SOURCE FILES: verification/cbmc/stubs/memcpy_using_uint64.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+/**
+ * FUNCTION: memcpy
+ *
+ * This function overrides the original implementation of the memcpy function
+ * from string.h. It copies the values of n bytes from the *src to the *dst.
+ * It also checks if the size of the arrays pointed to by both the *dst and
+ * *src parameters are at least n bytes and if they overlap.
+ *
+ * This takes advantage of the fact that 64bit operations require fewer array updates,
+ * which can make this version faster than the naive unrolling when used in CBMC.
+ * Benchmark your particular proof to know for sure.
+ */
+
+SOURCE FILES: verification/cbmc/stubs/memset_override_0.c, verification/cbmc/stubs/memset_using_uint64.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+/**
+ * FUNCTION: memset
+ *
+ * Override the version of memset used by CBMC.
+ * This takes advantage of the fact that 64bit operations require fewer array updates,
+ * which can make this version faster than the naive unrolling when used in CBMC.
+ * Benchmark your particular proof to know for sure.
+ */
+
+SOURCE FILES: verification/cbmc/stubs/s_remove_node_override.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+/**
+ * FUNCTION: s_remove_node
+ *
+ * This function overrides the original implementation of the
+ * s_remove_node function from priority_queue.h with a no_op.
+ *
+ * It is safe to use as long as there are no assertions on the
+ * positions of elements in the priority queue after its invocation,
+ * as it doesn't really remove an element and reorders the rest, but
+ * it just reduces the length of both of the array lists of the
+ * priority queue by 1.
+ */
+
+SOURCE FILES: verification/cbmc/stubs/s_sift_either_override.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+/**
+ * FUNCTION: s_sift_either
+ *
+ * This function overrides the original implementation of the
+ * s_sift_either function from priority_queue.h with a no_op.
+ *
+ * It is necessary to stub out s_sift_either because in order for it
+ * to work, we have to have initialized all backpointers of the
+ * priority queue correctly (which needs a loop).
+ *
+ * It is safe to stub out s_sift_either as long as we don't make any
+ * assertions on the positions of elements in the priority queue and
+ * their relative values.
+ *
+ */
+
+SOURCE FILES: verification/cbmc/stubs/s_sift_up_override.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+/**
+ * FUNCTION: s_sift_up
+ *
+ * This function overrides the original implementation of the
+ * s_sift_up function from priority_queue.h with a no_op.
+ */
+
+SOURCE FILES: verification/cbmc/stubs/s_swap_override_no_op.c
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+/**
+ * FUNCTION: s_swap
+ *
+ * This function overrides s_swap and only swaps the backpointer
+ * indexes. It is used to improve the running time of the CBMC proofs,
+ * as this function adds heavy overhead on the proofs, especially the
+ * ones that loop over the elements of the priority queue (such as
+ * s_sift_up, s_sift_down, s_sift_either).
+ *
+ * It is safe to stub s_swap out, as long as no assertions about the
+ * values of the elements in the priority queue are made
+ * afterwards. Therefore, this stub cannot be used in proofs about the
+ * order of the elements in the priority queue, or any other
+ * functional correctness property concerning the values of the
+ * elements in the queue.
+ *
+ */

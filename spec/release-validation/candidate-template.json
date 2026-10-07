@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "status": "planning-template-not-approved",
+  "candidate_id": null,
+  "source_commit": null,
+  "source_clean": null,
+  "platform": "macOS ARM64",
+  "delivery": "scoped-preview",
+  "complete_client_v1": false,
+  "toolchain": null,
+  "bundle_sha256": null,
+  "native_sha256": null,
+  "extension_sha256": null,
+  "advertised_capabilities": [],
+  "qualified_providers_and_transports": [],
+  "qualification_limitations": [],
+  "previous_qualified_candidate": null,
+  "change_impact_review": {
+    "diff_reference": null,
+    "mandatory_rerun_catalog_ids": [],
+    "reused_baseline_run_ids": [],
+    "reuse_rationale": null,
+    "unresolved_impact": []
+  },
+  "gates": {
+    "G1": {"status": "planned", "run_ids": [], "review": null},
+    "G2": {"status": "planned", "run_ids": [], "review": null},
+    "G3": {"status": "planned", "run_ids": [], "review": null},
+    "G4": {"status": "planned", "run_ids": [], "review": null},
+    "G5": {"status": "planned", "run_ids": [], "review": null},
+    "G6": {"status": "planned", "run_ids": [], "review": null}
+  },
+  "compatibility_fixture_manifest": null,
+  "evidence_archive": {"uri": null, "sha256": null, "retention": null},
+  "publish_approval": null
+}

@@ -63,23 +63,33 @@
       "additionalProperties": false
     },
     "connection_details": {
-      "type": "object",
-      "properties": {
-        "org_id": {
-          "type": "string",
-          "pattern": "^00D[A-Za-z0-9]{12}([A-Za-z0-9]{3})?$"
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
         },
-        "api_version": {
-          "type": "string",
-          "pattern": "^v[0-9]+\\.[0-9]+$"
+        {
+          "type": "object",
+          "properties": {
+            "org_id": {
+              "type": "string",
+              "pattern": "^00D[A-Za-z0-9]{12}([A-Za-z0-9]{3})?$"
+            },
+            "api_version": {
+              "type": "string",
+              "pattern": "^v[0-9]+\\.[0-9]+$"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "org_id",
+            "api_version"
+          ],
+          "$comment": "Resolved org identity after authentication; the alias and credentials are never reported."
         }
-      },
-      "additionalProperties": false,
-      "required": [
-        "org_id",
-        "api_version"
       ],
-      "$comment": "Resolved org identity after authentication; the alias and credentials are never reported."
+      "$comment": "Bind occurs before authenticated resolution and may return the closed empty object. Resolved details retain their complete org_id/api_version shape; verified identity is established by authenticate before the fixed request or run is created."
     },
     "source_identity": {
       "type": "object",
@@ -133,7 +143,7 @@
         "api_version",
         "job_ids"
       ],
-      "$comment": "Bulk job IDs or REST query locators recorded durably before fetching; empty only before the first job is created."
+      "$comment": "Bulk job IDs or REST query locators recorded durably; job_ids may be empty when REST has no locator or Bulk creation is unresolved. Persist ambiguous creation intent and return OUTCOME_UNKNOWN without repeating the POST."
     }
   }
 }

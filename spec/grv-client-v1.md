@@ -2,7 +2,7 @@
 
 | | |
 | --------- | ------------ |
-| Status | draft; no CLI implemented |
+| Status | draft; partial Rust implementation |
 | Version | 1 |
 | Date | 2026-10-05 |
 | Extends | GRV v2 |
@@ -20,7 +20,8 @@ Users describe the source, selection, columns, and destination behavior. The
 CLI and adapters handle authentication, acquisition, staging, transactions,
 retries, and publication.
 
-This is a design, not an implemented CLI. The version-1 formats may evolve
+This is the full v1 contract. The Rust CLI implements a staged subset; see
+[the repository README](../README.md) for implemented paths and remaining verification gates. The version-1 formats may evolve
 until the implementation contract is frozen. The specification has three
 documents:
 
@@ -93,6 +94,7 @@ pull a Salesforce-populated dataset into DuckDB.
 grv push --decl <yaml> --grv <root>
 grv pull --decl <yaml> --grv <root> [--revision <N|latest>]
 grv adapter list
+grv adapter install <path|tarball> [--replace]
 grv adapter <name> capabilities
 grv adapter <name> <command> [adapter flags]
 ```
@@ -869,7 +871,8 @@ allocations.
 
 ### Lifecycle interface
 
-These are language-neutral obligations for the future SDK, not implemented APIs.
+These are language-neutral obligations; the Rust SDK implements their process
+protocol equivalents.
 An optional method is required when the corresponding capability is advertised.
 
 | Method | Inputs and required result |
@@ -955,9 +958,16 @@ and `describe` delegate login, session, and source inspection. Aliases resolve
 to the actual org ID for a fixed attempt. Credentials are not copied into
 declarations.
 
-- The default `options.transport: auto` chooses a supported complete, lossless
-  REST or Bulk extraction path. Decimal integrity is a requirement of either
-  path, not something the user must achieve by choosing a transport.
+- The default API version is `v66.0`. The default `options.transport: auto`
+  uses deterministic REST-first selection among proven complete, lossless
+  transports. Decimal integrity is a requirement of either path. Preserve an
+  explicitly authored alias and `transport: auto`; record canonical connection
+  coordinates and resolved transport separately.
+- Empty `job_ids` are permitted when REST returns no locator or Bulk creation
+  remains unresolved. Persist ambiguous Bulk creation and return
+  `OUTCOME_UNKNOWN` without repeating its POST. Private REST bootstrap rows
+  may establish acquisition evidence, but no rows or table completion are
+  emitted before durable checkpoint acknowledgement.
 - Advanced `rest` or `bulk` preferences fail if they cannot meet the declared
   semantics and types.
 - `options.all_rows` defaults to false. When true, the extraction uses
@@ -1076,5 +1086,4 @@ retention, cross-root derivation, CDC and watermarks, inferred keys, generic
 merge or upsert, concurrent or server DuckDB, provenance for arbitrary SQL
 application imports, and narrower output dependencies. V1 does not orchestrate
 arbitrary external model workflows; it manages the lifecycle of declared SQL
-builds and advanced attested integrations. There is no CLI implementation in
-this revision.
+builds and advanced attested integrations.

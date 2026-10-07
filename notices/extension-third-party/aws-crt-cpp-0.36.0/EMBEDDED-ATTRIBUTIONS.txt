@@ -1,0 +1,15 @@
+SOURCE FILES: bin/elasticurl_cpp/main.cpp, bin/mqtt5_app/main.cpp, bin/mqtt5_canary/main.cpp, source/Allocator.cpp, source/Api.cpp, source/DateTime.cpp, source/DnsUtils.cpp, source/ImdsClient.cpp, source/JsonObject.cpp, source/StringUtils.cpp, source/Types.cpp, source/UUID.cpp, source/auth/Credentials.cpp, source/auth/Sigv4Signing.cpp, source/cbor/Cbor.cpp, source/checksum/CRC.cpp, source/crypto/HKDF.cpp, source/crypto/HMAC.cpp, source/crypto/Hash.cpp, source/crypto/SecureRandom.cpp, source/crypto/SymmetricCipher.cpp, source/endpoints/RuleEngine.cpp, source/http/HttpConnection.cpp, source/http/HttpConnectionManager.cpp, source/http/HttpProxyStrategy.cpp, source/http/HttpRequestResponse.cpp, source/io/Bootstrap.cpp, source/io/ChannelHandler.cpp, source/io/EventLoopGroup.cpp, source/io/HostResolver.cpp, source/io/Pkcs11.cpp, source/io/SocketOptions.cpp, source/io/Stream.cpp, source/io/TlsOptions.cpp, source/io/Uri.cpp, source/iot/Mqtt5Client.cpp, source/iot/MqttClient.cpp, source/iot/MqttCommon.cpp, source/iot/MqttRequestResponseClient.cpp, source/mqtt/Mqtt5Client.cpp, source/mqtt/Mqtt5Packets.cpp, source/mqtt/MqttClient.cpp, source/mqtt/MqttConnection.cpp, tests/ApiTest.cpp, tests/CRCTest.cpp, tests/CborTest.cpp, tests/ChannelBootstrapTest.cpp, tests/ChannelHandlerTest.cpp, tests/CredentialsTest.cpp, tests/DateTimeTest.cpp, tests/EventLoopGroupTest.cpp, tests/HKDFTest.cpp, tests/HMACTest.cpp, tests/HashTest.cpp, tests/HostResolverTest.cpp, tests/HttpClientConnectionManagerTest.cpp, tests/HttpClientTest.cpp, tests/HttpRequestTest.cpp, tests/ImdsClientTest.cpp, tests/IotServiceTest.cpp, tests/JsonParserTest.cpp, tests/Mqtt5ClientCredentialsTest.cpp, tests/Mqtt5ClientTest.cpp, tests/MqttClientCredentialsTest.cpp, tests/MqttClientTest.cpp, tests/MqttRequestResponse.cpp, tests/OptionalMemorySafetyTest.cpp, tests/ProxyTest.cpp, tests/RuleEngineTest.cpp, tests/Sigv4SigningTest.cpp, tests/StreamTest.cpp, tests/StringViewTest.cpp, tests/SymmetricCipherTest.cpp, tests/TLSContextTest.cpp, tests/TypesTest.cpp, tests/UUIDTest.cpp, tests/VariantTest.cpp
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+SOURCE FILES: source/mqtt/Mqtt5ClientCore.cpp, source/mqtt/MqttConnectionCore.cpp
+/*! \cond DOXYGEN_PRIVATE
+** Hide API from this file in doxygen. Set DOXYGEN_PRIVATE in doxygen
+** config to enable this file for doxygen.
+*/
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */

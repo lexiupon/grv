@@ -1,0 +1,1251 @@
+SOURCE FILES: api/s2n.h
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/**
+ * @file s2n.h
+ * s2n-tls is a C99 implementation of the TLS/SSL protocols that is designed to
+ * be simple, small, fast, and with security as a priority. <br> It is released and 
+ * licensed under the Apache License 2.0.
+ */
+
+SOURCE FILES: api/unstable/async_offload.h, api/unstable/crl.h, api/unstable/fingerprint.h, api/unstable/ktls.h, crypto/s2n_evp_kem.c, crypto/s2n_evp_kem.h, tests/features/S2N_LIBCRYPTO_SUPPORTS_CUSTOM_OID.c, tests/features/S2N_LIBCRYPTO_SUPPORTS_EC_KEY_CHECK_FIPS.c, tests/features/S2N_LIBCRYPTO_SUPPORTS_EVP_AEAD_TLS.c, tests/features/S2N_LIBCRYPTO_SUPPORTS_EVP_KEM.c, tests/features/S2N_LIBCRYPTO_SUPPORTS_FLAG_NO_CHECK_TIME.c, tests/features/S2N_LIBCRYPTO_SUPPORTS_GET0_CHAIN.c, tests/features/S2N_LIBCRYPTO_SUPPORTS_HKDF.c, tests/features/S2N_LIBCRYPTO_SUPPORTS_MLKEM.c, tests/features/S2N_LIBCRYPTO_SUPPORTS_SHAKE.c, tests/unit/s2n_build_test.c, tests/unit/s2n_cbc_test.c, tests/unit/s2n_cert_validation_callback_test.c, tests/unit/s2n_client_hello_get_supported_groups_test.c, tests/unit/s2n_connection_protocol_versions_test.c, tests/unit/s2n_crl_test.c, tests/unit/s2n_fips_test.c, tests/unit/s2n_mem_testlib_test.c, tests/unit/s2n_server_cert_status_request_extension_test.c, tests/unit/s2n_sslv3_test.c, tests/unit/s2n_x509_get_validated_cert_chain_test.c, tests/unit/s2n_x509_validator_custom_oids_test.c, tests/unit/s2n_x509_validator_time_verification_test.c, tls/extensions/s2n_server_cert_status_request.c, tls/extensions/s2n_server_cert_status_request.h, tls/s2n_crl.c, tls/s2n_crl.h
+/*
+* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+*
+* Licensed under the Apache License, Version 2.0 (the "License").
+* You may not use this file except in compliance with the License.
+* A copy of the License is located at
+*
+*  http://aws.amazon.com/apache2.0
+*
+* or in the "license" file accompanying this file. This file is distributed
+* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+* express or implied. See the License for the specific language governing
+* permissions and limitations under the License.
+*/
+
+SOURCE FILES: api/unstable/cert_authorities.h
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/**
+ * @file cert_authorities.h
+ *
+ * This contains unstable APIs for selecting a client-sent certificate in
+ * response to the CertificateRequest message, and the necessary server-side
+ * work to support that selection (currently, just certificate_authorities).
+ *
+ * See also https://github.com/aws/s2n-tls/issues/5330. Please comment there if
+ * you're using the feature and report back on your experience.
+ */
+
+SOURCE FILES: api/unstable/cleanup.h, api/unstable/custom_x509_extensions.h, api/unstable/npn.h, api/unstable/renegotiate.h, bin/common.c, bin/common.h, bin/echo.c, bin/https.c, bin/policy.c, bin/s2nc.c, bin/s2nd.c, codebuild/bin/s2n_dynamic_load_test.c, crypto/s2n_aead_cipher_aes_gcm.c, crypto/s2n_aead_cipher_chacha20_poly1305.c, crypto/s2n_cbc_cipher_3des.c, crypto/s2n_cbc_cipher_aes.c, crypto/s2n_certificate.c, crypto/s2n_certificate.h, crypto/s2n_cipher.c, crypto/s2n_cipher.h, crypto/s2n_composite_cipher_aes_sha.c, crypto/s2n_crypto.c, crypto/s2n_crypto.h, crypto/s2n_dhe.c, crypto/s2n_dhe.h, crypto/s2n_drbg.c, crypto/s2n_drbg.h, crypto/s2n_ecc_evp.c, crypto/s2n_ecc_evp.h, crypto/s2n_evp.h, crypto/s2n_fips.c, crypto/s2n_fips.h, crypto/s2n_fips_rules.c, crypto/s2n_hash.c, crypto/s2n_hash.h, crypto/s2n_hkdf.c, crypto/s2n_hkdf.h, crypto/s2n_kdf.h, crypto/s2n_ktls_crypto.h, crypto/s2n_libcrypto.c, crypto/s2n_libcrypto.h, crypto/s2n_locking.c, crypto/s2n_locking.h, crypto/s2n_mldsa.c, crypto/s2n_mldsa.h, crypto/s2n_openssl.h, crypto/s2n_openssl_evp.h, crypto/s2n_openssl_x509.c, crypto/s2n_openssl_x509.h, crypto/s2n_pkey.c, crypto/s2n_pkey.h, crypto/s2n_pkey_evp.c, crypto/s2n_pkey_evp.h, crypto/s2n_pq.c, crypto/s2n_pq.h, crypto/s2n_prf_libcrypto.c, crypto/s2n_prf_libcrypto.h, crypto/s2n_rsa_pss.c, crypto/s2n_rsa_pss.h, crypto/s2n_sequence.c, crypto/s2n_sequence.h, crypto/s2n_stream_cipher_null.c, crypto/s2n_stream_cipher_rc4.c, crypto/s2n_tls13_keys.c, crypto/s2n_tls13_keys.h, docs/examples/s2n_negotiate.c, docs/examples/s2n_recv.c, docs/examples/s2n_send.c, error/s2n_errno.c, error/s2n_errno.h, stuffer/s2n_stuffer.c, stuffer/s2n_stuffer.h, stuffer/s2n_stuffer_base64.c, stuffer/s2n_stuffer_file.c, stuffer/s2n_stuffer_hex.c, stuffer/s2n_stuffer_network_order.c, stuffer/s2n_stuffer_pem.c, stuffer/s2n_stuffer_text.c, tests/LD_PRELOAD/allocator_overrides.c, tests/cbmc/include/cbmc_proof/make_common_datastructures.h, tests/cbmc/proofs/s2n_add_overflow/s2n_add_overflow_harness.c, tests/cbmc/proofs/s2n_align_to/s2n_align_to_harness.c, tests/cbmc/proofs/s2n_alloc/s2n_alloc_harness.c, tests/cbmc/proofs/s2n_array_capacity/s2n_array_capacity_harness.c, tests/cbmc/proofs/s2n_array_free/s2n_array_free_harness.c, tests/cbmc/proofs/s2n_array_free_p/s2n_array_free_p_harness.c, tests/cbmc/proofs/s2n_array_get/s2n_array_get_harness.c, tests/cbmc/proofs/s2n_array_init/s2n_array_init_harness.c, tests/cbmc/proofs/s2n_array_insert/s2n_array_insert_harness.c, tests/cbmc/proofs/s2n_array_insert_and_copy/s2n_array_insert_and_copy_harness.c, tests/cbmc/proofs/s2n_array_new/s2n_array_new_harness.c, tests/cbmc/proofs/s2n_array_num_elements/s2n_array_num_elements_harness.c, tests/cbmc/proofs/s2n_array_pushback/s2n_array_pushback_harness.c, tests/cbmc/proofs/s2n_array_remove/s2n_array_remove_harness.c, tests/cbmc/proofs/s2n_blob_char_to_lower/s2n_blob_char_to_lower_harness.c, tests/cbmc/proofs/s2n_blob_init/s2n_blob_init_harness.c, tests/cbmc/proofs/s2n_blob_is_growable/s2n_blob_is_growable_harness.c, tests/cbmc/proofs/s2n_blob_slice/s2n_blob_slice_harness.c, tests/cbmc/proofs/s2n_blob_zero/s2n_blob_zero_harness.c, tests/cbmc/proofs/s2n_connection_get_last_message_name/s2n_connection_get_last_message_name_harness.c, tests/cbmc/proofs/s2n_constant_time_copy_or_dont/s2n_constant_time_copy_or_dont_harness.c, tests/cbmc/proofs/s2n_constant_time_equals/s2n_constant_time_equals_harness.c, tests/cbmc/proofs/s2n_constant_time_pkcs1_unpad_or_dont/s2n_constant_time_pkcs1_unpad_or_dont_harness.c, tests/cbmc/proofs/s2n_dh_compute_shared_secret_as_client/s2n_dh_compute_shared_secret_as_client_harness.c, tests/cbmc/proofs/s2n_dh_compute_shared_secret_as_server/s2n_dh_compute_shared_secret_as_server_harness.c, tests/cbmc/proofs/s2n_dh_generate_ephemeral_key/s2n_dh_generate_ephemeral_key_harness.c, tests/cbmc/proofs/s2n_dh_p_g_Ys_to_dh_params/s2n_dh_p_g_Ys_to_dh_params_harness.c, tests/cbmc/proofs/s2n_dh_params_check/s2n_dh_params_check_harness.c, tests/cbmc/proofs/s2n_dh_params_copy/s2n_dh_params_copy_harness.c, tests/cbmc/proofs/s2n_dh_params_free/s2n_dh_params_free_harness.c, tests/cbmc/proofs/s2n_dh_params_to_p_g_Ys/s2n_dh_params_to_p_g_Ys_harness.c, tests/cbmc/proofs/s2n_dup/s2n_dup_harness.c, tests/cbmc/proofs/s2n_free/s2n_free_harness.c, tests/cbmc/proofs/s2n_free_object/s2n_free_object_harness.c, tests/cbmc/proofs/s2n_free_or_wipe/s2n_free_or_wipe_harness.c, tests/cbmc/proofs/s2n_hash_copy/s2n_hash_copy_harness.c, tests/cbmc/proofs/s2n_hash_digest/s2n_hash_digest_harness.c, tests/cbmc/proofs/s2n_hash_digest_size/s2n_hash_digest_size_harness.c, tests/cbmc/proofs/s2n_hash_free/s2n_hash_free_harness.c, tests/cbmc/proofs/s2n_hash_get_currently_in_hash_total/s2n_hash_get_currently_in_hash_total_harness.c, tests/cbmc/proofs/s2n_hash_hmac_alg/s2n_hash_hmac_alg_harness.c, tests/cbmc/proofs/s2n_hash_init/s2n_hash_init_harness.c, tests/cbmc/proofs/s2n_hash_is_ready_for_input/s2n_hash_is_ready_for_input_harness.c, tests/cbmc/proofs/s2n_hash_new/s2n_hash_new_harness.c, tests/cbmc/proofs/s2n_hash_reset/s2n_hash_reset_harness.c, tests/cbmc/proofs/s2n_hash_update/s2n_hash_update_harness.c, tests/cbmc/proofs/s2n_hmac_copy/s2n_hmac_copy_harness.c, tests/cbmc/proofs/s2n_hmac_digest/s2n_hmac_digest_harness.c, tests/cbmc/proofs/s2n_hmac_digest_size/s2n_hmac_digest_size_harness.c, tests/cbmc/proofs/s2n_hmac_digest_two_compression_rounds/s2n_hmac_digest_two_compression_rounds_harness.c, tests/cbmc/proofs/s2n_hmac_digest_verify/s2n_hmac_digest_verify_harness.c, tests/cbmc/proofs/s2n_hmac_free/s2n_hmac_free_harness.c, tests/cbmc/proofs/s2n_hmac_hash_alg/s2n_hmac_hash_alg_harness.c, tests/cbmc/proofs/s2n_hmac_hash_block_size/s2n_hmac_hash_block_size_harness.c, tests/cbmc/proofs/s2n_hmac_init/s2n_hmac_init_harness.c, tests/cbmc/proofs/s2n_hmac_new/s2n_hmac_new_harness.c, tests/cbmc/proofs/s2n_hmac_reset/s2n_hmac_reset_harness.c, tests/cbmc/proofs/s2n_hmac_restore_evp_hash_state/s2n_hmac_restore_evp_hash_state_harness.c, tests/cbmc/proofs/s2n_hmac_save_evp_hash_state/s2n_hmac_save_evp_hash_state_harness.c, tests/cbmc/proofs/s2n_hmac_update/s2n_hmac_update_harness.c, tests/cbmc/proofs/s2n_hmac_xor_pad_size/s2n_hmac_xor_pad_size_harness.c, tests/cbmc/proofs/s2n_is_base64_char/s2n_is_base64_char_harness.c, tests/cbmc/proofs/s2n_is_hello_retry_handshake/s2n_is_hello_retry_handshake_harness.c, tests/cbmc/proofs/s2n_is_hello_retry_message/s2n_is_hello_retry_message_harness.c, tests/cbmc/proofs/s2n_mem_cleanup/s2n_mem_cleanup_harness.c, tests/cbmc/proofs/s2n_mem_init/s2n_mem_init_harness.c, tests/cbmc/proofs/s2n_mul_overflow_harness/s2n_mul_overflow_harness.c, tests/cbmc/proofs/s2n_pkcs3_to_dh_params/s2n_pkcs3_to_dh_params_harness.c, tests/cbmc/proofs/s2n_pkcs3_to_dh_params_openssl_1_1_0/s2n_pkcs3_to_dh_params_openssl_1_1_0_harness.c, tests/cbmc/proofs/s2n_realloc/s2n_realloc_harness.c, tests/cbmc/proofs/s2n_stuffer_alloc_ro_from_fd/s2n_stuffer_alloc_ro_from_fd_harness.c, tests/cbmc/proofs/s2n_stuffer_alloc_ro_from_file/s2n_stuffer_alloc_ro_from_file_harness.c, tests/cbmc/proofs/s2n_stuffer_copy/s2n_stuffer_copy_harness.c, tests/cbmc/proofs/s2n_stuffer_erase_and_read/s2n_stuffer_erase_and_read_harness.c, tests/cbmc/proofs/s2n_stuffer_extract_blob/s2n_stuffer_extract_blob_harness.c, tests/cbmc/proofs/s2n_stuffer_free/s2n_stuffer_free_harness.c, tests/cbmc/proofs/s2n_stuffer_get_vector_size/s2n_stuffer_get_vector_size_harness.c, tests/cbmc/proofs/s2n_stuffer_init/s2n_stuffer_init_harness.c, tests/cbmc/proofs/s2n_stuffer_is_consumed/s2n_stuffer_is_consumed_harness.c, tests/cbmc/proofs/s2n_stuffer_peek_char/s2n_stuffer_peek_char_harness.c, tests/cbmc/proofs/s2n_stuffer_peek_check_for_str/s2n_stuffer_peek_check_for_str_harness.c, tests/cbmc/proofs/s2n_stuffer_printf/s2n_stuffer_printf_harness.c, tests/cbmc/proofs/s2n_stuffer_raw_read/s2n_stuffer_raw_read_harness.c, tests/cbmc/proofs/s2n_stuffer_raw_write/s2n_stuffer_raw_write_harness.c, tests/cbmc/proofs/s2n_stuffer_read_base64/s2n_stuffer_read_base64_harness.c, tests/cbmc/proofs/s2n_stuffer_read_bytes/s2n_stuffer_read_bytes_harness.c, tests/cbmc/proofs/s2n_stuffer_read_expected_str/s2n_stuffer_read_expected_str_harness.c, tests/cbmc/proofs/s2n_stuffer_read_line/s2n_stuffer_read_line_harness.c, tests/cbmc/proofs/s2n_stuffer_read_token/s2n_stuffer_read_token_harness.c, tests/cbmc/proofs/s2n_stuffer_read_uint16/s2n_stuffer_read_uint16_harness.c, tests/cbmc/proofs/s2n_stuffer_read_uint24/s2n_stuffer_read_uint24_harness.c, tests/cbmc/proofs/s2n_stuffer_read_uint32/s2n_stuffer_read_uint32_harness.c, tests/cbmc/proofs/s2n_stuffer_read_uint64/s2n_stuffer_read_uint64_harness.c, tests/cbmc/proofs/s2n_stuffer_read_uint8/s2n_stuffer_read_uint8_harness.c, tests/cbmc/proofs/s2n_stuffer_recv_from_fd/s2n_stuffer_recv_from_fd_harness.c, tests/cbmc/proofs/s2n_stuffer_reread/s2n_stuffer_reread_harness.c, tests/cbmc/proofs/s2n_stuffer_reserve/s2n_stuffer_reserve_harness.c, tests/cbmc/proofs/s2n_stuffer_reserve_space/s2n_stuffer_reserve_space_harness.c, tests/cbmc/proofs/s2n_stuffer_reserve_uint16/s2n_stuffer_reserve_uint16_harness.c, tests/cbmc/proofs/s2n_stuffer_reserve_uint24/s2n_stuffer_reserve_uint24_harness.c, tests/cbmc/proofs/s2n_stuffer_resize/s2n_stuffer_resize_harness.c, tests/cbmc/proofs/s2n_stuffer_resize_if_empty/s2n_stuffer_resize_if_empty_harness.c, tests/cbmc/proofs/s2n_stuffer_rewind_read/s2n_stuffer_rewind_read_harness.c, tests/cbmc/proofs/s2n_stuffer_rewrite/s2n_stuffer_rewrite_harness.c, tests/cbmc/proofs/s2n_stuffer_send_to_fd/s2n_stuffer_send_to_fd_harness.c, tests/cbmc/proofs/s2n_stuffer_shift/s2n_stuffer_shift_harness.c, tests/cbmc/proofs/s2n_stuffer_skip_expected_char/s2n_stuffer_skip_expected_char_harness.c, tests/cbmc/proofs/s2n_stuffer_skip_read/s2n_stuffer_skip_read_harness.c, tests/cbmc/proofs/s2n_stuffer_skip_read_until/s2n_stuffer_skip_read_until_harness.c, tests/cbmc/proofs/s2n_stuffer_skip_to_char/s2n_stuffer_skip_to_char_harness.c, tests/cbmc/proofs/s2n_stuffer_skip_whitespace/s2n_stuffer_skip_whitespace_harness.c, tests/cbmc/proofs/s2n_stuffer_skip_write/s2n_stuffer_skip_write_harness.c, tests/cbmc/proofs/s2n_stuffer_wipe/s2n_stuffer_wipe_harness.c, tests/cbmc/proofs/s2n_stuffer_wipe_n/s2n_stuffer_wipe_n_harness.c, tests/cbmc/proofs/s2n_stuffer_write/s2n_stuffer_write_harness.c, tests/cbmc/proofs/s2n_stuffer_write_base64/s2n_stuffer_write_base64_harness.c, tests/cbmc/proofs/s2n_stuffer_write_bytes/s2n_stuffer_write_bytes_harness.c, tests/cbmc/proofs/s2n_stuffer_write_network_order/s2n_stuffer_write_network_order_harness.c, tests/cbmc/proofs/s2n_stuffer_write_reservation/s2n_stuffer_write_reservation_harness.c, tests/cbmc/proofs/s2n_stuffer_write_uint16/s2n_stuffer_write_uint16_harness.c, tests/cbmc/proofs/s2n_stuffer_write_uint24/s2n_stuffer_write_uint24_harness.c, tests/cbmc/proofs/s2n_stuffer_write_uint32/s2n_stuffer_write_uint32_harness.c, tests/cbmc/proofs/s2n_stuffer_write_uint64/s2n_stuffer_write_uint64_harness.c, tests/cbmc/proofs/s2n_stuffer_write_uint8/s2n_stuffer_write_uint8_harness.c, tests/cbmc/proofs/s2n_stuffer_write_vector_size/s2n_stuffer_write_vector_size_harness.c, tests/cbmc/proofs/s2n_stuffer_writev_bytes/s2n_stuffer_writev_bytes_harness.c, tests/cbmc/proofs/s2n_sub_overflow/s2n_sub_overflow_harness.c, tests/cbmc/sources/make_common_datastructures.c, tests/cbmc/stubs/s2n_ensure.c, tests/ctverif/s2n_annotations.h, tests/features/S2N_ATOMIC_SUPPORTED.c, tests/features/S2N_CLOEXEC_SUPPORTED.c, tests/features/S2N_CLOEXEC_XOPEN_SUPPORTED.c, tests/features/S2N_CLONE_SUPPORTED.c, tests/features/S2N_COMPILER_SUPPORTS_BRANCH_ALIGN.c, tests/features/S2N_CPUID_AVAILABLE.c, tests/features/S2N_DIAGNOSTICS_PUSH_SUPPORTED.c, tests/features/S2N_EXECINFO_AVAILABLE.c, tests/features/S2N_FALL_THROUGH_SUPPORTED.c, tests/features/S2N_FEATURES_AVAILABLE.c, tests/features/S2N_LIBCRYPTO_SUPPORTS_EVP_MD5_SHA1_HASH.c, tests/features/S2N_LIBCRYPTO_SUPPORTS_EVP_MD_CTX_SET_PKEY_CTX.c, tests/features/S2N_LIBCRYPTO_SUPPORTS_EVP_RC4.c, tests/features/S2N_LIBCRYPTO_SUPPORTS_MLDSA.c, tests/features/S2N_LIBCRYPTO_SUPPORTS_RSA_PSS_SIGNING.c, tests/features/S2N_LIBCRYPTO_SUPPORTS_X509_STORE_LIST.c, tests/features/S2N_MADVISE_SUPPORTED.c, tests/features/S2N_MINHERIT_SUPPORTED.c, tests/fuzz/LD_PRELOAD/global_overrides.c, tests/fuzz/LD_PRELOAD/s2n_client_cert_verify_recv_test_overrides.c, tests/fuzz/LD_PRELOAD/s2n_client_fuzz_test_overrides.c, tests/fuzz/LD_PRELOAD/s2n_memory_leak_negative_test_overrides.c, tests/fuzz/LD_PRELOAD/s2n_server_fuzz_test_overrides.c, tests/fuzz/s2n_memory_leak_negative_test.c, tests/s2n_test.h, tests/sidetrail/working/s2n-cbc/cbc.c, tests/sidetrail/working/s2n-cbc/stubs/s2n_annotations.h, tests/sidetrail/working/s2n-cbc/stubs/s2n_hash.c, tests/sidetrail/working/s2n-cbc/stubs/s2n_hash.h, tests/sidetrail/working/s2n-record-read-aead/s2n_annotations.h, tests/sidetrail/working/s2n-record-read-aead/s2n_record_read_wrapper.c, tests/sidetrail/working/s2n-record-read-cbc/s2n_annotations.h, tests/sidetrail/working/s2n-record-read-cbc/s2n_record_read_wrapper.c, tests/sidetrail/working/s2n-record-read-cbc/stubs/s2n_cbc.c, tests/sidetrail/working/s2n-record-read-cbc-negative-test/s2n_annotations.h, tests/sidetrail/working/s2n-record-read-cbc-negative-test/s2n_record_read_wrapper.c, tests/sidetrail/working/s2n-record-read-cbc-negative-test/stubs/s2n_cbc.c, tests/sidetrail/working/s2n-record-read-composite/s2n_annotations.h, tests/sidetrail/working/s2n-record-read-composite/s2n_record_read_wrapper.c, tests/sidetrail/working/s2n-record-read-stream/s2n_annotations.h, tests/sidetrail/working/s2n-record-read-stream/s2n_record_read_wrapper.c, tests/sidetrail/working/stubs/s2n_annotations.h, tests/sidetrail/working/stubs/s2n_ensure.c, tests/sidetrail/working/stubs/s2n_ensure.h, tests/sidetrail/working/stubs/s2n_errno.c, tests/sidetrail/working/stubs/s2n_hash.c, tests/sidetrail/working/stubs/s2n_hash.h, tests/sidetrail/working/stubs/s2n_mem.c, tests/testlib/s2n_connection_test_utils.c, tests/testlib/s2n_examples.h, tests/testlib/s2n_extension_test_utils.c, tests/testlib/s2n_hex_testlib.c, tests/testlib/s2n_io_testlib.c, tests/testlib/s2n_kem_fuzz_testlib.c, tests/testlib/s2n_key_schedule_testlib.c, tests/testlib/s2n_ktls_test_utils.c, tests/testlib/s2n_ktls_test_utils.h, tests/testlib/s2n_mem_testlib.c, tests/testlib/s2n_mem_testlib.h, tests/testlib/s2n_psk_testlib.c, tests/testlib/s2n_resumption_testlib.c, tests/testlib/s2n_seccomp.c, tests/testlib/s2n_security_policy_testlib.c, tests/testlib/s2n_sslv2_client_hello.h, tests/testlib/s2n_test_certs.c, tests/testlib/s2n_test_server_client.c, tests/testlib/s2n_testlib.h, tests/testlib/s2n_testlib_ecc_keys.c, tests/unit/s2n_3des_test.c, tests/unit/s2n_aead_aes_test.c, tests/unit/s2n_aead_chacha20_poly1305_test.c, tests/unit/s2n_aes_sha_composite_test.c, tests/unit/s2n_aes_test.c, tests/unit/s2n_alerts_protocol_test.c, tests/unit/s2n_alerts_test.c, tests/unit/s2n_array_test.c, tests/unit/s2n_async_offload_cb_test.c, tests/unit/s2n_async_pkey_test.c, tests/unit/s2n_auth_selection_test.c, tests/unit/s2n_blob_test.c, tests/unit/s2n_cert_authorities_test.c, tests/unit/s2n_cert_chain_and_key_load_test.c, tests/unit/s2n_cert_chain_and_key_test.c, tests/unit/s2n_cert_status_extension_test.c, tests/unit/s2n_cert_status_response_extension_test.c, tests/unit/s2n_certificate_extensions_test.c, tests/unit/s2n_certificate_parsing_test.c, tests/unit/s2n_certificate_test.c, tests/unit/s2n_change_cipher_spec_test.c, tests/unit/s2n_choose_supported_group_test.c, tests/unit/s2n_cipher_info_test.c, tests/unit/s2n_cipher_suite_match_test.c, tests/unit/s2n_cipher_suites_test.c, tests/unit/s2n_cleanup_test.c, tests/unit/s2n_cleanup_with_no_init_test.c, tests/unit/s2n_client_alpn_extension_test.c, tests/unit/s2n_client_auth_handshake_test.c, tests/unit/s2n_client_cert_request_context_test.c, tests/unit/s2n_client_cert_status_request_extension_test.c, tests/unit/s2n_client_cert_verify_test.c, tests/unit/s2n_client_early_data_indication_test.c, tests/unit/s2n_client_empty_cert_test.c, tests/unit/s2n_client_extensions_test.c, tests/unit/s2n_client_finished_test.c, tests/unit/s2n_client_hello_recv_test.c, tests/unit/s2n_client_hello_request_test.c, tests/unit/s2n_client_hello_retry_test.c, tests/unit/s2n_client_hello_test.c, tests/unit/s2n_client_key_exchange_test.c, tests/unit/s2n_client_key_share_extension_pq_test.c, tests/unit/s2n_client_key_share_extension_test.c, tests/unit/s2n_client_max_frag_len_extension_test.c, tests/unit/s2n_client_psk_extension_test.c, tests/unit/s2n_client_record_version_test.c, tests/unit/s2n_client_renegotiation_info_extension_test.c, tests/unit/s2n_client_sct_list_extension_test.c, tests/unit/s2n_client_secure_renegotiation_test.c, tests/unit/s2n_client_server_name_extension_test.c, tests/unit/s2n_client_session_ticket_extension_test.c, tests/unit/s2n_client_signature_algorithms_extension_test.c, tests/unit/s2n_client_supported_groups_extension_test.c, tests/unit/s2n_client_supported_versions_extension_test.c, tests/unit/s2n_config_test.c, tests/unit/s2n_connection_blinding_test.c, tests/unit/s2n_connection_context_test.c, tests/unit/s2n_connection_preferences_test.c, tests/unit/s2n_connection_serialize_test.c, tests/unit/s2n_connection_size_test.c, tests/unit/s2n_connection_test.c, tests/unit/s2n_cookie_test.c, tests/unit/s2n_crypto_test.c, tests/unit/s2n_drain_alert_test.c, tests/unit/s2n_drbg_test.c, tests/unit/s2n_early_data_io_api_test.c, tests/unit/s2n_early_data_io_test.c, tests/unit/s2n_early_data_test.c, tests/unit/s2n_ecc_evp_test.c, tests/unit/s2n_ecc_point_format_extension_test.c, tests/unit/s2n_ecc_preferences_test.c, tests/unit/s2n_ems_extension_test.c, tests/unit/s2n_encrypted_extensions_test.c, tests/unit/s2n_error_lookup_test.c, tests/unit/s2n_error_type_test.c, tests/unit/s2n_examples_test.c, tests/unit/s2n_extended_master_secret_test.c, tests/unit/s2n_extension_list_parse_test.c, tests/unit/s2n_extension_list_process_test.c, tests/unit/s2n_extension_list_send_test.c, tests/unit/s2n_extension_type_lists_test.c, tests/unit/s2n_extension_type_test.c, tests/unit/s2n_extensions_server_key_share_select_test.c, tests/unit/s2n_fingerprint_ja3_test.c, tests/unit/s2n_fingerprint_ja4_test.c, tests/unit/s2n_fingerprint_test.c, tests/unit/s2n_fips_rules_test.c, tests/unit/s2n_fork_generation_number_test.c, tests/unit/s2n_fragmentation_coalescing_test.c, tests/unit/s2n_handshake_errno_test.c, tests/unit/s2n_handshake_fragment_test.c, tests/unit/s2n_handshake_hashes_test.c, tests/unit/s2n_handshake_invariant_test.c, tests/unit/s2n_handshake_io_async_test.c, tests/unit/s2n_handshake_io_early_data_test.c, tests/unit/s2n_handshake_io_errors_test.c, tests/unit/s2n_handshake_io_test.c, tests/unit/s2n_handshake_misc_test.c, tests/unit/s2n_handshake_partial_test.c, tests/unit/s2n_handshake_test.c, tests/unit/s2n_handshake_type_test.c, tests/unit/s2n_hash_all_algs_test.c, tests/unit/s2n_hash_test.c, tests/unit/s2n_hkdf_test.c, tests/unit/s2n_hmac_test.c, tests/unit/s2n_init_test.c, tests/unit/s2n_io_test.c, tests/unit/s2n_kem_preferences_test.c, tests/unit/s2n_kem_test.c, tests/unit/s2n_kex_test.c, tests/unit/s2n_key_share_extension_test.c, tests/unit/s2n_key_update_test.c, tests/unit/s2n_key_update_threads_test.c, tests/unit/s2n_ktls_io_sendfile_test.c, tests/unit/s2n_ktls_io_test.c, tests/unit/s2n_ktls_mode_test.c, tests/unit/s2n_ktls_test.c, tests/unit/s2n_ktls_test_utils_test.c, tests/unit/s2n_libcrypto_test.c, tests/unit/s2n_locking_test.c, tests/unit/s2n_malformed_handshake_test.c, tests/unit/s2n_map_iterator_test.c, tests/unit/s2n_map_test.c, tests/unit/s2n_mem_allocator_test.c, tests/unit/s2n_mem_test.c, tests/unit/s2n_mem_usage_test.c, tests/unit/s2n_mldsa_test.c, tests/unit/s2n_mutual_auth_test.c, tests/unit/s2n_next_protocol_test.c, tests/unit/s2n_npn_extension_test.c, tests/unit/s2n_nst_early_data_indication_test.c, tests/unit/s2n_openssl_x509_test.c, tests/unit/s2n_optional_client_auth_test.c, tests/unit/s2n_override_openssl_random_test.c, tests/unit/s2n_pem_rsa_dhe_test.c, tests/unit/s2n_pem_test.c, tests/unit/s2n_pkey_signing_test.c, tests/unit/s2n_pkey_test.c, tests/unit/s2n_policy_defaults_test.c, tests/unit/s2n_policy_writer_test.c, tests/unit/s2n_post_handshake_recv_test.c, tests/unit/s2n_post_handshake_send_test.c, tests/unit/s2n_post_handshake_test.c, tests/unit/s2n_pq_kem_test.c, tests/unit/s2n_pq_mlkem_policies_test.c, tests/unit/s2n_pq_mlkem_test.c, tests/unit/s2n_prf_key_material_test.c, tests/unit/s2n_protocol_preferences_test.c, tests/unit/s2n_psk_key_exchange_modes_extension_test.c, tests/unit/s2n_psk_offered_test.c, tests/unit/s2n_psk_test.c, tests/unit/s2n_quic_support_io_test.c, tests/unit/s2n_quic_support_test.c, tests/unit/s2n_quic_transport_params_extension_test.c, tests/unit/s2n_random_test.c, tests/unit/s2n_rc4_test.c, tests/unit/s2n_record_read_test.c, tests/unit/s2n_record_size_test.c, tests/unit/s2n_record_test.c, tests/unit/s2n_record_write_test.c, tests/unit/s2n_recv_buffering_test.c, tests/unit/s2n_recv_test.c, tests/unit/s2n_release_non_empty_buffers_test.c, tests/unit/s2n_renegotiate_io_test.c, tests/unit/s2n_renegotiate_test.c, tests/unit/s2n_resume_test.c, tests/unit/s2n_rfc5952_test.c, tests/unit/s2n_rsa_pss_rsae_test.c, tests/unit/s2n_rsa_pss_test.c, tests/unit/s2n_safety_blinding_test.c, tests/unit/s2n_safety_test.c, tests/unit/s2n_seccomp_failure_test.c, tests/unit/s2n_seccomp_handshake_test.c, tests/unit/s2n_security_policies_rules_test.c, tests/unit/s2n_security_policies_test.c, tests/unit/s2n_security_policy_cert_preferences_test.c, tests/unit/s2n_security_rules_test.c, tests/unit/s2n_self_talk_alerts_test.c, tests/unit/s2n_self_talk_alpn_test.c, tests/unit/s2n_self_talk_broken_pipe_test.c, tests/unit/s2n_self_talk_certificates_test.c, tests/unit/s2n_self_talk_client_hello_cb_test.c, tests/unit/s2n_self_talk_custom_io_test.c, tests/unit/s2n_self_talk_io_mem_test.c, tests/unit/s2n_self_talk_key_log_test.c, tests/unit/s2n_self_talk_ktls_test.c, tests/unit/s2n_self_talk_min_protocol_version_test.c, tests/unit/s2n_self_talk_nonblocking_test.c, tests/unit/s2n_self_talk_npn_test.c, tests/unit/s2n_self_talk_offload_signing_test.c, tests/unit/s2n_self_talk_psk_test.c, tests/unit/s2n_self_talk_quic_support_test.c, tests/unit/s2n_self_talk_session_id_test.c, tests/unit/s2n_self_talk_session_resumption_test.c, tests/unit/s2n_self_talk_shutdown_test.c, tests/unit/s2n_self_talk_tls12_test.c, tests/unit/s2n_self_talk_tls13_test.c, tests/unit/s2n_send_key_update_test.c, tests/unit/s2n_send_multirecord_test.c, tests/unit/s2n_send_test.c, tests/unit/s2n_sequence_number_test.c, tests/unit/s2n_server_alpn_extension_test.c, tests/unit/s2n_server_cert_request_test.c, tests/unit/s2n_server_early_data_indication_test.c, tests/unit/s2n_server_extensions_test.c, tests/unit/s2n_server_finished_test.c, tests/unit/s2n_server_hello_retry_test.c, tests/unit/s2n_server_hello_test.c, tests/unit/s2n_server_key_share_extension_test.c, tests/unit/s2n_server_max_frag_len_extension_test.c, tests/unit/s2n_server_new_session_ticket_test.c, tests/unit/s2n_server_psk_extension_test.c, tests/unit/s2n_server_renegotiation_info_test.c, tests/unit/s2n_server_sct_list_extension_test.c, tests/unit/s2n_server_server_name_extension_test.c, tests/unit/s2n_server_session_ticket_extension_test.c, tests/unit/s2n_server_signature_algorithms_extension_test.c, tests/unit/s2n_server_supported_versions_extension_test.c, tests/unit/s2n_session_ticket_test.c, tests/unit/s2n_shutdown_test.c, tests/unit/s2n_signature_algorithms_test.c, tests/unit/s2n_signature_scheme_test.c, tests/unit/s2n_ssl_prf_test.c, tests/unit/s2n_stacktrace_test.c, tests/unit/s2n_stream_cipher_null_test.c, tests/unit/s2n_stuffer_base64_test.c, tests/unit/s2n_stuffer_hex_test.c, tests/unit/s2n_stuffer_network_order_test.c, tests/unit/s2n_stuffer_test.c, tests/unit/s2n_stuffer_text_test.c, tests/unit/s2n_testlib_test.c, tests/unit/s2n_timer_test.c, tests/unit/s2n_tls12_handshake_test.c, tests/unit/s2n_tls13_cert_request_extensions_test.c, tests/unit/s2n_tls13_cert_request_test.c, tests/unit/s2n_tls13_cert_verify_test.c, tests/unit/s2n_tls13_client_finished_test.c, tests/unit/s2n_tls13_compute_shared_secret_test.c, tests/unit/s2n_tls13_handshake_early_data_test.c, tests/unit/s2n_tls13_handshake_state_machine_test.c, tests/unit/s2n_tls13_handshake_test.c, tests/unit/s2n_tls13_hybrid_pq_shared_secret_test.c, tests/unit/s2n_tls13_key_schedule_test.c, tests/unit/s2n_tls13_keys_test.c, tests/unit/s2n_tls13_new_session_ticket_test.c, tests/unit/s2n_tls13_parse_record_type_test.c, tests/unit/s2n_tls13_pq_handshake_test.c, tests/unit/s2n_tls13_prf_test.c, tests/unit/s2n_tls13_record_aead_test.c, tests/unit/s2n_tls13_secrets_test.c, tests/unit/s2n_tls13_server_cert_test.c, tests/unit/s2n_tls13_server_finished_test.c, tests/unit/s2n_tls13_support_test.c, tests/unit/s2n_tls13_zero_length_payload_test.c, tests/unit/s2n_tls_hybrid_prf_test.c, tests/unit/s2n_tls_prf_test.c, tests/unit/s2n_tls_record_stuffer_test.c, tests/unit/s2n_utils_test.c, tests/unit/s2n_wildcard_hostname_test.c, tests/unit/s2n_x509_validator_certificate_signatures_test.c, tests/unit/s2n_x509_validator_test.c, tests/viz/s2n_state_machine_viz.c, tls/extensions/s2n_cert_authorities.c, tls/extensions/s2n_cert_authorities.h, tls/extensions/s2n_cert_status.c, tls/extensions/s2n_cert_status.h, tls/extensions/s2n_cert_status_response.c, tls/extensions/s2n_cert_status_response.h, tls/extensions/s2n_client_alpn.c, tls/extensions/s2n_client_alpn.h, tls/extensions/s2n_client_cert_status_request.c, tls/extensions/s2n_client_cert_status_request.h, tls/extensions/s2n_client_cookie.c, tls/extensions/s2n_client_early_data_indication.c, tls/extensions/s2n_client_ems.c, tls/extensions/s2n_client_key_share.c, tls/extensions/s2n_client_key_share.h, tls/extensions/s2n_client_max_frag_len.c, tls/extensions/s2n_client_max_frag_len.h, tls/extensions/s2n_client_pq_kem.c, tls/extensions/s2n_client_pq_kem.h, tls/extensions/s2n_client_psk.c, tls/extensions/s2n_client_psk.h, tls/extensions/s2n_client_renegotiation_info.c, tls/extensions/s2n_client_renegotiation_info.h, tls/extensions/s2n_client_sct_list.c, tls/extensions/s2n_client_sct_list.h, tls/extensions/s2n_client_server_name.c, tls/extensions/s2n_client_server_name.h, tls/extensions/s2n_client_session_ticket.c, tls/extensions/s2n_client_session_ticket.h, tls/extensions/s2n_client_signature_algorithms.c, tls/extensions/s2n_client_signature_algorithms.h, tls/extensions/s2n_client_supported_groups.c, tls/extensions/s2n_client_supported_groups.h, tls/extensions/s2n_client_supported_versions.c, tls/extensions/s2n_client_supported_versions.h, tls/extensions/s2n_cookie.h, tls/extensions/s2n_early_data_indication.h, tls/extensions/s2n_ec_point_format.c, tls/extensions/s2n_ec_point_format.h, tls/extensions/s2n_ems.h, tls/extensions/s2n_extension_list.c, tls/extensions/s2n_extension_list.h, tls/extensions/s2n_extension_type.c, tls/extensions/s2n_extension_type.h, tls/extensions/s2n_extension_type_lists.c, tls/extensions/s2n_extension_type_lists.h, tls/extensions/s2n_key_share.c, tls/extensions/s2n_key_share.h, tls/extensions/s2n_npn.c, tls/extensions/s2n_npn.h, tls/extensions/s2n_nst_early_data_indication.c, tls/extensions/s2n_psk_key_exchange_modes.c, tls/extensions/s2n_psk_key_exchange_modes.h, tls/extensions/s2n_quic_transport_params.c, tls/extensions/s2n_quic_transport_params.h, tls/extensions/s2n_server_alpn.c, tls/extensions/s2n_server_alpn.h, tls/extensions/s2n_server_cookie.c, tls/extensions/s2n_server_early_data_indication.c, tls/extensions/s2n_server_ems.c, tls/extensions/s2n_server_key_share.c, tls/extensions/s2n_server_key_share.h, tls/extensions/s2n_server_max_fragment_length.c, tls/extensions/s2n_server_max_fragment_length.h, tls/extensions/s2n_server_psk.c, tls/extensions/s2n_server_psk.h, tls/extensions/s2n_server_renegotiation_info.c, tls/extensions/s2n_server_renegotiation_info.h, tls/extensions/s2n_server_sct_list.c, tls/extensions/s2n_server_sct_list.h, tls/extensions/s2n_server_server_name.c, tls/extensions/s2n_server_server_name.h, tls/extensions/s2n_server_session_ticket.c, tls/extensions/s2n_server_session_ticket.h, tls/extensions/s2n_server_signature_algorithms.c, tls/extensions/s2n_server_signature_algorithms.h, tls/extensions/s2n_server_supported_versions.c, tls/extensions/s2n_server_supported_versions.h, tls/extensions/s2n_supported_versions.c, tls/extensions/s2n_supported_versions.h, tls/policy/s2n_policy_defaults.c, tls/policy/s2n_policy_defaults.h, tls/policy/s2n_policy_feature.h, tls/policy/s2n_policy_writer.c, tls/s2n_aead.c, tls/s2n_alerts.c, tls/s2n_alerts.h, tls/s2n_async_offload.c, tls/s2n_async_offload.h, tls/s2n_async_pkey.c, tls/s2n_async_pkey.h, tls/s2n_auth_selection.c, tls/s2n_auth_selection.h, tls/s2n_cbc.c, tls/s2n_certificate_keys.c, tls/s2n_certificate_keys.h, tls/s2n_change_cipher_spec.c, tls/s2n_cipher_preferences.c, tls/s2n_cipher_preferences.h, tls/s2n_cipher_suites.c, tls/s2n_cipher_suites.h, tls/s2n_client_cert.c, tls/s2n_client_cert_verify.c, tls/s2n_client_finished.c, tls/s2n_client_hello.c, tls/s2n_client_hello.h, tls/s2n_client_hello_request.c, tls/s2n_client_key_exchange.c, tls/s2n_client_key_exchange.h, tls/s2n_config.c, tls/s2n_config.h, tls/s2n_connection.c, tls/s2n_connection.h, tls/s2n_connection_serialize.c, tls/s2n_connection_serialize.h, tls/s2n_crypto.c, tls/s2n_crypto.h, tls/s2n_crypto_constants.h, tls/s2n_early_data.c, tls/s2n_early_data.h, tls/s2n_early_data_io.c, tls/s2n_ecc_preferences.c, tls/s2n_ecc_preferences.h, tls/s2n_encrypted_extensions.c, tls/s2n_fingerprint.c, tls/s2n_fingerprint.h, tls/s2n_fingerprint_ja3.c, tls/s2n_fingerprint_ja4.c, tls/s2n_handshake.c, tls/s2n_handshake.h, tls/s2n_handshake_hashes.c, tls/s2n_handshake_hashes.h, tls/s2n_handshake_io.c, tls/s2n_handshake_transcript.c, tls/s2n_handshake_type.c, tls/s2n_handshake_type.h, tls/s2n_internal.h, tls/s2n_kem.c, tls/s2n_kem.h, tls/s2n_kem_preferences.c, tls/s2n_kem_preferences.h, tls/s2n_kex.c, tls/s2n_kex.h, tls/s2n_kex_data.h, tls/s2n_key_log.h, tls/s2n_key_update.c, tls/s2n_key_update.h, tls/s2n_ktls.c, tls/s2n_ktls.h, tls/s2n_ktls_io.c, tls/s2n_ktls_parameters.h, tls/s2n_next_protocol.c, tls/s2n_ocsp_stapling.c, tls/s2n_post_handshake.c, tls/s2n_post_handshake.h, tls/s2n_prf.c, tls/s2n_prf.h, tls/s2n_protocol_preferences.c, tls/s2n_protocol_preferences.h, tls/s2n_psk.c, tls/s2n_psk.h, tls/s2n_quic_support.c, tls/s2n_quic_support.h, tls/s2n_record.h, tls/s2n_record_read.c, tls/s2n_record_read.h, tls/s2n_record_read_aead.c, tls/s2n_record_read_cbc.c, tls/s2n_record_read_composite.c, tls/s2n_record_read_stream.c, tls/s2n_record_write.c, tls/s2n_recv.c, tls/s2n_renegotiate.c, tls/s2n_renegotiate.h, tls/s2n_resume.c, tls/s2n_resume.h, tls/s2n_security_policies.c, tls/s2n_security_policies.h, tls/s2n_security_rules.c, tls/s2n_security_rules.h, tls/s2n_send.c, tls/s2n_server_cert.c, tls/s2n_server_cert_request.c, tls/s2n_server_done.c, tls/s2n_server_extensions.c, tls/s2n_server_extensions.h, tls/s2n_server_finished.c, tls/s2n_server_hello.c, tls/s2n_server_hello_retry.c, tls/s2n_server_key_exchange.c, tls/s2n_server_key_exchange.h, tls/s2n_server_new_session_ticket.c, tls/s2n_shutdown.c, tls/s2n_signature_algorithms.c, tls/s2n_signature_algorithms.h, tls/s2n_signature_scheme.c, tls/s2n_signature_scheme.h, tls/s2n_tls.c, tls/s2n_tls.h, tls/s2n_tls13.c, tls/s2n_tls13.h, tls/s2n_tls13_certificate_verify.c, tls/s2n_tls13_certificate_verify.h, tls/s2n_tls13_handshake.c, tls/s2n_tls13_handshake.h, tls/s2n_tls13_key_schedule.c, tls/s2n_tls13_key_schedule.h, tls/s2n_tls13_secrets.c, tls/s2n_tls13_secrets.h, tls/s2n_tls_parameters.h, tls/s2n_x509_validator.c, tls/s2n_x509_validator.h, utils/s2n_annotations.h, utils/s2n_array.c, utils/s2n_array.h, utils/s2n_atomic.c, utils/s2n_atomic.h, utils/s2n_bitmap.h, utils/s2n_blob.c, utils/s2n_blob.h, utils/s2n_compiler.h, utils/s2n_ensure.c, utils/s2n_ensure.h, utils/s2n_fork_detection.h, utils/s2n_fork_detection_features.h, utils/s2n_init.c, utils/s2n_init.h, utils/s2n_io.c, utils/s2n_io.h, utils/s2n_map.c, utils/s2n_map.h, utils/s2n_map_internal.h, utils/s2n_mem.c, utils/s2n_mem.h, utils/s2n_prelude.h, utils/s2n_random.h, utils/s2n_result.h, utils/s2n_rfc5952.c, utils/s2n_safety.c, utils/s2n_safety.h, utils/s2n_safety_macros.h, utils/s2n_socket.c, utils/s2n_socket.h, utils/s2n_timer.c, utils/s2n_timer.h
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+SOURCE FILES: crypto/s2n_hmac.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+/* this file is patched by Sidetrail, clang-format invalidates patches */
+/* clang-format off */
+
+SOURCE FILES: crypto/s2n_hmac.h
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+/* this file is patched by sidetrail, clang-format invalidates patches */
+/* clang-format off */
+
+SOURCE FILES: crypto/s2n_signature.h
+/* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+SOURCE FILES: tests/cbmc/include/cbmc_proof/cbmc_utils.h, tests/cbmc/include/cbmc_proof/endian.h, tests/cbmc/include/cbmc_proof/nondet.h, tests/cbmc/sources/cbmc_utils.c, tests/cbmc/stubs/close.c, tests/cbmc/stubs/darwin_check_fd_set_overflow.c, tests/cbmc/stubs/fstat.c, tests/cbmc/stubs/getpeername.c, tests/cbmc/stubs/getsockopt.c, tests/cbmc/stubs/madvise.c, tests/cbmc/stubs/memcpy_havoc.c, tests/cbmc/stubs/memmove_havoc.c, tests/cbmc/stubs/memmove_simple.c, tests/cbmc/stubs/memset_havoc.c, tests/cbmc/stubs/mlock.c, tests/cbmc/stubs/mmap.c, tests/cbmc/stubs/munlock.c, tests/cbmc/stubs/open.c, tests/cbmc/stubs/posix_memalign_override.c, tests/cbmc/stubs/read.c, tests/cbmc/stubs/s2n_calculate_stacktrace.c, tests/cbmc/stubs/s2n_hash_copy.c, tests/cbmc/stubs/s2n_hash_digest.c, tests/cbmc/stubs/s2n_hash_reset.c, tests/cbmc/stubs/s2n_hash_update.c, tests/cbmc/stubs/s2n_is_in_fips_mode.c, tests/cbmc/stubs/s2n_stuffer_read_base64.c, tests/cbmc/stubs/s2n_stuffer_read_expected_str.c, tests/cbmc/stubs/s2n_stuffer_skip_expected_char.c, tests/cbmc/stubs/s2n_stuffer_skip_to_char.c, tests/cbmc/stubs/s2n_stuffer_skip_whitespace.c, tests/cbmc/stubs/setsockopt.c, tests/cbmc/stubs/sysconf.c, tests/cbmc/stubs/write.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"). You may not use
+ * this file except in compliance with the License. A copy of the License is
+ * located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the "license" file accompanying this file. This file is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied. See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+SOURCE FILES: tests/cbmc/proofs/s2n_hash_is_available/s2n_hash_is_available_harness.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHblock_size WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+SOURCE FILES: tests/cbmc/proofs/s2n_socket_is_ipv6/s2n_socket_is_ipv6_harness.c
+/* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/**
+ * @file s2n_socket_is_ipv6_harness.c
+ * @brief Implements the proof harness for s2n_socket_is_ipv6 function.
+ */
+
+SOURCE FILES: tests/cbmc/proofs/s2n_socket_quickack/s2n_socket_quickack_harness.c
+/* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/**
+ * @file s2n_socket_quickack_harness.c
+ * @brief Implements the proof harness for s2n_socket_quickack function.
+ */
+
+SOURCE FILES: tests/cbmc/proofs/s2n_socket_read/s2n_socket_read_harness.c
+/* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/**
+ * @file s2n_socket_read_harness.c
+ * @brief Implements the proof harness for s2n_socket_read function.
+ */
+
+SOURCE FILES: tests/cbmc/proofs/s2n_socket_read_restore/s2n_socket_read_restore_harness.c
+/* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/**
+ * @file s2n_socket_read_restore_harness.c
+ * @brief Implements the proof harness for s2n_socket_read_restore function.
+ */
+
+SOURCE FILES: tests/cbmc/proofs/s2n_socket_read_snapshot/s2n_socket_read_snapshot_harness.c
+/* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/**
+ * @file s2n_socket_read_snapshot_harness.c
+ * @brief Implements the proof harness for s2n_socket_read_snapshot function.
+ */
+
+SOURCE FILES: tests/cbmc/proofs/s2n_socket_was_corked/s2n_socket_was_corked_harness.c
+/* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/**
+ * @file s2n_socket_was_corked_harness.c
+ * @brief Implements the proof harness for s2n_socket_was_corked function.
+ */
+
+SOURCE FILES: tests/cbmc/proofs/s2n_socket_write/s2n_socket_write_harness.c
+/* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/**
+ * @file s2n_socket_write_harness.c
+ * @brief Implements the proof harness for s2n_socket_write function.
+ */
+
+SOURCE FILES: tests/cbmc/proofs/s2n_socket_write_cork/s2n_socket_write_cork_harness.c
+/* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/**
+ * @file s2n_socket_write_cork_harness.c
+ * @brief Implements the proof harness for s2n_socket_write_cork function.
+ */
+
+SOURCE FILES: tests/cbmc/proofs/s2n_socket_write_restore/s2n_socket_write_restore_harness.c
+/* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/**
+ * @file s2n_socket_write_restore_harness.c
+ * @brief Implements the proof harness for s2n_socket_write_restore function.
+ */
+
+SOURCE FILES: tests/cbmc/proofs/s2n_socket_write_snapshot/s2n_socket_write_snapshot_harness.c
+/* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/**
+ * @file s2n_socket_write_snapshot_harness.c
+ * @brief Implements the proof harness for s2n_socket_write_snapshot function.
+ */
+
+SOURCE FILES: tests/cbmc/proofs/s2n_socket_write_uncork/s2n_socket_write_uncork_harness.c
+/* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/**
+ * @file s2n_socket_write_uncork_harness.c
+ * @brief Implements the proof harness for s2n_socket_write_uncork function.
+ */
+
+SOURCE FILES: tests/cbmc/proofs/s2n_stuffer_alloc/s2n_stuffer_alloc_harness.c, tests/cbmc/proofs/s2n_stuffer_alloc_ro_from_string/s2n_stuffer_alloc_ro_from_string_harness.c, tests/cbmc/proofs/s2n_stuffer_certificate_from_pem/s2n_stuffer_certificate_from_pem_harness.c, tests/cbmc/proofs/s2n_stuffer_dhparams_from_pem/s2n_stuffer_dhparams_from_pem_harness.c, tests/cbmc/proofs/s2n_stuffer_erase_and_read_bytes/s2n_stuffer_erase_and_read_bytes_harness.c, tests/cbmc/proofs/s2n_stuffer_growable_alloc/s2n_stuffer_growable_alloc_harness.c, tests/cbmc/proofs/s2n_stuffer_private_key_from_pem/s2n_stuffer_private_key_from_pem_harness.c, tests/cbmc/proofs/s2n_stuffer_read/s2n_stuffer_read_harness.c, tests/cbmc/proofs/s2n_stuffer_read_hex/s2n_stuffer_read_hex_harness.c, tests/cbmc/proofs/s2n_stuffer_read_uint16_hex/s2n_stuffer_read_uint16_hex_harness.c, tests/cbmc/proofs/s2n_stuffer_read_uint8_hex/s2n_stuffer_read_uint8_hex_harness.c, tests/cbmc/proofs/s2n_stuffer_write_hex/s2n_stuffer_write_hex_harness.c, tests/cbmc/proofs/s2n_stuffer_write_uint16_hex/s2n_stuffer_write_uint16_hex_harness.c, tests/cbmc/proofs/s2n_stuffer_write_uint8_hex/s2n_stuffer_write_uint8_hex_harness.c, tls/s2n_establish_session.c
+/*
+ * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+SOURCE FILES: tests/cbmc/stubs/abort_override_assert_false.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"). You may not use
+ * this file except in compliance with the License. A copy of the License is
+ * located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the "license" file accompanying this file. This file is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied. See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * FUNCTION: abort
+ *
+ * We override abort to be an assert(0) so that it is caught by CBMC
+ */
+
+SOURCE FILES: tests/cbmc/stubs/s2n_libcrypto_is_awslc.c
+/*
+* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+*
+* Licensed under the Apache License, Version 2.0 (the "License"). You may not use
+* this file except in compliance with the License. A copy of the License is
+* located at
+*
+*     http://aws.amazon.com/apache2.0/
+*
+* or in the "license" file accompanying this file. This file is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+* implied. See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
+SOURCE FILES: tests/features/S2N_DIAGNOSTICS_POP_SUPPORTED.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/**
+ * This feature detects if the compiler properly pops diagnostics
+ */
+
+SOURCE FILES: tests/features/S2N_KTLS_SUPPORTED.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Gate kTLS support only to Linux. Add other platforms once they have been tested. */
+
+SOURCE FILES: tests/features/S2N_LIBCRYPTO_SUPPORTS_ENGINE.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/*
+ * This feature probe checks if the linked libcrypto has ENGINE support.
+ * https://docs.openssl.org/1.0.2/man3/engine/
+ */
+
+/*
+ * We would always expect the `openssl/engine.h` header to be available.
+ * However, some platforms (CentOS 10,  Fedora 41, and RHEL 10) have reportedly
+ * been removing the `openssl/engine.h` header.
+ *
+ * See the related issues:
+ * - https://github.com/aws/s2n-tls/pull/4705
+ * - https://github.com/aws/s2n-tls/pull/4873
+ */
+
+SOURCE FILES: tests/features/S2N_LIBCRYPTO_SUPPORTS_PRIVATE_RAND.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/*
+ * Not all libcryptos support RAND_priv_bytes.
+ *
+ * Note: the existence of RAND_priv_bytes() does NOT mean that the libcrypto
+ * actually supports a separate, private source of randomness. Some libcryptos
+ * like awslc just alias RAND_priv_bytes to RAND_bytes.
+ */
+
+SOURCE FILES: tests/features/S2N_LIBCRYPTO_SUPPORTS_PROVIDERS.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/*
+ * This feature probe checks if the linked libcrypto has "provider" support:
+ * https://docs.openssl.org/3.4/man7/provider/
+ * Fetching algorithms from providers:
+ * https://docs.openssl.org/3.4/man7/ossl-guide-libcrypto-introduction/#algorithm-fetching
+ */
+
+SOURCE FILES: tests/features/S2N_LINUX_SENDFILE.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* MacOS and BSD have completely different signatures for sendfile,
+ * and sendfile is provided by different headers.
+ * Test ONLY for the Linux version.
+ */
+
+SOURCE FILES: tests/fuzz/s2n_cert_req_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_cert_req_recv s2n_recv_client_cert_preferences
+                     s2n_cert_type_to_pkey_type s2n_recv_supported_sig_scheme_list
+                     s2n_choose_sig_scheme_from_peer_preference_list
+                     s2n_set_cert_chain_as_client */
+
+SOURCE FILES: tests/fuzz/s2n_certificate_extensions_parse_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_certificate_extensions_parse
+                     s2n_recv_server_sct_list s2n_server_certificate_status_recv
+                     s2n_x509_validator_validate_cert_stapled_ocsp_response */
+
+SOURCE FILES: tests/fuzz/s2n_client_ccs_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_client_ccs_recv s2n_basic_ccs_recv s2n_prf_client_finished */
+
+SOURCE FILES: tests/fuzz/s2n_client_cert_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_client_cert_recv s2n_x509_validator_validate_cert_chain */
+
+SOURCE FILES: tests/fuzz/s2n_client_cert_verify_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_client_cert_verify_recv s2n_signature_algorithm_recv s2n_pkey_verify */
+
+SOURCE FILES: tests/fuzz/s2n_client_finished_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_client_finished_recv */
+
+SOURCE FILES: tests/fuzz/s2n_client_fuzz_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_negotiate s2n_flush s2n_handshake_write_io
+                     s2n_handshake_read_io s2n_try_delete_session_cache
+                     s2n_read_full_handshake_message */
+
+SOURCE FILES: tests/fuzz/s2n_client_hello_recv_fuzz_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_client_hello_recv s2n_parse_client_hello s2n_populate_client_hello_extensions
+                     s2n_process_client_hello s2n_collect_client_hello */
+
+SOURCE FILES: tests/fuzz/s2n_client_key_recv_fuzz_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_client_key_recv s2n_kex_client_key_recv calculate_keys
+                     s2n_hybrid_client_action s2n_kex_tls_prf s2n_prf_key_expansion
+                     s2n_rsa_client_key_recv s2n_dhe_client_key_recv
+                     s2n_ecdhe_client_key_recv s2n_kem_client_key_recv */
+
+SOURCE FILES: tests/fuzz/s2n_deserialize_resumption_state_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_deserialize_resumption_state
+ * This test fuzzes the deserialization logic for our session tickets. This occurs after
+ * the ticket has been decrypted with the server ticket key. Technically it's not
+ * necessary to fuzz decrypted values, however, in the event that an attacker is 
+ * able to get a valid ticket key, we want to make sure these functions can't cause damage.
+ */
+
+SOURCE FILES: tests/fuzz/s2n_encrypted_extensions_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_encrypted_extensions_recv s2n_server_encrypted_extensions_parse s2n_recv_server_server_name */
+/* Target Functions: s2n_recv_server_alpn s2n_recv_server_max_fragment_length */
+
+SOURCE FILES: tests/fuzz/s2n_extensions_client_key_share_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_extensions_client_key_share_recv s2n_ecc_evp_read_params_point
+                     s2n_ecc_evp_parse_params_point  s2n_ecc_evp_params_free */
+
+SOURCE FILES: tests/fuzz/s2n_extensions_client_supported_versions_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_extensions_client_supported_versions_recv s2n_extensions_client_supported_versions_process
+                     s2n_connection_get_minimum_supported_version */
+
+SOURCE FILES: tests/fuzz/s2n_extensions_server_key_share_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_extensions_server_key_share_recv s2n_ecc_evp_read_params_point s2n_ecc_evp_parse_params_point */
+
+SOURCE FILES: tests/fuzz/s2n_extensions_server_supported_versions_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_extensions_server_supported_versions_process */
+
+SOURCE FILES: tests/fuzz/s2n_hybrid_ecdhe_kyber_r3_fuzz_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_client_key_recv s2n_kex_client_key_recv calculate_keys
+                     s2n_kex_tls_prf s2n_prf_key_expansion s2n_ecdhe_client_key_recv
+                     s2n_kem_client_key_recv s2n_hybrid_client_action */
+
+SOURCE FILES: tests/fuzz/s2n_kyber_r3_recv_ciphertext_fuzz_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_kem_recv_ciphertext s2n_kem_decapsulate kyber_512_r3_crypto_kem_dec */
+
+SOURCE FILES: tests/fuzz/s2n_kyber_r3_recv_public_key_fuzz_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_kem_recv_public_key s2n_kem_encapsulate kyber_512_r3_crypto_kem_enc kyber_768_r3_crypto_kem_enc kyber_1024_r3_crypto_kem_enc */
+
+SOURCE FILES: tests/fuzz/s2n_openssl_diff_pem_parsing_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_parse_cert_chain s2n_create_cert_chain_from_stuffer
+                     s2n_cert_chain_and_key_free */
+
+SOURCE FILES: tests/fuzz/s2n_recv_client_supported_groups_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_recv_client_supported_groups s2n_ecc_evp_find_supported_curve */
+
+SOURCE FILES: tests/fuzz/s2n_select_server_cert_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_conn_find_name_matching_certs s2n_config_add_cert_chain_and_key_to_store
+                     s2n_server_received_server_name s2n_find_cert_matches s2n_create_wildcard_hostname */
+
+SOURCE FILES: tests/fuzz/s2n_server_ccs_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_server_ccs_recv s2n_basic_ccs_recv s2n_prf_server_finished */
+
+SOURCE FILES: tests/fuzz/s2n_server_cert_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_server_cert_recv s2n_x509_validator_validate_cert_chain */
+
+SOURCE FILES: tests/fuzz/s2n_server_extensions_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_server_extensions_recv s2n_recv_server_server_name
+                     s2n_recv_server_renegotiation_info_ext s2n_recv_server_alpn
+                     s2n_recv_server_status_request s2n_recv_server_sct_list
+                     s2n_recv_server_max_fragment_length s2n_recv_server_session_ticket_ext */
+
+SOURCE FILES: tests/fuzz/s2n_server_finished_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_server_finished_recv */
+
+SOURCE FILES: tests/fuzz/s2n_server_fuzz_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_negotiate s2n_flush s2n_handshake_handle_app_data
+                     s2n_handshake_write_io s2n_handshake_read_io
+                     s2n_try_delete_session_cache s2n_read_full_handshake_message */
+
+SOURCE FILES: tests/fuzz/s2n_server_hello_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_server_hello_recv s2n_server_extensions_recv s2n_server_hello_retry_recv
+                     s2n_connection_get_cipher_preferences s2n_set_cipher_as_client */
+
+SOURCE FILES: tests/fuzz/s2n_stuffer_pem_fuzz_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_stuffer_pem_read_encapsulation_line s2n_stuffer_pem_read_contents */
+
+SOURCE FILES: tests/fuzz/s2n_tls13_cert_req_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_tls13_cert_req_recv s2n_extension_list_recv s2n_extension_process
+                     s2n_extension_list_process s2n_extension_parse s2n_extension_list_parse */
+
+SOURCE FILES: tests/fuzz/s2n_tls13_cert_verify_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_tls13_cert_verify_recv s2n_signature_algorithm_recv
+                     s2n_tls13_cert_read_and_verify_signature */
+
+SOURCE FILES: tests/fuzz/s2n_tls13_client_finished_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_tls13_client_finished_recv */
+
+SOURCE FILES: tests/fuzz/s2n_tls13_server_finished_recv_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Target Functions: s2n_tls13_server_finished_recv */
+
+SOURCE FILES: tests/testlib/s2n_nist_kats.h
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ *
+ * Modified from PQCgenKAT_kem.c
+ * Created by Bassham, Lawrence E (Fed) on 8/29/17.
+ * Copyright © 2017 Bassham, Lawrence E (Fed). All rights reserved.
+ */
+
+SOURCE FILES: tests/unit/s2n_safety_macros_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* clang-format off */
+
+SOURCE FILES: tests/unit/s2n_strongly_preferred_groups_test.c, tls/s2n_supported_group_preferences.c, tls/s2n_supported_group_preferences.h
+/*
+* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+SOURCE FILES: tests/unit/s2n_tls13_key_schedule_rfc8448_test.c, tests/unit/s2n_tls13_secrets_rfc8448_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* Needed to set up X25519 key shares */
+
+SOURCE FILES: tests/unit/s2n_tls13_pure_pq_shared_secret_test.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+SOURCE FILES: tls/s2n_key_log.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/**
+ * This module implements key logging as defined by the NSS Key Log Format
+ *
+ * See https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/Key_Log_Format
+ *
+ * This key log file is a series of lines. Comment lines begin with a sharp
+ * character ('#') and are ignored. Secrets follow the format
+ * <Label> <space> <ClientRandom> <space> <Secret> where:
+ *
+ *   <Label> describes the following secret.
+ *   <ClientRandom> is 32 bytes Random value from the Client Hello message, encoded as 64 hexadecimal characters.
+ *   <Secret> depends on the Label (see below).
+ *
+ * The following labels are defined, followed by a description of the secret:
+ *
+ *   RSA: 48 bytes for the premaster secret, encoded as 96 hexadecimal characters (removed in NSS 3.34)
+ *   CLIENT_RANDOM: 48 bytes for the master secret, encoded as 96 hexadecimal characters (for SSL 3.0, TLS 1.0, 1.1 and 1.2)
+ *   CLIENT_EARLY_TRAFFIC_SECRET: the hex-encoded early traffic secret for the client side (for TLS 1.3)
+ *   CLIENT_HANDSHAKE_TRAFFIC_SECRET: the hex-encoded handshake traffic secret for the client side (for TLS 1.3)
+ *   SERVER_HANDSHAKE_TRAFFIC_SECRET: the hex-encoded handshake traffic secret for the server side (for TLS 1.3)
+ *   CLIENT_TRAFFIC_SECRET_0: the first hex-encoded application traffic secret for the client side (for TLS 1.3)
+ *   SERVER_TRAFFIC_SECRET_0: the first hex-encoded application traffic secret for the server side (for TLS 1.3)
+ *   EARLY_EXPORTER_SECRET: the hex-encoded early exporter secret (for TLS 1.3).
+ *   EXPORTER_SECRET: the hex-encoded exporter secret (for TLS 1.3)
+ */
+
+SOURCE FILES: utils/s2n_fork_detection.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/* force the internal header to be included first, since it modifies _GNU_SOURCE/_POSIX_C_SOURCE */
+/* clang-format off */
+
+SOURCE FILES: utils/s2n_random.c
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/*
+ * _XOPEN_SOURCE is needed for resolving the constant O_CLOEXEC in some
+ * environments. We use _XOPEN_SOURCE instead of _GNU_SOURCE because
+ * _GNU_SOURCE is not portable and breaks when attempting to build rust
+ * bindings on MacOS.
+ *
+ * https://man7.org/linux/man-pages/man2/open.2.html
+ * The O_CLOEXEC, O_DIRECTORY, and O_NOFOLLOW flags are not
+ * specified in POSIX.1-2001, but are specified in POSIX.1-2008.
+ * Since glibc 2.12, one can obtain their definitions by defining
+ * either _POSIX_C_SOURCE with a value greater than or equal to
+ * 200809L or _XOPEN_SOURCE with a value greater than or equal to
+ * 700.  In glibc 2.11 and earlier, one obtains the definitions by
+ * defining _GNU_SOURCE.
+ *
+ * We use two feature probes to detect the need to perform this workaround.
+ * It is only applied if we can't get CLOEXEC without it and the build doesn't
+ * fail with _XOPEN_SOURCE being defined.
+ *
+ * # Relevent Links
+ *
+ * - POSIX.1-2017: https://pubs.opengroup.org/onlinepubs/9699919799
+ * - https://stackoverflow.com/a/5724485
+ * - https://stackoverflow.com/a/5583764
+ */

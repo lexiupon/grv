@@ -1,0 +1,10 @@
+{
+  "orgName": "GRV Release Validation Fixture",
+  "edition": "Developer",
+  "features": [],
+  "settings": {
+    "lightningExperienceSettings": {
+      "enableS1Desktop": false
+    }
+  }
+}

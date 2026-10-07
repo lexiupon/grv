@@ -143,7 +143,11 @@ fn salesforce_capture_publication_and_source_free_replay(transport: &str) {
         .map(|name| {
             TablePlan::from_declaration(
                 &json!({}),
-                &json!({"name":name,"columns":[{"name":"id","type":"utf8"},{"name":"amount","type":"decimal128(38,6)"},{"name":"created","type":"timestamp(us,UTC)"}]}),
+                &if name == "rows" {
+                    json!({"name":name,"partition_keys":["month"],"columns":[{"name":"id","type":"utf8"},{"name":"amount","type":"decimal128(38,6)"},{"name":"created","type":"timestamp(us,UTC)"},{"name":"_month_","type":"utf8","derive":{"from":"created","format":"month"}}]})
+                } else {
+                    json!({"name":name,"columns":[{"name":"id","type":"utf8"},{"name":"amount","type":"decimal128(38,6)"},{"name":"created","type":"timestamp(us,UTC)"}]})
+                },
             )
             .unwrap()
         })
@@ -423,6 +427,12 @@ fn salesforce_capture_publication_and_source_free_replay(transport: &str) {
             completion_sha256: digest.clone(),
         })
     });
+    // A later REST page fails only AFTER the production adapter/SDK emits
+    // and durably records bootstrap rows. That partial attempt must not omit
+    // the populated snapshot accepted above, including its exact file bytes.
+    if transport == "auto" {
+        later_page_failure_preserves_snapshot(temp.path(), &grv, &store, &request, &plans);
+    }
     drop(journal);
     drop(store);
     // Neither process executability nor source/GRV availability is needed to
@@ -438,6 +448,195 @@ fn salesforce_capture_publication_and_source_free_replay(transport: &str) {
     let terminal = replay.evidence.terminal.unwrap();
     assert_eq!(terminal.revision.get(), 1);
     assert_eq!(terminal.completion_sha256, digest);
+}
+
+fn later_page_failure_preserves_snapshot(
+    temp: &Path,
+    grv: &Path,
+    store: &Store<LocalBackend>,
+    seed: &ExtractRequest,
+    plans: &[TablePlan],
+) {
+    fn snapshot(root: &Path) -> std::collections::BTreeMap<String, Vec<u8>> {
+        fn visit(
+            root: &Path,
+            directory: &Path,
+            out: &mut std::collections::BTreeMap<String, Vec<u8>>,
+        ) {
+            for entry in std::fs::read_dir(directory).unwrap() {
+                let path = entry.unwrap().path();
+                if path.is_dir() {
+                    visit(root, &path, out);
+                } else {
+                    let relative = path.strip_prefix(root).unwrap().to_str().unwrap();
+                    // Ignore the fresh failed run's lease/control; preserve all
+                    // published revision, manifest and data-file bytes exactly.
+                    if !relative.contains("/.runs/") && !relative.ends_with("/_control.json") {
+                        out.insert(relative.into(), std::fs::read(path).unwrap());
+                    }
+                }
+            }
+        }
+        let mut out = std::collections::BTreeMap::new();
+        visit(root, root, &mut out);
+        out
+    }
+    let before = snapshot(grv);
+    let package = temp.join("adapters/salesforce");
+    std::fs::create_dir_all(&package).unwrap();
+    for directory in [temp.join("adapters"), package.clone()] {
+        std::fs::set_permissions(directory, std::fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let entry = package.join("entry");
+    write_script(
+        &entry,
+        &format!(
+            "exec {} --salesforce-fixture {}",
+            shell_quote(std::env::current_exe().unwrap().to_str().unwrap()),
+            shell_quote(package.to_str().unwrap())
+        ),
+    );
+    write_script(&package.join("sf"), SF);
+    let counter = temp.join("failed-page-calls");
+    let bootstrap = temp.join("bootstrap-calls");
+    let curl = format!(
+        "input=; while IFS= read -r line; do input=\"$input$line\"; done\ncase \"$input\" in *case-locator*) printf x >> {}; printf 'HTTP/1.1 503 Unavailable\\r\\n\\r\\n%s' '{{\"error\":\"later page failure\"}}'; exit 0;; *FROM%20Case*) printf x >> {};; esac\n{}",
+        shell_quote(counter.to_str().unwrap()),
+        shell_quote(bootstrap.to_str().unwrap()),
+        REST.split_once("printf 'HTTP/1.1 200 OK")
+            .map(|(_, rest)| format!("printf 'HTTP/1.1 200 OK{rest}"))
+            .unwrap()
+    );
+    write_script(&package.join("curl"), &curl);
+    std::fs::write(package.join("adapter.toml"), format!("name='salesforce'\nversion='0.1.0'\ninterface_versions=[1]\nbinding_schema_version=1\nentrypoint={entry:?}\n")).unwrap();
+    let installations = discovery::discover(&[SearchRoot {
+        path: temp.join("adapters"),
+        kind: RootKind::User,
+    }])
+    .unwrap();
+    let start = || {
+        let mut session = Session::spawn(
+            &installations[0],
+            Deadlines {
+                response: Duration::from_secs(30),
+                ..Deadlines::default()
+            },
+        )
+        .unwrap();
+        let locator = session
+            .locate_connection(
+                json!({"org":"synthetic-fixture","api_version":"v66.0"}),
+                Mode::Extract,
+                None,
+            )
+            .unwrap();
+        let bound = session
+            .bind_connection(
+                locator,
+                Some(grv.to_str().unwrap().into()),
+                None,
+                None,
+                Mode::Extract,
+            )
+            .unwrap();
+        session
+            .authenticate(bound.handle.clone(), Some(seed.connection_identity.clone()))
+            .unwrap();
+        (session, bound.handle)
+    };
+    let mut request = seed.clone();
+    request.attempt_id = Uuid::v4();
+    request.stream_id = Uuid::v4();
+    request.run_id = RunId::new("01ARZ3NDEKTSV4RRFFQ69G5FAW").unwrap();
+    let clock = SystemClock::default();
+    let ownership = Ownership::new(store, &clock, 60).unwrap();
+    let mut run = ownership
+        .prepare_run(
+            request.dataset.clone(),
+            request.run_id.clone(),
+            1.into(),
+            vec![],
+            None,
+        )
+        .unwrap();
+    ownership.commit_run(&run).unwrap();
+    ownership.confirm_holds(&mut run).unwrap();
+    let journal = Journal::create(
+        temp.join(format!("failed-state/push/{}", request.attempt_id)),
+        &[grv.into()],
+    )
+    .unwrap();
+    let mut failed: Record = journal
+        .create_evidence(Evidence {
+            intent: Intent {
+                request: request.clone(),
+                run: run.clone(),
+            },
+            capture: None,
+            progress: json!({"acquisition":AcquisitionProgress::prepared(&request)}),
+            terminal: None,
+        })
+        .unwrap();
+    let job = CaptureJob {
+        ownership: &ownership,
+        run: &run,
+        journal: &journal,
+        request: &request,
+        plans,
+        renewal_interval: Duration::from_secs(5),
+    };
+    let mut progress = AcquisitionProgress::prepared(&request);
+    let (mut session, handle) = start();
+    let error = job
+        .acquire(&mut session, handle, &mut progress, |next| {
+            update(&journal, &mut failed, |e| {
+                e.progress["acquisition"] = serde_json::to_value(next).unwrap()
+            });
+            Ok(())
+        })
+        .unwrap_err();
+    assert!(!error.message.contains("credential-canary"));
+    assert!(progress.started && !progress.stopped);
+    assert!(
+        progress
+            .tables
+            .iter()
+            .any(|table| !table.batches.is_empty()),
+        "later-page failure must follow durable raw rows"
+    );
+    assert_eq!(std::fs::read(&bootstrap).unwrap(), b"x");
+    assert_eq!(std::fs::read(&counter).unwrap(), b"x");
+    assert_eq!(
+        job.canonicalize(&progress, grv_types::SourceConsistency::CaptureWindow)
+            .unwrap_err()
+            .code,
+        ErrorCode::ExtractionIncomplete
+    );
+    let durable: Record = journal.read().unwrap();
+    assert!(durable.evidence.capture.is_none() && durable.evidence.terminal.is_none());
+    let durable_progress: AcquisitionProgress =
+        serde_json::from_value(durable.evidence.progress["acquisition"].clone()).unwrap();
+    assert!(durable_progress.started && !durable_progress.stopped);
+    assert_eq!(
+        snapshot(grv),
+        before,
+        "partial acquisition changed published membership/file bytes"
+    );
+    drop(session);
+    let (mut reopened, handle) = start();
+    assert_eq!(
+        job.acquire(&mut reopened, handle, &mut progress, |_| panic!(
+            "must refuse before source calls"
+        ))
+        .unwrap_err()
+        .code,
+        ErrorCode::ExtractionIncomplete
+    );
+    assert_eq!(std::fs::read(&bootstrap).unwrap(), b"x");
+    assert_eq!(std::fs::read(&counter).unwrap(), b"x");
+    assert_eq!(snapshot(grv), before);
+    drop(reopened);
+    std::fs::remove_dir_all(temp.join("adapters")).unwrap();
 }
 
 fn shell_quote(value: &str) -> String {

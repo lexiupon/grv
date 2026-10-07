@@ -2549,6 +2549,66 @@ mod tests {
             assert!(f.data_present());
         }
         #[test]
+        fn gc_corrupt_coordination_refuses_before_destructive_effects() {
+            use std::collections::BTreeMap;
+            fn contents(root: &std::path::Path) -> BTreeMap<String, Vec<u8>> {
+                fn walk(
+                    root: &std::path::Path,
+                    dir: &std::path::Path,
+                    out: &mut BTreeMap<String, Vec<u8>>,
+                ) {
+                    for entry in std::fs::read_dir(dir).unwrap() {
+                        let path = entry.unwrap().path();
+                        if path.is_dir() {
+                            walk(root, &path, out);
+                        } else {
+                            out.insert(
+                                path.strip_prefix(root).unwrap().to_str().unwrap().into(),
+                                std::fs::read(path).unwrap(),
+                            );
+                        }
+                    }
+                }
+                let mut result = BTreeMap::new();
+                walk(root, root, &mut result);
+                result
+            }
+            for relative in [
+                ".runs/01M3KQA080R6Y8C2D9F0G00001.control.json",
+                "events/.claim",
+                ".states/revisions/revision=1/.superseded.json",
+            ] {
+                let f = Fixture::new();
+                f.supersede();
+                let mut owner = f.lease();
+                let key = object(&name("data"), relative);
+                // Require a real fixture coordination record, not a random
+                // garbage file that production discovery might ignore.
+                f.store.backend.inner.head(&key).unwrap();
+                let path = f.root.path().join(key.as_str());
+                std::fs::write(&path, b"{corrupt-coordination").unwrap();
+                let before = contents(f.root.path());
+                let gc = Gc::new(&f.store, &f.clock, 60).unwrap();
+                let result = gc.apply(
+                    &mut owner,
+                    &mut GcProgress::Prepared,
+                    f.root.path(),
+                    None,
+                    |_| Ok(()),
+                );
+                assert!(
+                    result.is_err(),
+                    "corrupt coordination must refuse: {relative}"
+                );
+                assert!(f.data_present());
+                assert_eq!(
+                    contents(f.root.path()),
+                    before,
+                    "GC changed storage after corrupt coordination: {relative}"
+                );
+            }
+        }
+        #[test]
         fn gc_apply_rechecks_new_pins_after_preview_and_only_reclaims_after_release() {
             let f = Fixture::new();
             f.supersede();

@@ -10,6 +10,23 @@ artifactaudit and native/extension/localflow verification passed on historical
 releasebytes. No current native notice-text blocker; finalcandidate check pending.
 No publication, tag or broad/full-v1 qualification is approved.
 
+Candidate15ec092 builtfromcleansource:strictnoticeverify,actualnative/extension
+localbuildpullreplay,protected directory/tarinstall,freshHOME,artifactaudit,
+compatibilitybaseline replay PASS. Fullnativeworkspace510PASS22ignored (600s
+firsttimeoutretained/ownedorphanreview;1800sretryPASS),strictClippy/scripts36,
+Rust1.89alltargets/nativeCTest8 PASS. ProductioncandidateGCSDuckDB+SF900exact
+publication/noop/pull/offlinereplay/ownedUUIDcleanup PASS. Newcfgtest-only
+SDKcommitcancel/EOF+partialcapture safety tests now PASS;candidate respinneeded.
+Runnerprocessgrouptimeoutcleanup improved;privatearchivehelperadded(42offline
+scripts currentlyPASS). Task21scopedsafetyclosed:helperinheritableFDisolation
+negativecontrolPASS;GCcorruptcoordination zeroeffectassertionsPASS;operational
+localattester exactepoch/stoppedacceptedproofandcloudrefusal reviewed.
+S3worksheet: s3://private-scope-placeholder/private-scope-placeholder/
+profile private-scope-placeholder, region eu-west-1 userauthorized. Productionrecipe
+firstpreflight REFUSED ListBucketMultipartUploads AccessDenied beforewrites;
+objectlistingAPI passed,parentempty. No multipartcleanupqualification or IAM
+changeclaim;permission/explicitlimitationdecision pending.
+
 ## Gate board
 
 | Gate / task | Current evidence | Remaining closure |

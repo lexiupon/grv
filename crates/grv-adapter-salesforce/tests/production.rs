@@ -12,7 +12,10 @@ use serde_json::json;
 use std::{
     ffi::OsString,
     fs,
-    os::unix::fs::PermissionsExt,
+    os::{
+        fd::{AsRawFd, FromRawFd, OwnedFd},
+        unix::fs::PermissionsExt,
+    },
     time::{Duration, Instant},
 };
 
@@ -56,6 +59,54 @@ fn supervised_helper_bounds_output_drains_stderr_and_redacts_failures() {
     .unwrap();
     assert_eq!(error.code, "INTEGRITY_FAILURE");
     assert!(!error.message.contains("credential-canary"));
+}
+
+#[test]
+fn supervised_helper_isolates_inheritable_parent_descriptors() {
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("descriptor-canary");
+    fs::write(&path, b"parent-descriptor-canary\n").unwrap();
+    let file = fs::File::open(&path).unwrap();
+    // Use a high descriptor to avoid helper stdio/shell bookkeeping. F_DUPFD
+    // deliberately clears CLOEXEC, so exec alone cannot provide isolation.
+    let raw_fd = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_DUPFD, 64) };
+    assert!(raw_fd >= 64);
+    let inherited = unsafe { OwnedFd::from_raw_fd(raw_fd) };
+    let flags = unsafe { libc::fcntl(inherited.as_raw_fd(), libc::F_GETFD) };
+    assert!(flags >= 0);
+    assert_eq!(flags & libc::FD_CLOEXEC, 0);
+
+    // Negative control proves this exact shell/dev-fd probe can see the
+    // inheritable descriptor without the production containment wrapper.
+    let control = std::process::Command::new("/bin/sh")
+        .args([
+            "-c",
+            &format!(
+                "IFS= read -r value < /dev/fd/{raw_fd}; [ \"$value\" = parent-descriptor-canary ]"
+            ),
+        ])
+        .env_clear()
+        .status()
+        .unwrap();
+    assert!(control.success());
+
+    let body = format!(
+        "[ \"$GRV_TEST_HELPER_ENV_CANARY\" = explicit-test-canary ] || exit 2\n\
+         if {{ IFS= read -r leaked < /dev/fd/{raw_fd}; }} 2>/dev/null; then exit 3; fi\n\
+         printf 'isolated'"
+    );
+    let mut process = spec(&body, 16);
+    // Supply only our test variable explicitly; never inspect or mutate an
+    // ambient credential variable in the parent process.
+    process.env = vec![(
+        "GRV_TEST_HELPER_ENV_CANARY".into(),
+        "explicit-test-canary".into(),
+    )];
+    let output = run(process, &Cancellation::default()).unwrap();
+    assert!(output.status.success());
+    assert_eq!(output.stdout, b"isolated");
+    // Keep the inheritable descriptor alive until the real supervisor returns.
+    assert!(unsafe { libc::fcntl(inherited.as_raw_fd(), libc::F_GETFD) } >= 0);
 }
 
 #[test]

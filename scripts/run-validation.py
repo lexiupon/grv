@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import signal
 import uuid
 
 SPEC = importlib.util.spec_from_file_location('validation_evidence', Path(__file__).with_name('validation-evidence.py'))
@@ -22,6 +23,27 @@ ROOT = EVIDENCE.ROOT
 
 def now():
     return datetime.now(timezone.utc).isoformat()
+
+
+def execute(command, output, timeout):
+    """Own one process group; stop inherited descendants before sealing a log.
+
+    Detached/escaped workers and remote effects still need separate review.
+    This is harness cleanup, never proof of a GRV/cloud writer-stop contract.
+    """
+    process = subprocess.Popen(command, cwd=ROOT, stdout=output,
+                               stderr=subprocess.STDOUT, start_new_session=True)
+    try:
+        return process.wait(timeout=timeout), False
+    except subprocess.TimeoutExpired:
+        # Kill the exact owned group, even if the leader exited meanwhile.
+        for kind in (signal.SIGTERM, signal.SIGKILL):
+            try:
+                os.killpg(process.pid, kind)
+            except ProcessLookupError:
+                pass
+        process.wait()
+        return 124, True
 
 
 def main():
@@ -60,15 +82,7 @@ def main():
     timed_out = False
     with log.open('x') as output:
         log.chmod(0o600)
-        try:
-            # Serial child; subprocess suites retain responsibility for owned
-            # worker cleanup. A timeout is failure, never a passing skip.
-            process = subprocess.run(command, cwd=ROOT, stdout=output,
-                                     stderr=subprocess.STDOUT, timeout=args.timeout)
-            code = process.returncode
-        except subprocess.TimeoutExpired:
-            code = 124
-            timed_out = True
+        code, timed_out = execute(command, output, args.timeout)
     finished = now()
     post = EVIDENCE.snapshot()
     changed = pre != post
@@ -76,7 +90,7 @@ def main():
     if changed:
         limitations.append('Repository snapshot changed during execution; not frozen-candidate evidence.')
     if timed_out:
-        limitations.append('Command timed out; owned descendants/remote effects require separate cleanup review.')
+        limitations.append('Command timed out; owned process group terminated before log sealing. Escaped descendants/remote effects require separate cleanup review.')
     record = {
         'version': 1, 'run_id': run_id, 'catalog_id': args.catalog_id,
         'catalog_sha256': EVIDENCE.digest(EVIDENCE.CATALOG),

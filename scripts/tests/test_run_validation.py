@@ -2,8 +2,8 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
-from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -31,11 +31,21 @@ class RunnerTests(unittest.TestCase):
                     patch.object(RUN.EVIDENCE, 'digest', return_value='a' * 64), \
                     patch.object(RUN.EVIDENCE, 'check_record'), \
                     patch.object(RUN.subprocess, 'check_output', return_value=b'commit'), \
-                    patch.object(RUN.subprocess, 'run', return_value=SimpleNamespace(returncode=result)) as child:
+                    patch.object(RUN, 'execute', return_value=(result, False)) as child:
                 with self.assertRaises(SystemExit) as exit:
                     RUN.main()
                 records = list((root / 'artifacts/runs').glob('*.json'))
                 return exit.exception.code, child.call_count, [json.loads(p.read_text()) for p in records]
+
+    def test_timeout_stops_exact_group_and_waits_before_log_sealing(self):
+        with patch.object(RUN.subprocess, 'Popen') as spawn, patch.object(RUN.os, 'killpg') as kill:
+            process = spawn.return_value
+            process.pid = 12345
+            process.wait.side_effect = [subprocess.TimeoutExpired(['test'], 1), -9]
+            self.assertEqual(RUN.execute(['test'], None, 1), (124, True))
+            self.assertTrue(spawn.call_args.kwargs['start_new_session'])
+            self.assertEqual([call.args[0] for call in kill.call_args_list], [12345, 12345])
+            self.assertEqual(process.wait.call_count, 2)
 
     def test_live_requires_explicit_allow_before_execution(self):
         code, calls, records = self.run_case(live=True)

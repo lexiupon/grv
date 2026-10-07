@@ -675,6 +675,62 @@
       ],
       "live": false,
       "serial": true
+    },
+    {
+      "id": "commit-cancel-eof",
+      "command": "cargo test --locked -p grv-adapter-duckdb --features native --lib commit_boundary_tests::sdk_native_cancel_and_eof_at_commit_boundary_fence_and_immutable_replay -- --exact --test-threads=1",
+      "test_files": [
+        "crates/grv-adapter-duckdb/src/commit_boundary_tests.rs"
+      ],
+      "gates": [
+        "G4",
+        "G6"
+      ],
+      "limits": "FourdeterministicSDKwirecancelEOFbeforeafterCOMMIT,cfgtestonlyhooks,fencejoin/receipt/neweradvance/sourcefreereplay;notarbitraryschedules.",
+      "triggers": [
+        "candidate",
+        "safety",
+        "backend"
+      ],
+      "live": false,
+      "serial": true
+    },
+    {
+      "id": "production-s3",
+      "command": "python3 scripts/validate-s3-production.py --bundle \"$BUNDLE\" --write-root \"$OWNED_UUID_CHILD\" --profile private-scope-placeholder --region eu-west-1 --sf-org fixture-user@example.invalid --sf-org-id 00D000000000001AAA --output \"$FRESH_PRIVATE_OUTPUT\"",
+      "test_files": [
+        "scripts/validate-s3-production.py"
+      ],
+      "gates": [
+        "G5"
+      ],
+      "limits": "ExactauthorizedstagingUUIDchildonly;object+multipartinventorymustpass beforewrites;noIAM/retention changes. Noindependentleastprivilegecredentialclaim.",
+      "triggers": [
+        "candidate",
+        "safety",
+        "backend"
+      ],
+      "live": true,
+      "serial": true
+    },
+    {
+      "id": "sf-partial-capture",
+      "command": "cargo test --locked -p grv-conformance --test salesforce_capture",
+      "test_files": [
+        "crates/grv-conformance/tests/salesforce_capture.rs"
+      ],
+      "gates": [
+        "G4",
+        "G6"
+      ],
+      "limits": "Customharnessmain explicitpositiveREST/Bulk and negativeRESTlaterpage;productionSDKadaptercore,synthetichttphelpers,noliveorg,nofullCLIclaim.",
+      "triggers": [
+        "candidate",
+        "capture",
+        "safety"
+      ],
+      "live": false,
+      "serial": true
     }
   ]
 }

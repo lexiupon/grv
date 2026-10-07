@@ -1,0 +1,271 @@
+{
+  "version": 1,
+  "status": "targeted-critical-tests-not-final-release-approval",
+  "runs": [
+    {
+      "version": 1,
+      "run_id": "critical-partial-acquisition",
+      "catalog_id": "sf-partial-capture",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": 1,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-candidate/partial-acquisition.log",
+          "sha256": "fa848173545ce3ab288bbc91c609b72095e03fc941935a707574a89014627152"
+        }
+      ],
+      "limitations": [
+        "Mutablecheckouttargetedtestfollowup;notfrozencandidate. ExactUTC/sourceexecutionintervalunknown. Failuresretained;S3firstownershippreflightrefusedbeforewrites ListBucketMultipartUploads AccessDenied."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "critical-partial-acquisition-retry1",
+      "catalog_id": "sf-partial-capture",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-candidate/partial-acquisition-retry1.log",
+          "sha256": "bf0932c89e5bc1dd932b6174f72b19706dba173dfc864768f2ac958df9aef18e"
+        }
+      ],
+      "limitations": [
+        "Mutablecheckouttargetedtestfollowup;notfrozencandidate. ExactUTC/sourceexecutionintervalunknown. Failuresretained;S3firstownershippreflightrefusedbeforewrites ListBucketMultipartUploads AccessDenied."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "critical-commit-boundary",
+      "catalog_id": "commit-cancel-eof",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": 1,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-candidate/commit-boundary.log",
+          "sha256": "cc056dcfe39e3af70e6c26bf4c613b2a69542d0f305dfea82ffac78c2bfece83"
+        }
+      ],
+      "limitations": [
+        "Mutablecheckouttargetedtestfollowup;notfrozencandidate. ExactUTC/sourceexecutionintervalunknown. Failuresretained;S3firstownershippreflightrefusedbeforewrites ListBucketMultipartUploads AccessDenied."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "critical-commit-boundary-retry1",
+      "catalog_id": "commit-cancel-eof",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-candidate/commit-boundary-retry1.log",
+          "sha256": "9f3bee1ae0b84eca700acc2f899a3b96f2b1f72062a9658839edc7a47bd15961"
+        }
+      ],
+      "limitations": [
+        "Mutablecheckouttargetedtestfollowup;notfrozencandidate. ExactUTC/sourceexecutionintervalunknown. Failuresretained;S3firstownershippreflightrefusedbeforewrites ListBucketMultipartUploads AccessDenied."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "critical-commit-boundary-final",
+      "catalog_id": "commit-cancel-eof",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-candidate/commit-boundary-final.log",
+          "sha256": "ae9a42732bec1b99ec280af94e899874f437af5da47b0b7df50f99978ee6d04c"
+        }
+      ],
+      "limitations": [
+        "Mutablecheckouttargetedtestfollowup;notfrozencandidate. ExactUTC/sourceexecutionintervalunknown. Failuresretained;S3firstownershippreflightrefusedbeforewrites ListBucketMultipartUploads AccessDenied."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "critical-critical-fault-clippy",
+      "catalog_id": "workspace-clippy",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-candidate/critical-fault-clippy.log",
+          "sha256": "91847cfbcfda20b06d8ea206f8e0d34078e4c805bdc9c6880ad9f5f56c1c7635"
+        }
+      ],
+      "limitations": [
+        "Mutablecheckouttargetedtestfollowup;notfrozencandidate. ExactUTC/sourceexecutionintervalunknown. Failuresretained;S3firstownershippreflightrefusedbeforewrites ListBucketMultipartUploads AccessDenied."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "critical-production-s3-1",
+      "catalog_id": "production-s3",
+      "provenance": "historical-import",
+      "result": "failed",
+      "exit_code": 1,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-candidate/production-s3-1.log",
+          "sha256": "d713cf793bcc51930f173fe093d03645efee9348651924d88780bcee69393f38"
+        }
+      ],
+      "limitations": [
+        "Mutablecheckouttargetedtestfollowup;notfrozencandidate. ExactUTC/sourceexecutionintervalunknown. Failuresretained;S3firstownershippreflightrefusedbeforewrites ListBucketMultipartUploads AccessDenied."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "critical-s3-recipe-tests",
+      "catalog_id": "scripts",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-candidate/s3-recipe-tests.log",
+          "sha256": "dae4d2968180615c3ffbe051a7649e1e1e38f9e1eb80e0e2b79e0f797017fc08"
+        }
+      ],
+      "limitations": [
+        "Mutablecheckouttargetedtestfollowup;notfrozencandidate. ExactUTC/sourceexecutionintervalunknown. Failuresretained;S3firstownershippreflightrefusedbeforewrites ListBucketMultipartUploads AccessDenied."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "critical-gc-corrupt",
+      "catalog_id": "core-protocol",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-candidate/gc-corrupt.log",
+          "sha256": "a155185f9da4688d1be14d6df21fd3d25a779bda49702d09f859fdd46f6cfd00"
+        }
+      ],
+      "limitations": [
+        "Exacttargetadmin::tests::gc_tests::gc_corrupt_coordination_refuses_before_destructive_effects;currentdevsource,newcandidate rerun required.",
+        "Corruptpublishedruncontrol/claim/supersessionreceipt onlocalfaultbackend;no storage byteschanged,no data deletion. No livecloudcorruptionclaim."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "critical-helper-descriptor",
+      "catalog_id": "sf-all-targets",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-candidate/helper-descriptor.log",
+          "sha256": "a76aff9b10112f7a36722d43018ec2c9f7b90096b7ebdef3f5ee3fba7a01a52b"
+        }
+      ],
+      "limitations": [
+        "Targeteddevelopmentfollowup only,notcatalogfullsuite;executionUTC/sourceintervalunknown. Parentnegativecontroladdedafteragenttest,retainedseparate."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "critical-helper-descriptor-control",
+      "catalog_id": "sf-all-targets",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-candidate/helper-descriptor-control.log",
+          "sha256": "d1d4b707eb152a060770cf4fab3d1e33bbb42559ba0013199d5a13939c98c4f1"
+        }
+      ],
+      "limitations": [
+        "Targeteddevelopmentfollowup only,notcatalogfullsuite;executionUTC/sourceintervalunknown. Parentnegativecontroladdedafteragenttest,retainedseparate."
+      ]
+    },
+    {
+      "version": 1,
+      "run_id": "critical-archive-script-tests",
+      "catalog_id": "scripts",
+      "provenance": "historical-import",
+      "result": "passed",
+      "exit_code": 0,
+      "started_at": null,
+      "finished_at": null,
+      "command": null,
+      "source_sha256": null,
+      "binary_sha256": null,
+      "logs": [
+        {
+          "path": "artifacts/release-validation/0.1.0-candidate/archive-script-tests.log",
+          "sha256": "eb220b7107d091e6cdc2cd24d8937dc46594440238dee61fc631c573652f7346"
+        }
+      ],
+      "limitations": [
+        "Targeteddevelopmentfollowup only,notcatalogfullsuite;executionUTC/sourceintervalunknown. Parentnegativecontroladdedafteragenttest,retainedseparate."
+      ]
+    }
+  ]
+}

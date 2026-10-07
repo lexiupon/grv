@@ -1,7 +1,7 @@
 # macOS ARM64 0.1.0 critical safety review
 
-Current status: assertions reviewed; development regressions pass, not candidate
-approval. Exact contracts remain authoritative; independent tests are not
+Current status: scoped safety assertions reviewed and targeted gaps closed;
+final frozen-candidate rerun remains under task18, not publication approval. Exact contracts remain authoritative; independent tests are not
 composed into a stronger integrated fault claim. Full scenario mappings are
 still being reviewed in scenarios.json.
 
@@ -29,21 +29,43 @@ selectors. Run every candidate's applicable native suite again after freeze.
 | grv-conformance test host | runnable_cli_list_capabilities_echo_slice_and_environment_isolation | Credential/root canaries absent; child environment probe clean. Fixture host, not full shipped credential surfaces. |
 | grv-conformance test host | cancellation_stops_descendant_before_acknowledging_and_clean_close | Controlled descendant absent before stopped ACK. Not all detached process/commit races. |
 
-## Remaining review gates (not waived)
+## Scoped gap closure and explicit evidence limits
 
 - Commit process-exit hook -> reopen originalreceipt -> latercheckpointadvance
   -> originalreplay with deletedsource now added to the named native crash test
   and PASSED (pull-commit-advance-replay.log); originalrows do not rewind. This
-  closes the inspected EX-PULLTX-003 conjunction, not cancel/EOF ambiguity.
-- Failed/partial acquisition must not authorize omission. Scaled Salesforce
-  successful changed/complete-empty/reset covers positive path; retain exact
-  second-page/failure negative selectors and stale-base/ABA assertions.
-- Production helper/descriptor/argv isolation, auth-unavailable replay, token
-  stderr, and final artifact canary scan: fixture canary evidence is partial.
-- Destructive administration on advertised backends: preview/apply pin/hold
-  races, tombstone-before-delete, corrupt coordination refusal, writer epoch
-  proof and unresolved cloud writes. Conservative busy/unknown is correct;
-  do not advertise successful takeover without actual stop evidence.
+  closes the inspected EX-PULLTX-003 conjunction; task29 separately tests
+  actual SDK cancel/EOF at deterministic commit boundaries below.
+- Task28 now PASSED: custom `salesforce_capture` productionadapter/SDK/CaptureJob
+  gate seeds exact two-row derivedmonth-partitioned + empty tables at revision1,
+  then REST secondpage503 AFTER rawbatchdurability. Canonicalization refuses;
+  durable capture/terminal absent, publishedLATEST/schema/manifests/data bytes
+  unchanged (mutable .runs excluded). Freshprocess sameattempt refuses before
+  sourcequery counters increase. Firstsnapshotfilter harnessfailure and retry
+  retained; synthetichelpers, not realservice fault or entireproductionCLI.
+- Task29 now PASSED: `commit_boundary_tests::sdk_native_cancel_and_eof_at_commit_boundary_fence_and_immutable_replay`
+  uses actual SDK wirecancel/EOF -> StopToken/PullWorker nativeinterrupt, with
+  cfgtest-only before/afterCOMMIT synchronization. Ownerlock held/noprematureACK
+  until join; postcommit originalreceipt recovered; beforecommit rollbackor
+  exactcommittedreceipt. Advance3/deletefiles/originallookupcompare returns old
+  receipt with no prepare/apply/rewind. Fourcases pass; deterministic schedule
+  not allpossible races. Hooks absent from shippedlibrary normalbuild.
+- Production helper isolation now tested: supervised_helper_isolates_inheritable_parent_descriptors
+  opens fd>=64 WITHOUT CLOEXEC, proves ordinary shell can read exactcanary,
+  then productioncontainedhelper cannotread whileparentfdremainslive. Explicit
+  testenvironment only;9production tests and targetednegativecontrol PASS.
+  Existing privateSTDIN/TLS/noargvcredential/redactedstderr assertions inspected;
+  actualbundle heuristicsecret/fixtureartifactscan PASS. Universalcredential
+  surface/leak detection is notclaimed; SFactualCLI auth used inlivecandidateGCS.
+- admin::tests::gc_tests::gc_corrupt_coordination_refuses_before_destructive_effects
+  now PASS: corrupt REAL publishedruncontrol/claim/supersessionreceipt after
+  eligibleoldversion andlease;applyrefuses,allstoragebytesunchanged,dataretained.
+  Localfaultbackend gate, notlivecloudcorruption. Existing preview/newpin/apply
+  race,tombstonebeforedelete,wrongstoppedepoch andexpirywaitingassertions inspected.
+  Production LocalWriterAttester refusescloudrootbeforejournalaccess;localproof
+  needs lockedjournal exactroot/run/owner/created/base/input/metadata and stopped
+  acceptedfile/export evidence. No cloudtakeover inferredfromlocalprocesslock.
+  Conservative busy/unknown remains explicitscope, notsuccessfultakeoverclaim.
 - Every retained claim must bind to actual shipped binary/native digests and
   clean-source qualification. Not all ignored tests are missing work: helpers
   run via custom tests, live selectors require named authorization.

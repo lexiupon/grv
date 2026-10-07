@@ -1431,6 +1431,8 @@ mod destination {
                 if self.commit_crash == Some(false) {
                     std::process::exit(86);
                 }
+                #[cfg(test)]
+                crate::commit_boundary_tests::pause_at_commit(false, &receipt, &self.stopping);
                 self.engine.metadata_query("COMMIT").map_err(|error| {
                     PullError::OutcomeUnknown(format!(
                         "destination commit requires fenced receipt resolution: {error}"
@@ -1440,6 +1442,8 @@ mod destination {
                 if self.commit_crash == Some(true) {
                     std::process::exit(86);
                 }
+                #[cfg(test)]
+                crate::commit_boundary_tests::pause_at_commit(true, &receipt, &self.stopping);
                 Ok(Box::new(receipt))
             })();
             if result.is_err() {

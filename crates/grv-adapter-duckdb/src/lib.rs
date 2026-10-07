@@ -35,6 +35,9 @@ pub mod pull_worker;
 pub mod s3_config;
 pub mod worker;
 
+#[cfg(all(test, feature = "native"))]
+mod commit_boundary_tests;
+
 pub const DUCKDB_VERSION: &str = "1.5.6";
 pub const DUCKDB_MEMORY_BYTES: usize = 512 * 1024 * 1024;
 pub const DUCKDB_SPILL_BYTES: u64 = 16 * 1024 * 1024 * 1024;

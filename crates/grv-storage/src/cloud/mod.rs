@@ -1275,8 +1275,34 @@ mod tests {
         backend
             .conditional_create(&large, &mut Generated(size))
             .unwrap();
+        // Preserve the production upload timeout. A deliberately large read-back
+        // may use an explicit test-only timeout on a separate read-only verifier.
+        // This does not qualify the default timeout on a slow connection.
+        let read_timeout = std::env::var("GRV_S3_TEST_READ_TIMEOUT_SECONDS").ok();
+        let verifier = read_timeout.map(|value| {
+            assert!(!value.is_empty() && value.bytes().all(|b| b.is_ascii_digit()));
+            let seconds = value.parse::<u64>().unwrap();
+            assert!((1..=3600).contains(&seconds));
+            CloudBackend::open(
+                &root,
+                CloudOptions {
+                    timeout: Duration::from_secs(seconds),
+                    ..Default::default()
+                },
+            )
+            .unwrap()
+        });
         let mut count = Count(0);
-        assert_eq!(backend.get(&large, &mut count).unwrap().size.get(), size);
+        assert_eq!(
+            verifier
+                .as_ref()
+                .unwrap_or(&backend)
+                .get(&large, &mut count)
+                .unwrap()
+                .size
+                .get(),
+            size
+        );
         assert_eq!(count.0, size);
         assert_eq!(
             backend

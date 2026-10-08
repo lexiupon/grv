@@ -34,9 +34,7 @@
       },
       "test_summary": null,
       "observed_selectors": [],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -73,9 +71,7 @@
       },
       "test_summary": null,
       "observed_selectors": [],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -307,9 +303,7 @@
         "tests::identity_golden_vectors",
         "tests::scalars_reject_noncanonical_forms"
       ],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -346,9 +340,7 @@
       },
       "test_summary": null,
       "observed_selectors": [],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -477,9 +469,7 @@
         "ignored": 0
       },
       "observed_selectors": [],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
@@ -521,9 +511,7 @@
         "ignored": 0
       },
       "observed_selectors": [],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
@@ -561,9 +549,7 @@
       },
       "test_summary": null,
       "observed_selectors": [],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
@@ -622,9 +608,7 @@
         "recovery_seals_unpublished_runs_materializes_missing_payload_and_repeats_without_rewrite",
         "requested_live_run_is_busy_and_pending_unrelated_corruption_is_isolated"
       ],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -664,12 +648,8 @@
         "failed": 0,
         "ignored": 0
       },
-      "observed_selectors": [
-        "killed_managed_cli_stops_native_work_and_never_reexecutes_incomplete_attempt"
-      ],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "observed_selectors": ["killed_managed_cli_stops_native_work_and_never_reexecutes_incomplete_attempt"],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -734,9 +714,7 @@
         "timestamps_preserve_offsets_pre_epoch_values_and_reject_any_precision_loss",
         "zero_row_rest_has_empty_job_ids_and_still_requires_checkpoint_ack"
       ],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -836,9 +814,7 @@
         "encoded_and_decoded_source_data_are_charged_together_before_tree_adoption",
         "source_json_keeps_numeric_tokens_utf8_and_rejects_duplicate_or_reserved_keys"
       ],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -879,9 +855,7 @@
         "ignored": 0
       },
       "observed_selectors": [],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
@@ -923,9 +897,7 @@
         "ignored": 0
       },
       "observed_selectors": [],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
@@ -967,9 +939,7 @@
         "ignored": 0
       },
       "observed_selectors": [],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
@@ -1011,9 +981,7 @@
         "ignored": 0
       },
       "observed_selectors": [],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
@@ -1054,12 +1022,8 @@
         "failed": 0,
         "ignored": 0
       },
-      "observed_selectors": [
-        "live_bulk_response_loss_never_reposts_or_adopts_after_restart"
-      ],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "observed_selectors": ["live_bulk_response_loss_never_reposts_or_adopts_after_restart"],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files.",
@@ -1100,12 +1064,8 @@
         "failed": 0,
         "ignored": 0
       },
-      "observed_selectors": [
-        "production_cli_empty_capture_noop_and_source_free_terminal_replay"
-      ],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "observed_selectors": ["production_cli_empty_capture_noop_and_source_free_terminal_replay"],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -1155,9 +1115,7 @@
         "both_transports_prove_decimal_widths_and_forbid_cross_domain_casts_without_rows",
         "failed_projection_records_intent_and_never_queries_zero_or_all_null_attempts"
       ],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -1198,9 +1156,7 @@
         "ignored": 0
       },
       "observed_selectors": [],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -1240,12 +1196,8 @@
         "failed": 0,
         "ignored": 0
       },
-      "observed_selectors": [
-        "production_cli_relationship_acquisition_or_precise_bulk_refusal"
-      ],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "observed_selectors": ["production_cli_relationship_acquisition_or_precise_bulk_refusal"],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -1285,12 +1237,8 @@
         "failed": 0,
         "ignored": 0
       },
-      "observed_selectors": [
-        "production_wrong_expected_org_authentication_exposes_no_source_session"
-      ],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "observed_selectors": ["production_wrong_expected_org_authentication_exposes_no_source_session"],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -1330,12 +1278,8 @@
         "failed": 0,
         "ignored": 0
       },
-      "observed_selectors": [
-        "production_cli_org_capture_publication_and_source_free_terminal_replay"
-      ],
-      "assertions": [
-        "Exact independent 9000 Active-row oracle, published schema and bytes, fresh-attempt no-op and source-free terminal replay."
-      ],
+      "observed_selectors": ["production_cli_org_capture_publication_and_source_free_terminal_replay"],
+      "assertions": ["Exact independent 9000 Active-row oracle, published schema and bytes, fresh-attempt no-op and source-free terminal replay."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -1376,9 +1320,7 @@
         "ignored": 0
       },
       "observed_selectors": [],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -1418,12 +1360,8 @@
         "failed": 0,
         "ignored": 0
       },
-      "observed_selectors": [
-        "production_cli_org_capture_publication_and_source_free_terminal_replay"
-      ],
-      "assertions": [
-        "Exact independent 9000 Active-row oracle, published schema and bytes, fresh-attempt no-op and source-free terminal replay."
-      ],
+      "observed_selectors": ["production_cli_org_capture_publication_and_source_free_terminal_replay"],
+      "assertions": ["Exact independent 9000 Active-row oracle, published schema and bytes, fresh-attempt no-op and source-free terminal replay."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -1464,9 +1402,7 @@
         "ignored": 0
       },
       "observed_selectors": [],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -1537,9 +1473,7 @@
         "model::tests::retirement_marker_matches_the_v2_record_without_an_invented_actor_field",
         "model::tests::storage_int64_json_is_exact_and_exhaustion_refuses"
       ],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -2110,9 +2044,7 @@
         "tests::identity_golden_vectors",
         "tests::scalars_reject_noncanonical_forms"
       ],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -2149,9 +2081,7 @@
       },
       "test_summary": null,
       "observed_selectors": [],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."
@@ -2192,9 +2122,7 @@
         "ignored": 0
       },
       "observed_selectors": [],
-      "assertions": [
-        "Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."
-      ],
+      "assertions": ["Observed test outcomes and selectors retained in log; full release case coverage is NOT inferred."],
       "limitations": [
         "Historical mutable development checkout; exact executed source/binary/native hashes and UTC interval unavailable. Counts across repeated/overlapping families must not be added as distinct coverage.",
         "Catalog command is the current rerun recipe; exact historical invocation is unavailable in these log files."

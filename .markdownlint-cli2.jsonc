@@ -1,0 +1,53 @@
+// markdownlint-cli2 configuration for the grv project.
+//
+// Aligned with the KB standard (see
+// notes/20261006-prek-prettier-markdownlint-config.md in ~/kb) — keep in
+// sync when changing.
+//
+// Division of labor: Prettier owns all blank-line and whitespace
+// structure (it runs first in the pre-commit chain and re-stages its
+// output); markdownlint checks semantics only. The blank-line rules
+// below are disabled because they would fight Prettier.
+//
+// NOTE: no "globs" key on purpose. When a config defines "globs",
+// markdownlint-cli2 lints the union of (positional args, config globs) —
+// i.e. the whole workspace — and the pre-commit hook's pass_filenames
+// scoping is silently defeated. Without "globs", the tool lints exactly
+// the files passed on the command line:
+//   - pre-commit hook: only the staged .md files (see .pre-commit-config.yaml)
+//   - manual whole-repo check: markdownlint-cli2 "**/*.md"
+//
+// "ignores" is the opposite of "globs": it only excludes files, so it does
+// not defeat pass_filenames scoping. The `artifacts` symlink points at the
+// external OneDrive asset store, whose third-party .md files (vendored
+// LICENSE/NOTICE documents) must not be linted or fixed.
+{
+  "ignores": ["artifacts/**", "notices/**"],
+  "config": {
+    "default": true,
+    // Line length is the author's choice: Prettier runs with
+    // proseWrap: "preserve", so prose is not re-wrapped, and long lines
+    // in code blocks, tables, and headings are expected in spec documents.
+    "MD013": false,
+    // Blank-line structure is owned by Prettier (see note above).
+    "MD022": false,
+    // Duplicate headings are only a problem within one file; across files
+    // the spec legitimately repeats headings like "## Related Notes".
+    "MD024": { "siblings_only": true },
+    // Spec documents are not single-H1 documents.
+    "MD025": false,
+    "MD031": false,
+    "MD032": false,
+    // HTML (comments, embedded snippets) appears in documents; don't block on it.
+    "MD033": false,
+    // Documents often open with frontmatter or context, not a heading.
+    "MD041": false,
+    // Mermaid blocks are not part of the project's conventions.
+    "MD045": false,
+    "MD046": { "style": "fenced" },
+    // MD029 is intentionally left at its default (adaptive): it accepts
+    // both "1. 1. 1." and "1. 2. 3." lists and only flags lists that are
+    // internally inconsistent.
+    "MD060": false,
+  },
+}

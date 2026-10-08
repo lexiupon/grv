@@ -19,15 +19,15 @@ tables:
       filter: GrvStatus__c = 'Active'
     partition_keys: [month]
     columns:
-      - {name: id, source: Id, type: utf8}
-      - {name: name, source: Name, type: utf8}
-      - {name: status, source: GrvStatus__c, type: utf8}
-      - {name: partition_date, source: GrvPartitionDate__c, type: date32}
-      - {name: rel_id, source: GrvRel__c, type: utf8}
-      - {name: rel_name, source: GrvRel__r.Name, type: utf8}
-      - {name: rel_text, source: GrvRel__r.GrvRelText__c, type: utf8}
-      - {name: rel_decimal, source: GrvRel__r.GrvRelDecimal__c, type: 'decimal128(38,6)'}
-      - {name: rel_date, source: GrvRel__r.GrvRelDate__c, type: date32}
-      - {name: _month_, type: utf8, derive: {from: partition_date, format: month}}
+      - { name: id, source: Id, type: utf8 }
+      - { name: name, source: Name, type: utf8 }
+      - { name: status, source: GrvStatus__c, type: utf8 }
+      - { name: partition_date, source: GrvPartitionDate__c, type: date32 }
+      - { name: rel_id, source: GrvRel__c, type: utf8 }
+      - { name: rel_name, source: GrvRel__r.Name, type: utf8 }
+      - { name: rel_text, source: GrvRel__r.GrvRelText__c, type: utf8 }
+      - { name: rel_decimal, source: GrvRel__r.GrvRelDecimal__c, type: "decimal128(38,6)" }
+      - { name: rel_date, source: GrvRel__r.GrvRelDate__c, type: date32 }
+      - { name: _month_, type: utf8, derive: { from: partition_date, format: month } }
 checks:
-  - {table: grvfix, not_null: [id, name, _month_]}
+  - { table: grvfix, not_null: [id, name, _month_] }

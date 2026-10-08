@@ -12,24 +12,16 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "database"
-      ]
+      "required": ["database"]
     },
     "options": {
       "type": "object",
       "properties": {
         "materialization": {
-          "enum": [
-            "local",
-            "s3-view"
-          ]
+          "enum": ["local", "s3-view"]
         },
         "refresh": {
-          "enum": [
-            "auto",
-            "full"
-          ]
+          "enum": ["auto", "full"]
         }
       },
       "additionalProperties": false,
@@ -48,9 +40,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "table"
-      ]
+      "required": ["table"]
     },
     "managed_build_source": {
       "type": "object",
@@ -61,9 +51,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "sql"
-      ]
+      "required": ["sql"]
     },
     "external_build_source": {
       "type": "object",
@@ -74,9 +62,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "table"
-      ]
+      "required": ["table"]
     },
     "column_source": {
       "type": "string",
@@ -91,9 +77,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "schema"
-      ]
+      "required": ["schema"]
     },
     "pull_table_target": {
       "type": "object",
@@ -116,9 +100,7 @@
             }
           },
           "additionalProperties": false,
-          "required": [
-            "sql"
-          ]
+          "required": ["sql"]
         },
         {
           "type": "object",
@@ -129,9 +111,7 @@
             }
           },
           "additionalProperties": false,
-          "required": [
-            "file"
-          ]
+          "required": ["file"]
         }
       ]
     },
@@ -147,28 +127,16 @@
           "pattern": "^[a-z0-9_][a-z0-9_-]*$"
         },
         "write_mode": {
-          "enum": [
-            "replace",
-            "append"
-          ]
+          "enum": ["replace", "append"]
         },
         "transform_mode": {
-          "enum": [
-            "identity",
-            "sql"
-          ]
+          "enum": ["identity", "sql"]
         },
         "scope_mode": {
-          "enum": [
-            "complete",
-            "selected"
-          ]
+          "enum": ["complete", "selected"]
         },
         "materialization_mode": {
-          "enum": [
-            "local",
-            "s3-view"
-          ]
+          "enum": ["local", "s3-view"]
         },
         "source_partitions": {
           "type": "array",
@@ -185,10 +153,7 @@
                   "type": "string",
                   "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
                   "not": {
-                    "enum": [
-                      "version",
-                      "revision"
-                    ]
+                    "enum": ["version", "revision"]
                   }
                 },
                 "additionalProperties": {
@@ -198,22 +163,12 @@
               }
             },
             "additionalProperties": false,
-            "required": [
-              "table",
-              "partition"
-            ]
+            "required": ["table", "partition"]
           }
         }
       },
       "additionalProperties": false,
-      "required": [
-        "target_schema",
-        "write_mode",
-        "transform_mode",
-        "scope_mode",
-        "materialization_mode",
-        "source_partitions"
-      ]
+      "required": ["target_schema", "write_mode", "transform_mode", "scope_mode", "materialization_mode", "source_partitions"]
     },
     "push_result": {
       "type": "object",
@@ -239,10 +194,7 @@
           ]
         },
         "binding": {
-          "enum": [
-            "bound",
-            "uninitialized"
-          ]
+          "enum": ["bound", "uninitialized"]
         },
         "materializations": {
           "type": "array",
@@ -271,14 +223,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "path",
-        "workspace_id",
-        "binding",
-        "materializations",
-        "sessions",
-        "imports"
-      ]
+      "required": ["path", "workspace_id", "binding", "materializations", "sessions", "imports"]
     },
     "session_details": {
       "type": "object",
@@ -304,10 +249,7 @@
               }
             },
             "additionalProperties": false,
-            "required": [
-              "alias",
-              "engine_table"
-            ]
+            "required": ["alias", "engine_table"]
           }
         },
         "self_mappings": {
@@ -327,19 +269,12 @@
               }
             },
             "additionalProperties": false,
-            "required": [
-              "table",
-              "engine_table"
-            ]
+            "required": ["table", "engine_table"]
           }
         }
       },
       "additionalProperties": false,
-      "required": [
-        "database",
-        "input_mappings",
-        "self_mappings"
-      ]
+      "required": ["database", "input_mappings", "self_mappings"]
     },
     "push_options": {
       "type": "object",
@@ -365,19 +300,11 @@
           ]
         },
         "binding": {
-          "enum": [
-            "bound",
-            "uninitialized",
-            "not_applicable"
-          ]
+          "enum": ["bound", "uninitialized", "not_applicable"]
         }
       },
       "additionalProperties": false,
-      "required": [
-        "database",
-        "workspace_id",
-        "binding"
-      ],
+      "required": ["database", "workspace_id", "binding"],
       "$comment": "Canonical absolute database path and observed root/workspace binding; extraction from unmanaged tables reports not_applicable."
     },
     "source_identity": {
@@ -393,10 +320,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "relation",
-        "database"
-      ],
+      "required": ["relation", "database"],
       "$comment": "One extracted relation, read inside the stream's single snapshot transaction."
     },
     "source_job": {
@@ -414,16 +338,10 @@
           "pattern": "^[a-z0-9_][a-z0-9_-]*$"
         },
         "role": {
-          "enum": [
-            "identity",
-            "application"
-          ]
+          "enum": ["identity", "application"]
         },
         "refresh": {
-          "enum": [
-            "changed",
-            "full"
-          ]
+          "enum": ["changed", "full"]
         },
         "mappings": {
           "type": "array",
@@ -440,10 +358,7 @@
               }
             },
             "additionalProperties": false,
-            "required": [
-              "table",
-              "target_table"
-            ]
+            "required": ["table", "target_table"]
           },
           "minItems": 1
         },
@@ -478,15 +393,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "target_schema",
-        "role",
-        "refresh",
-        "mappings",
-        "prior_revision",
-        "prior_generation_id",
-        "obsolete_targets"
-      ],
+      "required": ["target_schema", "role", "refresh", "mappings", "prior_revision", "prior_generation_id", "obsolete_targets"],
       "$comment": "Transactional adapter: PullResolution.recovery is always null, so this point validates only PullPlan.adapter_details. prior_* describe the committed checkpoint the diff was planned against; obsolete_targets are owned targets cleared by a mapping change."
     },
     "engine_materialization": {
@@ -501,16 +408,10 @@
           "pattern": "^[a-z0-9_][a-z0-9_-]*$"
         },
         "revision_mode": {
-          "enum": [
-            "latest",
-            "fixed"
-          ]
+          "enum": ["latest", "fixed"]
         },
         "materialization_mode": {
-          "enum": [
-            "local",
-            "s3-view"
-          ]
+          "enum": ["local", "s3-view"]
         },
         "committed_revision": {
           "type": "string",
@@ -535,10 +436,7 @@
               }
             },
             "additionalProperties": false,
-            "required": [
-              "grv_table",
-              "target_table"
-            ]
+            "required": ["grv_table", "target_table"]
           }
         },
         "adapter": {
@@ -605,20 +503,12 @@
                 "pattern": "^[1-9][0-9]*$"
               }
             },
-            "required": [
-              "dataset",
-              "revision"
-            ],
+            "required": ["dataset", "revision"],
             "additionalProperties": false
           }
         },
         "state": {
-          "enum": [
-            "prepared",
-            "executing",
-            "completed",
-            "aborted"
-          ]
+          "enum": ["prepared", "executing", "completed", "aborted"]
         },
         "completion_sha256": {
           "anyOf": [
@@ -637,11 +527,7 @@
               "type": "object",
               "properties": {
                 "kind": {
-                  "enum": [
-                    "published",
-                    "no-op",
-                    "aborted"
-                  ]
+                  "enum": ["published", "no-op", "aborted"]
                 },
                 "revision": {
                   "anyOf": [
@@ -667,11 +553,7 @@
                 }
               },
               "additionalProperties": false,
-              "required": [
-                "kind",
-                "revision",
-                "operation_id"
-              ]
+              "required": ["kind", "revision", "operation_id"]
             },
             {
               "type": "null"

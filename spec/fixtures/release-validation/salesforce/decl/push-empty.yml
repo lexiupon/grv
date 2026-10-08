@@ -19,20 +19,20 @@ tables:
       filter: GrvStatus__c = 'Active' AND Name = 'GRVFIX-EMPTY-NONEXISTENT'
     partition_keys: [month]
     columns:
-      - {name: id, source: Id, type: utf8}
-      - {name: name, source: Name, type: utf8}
-      - {name: text, source: GrvText__c, type: utf8}
-      - {name: long_text, source: GrvLongText__c, type: utf8}
-      - {name: int_value, source: GrvInt__c, type: int64}
-      - {name: decimal_value, source: GrvDecimal__c, type: 'decimal128(38,10)'}
-      - {name: date_value, source: GrvDate__c, type: date32}
-      - {name: datetime_value, source: GrvDateTime__c, type: 'timestamp(us,UTC)'}
-      - {name: picklist, source: GrvPicklist__c, type: utf8}
-      - {name: bool_value, source: GrvBool__c, type: bool}
-      - {name: formula, source: GrvFormula__c, type: utf8}
-      - {name: partition_date, source: GrvPartitionDate__c, type: date32}
-      - {name: status, source: GrvStatus__c, type: utf8}
-      - {name: rel_id, source: GrvRel__c, type: utf8}
-      - {name: _month_, type: utf8, derive: {from: partition_date, format: month}}
+      - { name: id, source: Id, type: utf8 }
+      - { name: name, source: Name, type: utf8 }
+      - { name: text, source: GrvText__c, type: utf8 }
+      - { name: long_text, source: GrvLongText__c, type: utf8 }
+      - { name: int_value, source: GrvInt__c, type: int64 }
+      - { name: decimal_value, source: GrvDecimal__c, type: "decimal128(38,10)" }
+      - { name: date_value, source: GrvDate__c, type: date32 }
+      - { name: datetime_value, source: GrvDateTime__c, type: "timestamp(us,UTC)" }
+      - { name: picklist, source: GrvPicklist__c, type: utf8 }
+      - { name: bool_value, source: GrvBool__c, type: bool }
+      - { name: formula, source: GrvFormula__c, type: utf8 }
+      - { name: partition_date, source: GrvPartitionDate__c, type: date32 }
+      - { name: status, source: GrvStatus__c, type: utf8 }
+      - { name: rel_id, source: GrvRel__c, type: utf8 }
+      - { name: _month_, type: utf8, derive: { from: partition_date, format: month } }
 checks:
-  - {table: grvfix, not_null: [id, name, _month_]}
+  - { table: grvfix, not_null: [id, name, _month_] }

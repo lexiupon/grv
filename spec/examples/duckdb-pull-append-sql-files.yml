@@ -16,4 +16,4 @@ tables:
     columns:
       file: ./contracts/credit-note-import.columns.yml
 checks:
-  - {table: cases, not_null: [source_case_id, amount]}
+  - { table: cases, not_null: [source_case_id, amount] }

@@ -1,12 +1,12 @@
 # GRV crypto-shredding v1 (companion RFC)
 
-|                |                                                          |
-|----------------|----------------------------------------------------------|
-| Status         | draft — for review by the Data Protection Officer (DPO)  |
-| Extension id   | `crypto-shredding/1`                                     |
-| Date           | 2026-09-29                                               |
-| Companion to   | [grv-storage-v2.md](grv-storage-v2.md) (GRV v2 storage layout)           |
-| Sign-off       | see [§13](#13-sign-off)                                  |
+|              |                                                                |
+| ------------ | -------------------------------------------------------------- |
+| Status       | draft — for review by the Data Protection Officer (DPO)        |
+| Extension id | `crypto-shredding/1`                                           |
+| Date         | 2026-09-29                                                     |
+| Companion to | [grv-storage-v2.md](grv-storage-v2.md) (GRV v2 storage layout) |
+| Sign-off     | see [§13](#13-sign-off)                                        |
 
 ## 1. Summary
 
@@ -42,11 +42,11 @@ For a DPO, the guarantees and their limits in plain terms:
 limited time in places this RFC controls. Erasure is complete when the last
 of them expires:
 
-| where                         | bounded by                                  | parameter |
-|-------------------------------|---------------------------------------------|-----------|
-| key-store backups             | backup retention                            | `B`       |
-| in-memory key caches          | cache time-to-live                          | `T`       |
-| warehouse copies (time travel, fail-safe) | warehouse retention settings    | `W`       |
+| where                                     | bounded by                   | parameter |
+| ----------------------------------------- | ---------------------------- | --------- |
+| key-store backups                         | backup retention             | `B`       |
+| in-memory key caches                      | cache time-to-live           | `T`       |
+| warehouse copies (time travel, fail-safe) | warehouse retention settings | `W`       |
 
 The erasure completion date is `shred time + max(B, T, W)`. Each value is
 recorded at sign-off (§13) and must fit within the legal response deadline:
@@ -63,23 +63,23 @@ one month under GDPR Art. 12(3), extendable by two further months.
 
 ## 3. Terms
 
-| term | meaning |
-|------|---------|
-| **subject** | the person or account whose erasure requests are honored |
-| **subject id** | a surrogate identifier of the subject, such as an internal account id; not personal data on its own |
-| **protected column** | a column whose values are personal data; stored only encrypted |
-| **key scope** | the data one key covers: one subject within one GRV partition (default), or within one table |
-| **key id (`kid`)** | the canonical name of a key scope (§6.1) |
-| **DEK** | data encryption key: one per key id and generation |
-| **wrapping key (WK)** | a key-store key that encrypts ("wraps") DEKs; itself wrapped by the KEK |
-| **KEK** | key encryption key held in the KMS; never leaves the KMS |
-| **key store** | the mutable database holding wrapped DEKs and wrapping keys |
-| **suppression list** | subjects that have been shredded; no key is ever created for them again |
-| **shredding** | irreversibly deleting all of a subject's DEKs |
+| term                  | meaning                                                                                             |
+| --------------------- | --------------------------------------------------------------------------------------------------- |
+| **subject**           | the person or account whose erasure requests are honored                                            |
+| **subject id**        | a surrogate identifier of the subject, such as an internal account id; not personal data on its own |
+| **protected column**  | a column whose values are personal data; stored only encrypted                                      |
+| **key scope**         | the data one key covers: one subject within one GRV partition (default), or within one table        |
+| **key id (`kid`)**    | the canonical name of a key scope (§6.1)                                                            |
+| **DEK**               | data encryption key: one per key id and generation                                                  |
+| **wrapping key (WK)** | a key-store key that encrypts ("wraps") DEKs; itself wrapped by the KEK                             |
+| **KEK**               | key encryption key held in the KMS; never leaves the KMS                                            |
+| **key store**         | the mutable database holding wrapped DEKs and wrapping keys                                         |
+| **suppression list**  | subjects that have been shredded; no key is ever created for them again                             |
+| **shredding**         | irreversibly deleting all of a subject's DEKs                                                       |
 
 ## 4. Design overview
 
-```
+```text
 KMS key encryption key (KEK)              never leaves the KMS
   │ wraps (KMS encrypt/decrypt)
 wrapping keys (WK)                         few; in the key store
@@ -128,12 +128,12 @@ does not implement this RFC must refuse to write to the table:
 }
 ```
 
-| field            | required | notes |
-|------------------|----------|-------|
-| `subject_column` | yes      | the column whose value selects the key: a column of GRV type `string` or `int64`, never protected, non-null in every row |
-| `key_scope`      | yes      | `partition` — one key per (subject, dataset, table, partition); or `table` — one key per (subject, dataset, table) |
+| field            | required | notes                                                                                                                        |
+| ---------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `subject_column` | yes      | the column whose value selects the key: a column of GRV type `string` or `int64`, never protected, non-null in every row     |
+| `key_scope`      | yes      | `partition` — one key per (subject, dataset, table, partition); or `table` — one key per (subject, dataset, table)           |
 | `on_suppressed`  | yes      | what writers do with rows of a shredded subject: `null` (write the row with protected columns null) or `drop` (omit the row) |
-| `dpia`           | no       | reference to the data protection impact assessment or record of processing that covers the table |
+| `dpia`           | no       | reference to the data protection impact assessment or record of processing that covers the table                             |
 
 Rules:
 
@@ -154,13 +154,12 @@ Each protected column is declared in the table's schema baseline (core §4)
 with an `ext` entry, in the same compare-and-swap that adds the column:
 
 ```json
-{ "name": "phone_number", "type": "binary",
-  "ext": { "crypto-shredding/1": { "plaintext_type": "string", "mode": "randomized" } } }
+{ "name": "phone_number", "type": "binary", "ext": { "crypto-shredding/1": { "plaintext_type": "string", "mode": "randomized" } } }
 ```
 
-| field            | notes |
-|------------------|-------|
-| `plaintext_type` | the value's type before encryption, in GRV type notation (core §4); one of `string`, `json`, `binary`, `boolean`, `int32`, `int64`, `float64`, `date`, `timestamp`, `decimal` |
+| field            | notes                                                                                                                                                                                                     |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `plaintext_type` | the value's type before encryption, in GRV type notation (core §4); one of `string`, `json`, `binary`, `boolean`, `int32`, `int64`, `float64`, `date`, `timestamp`, `decimal`                             |
 | `mode`           | `randomized` (AES-256-GCM; equal values encrypt differently) or `deterministic` (AES-256-SIV; equal values of one subject in one key scope and column encrypt identically, which allows equality lookups) |
 
 Rules:
@@ -182,7 +181,7 @@ Rules:
 
 A row's **key id** is derived from its subject id and GRV coordinates:
 
-```
+```text
 key_scope = partition:  cs1:<subject_id>:<dataset>/<table>/<partition path>
 key_scope = table:      cs1:<subject_id>:<dataset>/<table>
 ```
@@ -202,12 +201,12 @@ destination's key id.
 The key store is a transactional database outside GRV — never GRV itself,
 whose data is immutable. It holds:
 
-| table                 | columns |
-|-----------------------|---------|
+| table                 | columns                                                                                                                                                                           |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `deks`                | `kid`, `generation`, `subject_id`, `dataset`, `table`, `scope_path`, `wrapped_dek`, `wk_id`, `created_at`, `created_by`; unique on (`kid`, `generation`); indexed by `subject_id` |
-| `wrapping_keys`       | `wk_id`, `wrapped_wk` (by the KEK), `kek_version`, `created_at`, `state` (`active` or `decrypt_only`) |
-| `suppressed_subjects` | `subject_id`, `request_id`, `suppressed_at` |
-| `shredded_keys`       | `kid`, `generation`, `request_id`, `shredded_at`; no key material |
+| `wrapping_keys`       | `wk_id`, `wrapped_wk` (by the KEK), `kek_version`, `created_at`, `state` (`active` or `decrypt_only`)                                                                             |
+| `suppressed_subjects` | `subject_id`, `request_id`, `suppressed_at`                                                                                                                                       |
+| `shredded_keys`       | `kid`, `generation`, `request_id`, `shredded_at`; no key material                                                                                                                 |
 
 The **erasure log** (§10.4) is kept in a separate append-only store, not in
 the key store, so that it survives a key-store restore.
@@ -252,16 +251,17 @@ Requirements:
   `kid ‖ 0x00 ‖ generation` (decimal).
 - **Access.**
 
-  | principal                    | KMS permission on the KEK      | key store permission |
-  |------------------------------|--------------------------------|----------------------|
-  | key service                  | encrypt and decrypt            | manage wrapping keys |
-  | writers (ingest, publishers) | decrypt                        | read and insert `deks`; read `suppressed_subjects` |
-  | readers and pull clients     | decrypt                        | read `deks` |
-  | erasure operators            | none                           | delete `deks`; insert `suppressed_subjects` and `shredded_keys`; append to the erasure log |
-  | database administrators      | none                           | administer the database |
+  | principal                    | KMS permission on the KEK | key store permission                                                                       |
+  | ---------------------------- | ------------------------- | ------------------------------------------------------------------------------------------ |
+  | key service                  | encrypt and decrypt       | manage wrapping keys                                                                       |
+  | writers (ingest, publishers) | decrypt                   | read and insert `deks`; read `suppressed_subjects`                                         |
+  | readers and pull clients     | decrypt                   | read `deks`                                                                                |
+  | erasure operators            | none                      | delete `deks`; insert `suppressed_subjects` and `shredded_keys`; append to the erasure log |
+  | database administrators      | none                      | administer the database                                                                    |
 
   Nobody who administers the key store database also holds KMS decrypt, so
   no single role can read protected data from the key store alone.
+
 - **Audit.** KMS calls are logged: on Google Cloud, enable Data Access audit
   logs for Cloud KMS; on AWS, make sure CloudTrail does not exclude KMS
   events. Logs are retained per the security policy.
@@ -274,11 +274,11 @@ Requirements:
 
 Each non-null protected value is stored as a binary **envelope**:
 
-| offset | size | field |
-|--------|------|-------|
-| 0      | 1    | format version: `0x01` |
-| 1      | 1    | algorithm: `0x01` = AES-256-GCM (`randomized`), `0x02` = AES-256-SIV (`deterministic`) |
-| 2      | 4    | DEK generation, unsigned big-endian |
+| offset | size | field                                                                                                                   |
+| ------ | ---- | ----------------------------------------------------------------------------------------------------------------------- |
+| 0      | 1    | format version: `0x01`                                                                                                  |
+| 1      | 1    | algorithm: `0x01` = AES-256-GCM (`randomized`), `0x02` = AES-256-SIV (`deterministic`)                                  |
+| 2      | 4    | DEK generation, unsigned big-endian                                                                                     |
 | 6      | …    | AES-256-GCM: 12-byte random nonce ‖ ciphertext ‖ 16-byte tag. AES-256-SIV (RFC 5297): 16-byte synthetic IV ‖ ciphertext |
 
 - **Keys per algorithm.** The algorithm key is derived from the DEK with
@@ -290,15 +290,15 @@ Each non-null protected value is stored as a binary **envelope**:
   table, or column, or if its header is altered.
 - **Plaintext encoding.**
 
-  | `plaintext_type` | bytes encrypted |
-  |------------------|-----------------|
-  | `string`, `json` | UTF-8 |
-  | `binary`         | as is |
-  | `boolean`        | one byte, `0x00` or `0x01` |
-  | `int32`, `int64` | two's complement, big-endian, 4 or 8 bytes |
-  | `float64`        | IEEE 754 binary64, big-endian |
-  | `date`           | days since 1970-01-01 as `int32` |
-  | `timestamp`      | `int64` in the type's unit |
+  | `plaintext_type` | bytes encrypted                                              |
+  | ---------------- | ------------------------------------------------------------ |
+  | `string`, `json` | UTF-8                                                        |
+  | `binary`         | as is                                                        |
+  | `boolean`        | one byte, `0x00` or `0x01`                                   |
+  | `int32`, `int64` | two's complement, big-endian, 4 or 8 bytes                   |
+  | `float64`        | IEEE 754 binary64, big-endian                                |
+  | `date`           | days since 1970-01-01 as `int32`                             |
+  | `timestamp`      | `int64` in the type's unit                                   |
   | `decimal`        | unscaled value, two's complement, big-endian, minimal length |
 
 - **Nulls** are stored as null, unencrypted (§11, R6).
@@ -365,12 +365,12 @@ Each such copy needs its own erasure path, and all of them are listed in a
 
 ### 10.1 Roles
 
-| role | responsibility |
-|------|----------------|
+| role             | responsibility                                                                    |
+| ---------------- | --------------------------------------------------------------------------------- |
 | requester intake | receives and verifies requests (outside this RFC); maps the person to subject ids |
-| erasure operator | runs the procedure below |
-| approver | a second person who approves each shredding before it runs |
-| DPO | owns the procedure, reviews the erasure log, and signs off on this RFC |
+| erasure operator | runs the procedure below                                                          |
+| approver         | a second person who approves each shredding before it runs                        |
+| DPO              | owns the procedure, reviews the erasure log, and signs off on this RFC            |
 
 ### 10.2 Steps
 
@@ -434,17 +434,17 @@ no personal data beyond the surrogate subject id:
 
 ## 11. Residual risks
 
-| id | risk | bound or mitigation |
-|----|------|---------------------|
-| R1 | Deleted DEKs survive in key-store backups, log archives, or not yet vacuumed storage | all bounded by `B` days; restores reapply the erasure log first (§6.2) |
-| R2 | Plaintext survives in warehouse time travel or fail-safe | at most `W` days (§9) |
-| R3 | Processes hold unwrapped keys in memory | at most `T` minutes (§6.3) |
-| R4 | Plaintext copies outside GRV and the warehouse | plaintext inventory with owners and erasure paths (§9) |
-| R5 | Unprotected columns remain, linked to the subject id; they are pseudonymous personal data for as long as the subject id can be linked to the person | the DPO decides per table whether the remaining columns are acceptable, or protects them (checklist A8); erasing the subject-id mapping in the system of record makes the remainder anonymous |
-| R6 | Metadata is visible without keys: whether a value is null, ciphertext length (about the plaintext length), row counts per subject and partition, and, in deterministic mode, which values are equal within one key scope and column | accepted by the DPO (checklist F2); deterministic mode only where justified (A6) |
-| R7 | Anyone holding KMS decrypt and key-store read access can read protected data | separation of duties (§6.3), audit logs |
-| R8 | A mistaken shredding is irreversible | dry run and second approver (§10.2) |
-| R9 | Plaintext written before a table opted in, or by a non-conforming writer | tables are created with the extension; writers validate before commit (§8); DLP scans (checklist C7) |
+| id  | risk                                                                                                                                                                                                                                | bound or mitigation                                                                                                                                                                           |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1  | Deleted DEKs survive in key-store backups, log archives, or not yet vacuumed storage                                                                                                                                                | all bounded by `B` days; restores reapply the erasure log first (§6.2)                                                                                                                        |
+| R2  | Plaintext survives in warehouse time travel or fail-safe                                                                                                                                                                            | at most `W` days (§9)                                                                                                                                                                         |
+| R3  | Processes hold unwrapped keys in memory                                                                                                                                                                                             | at most `T` minutes (§6.3)                                                                                                                                                                    |
+| R4  | Plaintext copies outside GRV and the warehouse                                                                                                                                                                                      | plaintext inventory with owners and erasure paths (§9)                                                                                                                                        |
+| R5  | Unprotected columns remain, linked to the subject id; they are pseudonymous personal data for as long as the subject id can be linked to the person                                                                                 | the DPO decides per table whether the remaining columns are acceptable, or protects them (checklist A8); erasing the subject-id mapping in the system of record makes the remainder anonymous |
+| R6  | Metadata is visible without keys: whether a value is null, ciphertext length (about the plaintext length), row counts per subject and partition, and, in deterministic mode, which values are equal within one key scope and column | accepted by the DPO (checklist F2); deterministic mode only where justified (A6)                                                                                                              |
+| R7  | Anyone holding KMS decrypt and key-store read access can read protected data                                                                                                                                                        | separation of duties (§6.3), audit logs                                                                                                                                                       |
+| R8  | A mistaken shredding is irreversible                                                                                                                                                                                                | dry run and second approver (§10.2)                                                                                                                                                           |
+| R9  | Plaintext written before a table opted in, or by a non-conforming writer                                                                                                                                                            | tables are created with the extension; writers validate before commit (§8); DLP scans (checklist C7)                                                                                          |
 
 ## 12. Checklists
 
@@ -455,120 +455,120 @@ them.
 ### A. Table onboarding — data owner, per protected table
 
 - [ ] **A1** Personal-data columns are identified and recorded in the DPIA
-  or record of processing, whose reference is in the table's `dpia` field.
-  *Evidence:* DPIA entry, and the protected-column inventory listing (§5.2).
+      or record of processing, whose reference is in the table's `dpia` field.
+      _Evidence:_ DPIA entry, and the protected-column inventory listing (§5.2).
 - [ ] **A2** Every personal-data column is declared protected, including
-  derived forms (normalized values, hashes, free text that may contain
-  personal data). *Evidence:* the table's `.schema.json`.
+      derived forms (normalized values, hashes, free text that may contain
+      personal data). _Evidence:_ the table's `.schema.json`.
 - [ ] **A3** The subject column is a surrogate id that is not personal data
-  on its own, and the system of record that maps it to a person has its own
-  erasure procedure. *Evidence:* data model and the system of record's
-  procedure.
+      on its own, and the system of record that maps it to a person has its own
+      erasure procedure. _Evidence:_ data model and the system of record's
+      procedure.
 - [ ] **A4** No personal data in dataset names, table names, partition
-  keys, or partition values. *Evidence:* `.layout.json` and a sample of
-  partition paths.
+      keys, or partition values. _Evidence:_ `.layout.json` and a sample of
+      partition paths.
 - [ ] **A5** Key scope chosen, with the expected key count (subjects ×
-  partitions for `partition` scope). *Evidence:* sizing note.
+      partitions for `partition` scope). _Evidence:_ sizing note.
 - [ ] **A6** Deterministic mode is used only where equality lookups require
-  it, with the reason recorded. *Evidence:* column list with reasons.
+      it, with the reason recorded. _Evidence:_ column list with reasons.
 - [ ] **A7** `on_suppressed` behavior is chosen and agreed with the DPO.
 - [ ] **A8** The unprotected columns that remain after shredding are
-  reviewed and accepted (R5). *Evidence:* DPO note.
+      reviewed and accepted (R5). _Evidence:_ DPO note.
 
 ### B. Key management — platform team
 
 - [ ] **B1** The KEK is in the KMS, with automatic rotation enabled and
-  access restricted per §6.3. *Evidence:* KMS key configuration and IAM
-  policy export.
+      access restricted per §6.3. _Evidence:_ KMS key configuration and IAM
+      policy export.
 - [ ] **B2** The key store performs real deletes, removes deleted rows
-  physically within `B` days, keeps backups, point-in-time recovery, and
-  log archives for at most `B` days, and deletions reach every replica.
-  *Evidence:* database, vacuum, and backup configuration.
+      physically within `B` days, keeps backups, point-in-time recovery, and
+      log archives for at most `B` days, and deletions reach every replica.
+      _Evidence:_ database, vacuum, and backup configuration.
 - [ ] **B3** The restore procedure reapplies the erasure log before any
-  client connects. *Evidence:* runbook and a restore drill.
+      client connects. _Evidence:_ runbook and a restore drill.
 - [ ] **B4** A unique constraint enforces one DEK per (key id, generation),
-  and DEK creation checks the suppression list in the same transaction.
-  *Evidence:* schema and a concurrency test.
+      and DEK creation checks the suppression list in the same transaction.
+      _Evidence:_ schema and a concurrency test.
 - [ ] **B5** Keys are cached only in memory, for at most `T` minutes.
-  *Evidence:* configuration and code reference.
+      _Evidence:_ configuration and code reference.
 - [ ] **B6** Database administrators hold no KMS decrypt permission, and
-  erasure operators hold no KMS permission. *Evidence:* IAM export.
-- [ ] **B7** KMS audit logging is enabled and retained. *Evidence:* logging
-  configuration.
+      erasure operators hold no KMS permission. _Evidence:_ IAM export.
+- [ ] **B7** KMS audit logging is enabled and retained. _Evidence:_ logging
+      configuration.
 
 ### C. Writers and readers — engineering
 
-- [ ] **C1** Writers refuse tables with unknown extensions. *Evidence:*
-  automated test.
+- [ ] **C1** Writers refuse tables with unknown extensions. _Evidence:_
+      automated test.
 - [ ] **C2** The envelope format, key derivation, and associated data follow
-  §7, using a vetted library; the test vectors pass. *Evidence:* test
-  report.
+      §7, using a vetted library; the test vectors pass. _Evidence:_ test
+      report.
 - [ ] **C3** Parquet statistics, dictionaries, and bloom filters are
-  disabled for protected columns. *Evidence:* writer configuration and a
-  file inspection.
+      disabled for protected columns. _Evidence:_ writer configuration and a
+      file inspection.
 - [ ] **C4** Writers validate envelopes before committing a version.
-  *Evidence:* test that plaintext is rejected.
+      _Evidence:_ test that plaintext is rejected.
 - [ ] **C5** No personal data in logs, error messages, metrics, or GRV
-  metadata. *Evidence:* log review and a test with synthetic personal data.
+      metadata. _Evidence:_ log review and a test with synthetic personal data.
 - [ ] **C6** Readers return null for shredded values and report counts; an
-  authentication failure raises an error. *Evidence:* automated test.
+      authentication failure raises an error. _Evidence:_ automated test.
 - [ ] **C7** A data loss prevention (DLP) scan checks new versions for
-  plaintext personal data in unprotected columns, with alerts.
-  *Evidence:* scan configuration and a sample report.
+      plaintext personal data in unprotected columns, with alerts.
+      _Evidence:_ scan configuration and a sample report.
 
 ### D. Copies and derived data — data owners and platform team
 
 - [ ] **D1** The plaintext inventory lists every place where decrypted data
-  lands, each with an owner. *Evidence:* the inventory.
+      lands, each with an owner. _Evidence:_ the inventory.
 - [ ] **D2** Each inventory entry has an erasure mechanism and a maximum
-  delay within the deadline. *Evidence:* the inventory.
+      delay within the deadline. _Evidence:_ the inventory.
 - [ ] **D3** Warehouse time-travel and fail-safe retention is at most `W`
-  days. *Evidence:* warehouse configuration.
+      days. _Evidence:_ warehouse configuration.
 - [ ] **D4** Derived GRV product tables protect derived personal data under
-  their own key ids, and the aggregation threshold is agreed. *Evidence:*
-  product schemas and the DPO note.
+      their own key ids, and the aggregation threshold is agreed. _Evidence:_
+      product schemas and the DPO note.
 
 ### E. Erasure operations — operations team
 
 - [ ] **E1** The §10 procedure is adopted, with named operators and
-  approvers. *Evidence:* runbook and roster.
+      approvers. _Evidence:_ runbook and roster.
 - [ ] **E2** Every shredding has a reviewed dry run and a second approver.
-  *Evidence:* erasure log fields.
-- [ ] **E3** Legal holds are checked before shredding. *Evidence:* runbook
-  step and tooling.
+      _Evidence:_ erasure log fields.
+- [ ] **E3** Legal holds are checked before shredding. _Evidence:_ runbook
+      step and tooling.
 - [ ] **E4** Erasure records contain no personal data beyond the surrogate
-  subject id. *Evidence:* sample record.
+      subject id. _Evidence:_ sample record.
 - [ ] **E5** An end-to-end erasure drill on a synthetic subject passed, and
-  is repeated at least yearly. *Evidence:* drill report, including step 8
-  verification.
+      is repeated at least yearly. _Evidence:_ drill report, including step 8
+      verification.
 - [ ] **E6** `max(B, T, W)` plus operating time fits within the legal
-  deadline. *Evidence:* the values from §13.
+      deadline. _Evidence:_ the values from §13.
 
 ### F. DPO decisions
 
 - [ ] **F1** Crypto-shredding is accepted as the erasure method for data in
-  GRV.
+      GRV.
 - [ ] **F2** The residual risks R1–R9 (§11) are accepted, with the values
-  of `B`, `T`, and `W` below.
+      of `B`, `T`, and `W` below.
 - [ ] **F3** The treatment of remaining pseudonymous data (R5) is accepted.
 - [ ] **F4** The subject granularity is confirmed (open question 1).
 - [ ] **F5** The `on_suppressed` default and the permanence of suppression
-  are confirmed (open question 2).
+      are confirmed (open question 2).
 
 ## 13. Sign-off
 
-| parameter | value | set by |
-|-----------|-------|--------|
-| `B` — key-store backup retention (days) | | platform |
-| `T` — key cache time-to-live (minutes) | | platform |
-| `W` — warehouse time travel + fail-safe (days) | | platform |
-| erasure response target (days) | | DPO |
+| parameter                                      | value | set by   |
+| ---------------------------------------------- | ----- | -------- |
+| `B` — key-store backup retention (days)        |       | platform |
+| `T` — key cache time-to-live (minutes)         |       | platform |
+| `W` — warehouse time travel + fail-safe (days) |       | platform |
+| erasure response target (days)                 |       | DPO      |
 
-| role | name | date | decision |
-|------|------|------|----------|
-| Data Protection Officer | | | |
-| Security | | | |
-| Platform owner | | | |
+| role                    | name | date | decision |
+| ----------------------- | ---- | ---- | -------- |
+| Data Protection Officer |      |      |          |
+| Security                |      |      |          |
+| Platform owner          |      |      |          |
 
 ## 14. Open questions
 

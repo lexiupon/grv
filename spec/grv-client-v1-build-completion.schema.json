@@ -4,14 +4,14 @@
   "$comment": "The driver attests completion. Validate unique output table names, exact session binding/mappings, and complete selected-output coverage through grv-client-v1.md.",
   "type": "object",
   "properties": {
-    "result_version": {"const": 1},
-    "run_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
-    "workspace_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-    "declaration_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-    "kind": {"enum": ["engine", "direct", "omission-only"]},
-    "invocation_id": {"type": "string", "minLength": 1},
-    "status": {"const": "succeeded"},
-    "writers_stopped": {"const": true},
+    "result_version": { "const": 1 },
+    "run_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
+    "workspace_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
+    "declaration_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "kind": { "enum": ["engine", "direct", "omission-only"] },
+    "invocation_id": { "type": "string", "minLength": 1 },
+    "status": { "const": "succeeded" },
+    "writers_stopped": { "const": true },
     "completed_at": {
       "type": "string",
       "format": "date-time",
@@ -22,8 +22,8 @@
       "items": {
         "type": "object",
         "properties": {
-          "table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-          "engine_table": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*\\.[a-z0-9_][a-z0-9_-]*$"}
+          "table": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+          "engine_table": { "type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*\\.[a-z0-9_][a-z0-9_-]*$" }
         },
         "additionalProperties": false,
         "required": ["table", "engine_table"]
@@ -46,8 +46,8 @@
   ],
   "allOf": [
     {
-      "if": {"properties": {"kind": {"const": "omission-only"}}},
-      "then": {"properties": {"completed_outputs": {"maxItems": 0}}}
+      "if": { "properties": { "kind": { "const": "omission-only" } } },
+      "then": { "properties": { "completed_outputs": { "maxItems": 0 } } }
     }
   ]
 }

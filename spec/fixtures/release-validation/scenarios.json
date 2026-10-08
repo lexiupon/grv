@@ -24,11 +24,7 @@
       "line": 2076,
       "scenario": "Failure while refreshing the second table",
       "required_result": "All table, schema, ownership, and checkpoint changes roll back",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs",
-        "crates/grv-core/src/pull.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-conformance/tests/pull_cli.rs", "crates/grv-core/src/pull.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -38,11 +34,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-01",
-          "REL-PULL-04",
-          "REL-PULL-06"
-        ]
+        "release_cases": ["REL-PULL-01", "REL-PULL-04", "REL-PULL-06"]
       }
     },
     {
@@ -52,11 +44,7 @@
       "line": 2077,
       "scenario": "Ambiguous pull commit",
       "required_result": "Fence the prior writer, recover DuckDB, and resolve the immutable attempt receipt",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs",
-        "crates/grv-core/src/pull.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-conformance/tests/pull_cli.rs", "crates/grv-core/src/pull.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -66,11 +54,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-01",
-          "REL-PULL-04",
-          "REL-PULL-06"
-        ]
+        "release_cases": ["REL-PULL-01", "REL-PULL-04", "REL-PULL-06"]
       }
     },
     {
@@ -80,11 +64,7 @@
       "line": 2078,
       "scenario": "A committed pull crashes, then another pull advances the checkpoint",
       "required_result": "Retry with the original ID returns the original receipt without reapplying or rewinding",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs",
-        "crates/grv-core/src/pull.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-conformance/tests/pull_cli.rs", "crates/grv-core/src/pull.rs"],
       "applicability": {
         "status": "applicable",
         "reviewed": true,
@@ -98,10 +78,7 @@
         "assertions": [
           "Child exits86 after commit; reopened destination resolves original revision2 receipt after source removal. Later successful pull advances revision3, then originalapply returns identical receipt without source/reapply/rewind; rows remain11(local) or empty(S3View). Hookexit proof, not arbitrary cancel/EOF."
         ],
-        "release_cases": [
-          "REL-PULL-04",
-          "REL-PULL-06"
-        ]
+        "release_cases": ["REL-PULL-04", "REL-PULL-06"]
       },
       "execution_evidence": [
         {
@@ -120,11 +97,7 @@
       "line": 2079,
       "scenario": "A successful pull's source data is later pruned",
       "required_result": "Receipt replay still returns its committed outcome without downloading again",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs",
-        "crates/grv-core/src/pull.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-conformance/tests/pull_cli.rs", "crates/grv-core/src/pull.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -134,11 +107,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-01",
-          "REL-PULL-04",
-          "REL-PULL-06"
-        ]
+        "release_cases": ["REL-PULL-01", "REL-PULL-04", "REL-PULL-06"]
       }
     },
     {
@@ -148,11 +117,7 @@
       "line": 2080,
       "scenario": "A pull retry changes its declaration, target, or requested selector",
       "required_result": "Reject reuse with `REQUEST_MISMATCH`",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs",
-        "crates/grv-core/src/pull.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-conformance/tests/pull_cli.rs", "crates/grv-core/src/pull.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -162,11 +127,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-01",
-          "REL-PULL-04",
-          "REL-PULL-06"
-        ]
+        "release_cases": ["REL-PULL-01", "REL-PULL-04", "REL-PULL-06"]
       }
     },
     {
@@ -176,11 +137,7 @@
       "line": 2081,
       "scenario": "Receipt metadata is missing in a previously initialized workspace",
       "required_result": "Report inconsistent metadata; do not infer rollback or invent an empty history",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs",
-        "crates/grv-core/src/pull.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-conformance/tests/pull_cli.rs", "crates/grv-core/src/pull.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -190,11 +147,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-01",
-          "REL-PULL-04",
-          "REL-PULL-06"
-        ]
+        "release_cases": ["REL-PULL-01", "REL-PULL-04", "REL-PULL-06"]
       }
     },
     {
@@ -204,11 +157,7 @@
       "line": 2082,
       "scenario": "A declared not-null check fails in an otherwise unchanged table",
       "required_result": "Roll back the whole pull, including the checkpoint and attempt receipt",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs",
-        "crates/grv-core/src/pull.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-conformance/tests/pull_cli.rs", "crates/grv-core/src/pull.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -218,11 +167,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-01",
-          "REL-PULL-04",
-          "REL-PULL-06"
-        ]
+        "release_cases": ["REL-PULL-01", "REL-PULL-04", "REL-PULL-06"]
       }
     },
     {
@@ -232,11 +177,7 @@
       "line": 2083,
       "scenario": "Adapter cancellation sees an unresolved destination commit",
       "required_result": "Preserve receipts and journal, and resolve the outcome; never report an assumed rollback",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs",
-        "crates/grv-core/src/pull.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-conformance/tests/pull_cli.rs", "crates/grv-core/src/pull.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -246,11 +187,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-01",
-          "REL-PULL-04",
-          "REL-PULL-06"
-        ]
+        "release_cases": ["REL-PULL-01", "REL-PULL-04", "REL-PULL-06"]
       }
     },
     {
@@ -260,11 +197,7 @@
       "line": 2084,
       "scenario": "Another binding overlaps an owned replacement scope",
       "required_result": "Reject before mutation regardless of source selector",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs",
-        "crates/grv-core/src/pull.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-conformance/tests/pull_cli.rs", "crates/grv-core/src/pull.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -274,11 +207,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-01",
-          "REL-PULL-04",
-          "REL-PULL-06"
-        ]
+        "release_cases": ["REL-PULL-01", "REL-PULL-04", "REL-PULL-06"]
       }
     },
     {
@@ -288,11 +217,7 @@
       "line": 2085,
       "scenario": "A replacement declaration changes its mapping members",
       "required_result": "Update the stable owner scope atomically and clear obsolete owned targets",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs",
-        "crates/grv-core/src/pull.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-conformance/tests/pull_cli.rs", "crates/grv-core/src/pull.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -302,11 +227,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-01",
-          "REL-PULL-04",
-          "REL-PULL-06"
-        ]
+        "release_cases": ["REL-PULL-01", "REL-PULL-04", "REL-PULL-06"]
       }
     },
     {
@@ -316,11 +237,7 @@
       "line": 2086,
       "scenario": "Pull uses a fixed revision",
       "required_result": "Write the declared destination; create no generated historical schema",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs",
-        "crates/grv-core/src/pull.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-conformance/tests/pull_cli.rs", "crates/grv-core/src/pull.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -330,11 +247,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-01",
-          "REL-PULL-04",
-          "REL-PULL-06"
-        ]
+        "release_cases": ["REL-PULL-01", "REL-PULL-04", "REL-PULL-06"]
       }
     },
     {
@@ -344,11 +257,7 @@
       "line": 2087,
       "scenario": "The same owned replacement scope switches between latest and fixed selectors",
       "required_result": "Permit the explicit request without changing ownership or target naming",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs",
-        "crates/grv-core/src/pull.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-conformance/tests/pull_cli.rs", "crates/grv-core/src/pull.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -358,11 +267,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-01",
-          "REL-PULL-04",
-          "REL-PULL-06"
-        ]
+        "release_cases": ["REL-PULL-01", "REL-PULL-04", "REL-PULL-06"]
       }
     },
     {
@@ -372,11 +277,7 @@
       "line": 2088,
       "scenario": "Identity replacement gains a partition selector or SQL",
       "required_result": "Require a separate application scope; never retain build-input eligibility",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs",
-        "crates/grv-core/src/pull.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-conformance/tests/pull_cli.rs", "crates/grv-core/src/pull.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -386,11 +287,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-01",
-          "REL-PULL-04",
-          "REL-PULL-06"
-        ]
+        "release_cases": ["REL-PULL-01", "REL-PULL-04", "REL-PULL-06"]
       }
     },
     {
@@ -414,10 +311,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-02",
-          "REL-CAN-02"
-        ]
+        "release_cases": ["REL-PULL-02", "REL-CAN-02"]
       }
     },
     {
@@ -441,10 +335,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-02",
-          "REL-CAN-02"
-        ]
+        "release_cases": ["REL-PULL-02", "REL-CAN-02"]
       }
     },
     {
@@ -468,10 +359,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-02",
-          "REL-CAN-02"
-        ]
+        "release_cases": ["REL-PULL-02", "REL-CAN-02"]
       }
     },
     {
@@ -495,10 +383,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-02",
-          "REL-CAN-02"
-        ]
+        "release_cases": ["REL-PULL-02", "REL-CAN-02"]
       }
     },
     {
@@ -522,10 +407,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-02",
-          "REL-CAN-02"
-        ]
+        "release_cases": ["REL-PULL-02", "REL-CAN-02"]
       }
     },
     {
@@ -549,10 +431,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-02",
-          "REL-CAN-02"
-        ]
+        "release_cases": ["REL-PULL-02", "REL-CAN-02"]
       }
     },
     {
@@ -576,10 +455,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-02",
-          "REL-CAN-02"
-        ]
+        "release_cases": ["REL-PULL-02", "REL-CAN-02"]
       }
     },
     {
@@ -603,10 +479,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-02",
-          "REL-CAN-02"
-        ]
+        "release_cases": ["REL-PULL-02", "REL-CAN-02"]
       }
     },
     {
@@ -630,10 +503,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-02",
-          "REL-CAN-02"
-        ]
+        "release_cases": ["REL-PULL-02", "REL-CAN-02"]
       }
     },
     {
@@ -643,11 +513,7 @@
       "line": 2108,
       "scenario": "DuckDB append SQL excludes an existing business ID",
       "required_result": "Preserve existing rows; insert only query-selected rows",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-core/src/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-core/src/pull.rs", "crates/grv-conformance/tests/pull_cli.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -657,11 +523,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-03",
-          "REL-PULL-04",
-          "REL-PULL-05"
-        ]
+        "release_cases": ["REL-PULL-03", "REL-PULL-04", "REL-PULL-05"]
       }
     },
     {
@@ -671,11 +533,7 @@
       "line": 2109,
       "scenario": "Incoming rows duplicate an ID and SQL uses a window rule",
       "required_result": "Apply the declared rule; infer no extra business-key policy",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-core/src/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-core/src/pull.rs", "crates/grv-conformance/tests/pull_cli.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -685,11 +543,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-03",
-          "REL-PULL-04",
-          "REL-PULL-05"
-        ]
+        "release_cases": ["REL-PULL-03", "REL-PULL-04", "REL-PULL-05"]
       }
     },
     {
@@ -699,11 +553,7 @@
       "line": 2110,
       "scenario": "SQL append runs again with the same successful attempt ID",
       "required_result": "Return its receipt without re-evaluating SQL or duplicating rows",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-core/src/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-core/src/pull.rs", "crates/grv-conformance/tests/pull_cli.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -713,11 +563,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-03",
-          "REL-PULL-04",
-          "REL-PULL-05"
-        ]
+        "release_cases": ["REL-PULL-03", "REL-PULL-04", "REL-PULL-05"]
       }
     },
     {
@@ -727,11 +573,7 @@
       "line": 2111,
       "scenario": "SQL append runs with a fresh attempt against the same revision",
       "required_result": "Evaluate current local conditions; infer no snapshot-ledger no-op",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-core/src/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-core/src/pull.rs", "crates/grv-conformance/tests/pull_cli.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -741,11 +583,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-03",
-          "REL-PULL-04",
-          "REL-PULL-05"
-        ]
+        "release_cases": ["REL-PULL-03", "REL-PULL-04", "REL-PULL-05"]
       }
     },
     {
@@ -755,11 +593,7 @@
       "line": 2112,
       "scenario": "Two output queries inspect destination rows",
       "required_result": "Both see the same pre-write state; no query sees another output's inserts",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-core/src/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-core/src/pull.rs", "crates/grv-conformance/tests/pull_cli.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -769,11 +603,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-03",
-          "REL-PULL-04",
-          "REL-PULL-05"
-        ]
+        "release_cases": ["REL-PULL-03", "REL-PULL-04", "REL-PULL-05"]
       }
     },
     {
@@ -783,11 +613,7 @@
       "line": 2113,
       "scenario": "Append SQL fails while writing its second target",
       "required_result": "Roll back rows, schema and binding metadata, checks, and receipts together",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-core/src/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-core/src/pull.rs", "crates/grv-conformance/tests/pull_cli.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -797,11 +623,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-03",
-          "REL-PULL-04",
-          "REL-PULL-05"
-        ]
+        "release_cases": ["REL-PULL-03", "REL-PULL-04", "REL-PULL-05"]
       }
     },
     {
@@ -811,11 +633,7 @@
       "line": 2114,
       "scenario": "Append produces zero rows",
       "required_result": "Commit a successful zero-row import receipt",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-core/src/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-core/src/pull.rs", "crates/grv-conformance/tests/pull_cli.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -825,11 +643,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-03",
-          "REL-PULL-04",
-          "REL-PULL-05"
-        ]
+        "release_cases": ["REL-PULL-03", "REL-PULL-04", "REL-PULL-05"]
       }
     },
     {
@@ -839,11 +653,7 @@
       "line": 2115,
       "scenario": "Append targets an existing ordinary table with a different schema",
       "required_result": "Reject before inserting or altering existing application rows",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-core/src/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-core/src/pull.rs", "crates/grv-conformance/tests/pull_cli.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -853,11 +663,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-03",
-          "REL-PULL-04",
-          "REL-PULL-05"
-        ]
+        "release_cases": ["REL-PULL-03", "REL-PULL-04", "REL-PULL-05"]
       }
     },
     {
@@ -867,11 +673,7 @@
       "line": 2116,
       "scenario": "SQL uses DML, multiple statements, or external-read functions",
       "required_result": "Reject before destination mutation",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-core/src/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-core/src/pull.rs", "crates/grv-conformance/tests/pull_cli.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -881,11 +683,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-03",
-          "REL-PULL-04",
-          "REL-PULL-05"
-        ]
+        "release_cases": ["REL-PULL-03", "REL-PULL-04", "REL-PULL-05"]
       }
     },
     {
@@ -895,11 +693,7 @@
       "line": 2117,
       "scenario": "SQL output names, order, or types differ from the resolved output column contract",
       "required_result": "Reject without silent projection or lossy casts",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-core/src/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-core/src/pull.rs", "crates/grv-conformance/tests/pull_cli.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -909,11 +703,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-03",
-          "REL-PULL-04",
-          "REL-PULL-05"
-        ]
+        "release_cases": ["REL-PULL-03", "REL-PULL-04", "REL-PULL-05"]
       }
     },
     {
@@ -923,11 +713,7 @@
       "line": 2118,
       "scenario": "A SQL file contains two statements or an external-scanning local view",
       "required_result": "Reject before writes, using the adapter parser and execution dependency contract",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/pull.rs",
-        "crates/grv-core/src/pull.rs",
-        "crates/grv-conformance/tests/pull_cli.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/pull.rs", "crates/grv-core/src/pull.rs", "crates/grv-conformance/tests/pull_cli.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -937,11 +723,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-03",
-          "REL-PULL-04",
-          "REL-PULL-05"
-        ]
+        "release_cases": ["REL-PULL-03", "REL-PULL-04", "REL-PULL-05"]
       }
     },
     {
@@ -965,11 +747,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-05",
-          "REL-SEC-02",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BUILD-05", "REL-SEC-02", "REL-SEC-03"]
       }
     },
     {
@@ -993,11 +771,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-05",
-          "REL-SEC-02",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BUILD-05", "REL-SEC-02", "REL-SEC-03"]
       }
     },
     {
@@ -1021,11 +795,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-05",
-          "REL-SEC-02",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BUILD-05", "REL-SEC-02", "REL-SEC-03"]
       }
     },
     {
@@ -1049,11 +819,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-05",
-          "REL-SEC-02",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BUILD-05", "REL-SEC-02", "REL-SEC-03"]
       }
     },
     {
@@ -1078,15 +844,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1111,15 +869,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1144,15 +894,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1177,15 +919,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1210,15 +944,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1247,15 +973,7 @@
         "assertions": [
           "Transitive target cycle returns InvalidDeclaration with derived -> upstream -> bridge -> derived; target directory absent. Direct self-cycle is likewise rejected before target creation."
         ],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       },
       "execution_evidence": [
         {
@@ -1290,15 +1008,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1323,15 +1033,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1356,15 +1058,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1389,15 +1083,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1422,15 +1108,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1455,15 +1133,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1488,15 +1158,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1521,15 +1183,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1554,15 +1208,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1587,15 +1233,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1620,15 +1258,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1653,15 +1283,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1686,15 +1308,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1719,15 +1333,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1752,15 +1358,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -1785,13 +1383,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-02",
-          "REL-LOCAL-03",
-          "REL-LOCAL-04",
-          "REL-REC-01",
-          "REL-REC-02"
-        ]
+        "release_cases": ["REL-LOCAL-02", "REL-LOCAL-03", "REL-LOCAL-04", "REL-REC-01", "REL-REC-02"]
       }
     },
     {
@@ -1816,13 +1408,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-02",
-          "REL-LOCAL-03",
-          "REL-LOCAL-04",
-          "REL-REC-01",
-          "REL-REC-02"
-        ]
+        "release_cases": ["REL-LOCAL-02", "REL-LOCAL-03", "REL-LOCAL-04", "REL-REC-01", "REL-REC-02"]
       }
     },
     {
@@ -1851,13 +1437,7 @@
         "assertions": [
           "Three histories covering version ABA, absent/present/absent and removed/restored pairs each return StateConflict from revision 1 to 3; unchanged history succeeds."
         ],
-        "release_cases": [
-          "REL-LOCAL-02",
-          "REL-LOCAL-03",
-          "REL-LOCAL-04",
-          "REL-REC-01",
-          "REL-REC-02"
-        ]
+        "release_cases": ["REL-LOCAL-02", "REL-LOCAL-03", "REL-LOCAL-04", "REL-REC-01", "REL-REC-02"]
       },
       "execution_evidence": [
         {
@@ -1896,13 +1476,7 @@
         "assertions": [
           "Completed zero-row capture has no export groups and one effective partition omission; finalization commits revision 2 with empty state and no newly contributed version entries."
         ],
-        "release_cases": [
-          "REL-LOCAL-02",
-          "REL-LOCAL-03",
-          "REL-LOCAL-04",
-          "REL-REC-01",
-          "REL-REC-02"
-        ]
+        "release_cases": ["REL-LOCAL-02", "REL-LOCAL-03", "REL-LOCAL-04", "REL-REC-01", "REL-REC-02"]
       },
       "execution_evidence": [
         {
@@ -1943,13 +1517,7 @@
           "Complete canonical empty unpartitioned table first publishes revision 1; Changed repeat reuses version 1 and returns no-op with no sealed entries; All instead writes a new version.",
           "Two-file equality rejects changed hash, size, filename or missing file; this core empty-snapshot example is not full cross-platform/live qualification."
         ],
-        "release_cases": [
-          "REL-LOCAL-02",
-          "REL-LOCAL-03",
-          "REL-LOCAL-04",
-          "REL-REC-01",
-          "REL-REC-02"
-        ]
+        "release_cases": ["REL-LOCAL-02", "REL-LOCAL-03", "REL-LOCAL-04", "REL-REC-01", "REL-REC-02"]
       },
       "execution_evidence": [
         {
@@ -1984,13 +1552,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-02",
-          "REL-LOCAL-03",
-          "REL-LOCAL-04",
-          "REL-REC-01",
-          "REL-REC-02"
-        ]
+        "release_cases": ["REL-LOCAL-02", "REL-LOCAL-03", "REL-LOCAL-04", "REL-REC-01", "REL-REC-02"]
       }
     },
     {
@@ -2019,13 +1581,7 @@
         "assertions": [
           "After injected terminal-progress persistence failure, publication exists and terminal evidence does not. Delete capture and corrupt plan digest; retry recovers revision 1 and never invokes offline-check callback. Fault is callback failure, not OS kill."
         ],
-        "release_cases": [
-          "REL-LOCAL-02",
-          "REL-LOCAL-03",
-          "REL-LOCAL-04",
-          "REL-REC-01",
-          "REL-REC-02"
-        ]
+        "release_cases": ["REL-LOCAL-02", "REL-LOCAL-03", "REL-LOCAL-04", "REL-REC-01", "REL-REC-02"]
       },
       "execution_evidence": [
         {
@@ -2064,13 +1620,7 @@
         "assertions": [
           "Applied CAS with lost response returns Published revision 1 on abort; commit count unchanged and no engine access. Unapplied control returns Aborted. Local fault wrapper, not real-cloud publication evidence."
         ],
-        "release_cases": [
-          "REL-LOCAL-02",
-          "REL-LOCAL-03",
-          "REL-LOCAL-04",
-          "REL-REC-01",
-          "REL-REC-02"
-        ]
+        "release_cases": ["REL-LOCAL-02", "REL-LOCAL-03", "REL-LOCAL-04", "REL-REC-01", "REL-REC-02"]
       },
       "execution_evidence": [
         {
@@ -2105,13 +1655,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-02",
-          "REL-LOCAL-03",
-          "REL-LOCAL-04",
-          "REL-REC-01",
-          "REL-REC-02"
-        ]
+        "release_cases": ["REL-LOCAL-02", "REL-LOCAL-03", "REL-LOCAL-04", "REL-REC-01", "REL-REC-02"]
       }
     },
     {
@@ -2140,13 +1684,7 @@
         "assertions": [
           "After seal before lease failure, delete capture. Wrong sealed entries refuse ExtractionIncomplete; unchanged sealed export plan publishes revision 1 without source capture."
         ],
-        "release_cases": [
-          "REL-LOCAL-02",
-          "REL-LOCAL-03",
-          "REL-LOCAL-04",
-          "REL-REC-01",
-          "REL-REC-02"
-        ]
+        "release_cases": ["REL-LOCAL-02", "REL-LOCAL-03", "REL-LOCAL-04", "REL-REC-01", "REL-REC-02"]
       },
       "execution_evidence": [
         {
@@ -2181,13 +1719,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-02",
-          "REL-LOCAL-03",
-          "REL-LOCAL-04",
-          "REL-REC-01",
-          "REL-REC-02"
-        ]
+        "release_cases": ["REL-LOCAL-02", "REL-LOCAL-03", "REL-LOCAL-04", "REL-REC-01", "REL-REC-02"]
       }
     },
     {
@@ -2743,11 +2275,7 @@
       "line": 2194,
       "scenario": "A declaration has duplicate YAML keys, unknown fields, an invalid selector, or an unsupported Arrow type",
       "required_result": "Reject before engine or GRV mutation",
-      "candidate_test_files": [
-        "crates/grv-core/src/declaration.rs",
-        "crates/grv-core/src/normalize.rs",
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-core/src/declaration.rs", "crates/grv-core/src/normalize.rs", "crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -2757,13 +2285,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-CAN-02",
-          "REL-SEC-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-CAN-02", "REL-SEC-01", "REL-SEC-02"]
       }
     },
     {
@@ -2773,11 +2295,7 @@
       "line": 2195,
       "scenario": "A column or SQL file changes on an unfinished retry",
       "required_result": "Reject the changed effective request; preserve accepted capture and outcome evidence",
-      "candidate_test_files": [
-        "crates/grv-core/src/declaration.rs",
-        "crates/grv-core/src/normalize.rs",
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-core/src/declaration.rs", "crates/grv-core/src/normalize.rs", "crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -2787,13 +2305,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-CAN-02",
-          "REL-SEC-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-CAN-02", "REL-SEC-01", "REL-SEC-02"]
       }
     },
     {
@@ -2803,11 +2315,7 @@
       "line": 2196,
       "scenario": "A DuckDB `INTEGER` source column is declared `int64`",
       "required_result": "Accept the exact widening; a narrowing or lossy declaration fails",
-      "candidate_test_files": [
-        "crates/grv-core/src/declaration.rs",
-        "crates/grv-core/src/normalize.rs",
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-core/src/declaration.rs", "crates/grv-core/src/normalize.rs", "crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -2817,13 +2325,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-CAN-02",
-          "REL-SEC-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-CAN-02", "REL-SEC-01", "REL-SEC-02"]
       }
     },
     {
@@ -2833,11 +2335,7 @@
       "line": 2197,
       "scenario": "A command emits success or a partial error in JSON",
       "required_result": "Validate its command-specific schema, error-to-exit correspondence, precision, and token redaction",
-      "candidate_test_files": [
-        "crates/grv-core/src/declaration.rs",
-        "crates/grv-core/src/normalize.rs",
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-core/src/declaration.rs", "crates/grv-core/src/normalize.rs", "crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -2847,13 +2345,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-CAN-02",
-          "REL-SEC-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-CAN-02", "REL-SEC-01", "REL-SEC-02"]
       }
     },
     {
@@ -2863,11 +2355,7 @@
       "line": 2198,
       "scenario": "A namespaced adapter command returns JSON",
       "required_result": "Validate the common envelope and registered redacted adapter-result schema",
-      "candidate_test_files": [
-        "crates/grv-core/src/declaration.rs",
-        "crates/grv-core/src/normalize.rs",
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-core/src/declaration.rs", "crates/grv-core/src/normalize.rs", "crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -2877,13 +2365,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-CAN-02",
-          "REL-SEC-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-CAN-02", "REL-SEC-01", "REL-SEC-02"]
       }
     },
     {
@@ -2893,11 +2375,7 @@
       "line": 2199,
       "scenario": "An adapter adds unknown binding fields",
       "required_result": "Reject through its registered closed schema without modifying the common envelope",
-      "candidate_test_files": [
-        "crates/grv-core/src/declaration.rs",
-        "crates/grv-core/src/normalize.rs",
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-core/src/declaration.rs", "crates/grv-core/src/normalize.rs", "crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -2907,13 +2385,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-CAN-02",
-          "REL-SEC-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-CAN-02", "REL-SEC-01", "REL-SEC-02"]
       }
     },
     {
@@ -2923,11 +2395,7 @@
       "line": 2200,
       "scenario": "Built-in and third-party bindings use equivalent capabilities",
       "required_result": "Follow the same registration, validation, lifecycle, and result paths",
-      "candidate_test_files": [
-        "crates/grv-core/src/declaration.rs",
-        "crates/grv-core/src/normalize.rs",
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-core/src/declaration.rs", "crates/grv-core/src/normalize.rs", "crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -2937,13 +2405,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-CAN-02",
-          "REL-SEC-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-CAN-02", "REL-SEC-01", "REL-SEC-02"]
       }
     },
     {
@@ -2953,11 +2415,7 @@
       "line": 2201,
       "scenario": "A built-in runs in-process",
       "required_result": "Same registration, authority split, and logical conformance results as a process adapter",
-      "candidate_test_files": [
-        "crates/grv-core/src/declaration.rs",
-        "crates/grv-core/src/normalize.rs",
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-core/src/declaration.rs", "crates/grv-core/src/normalize.rs", "crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -2967,13 +2425,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-CAN-02",
-          "REL-SEC-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-CAN-02", "REL-SEC-01", "REL-SEC-02"]
       }
     },
     {
@@ -2999,12 +2451,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3030,12 +2477,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3061,12 +2503,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3092,12 +2529,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3123,12 +2555,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3154,12 +2581,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3185,12 +2607,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3216,12 +2633,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3247,12 +2659,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3278,12 +2685,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3309,12 +2711,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3340,12 +2737,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3371,12 +2763,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3402,12 +2789,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3433,12 +2815,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3464,12 +2841,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3495,12 +2867,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-LOCAL-01",
-          "REL-REC-02",
-          "REL-REC-03",
-          "REL-REC-04"
-        ]
+        "release_cases": ["REL-LOCAL-01", "REL-REC-02", "REL-REC-03", "REL-REC-04"]
       }
     },
     {
@@ -3510,9 +2877,7 @@
       "line": 1925,
       "scenario": "disjoint interface versions or unsupported platform",
       "required_result": "`UNSUPPORTED_CAPABILITY`; no operation or mutation",
-      "candidate_test_files": [
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -3522,11 +2887,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-SEC-02"]
       }
     },
     {
@@ -3536,9 +2897,7 @@
       "line": 1926,
       "scenario": "manifest and handshake identity or version mismatch",
       "required_result": "`ADAPTER_FAILURE`; no binding",
-      "candidate_test_files": [
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -3548,11 +2907,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-SEC-02"]
       }
     },
     {
@@ -3562,9 +2917,7 @@
       "line": 1927,
       "scenario": "unknown capability or data-plane offer",
       "required_result": "refusal without fallback",
-      "candidate_test_files": [
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -3574,11 +2927,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-SEC-02"]
       }
     },
     {
@@ -3588,9 +2937,7 @@
       "line": 1928,
       "scenario": "user and system root shadowing, and explicit root override",
       "required_result": "one deterministic winning manifest; override suppresses every fallback",
-      "candidate_test_files": [
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -3600,11 +2947,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-SEC-02"]
       }
     },
     {
@@ -3614,9 +2957,7 @@
       "line": 1929,
       "scenario": "unsafe owner or group permissions, or executable changed after hashing",
       "required_result": "refusal under \u00a71 checks; no spawn of an observed changed object",
-      "candidate_test_files": [
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -3626,11 +2967,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-SEC-02"]
       }
     },
     {
@@ -3640,9 +2977,7 @@
       "line": 1930,
       "scenario": "external schema reference or wrong mode's table source",
       "required_result": "offline rejection before authentication or mutation",
-      "candidate_test_files": [
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -3652,11 +2987,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-SEC-02"]
       }
     },
     {
@@ -3666,9 +2997,7 @@
       "line": 1931,
       "scenario": "optional defaults, or inline versus file declarations",
       "required_result": "same normalized effective request and identity",
-      "candidate_test_files": [
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -3678,11 +3007,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-SEC-02"]
       }
     },
     {
@@ -3692,9 +3017,7 @@
       "line": 1932,
       "scenario": "namespaced flags and requires-connection or requires-authentication descriptors",
       "required_result": "adapter parsing, capability checks, and sanitized result validation",
-      "candidate_test_files": [
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -3704,11 +3027,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-LOCAL-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-LOCAL-01", "REL-SEC-02"]
       }
     },
     {
@@ -3732,11 +3051,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-04",
-          "REL-PULL-06",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-PULL-04", "REL-PULL-06", "REL-SEC-03"]
       }
     },
     {
@@ -3760,11 +3075,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-04",
-          "REL-PULL-06",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-PULL-04", "REL-PULL-06", "REL-SEC-03"]
       }
     },
     {
@@ -3788,11 +3099,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-04",
-          "REL-PULL-06",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-PULL-04", "REL-PULL-06", "REL-SEC-03"]
       }
     },
     {
@@ -3816,11 +3123,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-04",
-          "REL-PULL-06",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-PULL-04", "REL-PULL-06", "REL-SEC-03"]
       }
     },
     {
@@ -3844,11 +3147,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-04",
-          "REL-PULL-06",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-PULL-04", "REL-PULL-06", "REL-SEC-03"]
       }
     },
     {
@@ -3872,11 +3171,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-04",
-          "REL-PULL-06",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-PULL-04", "REL-PULL-06", "REL-SEC-03"]
       }
     },
     {
@@ -3900,11 +3195,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-04",
-          "REL-PULL-06",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-PULL-04", "REL-PULL-06", "REL-SEC-03"]
       }
     },
     {
@@ -3928,11 +3219,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-PULL-04",
-          "REL-PULL-06",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-PULL-04", "REL-PULL-06", "REL-SEC-03"]
       }
     },
     {
@@ -3957,15 +3244,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -3990,15 +3269,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -4023,15 +3294,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -4056,15 +3319,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -4089,15 +3344,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -4122,15 +3369,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -4155,15 +3394,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -4188,15 +3419,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -4221,15 +3444,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -4254,15 +3469,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -4287,15 +3494,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -4320,15 +3519,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -4353,15 +3544,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -4386,15 +3569,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -4419,15 +3594,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-01",
-          "REL-BUILD-02",
-          "REL-BUILD-03",
-          "REL-BUILD-04",
-          "REL-BUILD-05",
-          "REL-BUILD-06",
-          "REL-BUILD-07"
-        ]
+        "release_cases": ["REL-BUILD-01", "REL-BUILD-02", "REL-BUILD-03", "REL-BUILD-04", "REL-BUILD-05", "REL-BUILD-06", "REL-BUILD-07"]
       }
     },
     {
@@ -4437,10 +3604,7 @@
       "line": 1971,
       "scenario": "context copies, engine aliases, or hard-linked database",
       "required_result": "canonical session and workspace lock serialization; hard-link aliases rejected",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/ownership.rs",
-        "crates/grv-conformance/tests/session_cli.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/ownership.rs", "crates/grv-conformance/tests/session_cli.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -4450,11 +3614,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-05",
-          "REL-SEC-02",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BUILD-05", "REL-SEC-02", "REL-SEC-03"]
       }
     },
     {
@@ -4464,10 +3624,7 @@
       "line": 1972,
       "scenario": "adapter or driver dies with a live database child",
       "required_result": "the child's lock and file ownership remain busy; no stolen access",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/ownership.rs",
-        "crates/grv-conformance/tests/session_cli.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/ownership.rs", "crates/grv-conformance/tests/session_cli.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -4477,11 +3634,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-05",
-          "REL-SEC-02",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BUILD-05", "REL-SEC-02", "REL-SEC-03"]
       }
     },
     {
@@ -4491,10 +3644,7 @@
       "line": 1973,
       "scenario": "engine-free renew during an external invocation",
       "required_result": "session and backend renewal without workspace contention",
-      "candidate_test_files": [
-        "crates/grv-adapter-duckdb/tests/ownership.rs",
-        "crates/grv-conformance/tests/session_cli.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-duckdb/tests/ownership.rs", "crates/grv-conformance/tests/session_cli.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -4504,11 +3654,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BUILD-05",
-          "REL-SEC-02",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BUILD-05", "REL-SEC-02", "REL-SEC-03"]
       }
     },
     {
@@ -4518,10 +3664,7 @@
       "line": 1979,
       "scenario": "closed, unknown, or duplicate frame fields, or non-safe numerics",
       "required_result": "`PROTOCOL_FAILURE`; no parser rounding or invented defaults",
-      "candidate_test_files": [
-        "crates/grv-adapter-wire/tests/protocol.rs",
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-wire/tests/protocol.rs", "crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -4531,10 +3674,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-SEC-02"]
       }
     },
     {
@@ -4544,10 +3684,7 @@
       "line": 1980,
       "scenario": "started event followed by repeated stream req",
       "required_result": "valid correlation; the request stays active until terminal and drained",
-      "candidate_test_files": [
-        "crates/grv-adapter-wire/tests/protocol.rs",
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-wire/tests/protocol.rs", "crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -4557,10 +3694,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-SEC-02"]
       }
     },
     {
@@ -4570,10 +3704,7 @@
       "line": 1981,
       "scenario": "byte-fragmented or coalesced frames and payloads, partial writes",
       "required_result": "exact frame and payload boundaries on Linux and macOS",
-      "candidate_test_files": [
-        "crates/grv-adapter-wire/tests/protocol.rs",
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-wire/tests/protocol.rs", "crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -4583,10 +3714,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-SEC-02"]
       }
     },
     {
@@ -4596,10 +3724,7 @@
       "line": 1982,
       "scenario": "payload shorter than `size`, EOF mid-payload, or `size` above `max_batch_bytes`",
       "required_result": "`PROTOCOL_FAILURE`; partial payload discarded, channel closed",
-      "candidate_test_files": [
-        "crates/grv-adapter-wire/tests/protocol.rs",
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-wire/tests/protocol.rs", "crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -4609,10 +3734,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-SEC-02"]
       }
     },
     {
@@ -4622,10 +3744,7 @@
       "line": 1983,
       "scenario": "another frame or document chunk interleaved inside a payload",
       "required_result": "`PROTOCOL_FAILURE`",
-      "candidate_test_files": [
-        "crates/grv-adapter-wire/tests/protocol.rs",
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-wire/tests/protocol.rs", "crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -4635,10 +3754,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-SEC-02"]
       }
     },
     {
@@ -4648,10 +3764,7 @@
       "line": 1984,
       "scenario": "peer closes while parent writes",
       "required_result": "handled EPIPE or EOF, not parent SIGPIPE death",
-      "candidate_test_files": [
-        "crates/grv-adapter-wire/tests/protocol.rs",
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-wire/tests/protocol.rs", "crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -4661,10 +3774,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-SEC-02"]
       }
     },
     {
@@ -4674,10 +3784,7 @@
       "line": 1985,
       "scenario": "metadata >1 MiB, malformed chunks or digest, >64 MiB declaration",
       "required_result": "bounded chunking or pre-mutation rejection; no unbounded buffering",
-      "candidate_test_files": [
-        "crates/grv-adapter-wire/tests/protocol.rs",
-        "crates/grv-conformance/tests/host.rs"
-      ],
+      "candidate_test_files": ["crates/grv-adapter-wire/tests/protocol.rs", "crates/grv-conformance/tests/host.rs"],
       "applicability": {
         "status": "review_required",
         "reviewed": false,
@@ -4687,10 +3794,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-SEC-02"]
       }
     },
     {
@@ -4715,11 +3819,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-CAN-03",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-CAN-03", "REL-SEC-03"]
       }
     },
     {
@@ -4744,11 +3844,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-CAN-03",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-CAN-03", "REL-SEC-03"]
       }
     },
     {
@@ -4773,11 +3869,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-CAN-03",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-CAN-03", "REL-SEC-03"]
       }
     },
     {
@@ -4802,11 +3894,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-CAN-03",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-CAN-03", "REL-SEC-03"]
       }
     },
     {
@@ -4831,11 +3919,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-CAN-03",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-CAN-03", "REL-SEC-03"]
       }
     },
     {
@@ -4860,11 +3944,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-CAN-03",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-CAN-03", "REL-SEC-03"]
       }
     },
     {
@@ -4889,11 +3969,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-CAN-03",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-CAN-03", "REL-SEC-03"]
       }
     },
     {
@@ -4918,11 +3994,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-CAN-03",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-CAN-03", "REL-SEC-03"]
       }
     },
     {
@@ -4947,11 +4019,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-BASE-01",
-          "REL-CAN-03",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-BASE-01", "REL-CAN-03", "REL-SEC-03"]
       }
     },
     {
@@ -4977,12 +4045,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-REC-01",
-          "REL-REC-02",
-          "REL-REC-05",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-REC-01", "REL-REC-02", "REL-REC-05", "REL-SEC-03"]
       }
     },
     {
@@ -5008,12 +4071,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-REC-01",
-          "REL-REC-02",
-          "REL-REC-05",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-REC-01", "REL-REC-02", "REL-REC-05", "REL-SEC-03"]
       }
     },
     {
@@ -5039,12 +4097,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-REC-01",
-          "REL-REC-02",
-          "REL-REC-05",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-REC-01", "REL-REC-02", "REL-REC-05", "REL-SEC-03"]
       }
     },
     {
@@ -5070,12 +4123,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-REC-01",
-          "REL-REC-02",
-          "REL-REC-05",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-REC-01", "REL-REC-02", "REL-REC-05", "REL-SEC-03"]
       }
     },
     {
@@ -5101,12 +4149,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-REC-01",
-          "REL-REC-02",
-          "REL-REC-05",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-REC-01", "REL-REC-02", "REL-REC-05", "REL-SEC-03"]
       }
     },
     {
@@ -5132,12 +4175,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-REC-01",
-          "REL-REC-02",
-          "REL-REC-05",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-REC-01", "REL-REC-02", "REL-REC-05", "REL-SEC-03"]
       }
     },
     {
@@ -5167,12 +4205,7 @@
         "assertions": [
           "Applied ambiguous publication remains Published revision 1 on abort, with no extra commit or engine access. Shares same test evidence as EX-PUSH-008."
         ],
-        "release_cases": [
-          "REL-REC-01",
-          "REL-REC-02",
-          "REL-REC-05",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-REC-01", "REL-REC-02", "REL-REC-05", "REL-SEC-03"]
       },
       "execution_evidence": [
         {
@@ -5208,12 +4241,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-REC-01",
-          "REL-REC-02",
-          "REL-REC-05",
-          "REL-SEC-03"
-        ]
+        "release_cases": ["REL-REC-01", "REL-REC-02", "REL-REC-05", "REL-SEC-03"]
       }
     },
     {
@@ -5237,10 +4265,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-SEC-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-SEC-01", "REL-SEC-02"]
       }
     },
     {
@@ -5264,10 +4289,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-SEC-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-SEC-01", "REL-SEC-02"]
       }
     },
     {
@@ -5291,10 +4313,7 @@
         "reviewed": false,
         "test_selectors": [],
         "assertions": [],
-        "release_cases": [
-          "REL-SEC-01",
-          "REL-SEC-02"
-        ]
+        "release_cases": ["REL-SEC-01", "REL-SEC-02"]
       }
     }
   ],

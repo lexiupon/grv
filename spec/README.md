@@ -11,15 +11,15 @@ qualification is still in progress.
 Read the first four documents in the order below. Crypto-shredding is an
 optional extension RFC.
 
-| Document | Status | Scope and authority |
-|----------|--------|---------------------|
-| [Storage v2](grv-storage-v2.md) | Draft | Authoritative GRV storage layout and backend contract: tables, versions, claims, runs, revisions, publication, holds, pins, and GC. |
-| [Client v1](grv-client-v1.md) | Draft; implementation available | Commands, declarations, supported data types, adapter registration, and language-neutral lifecycle obligations. |
-| [Client v1 execution semantics](grv-client-v1-execution.md) | Draft; normative companion | Normalized identity, command results, orchestration, transactions, locks, build completion, recovery, and conformance requirements. |
-| [Adapter process protocol v1](grv-adapter-protocol-v1.md) | Draft; normative companion | Installation, process supervision, handshake, frame grammar, stream data plane, and adapter operation ordering. Implements the client contracts across a process boundary for installed adapters; v1 built-ins may run in-process behind the same logical interface. |
-| [First release validation](grv-v1-release-validation.md) | Initial macOS pass in progress | Full automated/live acceptance matrix, controlled faults, cleanup, evidence and release gates; procedural and subordinate to the contracts above. |
-| [Validation operations](release-validation/README.md) | Scoped release gate tracking | Reusable catalog, current status, evidence retention and change-based rerun policy; not a full-v1 qualification claim. |
-| [Crypto-shredding v1 RFC](grv-crypto-shredding-v1-rfc.md) | Draft; DPO review pending | Proposed `crypto-shredding/1` extension for encrypted personal data and subject-key erasure; includes unresolved decisions and sign-off requirements. |
+| Document                                                    | Status                          | Scope and authority                                                                                                                                                                                                                                                  |
+| ----------------------------------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Storage v2](grv-storage-v2.md)                             | Draft                           | Authoritative GRV storage layout and backend contract: tables, versions, claims, runs, revisions, publication, holds, pins, and GC.                                                                                                                                  |
+| [Client v1](grv-client-v1.md)                               | Draft; implementation available | Commands, declarations, supported data types, adapter registration, and language-neutral lifecycle obligations.                                                                                                                                                      |
+| [Client v1 execution semantics](grv-client-v1-execution.md) | Draft; normative companion      | Normalized identity, command results, orchestration, transactions, locks, build completion, recovery, and conformance requirements.                                                                                                                                  |
+| [Adapter process protocol v1](grv-adapter-protocol-v1.md)   | Draft; normative companion      | Installation, process supervision, handshake, frame grammar, stream data plane, and adapter operation ordering. Implements the client contracts across a process boundary for installed adapters; v1 built-ins may run in-process behind the same logical interface. |
+| [First release validation](grv-v1-release-validation.md)    | Initial macOS pass in progress  | Full automated/live acceptance matrix, controlled faults, cleanup, evidence and release gates; procedural and subordinate to the contracts above.                                                                                                                    |
+| [Validation operations](release-validation/README.md)       | Scoped release gate tracking    | Reusable catalog, current status, evidence retention and change-based rerun policy; not a full-v1 qualification claim.                                                                                                                                               |
+| [Crypto-shredding v1 RFC](grv-crypto-shredding-v1-rfc.md)   | Draft; DPO review pending       | Proposed `crypto-shredding/1` extension for encrypted personal data and subject-key erasure; includes unresolved decisions and sign-off requirements.                                                                                                                |
 
 Each document owns the contract stated above. The execution companion and
 adapter protocol must satisfy the client obligations; none adds or overrides
@@ -41,13 +41,13 @@ or storage version; compatibility must be specified explicitly.
 
 ## Schemas and examples
 
-| File or directory | Purpose |
-|-------------------|---------|
-| [Declaration schema](grv-client-v1-declaration.schema.json) | Common push/pull authoring envelope; adapter fragments require additional registered validation. |
-| [Command output schema](grv-client-v1-command-output.schema.json) | Public command result envelope, errors, and command-specific result shapes. |
-| [Build completion schema](grv-client-v1-build-completion.schema.json) | Successful invocation and stopped-writer attestation supplied before build finalization. |
-| [Adapter binding schemas](adapters/) | DuckDB and Salesforce validation-point schemas. |
-| [Examples](examples/) | Client declarations and their local SQL/column-contract files. |
+| File or directory                                                     | Purpose                                                                                          |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [Declaration schema](grv-client-v1-declaration.schema.json)           | Common push/pull authoring envelope; adapter fragments require additional registered validation. |
+| [Command output schema](grv-client-v1-command-output.schema.json)     | Public command result envelope, errors, and command-specific result shapes.                      |
+| [Build completion schema](grv-client-v1-build-completion.schema.json) | Successful invocation and stopped-writer attestation supplied before build finalization.         |
+| [Adapter binding schemas](adapters/)                                  | DuckDB and Salesforce validation-point schemas.                                                  |
+| [Examples](examples/)                                                 | Client declarations and their local SQL/column-contract files.                                   |
 
 Schemas validate structural shapes; the specifications also define required
 cross-field, identity, ordering, and recovery checks. Examples illustrate the

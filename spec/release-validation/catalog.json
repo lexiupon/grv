@@ -5,730 +5,410 @@
     {
       "id": "workspace-native",
       "command": "cargo test --locked --workspace --all-targets --features grv-adapter-duckdb/native,grv-conformance/native-duckdb",
-      "gates": [
-        "G1",
-        "G4",
-        "G6"
-      ],
-      "test_files": [
-        "Cargo.toml"
-      ],
+      "gates": ["G1", "G4", "G6"],
+      "test_files": ["Cargo.toml"],
       "limits": "Protected native paths; RUST_TEST_THREADS=1; serialize Cargo/service suites. No blanket --ignored. Ignored live/helper selectors separately assessed.",
-      "triggers": [
-        "every-release"
-      ],
+      "triggers": ["every-release"],
       "live": false,
       "serial": true
     },
     {
       "id": "workspace-doc",
       "command": "cargo test --locked --workspace --doc --features grv-adapter-duckdb/native,grv-conformance/native-duckdb",
-      "gates": [
-        "G1"
-      ],
-      "test_files": [
-        "Cargo.toml"
-      ],
+      "gates": ["G1"],
+      "test_files": ["Cargo.toml"],
       "limits": "Protected native paths; RUST_TEST_THREADS=1; serialize Cargo/service suites. No blanket --ignored. No doctests currently present.",
-      "triggers": [
-        "every-release"
-      ],
+      "triggers": ["every-release"],
       "live": false,
       "serial": true
     },
     {
       "id": "workspace-clippy",
       "command": "cargo clippy --locked --workspace --all-targets --features grv-adapter-duckdb/native,grv-conformance/native-duckdb -- -D warnings",
-      "gates": [
-        "G1"
-      ],
-      "test_files": [
-        "Cargo.toml"
-      ],
+      "gates": ["G1"],
+      "test_files": ["Cargo.toml"],
       "limits": "Protected native paths; RUST_TEST_THREADS=1; serialize Cargo/service suites. No blanket --ignored.",
-      "triggers": [
-        "every-release"
-      ],
+      "triggers": ["every-release"],
       "live": false,
       "serial": true
     },
     {
       "id": "changed-clippy",
       "command": "cargo clippy --locked -p grv-adapter-salesforce -p grv-storage -p grv-conformance --all-targets --features grv-storage/cloud,grv-conformance/native-duckdb -- -D warnings",
-      "gates": [
-        "G1"
-      ],
-      "test_files": [
-        "Cargo.toml"
-      ],
+      "gates": ["G1"],
+      "test_files": ["Cargo.toml"],
       "limits": "Protected native paths; RUST_TEST_THREADS=1; serialize Cargo/service suites. No blanket --ignored.",
-      "triggers": [
-        "affected-crates"
-      ],
+      "triggers": ["affected-crates"],
       "live": false,
       "serial": true
     },
     {
       "id": "format",
       "command": "cargo fmt --all -- --check",
-      "gates": [
-        "G1"
-      ],
-      "test_files": [
-        "Cargo.toml"
-      ],
+      "gates": ["G1"],
+      "test_files": ["Cargo.toml"],
       "limits": "No services.",
-      "triggers": [
-        "every-release"
-      ],
+      "triggers": ["every-release"],
       "live": false,
       "serial": true
     },
     {
       "id": "register",
       "command": "python3 scripts/check-release-validation.py",
-      "gates": [
-        "G6"
-      ],
-      "test_files": [
-        "scripts/check-release-validation.py"
-      ],
+      "gates": ["G6"],
+      "test_files": ["scripts/check-release-validation.py"],
       "limits": "Draft consistency only; --require-mapped is full mapping gate, not pass evidence.",
-      "triggers": [
-        "contracts",
-        "register"
-      ],
+      "triggers": ["contracts", "register"],
       "live": false,
       "serial": true
     },
     {
       "id": "native-guard",
       "command": "ctest --test-dir \"$GRV_DUCKDB_NATIVE_LIB_DIR\" --output-on-failure",
-      "gates": [
-        "G1",
-        "G4"
-      ],
-      "test_files": [
-        "crates/grv-adapter-duckdb/Cargo.toml"
-      ],
+      "gates": ["G1", "G4"],
+      "test_files": ["crates/grv-adapter-duckdb/Cargo.toml"],
       "limits": "Protected native paths; RUST_TEST_THREADS=1; serialize Cargo/service suites. No blanket --ignored.",
-      "triggers": [
-        "every-release",
-        "native"
-      ],
+      "triggers": ["every-release", "native"],
       "live": false,
       "serial": true
     },
     {
       "id": "scripts",
       "command": "python3 -m unittest discover -s scripts/tests -p \"test_*.py\"",
-      "gates": [
-        "G1",
-        "G2",
-        "G3"
-      ],
-      "test_files": [
-        "scripts/package.py",
-        "scripts/verify-bundle.py"
-      ],
+      "gates": ["G1", "G2", "G3"],
+      "test_files": ["scripts/package.py", "scripts/verify-bundle.py"],
       "limits": "Offline scripts tests.",
-      "triggers": [
-        "every-release"
-      ],
+      "triggers": ["every-release"],
       "live": false,
       "serial": true
     },
     {
       "id": "fixture-offline",
       "command": "python3 -m unittest discover -s spec/fixtures/release-validation/salesforce -p 'test_*.py'",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "spec/fixtures/release-validation/salesforce/test_fixture.py"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["spec/fixtures/release-validation/salesforce/test_fixture.py"],
       "limits": "No org mutation/auth.",
-      "triggers": [
-        "salesforce-fixture"
-      ],
+      "triggers": ["salesforce-fixture"],
       "live": false,
       "serial": true
     },
     {
       "id": "core-protocol",
       "command": "cargo test --locked -p grv-core -p grv-types -p grv-adapter-host -p grv-adapter-wire --lib",
-      "gates": [
-        "G4",
-        "G6"
-      ],
-      "test_files": [
-        "crates/grv-core/src/push.rs"
-      ],
+      "gates": ["G4", "G6"],
+      "test_files": ["crates/grv-core/src/push.rs"],
       "limits": "Core unit evidence only; wire integration suite not run by --lib. Protected native paths; RUST_TEST_THREADS=1; serialize Cargo/service suites. No blanket --ignored.",
-      "triggers": [
-        "safety",
-        "protocol"
-      ],
+      "triggers": ["safety", "protocol"],
       "live": false,
       "serial": true
     },
     {
       "id": "local-lifecycle",
       "command": "cargo test --locked -p grv-conformance --features native-duckdb --test build_export_restart_cli --test build_lifecycle_cli --test gc_cli --test pull_cli --test recover_cli",
-      "gates": [
-        "G4",
-        "G6"
-      ],
-      "test_files": [
-        "crates/grv-conformance/tests/pull_cli.rs"
-      ],
+      "gates": ["G4", "G6"],
+      "test_files": ["crates/grv-conformance/tests/pull_cli.rs"],
       "limits": "Protected native paths; RUST_TEST_THREADS=1; serialize Cargo/service suites. No blanket --ignored.",
-      "triggers": [
-        "safety",
-        "local-lifecycle"
-      ],
+      "triggers": ["safety", "local-lifecycle"],
       "live": false,
       "serial": true
     },
     {
       "id": "native-crash",
       "command": "cargo test --locked -p grv-conformance --features native-duckdb --test build_cli killed_managed_cli_stops_native_work_and_never_reexecutes_incomplete_attempt -- --exact --nocapture --test-threads=1",
-      "gates": [
-        "G4"
-      ],
-      "test_files": [
-        "crates/grv-conformance/tests/build_cli.rs"
-      ],
+      "gates": ["G4"],
+      "test_files": ["crates/grv-conformance/tests/build_cli.rs"],
       "limits": "Protected native paths; RUST_TEST_THREADS=1; serialize Cargo/service suites. No blanket --ignored. Kills owned native child only.",
-      "triggers": [
-        "safety",
-        "cancel"
-      ],
+      "triggers": ["safety", "cancel"],
       "live": false,
       "serial": true
     },
     {
       "id": "sf-seams",
       "command": "cargo test --locked -p grv-adapter-salesforce --test extraction --test seams",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "crates/grv-adapter-salesforce/tests/seams.rs"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["crates/grv-adapter-salesforce/tests/seams.rs"],
       "limits": "Protected native paths; RUST_TEST_THREADS=1; serialize Cargo/service suites. No blanket --ignored. Offline seams are not provider qualification.",
-      "triggers": [
-        "salesforce"
-      ],
+      "triggers": ["salesforce"],
       "live": false,
       "serial": true
     },
     {
       "id": "sf-metadata",
       "command": "cargo test --locked -p grv-adapter-salesforce --test metadata",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "crates/grv-adapter-salesforce/tests/metadata.rs"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["crates/grv-adapter-salesforce/tests/metadata.rs"],
       "limits": "Protected native paths; RUST_TEST_THREADS=1; serialize Cargo/service suites. No blanket --ignored.",
-      "triggers": [
-        "salesforce-conversion"
-      ],
+      "triggers": ["salesforce-conversion"],
       "live": false,
       "serial": true
     },
     {
       "id": "sf-all-targets",
       "command": "cargo test --locked -p grv-adapter-salesforce --all-targets",
-      "gates": [
-        "G1",
-        "G5"
-      ],
-      "test_files": [
-        "crates/grv-adapter-salesforce/Cargo.toml"
-      ],
+      "gates": ["G1", "G5"],
+      "test_files": ["crates/grv-adapter-salesforce/Cargo.toml"],
       "limits": "Protected native paths; RUST_TEST_THREADS=1; serialize Cargo/service suites. No blanket --ignored. Live ignored separately.",
-      "triggers": [
-        "salesforce"
-      ],
+      "triggers": ["salesforce"],
       "live": false,
       "serial": true
     },
     {
       "id": "sf-live-base",
       "command": "cargo test --locked -p grv-conformance --features native-duckdb --test salesforce_live_cli production_cli_org_capture_publication_and_source_free_terminal_replay -- --ignored --exact --nocapture --test-threads=1",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "crates/grv-conformance/tests/salesforce_live_cli.rs"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["crates/grv-conformance/tests/salesforce_live_cli.rs"],
       "limits": "Pinned org 00D000000000001AAA only; explicit org/ID/adapter/transport; no production or arbitrary records. REST rich values, explicit Bulk refusal is not acquisition.",
-      "triggers": [
-        "salesforce",
-        "provider"
-      ],
+      "triggers": ["salesforce", "provider"],
       "live": true,
       "serial": true
     },
     {
       "id": "sf-live-empty",
       "command": "cargo test --locked -p grv-conformance --features native-duckdb --test salesforce_live_cli production_cli_empty_capture_noop_and_source_free_terminal_replay -- --ignored --exact --nocapture --test-threads=1",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "crates/grv-conformance/tests/salesforce_live_cli.rs"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["crates/grv-conformance/tests/salesforce_live_cli.rs"],
       "limits": "Pinned org 00D000000000001AAA only; explicit org/ID/adapter/transport; no production or arbitrary records. REST rich values, explicit Bulk refusal is not acquisition.",
-      "triggers": [
-        "salesforce",
-        "provider"
-      ],
+      "triggers": ["salesforce", "provider"],
       "live": true,
       "serial": true
     },
     {
       "id": "sf-live-rel",
       "command": "cargo test --locked -p grv-conformance --features native-duckdb --test salesforce_live_cli production_cli_relationship_acquisition_or_precise_bulk_refusal -- --ignored --exact --nocapture --test-threads=1",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "crates/grv-conformance/tests/salesforce_live_cli.rs"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["crates/grv-conformance/tests/salesforce_live_cli.rs"],
       "limits": "Pinned org 00D000000000001AAA only; explicit org/ID/adapter/transport; no production or arbitrary records. REST rich values, explicit Bulk refusal is not acquisition.",
-      "triggers": [
-        "salesforce",
-        "provider"
-      ],
+      "triggers": ["salesforce", "provider"],
       "live": true,
       "serial": true
     },
     {
       "id": "sf-live-wrong",
       "command": "cargo test --locked -p grv-conformance --features native-duckdb --test salesforce_live_cli production_wrong_expected_org_authentication_exposes_no_source_session -- --ignored --exact --nocapture --test-threads=1",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "crates/grv-conformance/tests/salesforce_live_cli.rs"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["crates/grv-conformance/tests/salesforce_live_cli.rs"],
       "limits": "Pinned org 00D000000000001AAA only; explicit org/ID/adapter/transport; no production or arbitrary records. REST rich values, explicit Bulk refusal is not acquisition.",
-      "triggers": [
-        "salesforce",
-        "provider"
-      ],
+      "triggers": ["salesforce", "provider"],
       "live": true,
       "serial": true
     },
     {
       "id": "sf-live-refusal",
       "command": "cargo test --locked -p grv-conformance --features native-duckdb --test salesforce_live_cli production_cli_rich_bulk_contract_refusal -- --ignored --exact --nocapture --test-threads=1",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "crates/grv-conformance/tests/salesforce_live_cli.rs"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["crates/grv-conformance/tests/salesforce_live_cli.rs"],
       "limits": "Pinned org 00D000000000001AAA only; explicit org/ID/adapter/transport; no production or arbitrary records. REST rich values, explicit Bulk refusal is not acquisition.",
-      "triggers": [
-        "salesforce",
-        "provider"
-      ],
+      "triggers": ["salesforce", "provider"],
       "live": true,
       "serial": true
     },
     {
       "id": "sf-fault",
       "command": "cargo test --locked -p grv-adapter-salesforce --test live_fault live_bulk_response_loss_never_reposts_or_adopts_after_restart -- --ignored --exact --nocapture --test-threads=1",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "crates/grv-adapter-salesforce/tests/live_fault.rs"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["crates/grv-adapter-salesforce/tests/live_fault.rs"],
       "limits": "Pinned org 00D000000000001AAA only; explicit org/ID/adapter/transport; no production or arbitrary records. REST rich values, explicit Bulk refusal is not acquisition. One real job, synthetic return loss, journal reopen not process kill; exact-job deletion.",
-      "triggers": [
-        "salesforce",
-        "safety"
-      ],
+      "triggers": ["salesforce", "safety"],
       "live": true,
       "serial": true
     },
     {
       "id": "gcs-race",
       "command": "cargo test --locked -p grv-storage --features cloud --lib cloud::tests::live_gcs_conditional_streaming_response_loss_and_race_contract -- --ignored --exact --nocapture --test-threads=1",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "crates/grv-storage/src/cloud/mod.rs"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["crates/grv-storage/src/cloud/mod.rs"],
       "limits": "Explicit account/project; only owned UUID children of gs://validation-gcs-bucket/grv-release-validation/; cleanup must prove absence; do not touch xyz/IAM/retention. Synthetic loss/ordered races, not all network schedules.",
-      "triggers": [
-        "gcs",
-        "backend",
-        "safety"
-      ],
+      "triggers": ["gcs", "backend", "safety"],
       "live": true,
       "serial": true
     },
     {
       "id": "gcs-stream-failure",
       "command": "cargo test --locked -p grv-storage --features cloud --lib cloud::tests::live_gcs_streaming_read_failure_contract -- --ignored --exact --nocapture --test-threads=1",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "crates/grv-storage/src/cloud/mod.rs"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["crates/grv-storage/src/cloud/mod.rs"],
       "limits": "Explicit account/project; only owned UUID children of gs://validation-gcs-bucket/grv-release-validation/; cleanup must prove absence; do not touch xyz/IAM/retention. Synthetic loss/ordered races, not all network schedules.",
-      "triggers": [
-        "gcs",
-        "backend",
-        "safety"
-      ],
+      "triggers": ["gcs", "backend", "safety"],
       "live": true,
       "serial": true
     },
     {
       "id": "cloud-regression",
       "command": "cargo test --locked -p grv-storage --features cloud --lib",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "crates/grv-storage/src/cloud/mod.rs"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["crates/grv-storage/src/cloud/mod.rs"],
       "limits": "Protected native paths; RUST_TEST_THREADS=1; serialize Cargo/service suites. No blanket --ignored. Ignored service cells not covered.",
-      "triggers": [
-        "backend"
-      ],
+      "triggers": ["backend"],
       "live": false,
       "serial": true
     },
     {
       "id": "gcs-cli",
       "command": "cargo test --locked -p grv-conformance --features native-duckdb --test gcs_live_cli live_cli_gcs_capture_publication_noop_and_source_free_terminal_replay -- --ignored --exact --nocapture --test-threads=1",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "crates/grv-conformance/tests/gcs_live_cli.rs"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["crates/grv-conformance/tests/gcs_live_cli.rs"],
       "limits": "Explicit account/project; only owned UUID children of gs://validation-gcs-bucket/grv-release-validation/; cleanup must prove absence; do not touch xyz/IAM/retention. Fixture CLI not production DuckDB; reconstructed terminal window not kill.",
-      "triggers": [
-        "gcs",
-        "lifecycle",
-        "safety"
-      ],
+      "triggers": ["gcs", "lifecycle", "safety"],
       "live": true,
       "serial": true
     },
     {
       "id": "msrv-check",
       "command": "cargo check --locked --offline --workspace --all-targets --features grv-adapter-duckdb/native,grv-conformance/native-duckdb",
-      "gates": [
-        "G1"
-      ],
-      "test_files": [
-        "Cargo.toml"
-      ],
+      "gates": ["G1"],
+      "test_files": ["Cargo.toml"],
       "limits": "Set PATH to explicit Rust1.89 bin and isolated CARGO_TARGET_DIR; protected native dir. Compilation only.",
-      "triggers": [
-        "candidate",
-        "affected-code"
-      ],
+      "triggers": ["candidate", "affected-code"],
       "live": false,
       "serial": true
     },
     {
       "id": "msrv-libs",
       "command": "cargo test --locked --offline --workspace --lib --features grv-adapter-duckdb/native,grv-conformance/native-duckdb",
-      "gates": [
-        "G1",
-        "G4"
-      ],
-      "test_files": [
-        "Cargo.toml"
-      ],
+      "gates": ["G1", "G4"],
+      "test_files": ["Cargo.toml"],
       "limits": "Rust1.89, isolated target, RUST_TEST_THREADS1; no blanket ignored. Lib-only not integration/candidate proof.",
-      "triggers": [
-        "candidate",
-        "affected-code"
-      ],
+      "triggers": ["candidate", "affected-code"],
       "live": false,
       "serial": true
     },
     {
       "id": "release-package",
       "command": "python3 scripts/package.py --profile release --native-dir \"$GRV_DUCKDB_NATIVE_LIB_DIR\" --extensions-dir \"$GRV_DUCKDB_EXTENSIONS_ROOT\" --output \"$BUNDLE\"",
-      "gates": [
-        "G1",
-        "G2",
-        "G3"
-      ],
-      "test_files": [
-        "scripts/package.py"
-      ],
+      "gates": ["G1", "G2", "G3"],
+      "test_files": ["scripts/package.py"],
       "limits": "Fresh protected output; candidate-unqualified until clean source+notices; no publication.",
-      "triggers": [
-        "candidate",
-        "affected-code"
-      ],
+      "triggers": ["candidate", "affected-code"],
       "live": false,
       "serial": true
     },
     {
       "id": "release-relocation",
       "command": "python3 scripts/verify-bundle.py \"$RELOCATED_BUNDLE\"",
-      "gates": [
-        "G2"
-      ],
-      "test_files": [
-        "scripts/package.py"
-      ],
+      "gates": ["G2"],
+      "test_files": ["scripts/package.py"],
       "limits": "No services; loading/build/pull/replay; use --require-distribution-ready for final distribution gate.",
-      "triggers": [
-        "candidate",
-        "affected-code"
-      ],
+      "triggers": ["candidate", "affected-code"],
       "live": false,
       "serial": true
     },
     {
       "id": "sf-mutation",
       "command": "cargo test --locked -p grv-conformance --features native-duckdb --test salesforce_live_cli production_cli_fixture_mutation_omission_and_restored_oracle -- --ignored --exact --nocapture --test-threads=1",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "spec/fixtures/release-validation/salesforce/provision.py"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["spec/fixtures/release-validation/salesforce/provision.py"],
       "limits": "Pinned disposable org only, MUTATIONallow REST; changes2 fixed rows then clean reset; actual load failure fails. Currently blocked by source restore.",
-      "triggers": [
-        "candidate",
-        "affected-code"
-      ],
+      "triggers": ["candidate", "affected-code"],
       "live": true,
       "serial": true
     },
     {
       "id": "sf-reset",
       "command": "python3 spec/fixtures/release-validation/salesforce/provision.py --org \"$AUTHORIZED_ORG\" --expected-org-id 00D000000000001AAA --ignore-storage-limit",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "spec/fixtures/release-validation/salesforce/provision.py"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["spec/fixtures/release-validation/salesforce/provision.py"],
       "limits": "Pinned authorized org; resets only fixture; actual load failures never waived.",
-      "triggers": [
-        "candidate",
-        "affected-code"
-      ],
+      "triggers": ["candidate", "affected-code"],
       "live": true,
       "serial": true
     },
     {
       "id": "sf-bulk-scaled-pages",
       "command": "cargo test --locked -p grv-adapter-salesforce --test live_bulk_pages live_bulk_scaled_pages_exact_oracle_checkpoint_empty_and_cleanup -- --ignored --exact --nocapture --test-threads=1",
-      "gates": [
-        "G4",
-        "G5"
-      ],
-      "test_files": [
-        "crates/grv-adapter-salesforce/tests/live_bulk_pages.rs"
-      ],
+      "gates": ["G4", "G5"],
+      "test_files": ["crates/grv-adapter-salesforce/tests/live_bulk_pages.rs"],
       "limits": "Pinned org only,1000+10 strict fixture,900Active. Test requests supported maxRecords100; unchanged response parser/journal, production defaults1000. SDK wire/credit NOT covered; exact two jobs cleanup.",
-      "triggers": [
-        "salesforce",
-        "bulk",
-        "fixture"
-      ],
+      "triggers": ["salesforce", "bulk", "fixture"],
       "live": true,
       "serial": true
     },
     {
       "id": "sf-auth-smoke",
       "command": "cargo test --locked -p grv-adapter-salesforce --test live_service named_org_authentication_metadata_and_read_only_rest_query -- --ignored --exact --nocapture --test-threads=1",
-      "gates": [
-        "G5"
-      ],
-      "test_files": [
-        "crates/grv-adapter-salesforce/tests/live_service.rs"
-      ],
+      "gates": ["G5"],
+      "test_files": ["crates/grv-adapter-salesforce/tests/live_service.rs"],
       "limits": "Explicit pinned disposable identity only; Organization.Id auth smoke supplements rich fixture, not acquisition qualification.",
-      "triggers": [
-        "salesforce",
-        "auth"
-      ],
+      "triggers": ["salesforce", "auth"],
       "live": true,
       "serial": true
     },
     {
       "id": "production-gcs",
       "command": "GRV_RELEASE_VALIDATION_CONFIG=\"$PRIVATE_CONFIG\" python3 scripts/validate-gcs-production.py --bundle \"$BUNDLE\" --write-root \"$OWNED_UUID_CHILD\" --account \"$GCS_ACCOUNT\" --project \"$GCS_PROJECT\" --sf-org \"$SF_ORG\" --sf-org-id \"$SF_ORG_ID\" --output \"$FRESH_PRIVATE_OUTPUT\"",
-      "gates": [
-        "G2",
-        "G5"
-      ],
-      "test_files": [
-        "scripts/validate-gcs-production.py"
-      ],
+      "gates": ["G2", "G5"],
+      "test_files": ["scripts/validate-gcs-production.py"],
       "limits": "Exact authorizedUUIDchild only; existing pinnedSF read only.Production bundle proof representative,not fullG5 or notice qualification. Allcleanupabsence mandatory.",
-      "triggers": [
-        "provider",
-        "packaging",
-        "gcs"
-      ],
+      "triggers": ["provider", "packaging", "gcs"],
       "live": true,
       "serial": true
     },
     {
       "id": "pull-commit-advance",
       "command": "cargo test --locked -p grv-adapter-duckdb --features native --lib pull::tests::native_precommit_and_postcommit_process_exit_resolve_without_reapplying -- --exact --test-threads=1",
-      "test_files": [
-        "crates/grv-adapter-duckdb/src/pull.rs"
-      ],
-      "gates": [
-        "G4",
-        "G6"
-      ],
+      "test_files": ["crates/grv-adapter-duckdb/src/pull.rs"],
+      "gates": ["G4", "G6"],
       "limits": "Nativeprocess-hook commit crash/reopen/newercheckpoint/originalreplay;not arbitrarycancel/EOF orliveS3reader.",
-      "triggers": [
-        "candidate",
-        "safety",
-        "compatibility"
-      ],
+      "triggers": ["candidate", "safety", "compatibility"],
       "live": false,
       "serial": true
     },
     {
       "id": "compatibility",
       "command": "python3 scripts/check-compatibility.py --bundle \"$BUNDLE\" --baseline \"$PERSISTED_BASELINE\" --output \"$FRESH_PROOF\"",
-      "test_files": [
-        "scripts/check-compatibility.py"
-      ],
-      "gates": [
-        "G6"
-      ],
+      "test_files": ["scripts/check-compatibility.py"],
+      "gates": ["G6"],
       "limits": "Sameidentitypaths, retainedlocal terminalbuild andpullreceipt; acceptednonterminal notcovered.",
-      "triggers": [
-        "candidate",
-        "safety",
-        "compatibility"
-      ],
+      "triggers": ["candidate", "safety", "compatibility"],
       "live": false,
       "serial": true
     },
     {
       "id": "artifact-audit",
       "command": "python3 scripts/audit-release.py --bundle \"$BUNDLE\" --output \"$FRESH_PROOF\"",
-      "test_files": [
-        "scripts/audit-release.py"
-      ],
-      "gates": [
-        "G3"
-      ],
+      "test_files": ["scripts/audit-release.py"],
+      "gates": ["G3"],
       "limits": "Known-key/token patterns + optionalsyntheticcanaries,exactfilehashes,unlistedfixtureauthartifactrefusal; not universal secret detection.",
-      "triggers": [
-        "candidate",
-        "packaging",
-        "compatibility"
-      ],
+      "triggers": ["candidate", "packaging", "compatibility"],
       "live": false,
       "serial": true
     },
     {
       "id": "installation",
       "command": "python3 scripts/validate-installation.py --bundle \"$BUNDLE\" --output \"$FRESH_PROOF\"",
-      "test_files": [
-        "scripts/validate-installation.py"
-      ],
-      "gates": [
-        "G2"
-      ],
+      "test_files": ["scripts/validate-installation.py"],
+      "gates": ["G2"],
       "limits": "FreshHOME/environment currenthost offlineprotected directory/tarball/replacement/traversal refusal; notindependentcleanhostnotarization.",
-      "triggers": [
-        "candidate",
-        "packaging",
-        "compatibility"
-      ],
+      "triggers": ["candidate", "packaging", "compatibility"],
       "live": false,
       "serial": true
     },
     {
       "id": "commit-cancel-eof",
       "command": "cargo test --locked -p grv-adapter-duckdb --features native --lib commit_boundary_tests::sdk_native_cancel_and_eof_at_commit_boundary_fence_and_immutable_replay -- --exact --test-threads=1",
-      "test_files": [
-        "crates/grv-adapter-duckdb/src/commit_boundary_tests.rs"
-      ],
-      "gates": [
-        "G4",
-        "G6"
-      ],
+      "test_files": ["crates/grv-adapter-duckdb/src/commit_boundary_tests.rs"],
+      "gates": ["G4", "G6"],
       "limits": "FourdeterministicSDKwirecancelEOFbeforeafterCOMMIT,cfgtestonlyhooks,fencejoin/receipt/neweradvance/sourcefreereplay;notarbitraryschedules.",
-      "triggers": [
-        "candidate",
-        "safety",
-        "backend"
-      ],
+      "triggers": ["candidate", "safety", "backend"],
       "live": false,
       "serial": true
     },
     {
       "id": "production-s3",
       "command": "GRV_RELEASE_VALIDATION_CONFIG=\"$PRIVATE_CONFIG\" python3 scripts/validate-s3-production.py --bundle \"$BUNDLE\" --write-root \"$OWNED_UUID_CHILD\" --profile \"$S3_PROFILE\" --region \"$S3_REGION\" --sf-org \"$SF_ORG\" --sf-org-id \"$SF_ORG_ID\" --upload-mode \"$UPLOAD_MODE\" --single-put-max-bytes \"$SINGLE_PUT_MAX_BYTES\" --output \"$FRESH_PRIVATE_OUTPUT\"",
-      "test_files": [
-        "scripts/validate-s3-production.py"
-      ],
-      "gates": [
-        "G5"
-      ],
+      "test_files": ["scripts/validate-s3-production.py"],
+      "gates": ["G5"],
       "limits": "Private-config-pinned UUID child only; current-object inventory/cleanup required. Multipart mode also inventories/aborts owned uploads; single-put mode creates none and never claims multipart absence. No IAM/retention changes or independently restricted-principal claim.",
-      "triggers": [
-        "candidate",
-        "safety",
-        "backend"
-      ],
+      "triggers": ["candidate", "safety", "backend"],
       "live": true,
       "serial": true
     },
     {
       "id": "sf-partial-capture",
       "command": "cargo test --locked -p grv-conformance --test salesforce_capture",
-      "test_files": [
-        "crates/grv-conformance/tests/salesforce_capture.rs"
-      ],
-      "gates": [
-        "G4",
-        "G6"
-      ],
+      "test_files": ["crates/grv-conformance/tests/salesforce_capture.rs"],
+      "gates": ["G4", "G6"],
       "limits": "Customharnessmain explicitpositiveREST/Bulk and negativeRESTlaterpage;productionSDKadaptercore,synthetichttphelpers,noliveorg,nofullCLIclaim.",
-      "triggers": [
-        "candidate",
-        "capture",
-        "safety"
-      ],
+      "triggers": ["candidate", "capture", "safety"],
       "live": false,
       "serial": true
     },
@@ -741,16 +421,9 @@
         "crates/grv-conformance/tests/s3_build_cli.rs",
         "crates/grv-storage/src/cloud/mod.rs"
       ],
-      "gates": [
-        "G4",
-        "G5"
-      ],
+      "gates": ["G4", "G5"],
       "limits": "ONEexactselectoronly;privatepinnedaccount/prefix/region;freshUUIDchild;ownedobjects+multipartinventoryabsence;noIAM/retentionchanges. Samewriter/readerprofileNOTindependentleastprivilege. ConformanceCLI/SDKnotproductionbundle.",
-      "triggers": [
-        "candidate",
-        "backend",
-        "safety"
-      ],
+      "triggers": ["candidate", "backend", "safety"],
       "live": true,
       "serial": true
     }

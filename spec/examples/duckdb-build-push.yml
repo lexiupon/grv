@@ -6,7 +6,7 @@ connection:
   database: ../../workspace.duckdb
 build:
   inputs:
-    - {table: raw.mt_month_stats, as: month_stats}
+    - { table: raw.mt_month_stats, as: month_stats }
 tables:
   - name: totals
     source:
@@ -15,10 +15,10 @@ tables:
         FROM grv_input.month_stats
         GROUP BY period, _period_
     columns:
-      - {name: period, type: date32}
-      - {name: total_spend, type: 'decimal128(38,4)'}
-      - {name: _period_, type: utf8}
+      - { name: period, type: date32 }
+      - { name: total_spend, type: "decimal128(38,4)" }
+      - { name: _period_, type: utf8 }
     partition_keys:
       - period
 checks:
-  - {table: totals, not_null: [period, total_spend, _period_]}
+  - { table: totals, not_null: [period, total_spend, _period_] }

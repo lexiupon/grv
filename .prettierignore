@@ -1,0 +1,31 @@
+# Generated and local tooling state
+.pi/
+node_modules/
+.git/
+.rumdl_cache/
+.claude/settings.local.json
+
+# Rust build output (gitignored)
+target/
+
+# Symlink to the OneDrive artifact store (gitignored)
+artifacts
+
+# Local release-validation state (gitignored)
+.release-validation.local.json
+
+# Python bytecode cache (gitignored)
+__pycache__/
+
+# Vendored third-party LICENSE/NOTICE files, the DuckDB native source
+# tree, and script-generated review JSON: third-party/tooling-owned,
+# must not be reformatted.
+notices/
+
+# Hand-written C++ for the DuckDB adapter: Prettier 3.9.9 mis-parses
+# *.inc as HTML and fails with syntax errors on the C++ sources.
+crates/grv-adapter-duckdb/native/
+
+# Prettier has no TOML parser built in; tool configs stay hand-formatted
+# (bunx prettier fails with "No parser could be inferred" on *.toml).
+*.toml

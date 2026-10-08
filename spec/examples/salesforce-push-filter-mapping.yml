@@ -10,13 +10,13 @@ tables:
       object: Case
       filter: Type = 'Credit Note' AND CreditAmount__c > 0
     columns:
-      - {name: id, source: Id, type: utf8}
-      - {name: case_number, source: CaseNumber, type: utf8}
-      - {name: account_id, source: AccountId, type: utf8}
-      - {name: credit_note_number, source: CreditNoteNumber__c, type: utf8}
-      - {name: status, source: Status, type: utf8}
-      - {name: credit_amount, source: CreditAmount__c, type: 'decimal128(38,6)'}
-      - {name: currency_code, source: CurrencyIsoCode, type: utf8}
-      - {name: modified_at, source: SystemModstamp, type: 'timestamp(us,UTC)'}
+      - { name: id, source: Id, type: utf8 }
+      - { name: case_number, source: CaseNumber, type: utf8 }
+      - { name: account_id, source: AccountId, type: utf8 }
+      - { name: credit_note_number, source: CreditNoteNumber__c, type: utf8 }
+      - { name: status, source: Status, type: utf8 }
+      - { name: credit_amount, source: CreditAmount__c, type: "decimal128(38,6)" }
+      - { name: currency_code, source: CurrencyIsoCode, type: utf8 }
+      - { name: modified_at, source: SystemModstamp, type: "timestamp(us,UTC)" }
 checks:
-  - {table: cases, not_null: [id, credit_amount]}
+  - { table: cases, not_null: [id, credit_amount] }

@@ -7,6 +7,7 @@ macOS ARM64 0.1.0 engineering distribution gate. No legal certification or
 exact linked dependency/SBOM completeness claim. See 0.1.0-SCOPE.md.
 
 Pinned official osx_arm64 DuckDB v1.5.6 extensions:
+
 - httpfs commit 4bc690dba4496c765777a0269d48fdbaff7cdc11,
   sha256 0cde1f5acd1970bfd414b11f5e945a1eddd8425e96e273f6411538d8fe3d951d
 - aws commit 28c853c084a6e3acd36d7b8018c42438bb8c5a33,
@@ -33,6 +34,7 @@ not legal certification/perfect graph.
 
 The following stronger provenance would improve exact-SBOM confidence, but is
 NOT an absolute release prerequisite under the user-reviewed policy:
+
 1. Signed digest -> deployment/signing record -> producing run/job/attempt and
    unsigned digest (signing changes bytes).
 2. Exact resolved engine/template/CI-tools SHAs, workflow inputs, merged vcpkg

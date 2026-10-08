@@ -54,14 +54,14 @@ under ignored evidence rather than staged or deleted. No active suite is assumed
 
 ## Gate board
 
-| Gate | Status and remaining closure |
-|---|---|
-| G1 / #18 | Previous clean candidate passed; current changes need clean freeze/build and complete automated/MSRV reruns. |
-| G2 / #19 | Installation/relocation tooling and previous candidate passed; rerun against final tar/bundle. No independent physical-host claim. |
-| G3 / #20 | Notice blocker closed: pinned upstream licenses plus reviewed 44 engine/55 extension third-party payloads. Recheck final hashes/audit; no exact linked SBOM/legal certification claim. |
-| G4 / #21 | Scoped critical safety review closed: partial acquisition, commit cancel/EOF, GC corruption, helper FD isolation and replay proof. Relevant tests rerun with candidate; no exhaustive race/network claim. |
-| G5 / #22, #30 | Current S3 permission blocker resolved; earlier multipart/single-PUT lifecycle passed. Final bytes/default-large-object and advertised view/build qualification remain. |
-| G6 / #24 | Private coordinates and archive move complete; canonical compatibility baseline created/replayed. Final dossier, remote synchronization, retention and publication review remain. |
+| Gate          | Status and remaining closure                                                                                                                                                                              |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G1 / #18      | Previous clean candidate passed; current changes need clean freeze/build and complete automated/MSRV reruns.                                                                                              |
+| G2 / #19      | Installation/relocation tooling and previous candidate passed; rerun against final tar/bundle. No independent physical-host claim.                                                                        |
+| G3 / #20      | Notice blocker closed: pinned upstream licenses plus reviewed 44 engine/55 extension third-party payloads. Recheck final hashes/audit; no exact linked SBOM/legal certification claim.                    |
+| G4 / #21      | Scoped critical safety review closed: partial acquisition, commit cancel/EOF, GC corruption, helper FD isolation and replay proof. Relevant tests rerun with candidate; no exhaustive race/network claim. |
+| G5 / #22, #30 | Current S3 permission blocker resolved; earlier multipart/single-PUT lifecycle passed. Final bytes/default-large-object and advertised view/build qualification remain.                                   |
+| G6 / #24      | Private coordinates and archive move complete; canonical compatibility baseline created/replayed. Final dossier, remote synchronization, retention and publication review remain.                         |
 
 ## Explicit qualification limits
 

@@ -140,9 +140,7 @@
           "sha256": "134a9915969c5b346c1017ae9db1c64c87f842f8f47343fc1f8e672cfeb7305d"
         }
       ],
-      "observed_selectors": [
-        "production_cli_org_capture_publication_and_source_free_terminal_replay"
-      ],
+      "observed_selectors": ["production_cli_org_capture_publication_and_source_free_terminal_replay"],
       "test_summary": {
         "passed": 1,
         "failed": 0,
@@ -190,9 +188,7 @@
           "sha256": "2c5800faab310bf69ca5b57ad92e1b9e8556916ab5bb75c1e54c3dd82d3a81b1"
         }
       ],
-      "observed_selectors": [
-        "live_bulk_response_loss_never_reposts_or_adopts_after_restart"
-      ],
+      "observed_selectors": ["live_bulk_response_loss_never_reposts_or_adopts_after_restart"],
       "test_summary": {
         "passed": 1,
         "failed": 0,
@@ -241,9 +237,7 @@
           "sha256": "07b59052e4a85bca084b487f56489fc53bda03a3b0786f46a85a7d7937e7021a"
         }
       ],
-      "observed_selectors": [
-        "live_bulk_scaled_pages_exact_oracle_checkpoint_empty_and_cleanup"
-      ],
+      "observed_selectors": ["live_bulk_scaled_pages_exact_oracle_checkpoint_empty_and_cleanup"],
       "test_summary": {
         "passed": 1,
         "failed": 0,
@@ -292,9 +286,7 @@
           "sha256": "52179f2835dc3f818cf141b74ae682a961ea9b9a2d5f5492ed8d91fddda2253f"
         }
       ],
-      "observed_selectors": [
-        "live_bulk_default_pages_exact_oracle_checkpoint_empty_and_cleanup"
-      ],
+      "observed_selectors": ["live_bulk_default_pages_exact_oracle_checkpoint_empty_and_cleanup"],
       "test_summary": {
         "passed": 1,
         "failed": 0,
@@ -343,9 +335,7 @@
           "sha256": "baa13b3df82b1ed60b78d2da1684f7a255e97dadcfe72aaca189f8a2a3a63f65"
         }
       ],
-      "observed_selectors": [
-        "production_cli_relationship_acquisition_or_precise_bulk_refusal"
-      ],
+      "observed_selectors": ["production_cli_relationship_acquisition_or_precise_bulk_refusal"],
       "test_summary": {
         "passed": 1,
         "failed": 0,
@@ -393,9 +383,7 @@
           "sha256": "4458e45bd30c2ad609b224702910289868e6073f33d6be77b1cadb47ebf155ed"
         }
       ],
-      "observed_selectors": [
-        "production_cli_rich_bulk_contract_refusal"
-      ],
+      "observed_selectors": ["production_cli_rich_bulk_contract_refusal"],
       "test_summary": {
         "passed": 1,
         "failed": 0,
@@ -531,9 +519,7 @@
           "sha256": "6b71703c9e54e6c2210e932c391643abb0ffc056c27d97443651c19a8ef2bcb5"
         }
       ],
-      "observed_selectors": [
-        "production_cli_fixture_mutation_omission_and_restored_oracle"
-      ],
+      "observed_selectors": ["production_cli_fixture_mutation_omission_and_restored_oracle"],
       "test_summary": {
         "passed": 1,
         "failed": 0,
@@ -669,9 +655,7 @@
           "sha256": "ab400a8c0e1ab6e537591c5af6b94a935020ae71d0eab0d0abd5c05b3d3b5ffe"
         }
       ],
-      "observed_selectors": [
-        "production_cli_empty_capture_noop_and_source_free_terminal_replay"
-      ],
+      "observed_selectors": ["production_cli_empty_capture_noop_and_source_free_terminal_replay"],
       "test_summary": {
         "passed": 1,
         "failed": 0,
@@ -719,9 +703,7 @@
           "sha256": "05ce57dbd537a709d55b2edc8f2aa34a5a917b81abf43b7b40f39b967c46f960"
         }
       ],
-      "observed_selectors": [
-        "production_cli_org_capture_publication_and_source_free_terminal_replay"
-      ],
+      "observed_selectors": ["production_cli_org_capture_publication_and_source_free_terminal_replay"],
       "test_summary": {
         "passed": 1,
         "failed": 0,
@@ -769,9 +751,7 @@
           "sha256": "fa00bbba333e5eb4d823042fe2b7ff29a7a96d2ee485a121f7df4580b3c030d0"
         }
       ],
-      "observed_selectors": [
-        "production_cli_org_capture_publication_and_source_free_terminal_replay"
-      ],
+      "observed_selectors": ["production_cli_org_capture_publication_and_source_free_terminal_replay"],
       "test_summary": {
         "passed": 0,
         "failed": 1,
@@ -819,9 +799,7 @@
           "sha256": "647d83f9f095820d6c992a208a60d79dc3f62fe3685a2eb0242dcf97f33063a8"
         }
       ],
-      "observed_selectors": [
-        "production_cli_relationship_acquisition_or_precise_bulk_refusal"
-      ],
+      "observed_selectors": ["production_cli_relationship_acquisition_or_precise_bulk_refusal"],
       "test_summary": {
         "passed": 1,
         "failed": 0,
@@ -869,9 +847,7 @@
           "sha256": "44e0c77784326415d493269f5eb80f69458709927674046ea8d3b3e45e2cdb04"
         }
       ],
-      "observed_selectors": [
-        "production_wrong_expected_org_authentication_exposes_no_source_session"
-      ],
+      "observed_selectors": ["production_wrong_expected_org_authentication_exposes_no_source_session"],
       "test_summary": {
         "passed": 1,
         "failed": 0,
@@ -905,9 +881,7 @@
       "finished_at": null,
       "source_sha256": null,
       "binary_sha256": null,
-      "limitations": [
-        "Historical auth smoke only; not rich acquisition/candidate proof."
-      ],
+      "limitations": ["Historical auth smoke only; not rich acquisition/candidate proof."],
       "logs": [
         {
           "path": "artifacts/release-validation/sf-scaled/auth-smoke.log",

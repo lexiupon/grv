@@ -24,12 +24,8 @@
           "sha256": "ff42f2c2b9525a493fbf0b48e993351ae2c411a473816ceeaa83ad11eddf864c"
         }
       ],
-      "assertions": [
-        "Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."
-      ],
-      "limitations": [
-        "Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."
-      ],
+      "assertions": ["Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."],
+      "limitations": ["Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."],
       "cleanup": {
         "deleted_objects": 18,
         "absence_proved": true
@@ -58,12 +54,8 @@
           "sha256": "3b2beb9e3982e636b7478738909fd60c707fedbf640d7758c72bd19527647093"
         }
       ],
-      "assertions": [
-        "Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."
-      ],
-      "limitations": [
-        "Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."
-      ],
+      "assertions": ["Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."],
+      "limitations": ["Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."],
       "cleanup": {
         "deleted_objects": 20,
         "absence_proved": true
@@ -92,12 +84,8 @@
           "sha256": "0769f1dbc93cd8e544965a293b3c4049da254ad5e96dbb8d267554001ea5ef60"
         }
       ],
-      "assertions": [
-        "Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."
-      ],
-      "limitations": [
-        "Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."
-      ],
+      "assertions": ["Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."],
+      "limitations": ["Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."],
       "cleanup": {
         "deleted_objects": 20,
         "absence_proved": true
@@ -126,12 +114,8 @@
           "sha256": "5456213f65b5917eeeba3453375538c37bbd8881764e71525262367aa750de56"
         }
       ],
-      "assertions": [
-        "Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."
-      ],
-      "limitations": [
-        "Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."
-      ],
+      "assertions": ["Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."],
+      "limitations": ["Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."],
       "cleanup": {
         "deleted_objects": 20,
         "absence_proved": true
@@ -160,12 +144,8 @@
           "sha256": "6f227cd65ce46aea6574da0501000ecfac69d3edd7c738bf85befd10e0ccef4e"
         }
       ],
-      "assertions": [
-        "Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."
-      ],
-      "limitations": [
-        "Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."
-      ],
+      "assertions": ["Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."],
+      "limitations": ["Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."],
       "cleanup": {
         "deleted_objects": 39,
         "absence_proved": true
@@ -194,12 +174,8 @@
           "sha256": "c62fcc30164641f8714bbda43e5cc475a2ec089cf9f437db02d291823e62d477"
         }
       ],
-      "assertions": [
-        "Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."
-      ],
-      "limitations": [
-        "Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."
-      ],
+      "assertions": ["Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."],
+      "limitations": ["Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."],
       "cleanup": {
         "deleted_objects": 0,
         "absence_proved": true
@@ -228,12 +204,8 @@
           "sha256": "fca70f21a9290c7acf6064e2fc9ca557926f5a8cc318e527902c604828ee612c"
         }
       ],
-      "assertions": [
-        "Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."
-      ],
-      "limitations": [
-        "Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."
-      ],
+      "assertions": ["Production-bundle lifecycle facts in retainedresult including independentqueryandcleanup; earlier harnessfailures retained."],
+      "limitations": ["Retrospectiveimport lacks exactUTC/source interval,dirtybaseline bundle notfrozenqualification."],
       "cleanup": {
         "deleted_objects": 0,
         "absence_proved": true

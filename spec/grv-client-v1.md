@@ -1,11 +1,11 @@
 # GRV Client v1
 
-| | |
-| --------- | ------------ |
-| Status | draft; partial Rust implementation |
-| Version | 1 |
-| Date | 2026-10-05 |
-| Extends | GRV v2 |
+|         |                                    |
+| ------- | ---------------------------------- |
+| Status  | draft; partial Rust implementation |
+| Version | 1                                  |
+| Date    | 2026-10-05                         |
+| Extends | GRV v2                             |
 
 ## Purpose and reading guide
 
@@ -42,10 +42,10 @@ transfer receipts are consumer state outside GRV. The GRV backend (filesystem,
 S3, or GCS) is separate from a data adapter (such as DuckDB, Salesforce, or a
 website).
 
-New readers should read *Terms*, *Everyday workflow*, and *The declaration*,
-then the *Worked declarations*. *DuckDB adapter* and *Managed builds* cover
-adapter-specific features. *Adapter architecture and extension contract* is for
-adapter authors. *Inspection, administration, and advanced integrations* lists
+New readers should read _Terms_, _Everyday workflow_, and _The declaration_,
+then the _Worked declarations_. _DuckDB adapter_ and _Managed builds_ cover
+adapter-specific features. _Adapter architecture and extension contract_ is for
+adapter authors. _Inspection, administration, and advanced integrations_ lists
 the remaining commands.
 
 ## Terms
@@ -84,11 +84,11 @@ A declaration defines one directional binding to one dataset. A dataset does
 not belong permanently to the adapter that produced it: another binding can
 pull a Salesforce-populated dataset into DuckDB.
 
-| Adapter | Push | Pull | Initial scope |
-| --------- | ------ | ------ | --------------- |
-| `duckdb` | Yes | Yes | Local snapshot extraction; managed SQL builds; transactional replace and append pulls |
-| `salesforce` | Yes | No | Filtered objects with mapped columns; full extractions |
-| Additional installed adapter | Capability | Capability | Its registered source or destination binding and commands |
+| Adapter                      | Push       | Pull       | Initial scope                                                                         |
+| ---------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------- |
+| `duckdb`                     | Yes        | Yes        | Local snapshot extraction; managed SQL builds; transactional replace and append pulls |
+| `salesforce`                 | Yes        | No         | Filtered objects with mapped columns; full extractions                                |
+| Additional installed adapter | Capability | Capability | Its registered source or destination binding and commands                             |
 
 ```console
 grv push --decl <yaml> --grv <root>
@@ -108,8 +108,8 @@ grv adapter <name> <command> [adapter flags]
 - `--revision` overrides the declaration's pull selector. It changes only the
   source state.
 - `--json` is supported by every command. Progress goes to stderr, and stdout
-  contains the versioned result envelope (execution companion, *Common command
-  behavior*).
+  contains the versioned result envelope (execution companion, _Common command
+  behavior_).
 
 There are no generic `--engine` or overloaded `--target` overrides. Connection
 and destination settings are declared explicitly.
@@ -128,8 +128,8 @@ The CLI reports the attempt UUID before mutation.
   revision. A committed pull receipt always returns the original resolved
   revision. Use a fixed revision when the source selection must remain constant.
 
-The execution companion defines retry behavior in full (*The pull algorithm*
-and *Extraction session preparation and capture*).
+The execution companion defines retry behavior in full (_The pull algorithm_
+and _Extraction session preparation and capture_).
 
 ### State directory
 
@@ -152,16 +152,16 @@ deployments should do one of the following:
 A declaration is one YAML file that describes one push or one pull of one
 dataset. Every declaration has this common envelope:
 
-| Field | Meaning |
-| --------- | --------- |
-| `declaration_version` | `1` |
-| `kind` | `push` or `pull` |
-| `dataset` | The GRV dataset name; declared once |
-| `adapter` | A registered adapter name |
-| `connection` | Adapter-specific connection identity; credentials stay in authentication stores |
-| `tables` | Table names, data selection, output contracts, and optional mappings |
-| `checks` | Optional output checks, initially `not_null` |
-| `options` | Optional advanced adapter tuning; ordinary declarations omit it |
+| Field                 | Meaning                                                                         |
+| --------------------- | ------------------------------------------------------------------------------- |
+| `declaration_version` | `1`                                                                             |
+| `kind`                | `push` or `pull`                                                                |
+| `dataset`             | The GRV dataset name; declared once                                             |
+| `adapter`             | A registered adapter name                                                       |
+| `connection`          | Adapter-specific connection identity; credentials stay in authentication stores |
+| `tables`              | Table names, data selection, output contracts, and optional mappings            |
+| `checks`              | Optional output checks, initially `not_null`                                    |
+| `options`             | Optional advanced adapter tuning; ordinary declarations omit it                 |
 
 Envelope rules:
 
@@ -182,7 +182,7 @@ branch to the common schema, and does not use a special `config_version/config`
 wrapper.
 
 YAML parsing, normalization, and request hashing follow the execution
-companion, *Normalized plans and identity*.
+companion, _Normalized plans and identity_.
 
 ### Output columns and types
 
@@ -234,17 +234,17 @@ Declarations name types with the Arrow-style spellings below. Each maps to
 exactly one GRV logical type ([GRV v2 §4](grv-storage-v2.md)), which is what
 schema baselines, revision schemas, and the adapter wire contract use:
 
-| Declaration type | GRV logical type |
-| --------- | --------- |
-| `bool` | `"boolean"` |
-| `int64` | `"int64"` |
-| `double` | `"float64"` |
-| `utf8` | `"string"` |
-| `binary` | `"binary"` |
-| `date32` | `"date"` |
-| `decimal128(p,s)` (precision 1–38, scale 0–p) | `{"decimal": {"precision": p, "scale": s}}` |
+| Declaration type                                  | GRV logical type                                          |
+| ------------------------------------------------- | --------------------------------------------------------- |
+| `bool`                                            | `"boolean"`                                               |
+| `int64`                                           | `"int64"`                                                 |
+| `double`                                          | `"float64"`                                               |
+| `utf8`                                            | `"string"`                                                |
+| `binary`                                          | `"binary"`                                                |
+| `date32`                                          | `"date"`                                                  |
+| `decimal128(p,s)` (precision 1–38, scale 0–p)     | `{"decimal": {"precision": p, "scale": s}}`               |
 | `timestamp(ms)`, `timestamp(us)`, `timestamp(ns)` | `{"timestamp": {"unit": "ms"\|"us"\|"ns", "utc": false}}` |
-| `timestamp(ms,UTC)`, `timestamp(us,UTC)` | `{"timestamp": {"unit": "ms"\|"us", "utc": true}}` |
+| `timestamp(ms,UTC)`, `timestamp(us,UTC)`          | `{"timestamp": {"unit": "ms"\|"us", "utc": true}}`        |
 
 Every other GRV logical type is unsupported in client v1: `int8`, `int16`,
 `int32`, unsigned integers, `float32`, `json`, `uuid`, `fixed_binary`, `time`,
@@ -304,7 +304,7 @@ after capture or export and before any version allocation.
 ### Push selection
 
 This section defines which rows an extraction reads and which tables and
-versions a push publishes. Managed builds are described in *Managed builds*.
+versions a push publishes. Managed builds are described in _Managed builds_.
 
 #### Source and filter
 
@@ -332,8 +332,8 @@ row-level delta:
   empty snapshot.
 
 An extraction fixes its whole dataset base. A concurrent publication requires a
-new attempt rather than mixing snapshots (execution companion, *Extraction
-snapshot membership*).
+new attempt rather than mixing snapshots (execution companion, _Extraction
+snapshot membership_).
 
 #### Table membership
 
@@ -354,11 +354,11 @@ separate datasets.
   of content and schema is proved. The core writes every output in a canonical
   sorted Parquet form, so it proves equality by comparing staged file hashes
   with the base manifest, without downloading base data (execution companion,
-  *Canonical encoding and equality*).
+  _Canonical encoding and equality_).
 - `all` writes new versions even when content is equal.
 
 Apart from whole-table `drop`, publication selectors are advanced build controls
-in the execution companion (*Build selection and no-op rules*).
+in the execution companion (_Build selection and no-op rules_).
 
 ### Pull selection and write behavior
 
@@ -429,17 +429,17 @@ revisions. A different binding cannot take over its targets.
 
 The following files are complete declarations, not generated datasets.
 
-| Case | Declaration |
-| --------- | --------------- |
-| Push a DuckDB table with a selection filter and column mapping | [duckdb-push-filter.yml](examples/duckdb-push-filter.yml) |
-| Push selected Salesforce Cases with SOQL filtering and mapped columns | [salesforce-push-filter-mapping.yml](examples/salesforce-push-filter-mapping.yml) |
-| Pull an identity replacement into DuckDB | [duckdb-pull-replace.yml](examples/duckdb-pull-replace.yml) |
-| Keep revision 7 in an explicitly named historical destination | [duckdb-pull-replace-historical.yml](examples/duckdb-pull-replace-historical.yml) |
-| Append rows using source filters, local lookups, target anti-join, and remapping | [duckdb-pull-append-sql.yml](examples/duckdb-pull-append-sql.yml) |
-| Reuse a SQL file and human-readable output column contract | [duckdb-pull-append-sql-files.yml](examples/duckdb-pull-append-sql-files.yml) |
-| Select September partitions before transfer, then append with SQL | [duckdb-pull-partitioned-append-sql.yml](examples/duckdb-pull-partitioned-append-sql.yml) |
-| Replace with a SQL-selected and remapped result | [duckdb-pull-replace-sql.yml](examples/duckdb-pull-replace-sql.yml) |
-| Run a managed SQL build over a held GRV input, then push its result | [duckdb-build-push.yml](examples/duckdb-build-push.yml) |
+| Case                                                                             | Declaration                                                                               |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Push a DuckDB table with a selection filter and column mapping                   | [duckdb-push-filter.yml](examples/duckdb-push-filter.yml)                                 |
+| Push selected Salesforce Cases with SOQL filtering and mapped columns            | [salesforce-push-filter-mapping.yml](examples/salesforce-push-filter-mapping.yml)         |
+| Pull an identity replacement into DuckDB                                         | [duckdb-pull-replace.yml](examples/duckdb-pull-replace.yml)                               |
+| Keep revision 7 in an explicitly named historical destination                    | [duckdb-pull-replace-historical.yml](examples/duckdb-pull-replace-historical.yml)         |
+| Append rows using source filters, local lookups, target anti-join, and remapping | [duckdb-pull-append-sql.yml](examples/duckdb-pull-append-sql.yml)                         |
+| Reuse a SQL file and human-readable output column contract                       | [duckdb-pull-append-sql-files.yml](examples/duckdb-pull-append-sql-files.yml)             |
+| Select September partitions before transfer, then append with SQL                | [duckdb-pull-partitioned-append-sql.yml](examples/duckdb-pull-partitioned-append-sql.yml) |
+| Replace with a SQL-selected and remapped result                                  | [duckdb-pull-replace-sql.yml](examples/duckdb-pull-replace-sql.yml)                       |
+| Run a managed SQL build over a held GRV input, then push its result              | [duckdb-build-push.yml](examples/duckdb-build-push.yml)                                   |
 
 ### Salesforce push
 
@@ -456,16 +456,16 @@ tables:
       object: Case
       filter: Type = 'Credit Note' AND CreditAmount__c > 0
     columns:
-      - {name: id, source: Id, type: utf8}
-      - {name: case_number, source: CaseNumber, type: utf8}
-      - {name: account_id, source: AccountId, type: utf8}
-      - {name: credit_note_number, source: CreditNoteNumber__c, type: utf8}
-      - {name: status, source: Status, type: utf8}
-      - {name: credit_amount, source: CreditAmount__c, type: 'decimal128(38,6)'}
-      - {name: currency_code, source: CurrencyIsoCode, type: utf8}
-      - {name: modified_at, source: SystemModstamp, type: 'timestamp(us,UTC)'}
+      - { name: id, source: Id, type: utf8 }
+      - { name: case_number, source: CaseNumber, type: utf8 }
+      - { name: account_id, source: AccountId, type: utf8 }
+      - { name: credit_note_number, source: CreditNoteNumber__c, type: utf8 }
+      - { name: status, source: Status, type: utf8 }
+      - { name: credit_amount, source: CreditAmount__c, type: "decimal128(38,6)" }
+      - { name: currency_code, source: CurrencyIsoCode, type: utf8 }
+      - { name: modified_at, source: SystemModstamp, type: "timestamp(us,UTC)" }
 checks:
-  - {table: cases, not_null: [id, credit_amount]}
+  - { table: cases, not_null: [id, credit_amount] }
 ```
 
 This produces `credit_notes.cases`. The adapter generates the SOQL query,
@@ -515,12 +515,12 @@ tables:
                    s.credit_amount DESC
         ) = 1
     columns:
-      - {name: source_case_id, type: utf8}
-      - {name: note_number, type: utf8}
-      - {name: amount, type: 'decimal128(38,6)'}
-      - {name: currency, type: utf8}
+      - { name: source_case_id, type: utf8 }
+      - { name: note_number, type: utf8 }
+      - { name: amount, type: "decimal128(38,6)" }
+      - { name: currency, type: utf8 }
 checks:
-  - {table: cases, not_null: [source_case_id, amount]}
+  - { table: cases, not_null: [source_case_id, amount] }
 ```
 
 This appends into `app.credit_notes`. The SQL:
@@ -553,7 +553,7 @@ destinations, and options.
 The connection is `{database: <local native path>}`. In v1 it cannot be
 `:memory:`, a network file, or a server. The adapter owns database locking,
 private relations, transactions, and `_grv` consumer metadata (execution
-companion, *DuckDB process ownership* and *Consumer metadata*).
+companion, _DuckDB process ownership_ and _Consumer metadata_).
 
 A managed pull or build binds the workspace to one canonical GRV root and a
 durable UUID. Read-only extraction from unmanaged tables does not establish this
@@ -585,8 +585,8 @@ selected partition scopes always evaluate their full selected scope.
 SQL or append correct.
 
 S3 views support complete identity replacement only, against S3 roots, with the
-verification and availability rules in the execution companion (*Backends and
-S3 views*).
+verification and availability rules in the execution companion (_Backends and
+S3 views_).
 
 ### SQL bindings and transaction
 
@@ -622,7 +622,7 @@ The DuckDB adapter binds these relations inside one transaction:
    transaction back.
 
 Row counts in receipts mean completed selected or inserted rows; they do not
-imply business uniqueness. The execution companion's *The pull algorithm*
+imply business uniqueness. The execution companion's _The pull algorithm_
 defines the transactional implementation.
 
 #### Append and replacement ownership
@@ -699,7 +699,7 @@ supplies one output query per table. Users first pull the required identity
 inputs. The build runner uses that completed pull only to choose each input's
 revision and contract. It then loads private input copies from the held,
 verified GRV files of that revision, not from the tracking tables (execution
-companion, *DuckDB build session preparation and context*).
+companion, _DuckDB build session preparation and context_).
 
 ```yaml
 declaration_version: 1
@@ -710,7 +710,7 @@ connection:
   database: ../../workspace.duckdb
 build:
   inputs:
-    - {table: raw.mt_month_stats, as: month_stats}
+    - { table: raw.mt_month_stats, as: month_stats }
 tables:
   - name: totals
     source:
@@ -719,13 +719,13 @@ tables:
         FROM grv_input.month_stats
         GROUP BY period, _period_
     columns:
-      - {name: period, type: date32}
-      - {name: total_spend, type: 'decimal128(38,4)'}
-      - {name: _period_, type: utf8}
+      - { name: period, type: date32 }
+      - { name: total_spend, type: "decimal128(38,4)" }
+      - { name: _period_, type: utf8 }
     partition_keys:
       - period
 checks:
-  - {table: totals, not_null: [period, total_spend, _period_]}
+  - { table: totals, not_null: [period, total_spend, _period_] }
 ```
 
 Run this with ordinary `grv push --decl ... --grv ...`. The runner:
@@ -753,11 +753,11 @@ previous-state seeds. Self-input is the separate immutable read binding.
 
 The runner owns locking, renewal, cancellation, stopped-writer checks, and the
 completion record. It never treats abandoned output tables as completion
-(execution companion, *Managed runner execution* and *Build completion record*).
+(execution companion, _Managed runner execution_ and _Build completion record_).
 
 Every derived output conservatively cites all confirmed external input
 revisions. Self-input is the prepared target base, not a self-hold (execution
-companion, *Schemas and provenance*). Source revision 0 and application imports,
+companion, _Schemas and provenance_). Source revision 0 and application imports,
 including SQL imports, are not eligible external build inputs.
 `build.code_fingerprints` optionally supplies external code identities.
 
@@ -765,7 +765,7 @@ including SQL imports, are not eligible external build inputs.
 
 Advanced external engines use `build.execution: external`, output aliases in
 `source.table`, and the explicit session and completion API in the execution
-companion (*`grv session`*). Their drivers must meet its fencing and attestation
+companion (_`grv session`_). Their drivers must meet its fencing and attestation
 contract. Managed and external build capabilities are separate. Declaring a
 capability requires implementing its lifecycle, not merely accepting its flag.
 
@@ -777,17 +777,17 @@ registers and implements.
 
 ### Modules and responsibilities
 
-| Module | Owns |
-| --------- | ------ |
-| CLI | Commands, YAML and reference loading, result rendering; no transport or destination SQL implementation |
-| Transfer core | Capability checks; normalized plan and identity; source revision and file selection; Arrow contracts; capture writer; GRV holds, runs, and publication; outcome coordination |
-| Adapter | Connection and authentication; source dialect, encoding, and jobs; destination execution, transactions, and receipts; engine-specific locks; registered schemas and commands |
-| Managed runner | Logical input and output lifecycle coordinated by core; engine execution and stopped-writer attestation supplied by its adapter |
-| GRV backend | Immutable storage operations, conditional writes, validators, backend credentials |
+| Module         | Owns                                                                                                                                                                         |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CLI            | Commands, YAML and reference loading, result rendering; no transport or destination SQL implementation                                                                       |
+| Transfer core  | Capability checks; normalized plan and identity; source revision and file selection; Arrow contracts; capture writer; GRV holds, runs, and publication; outcome coordination |
+| Adapter        | Connection and authentication; source dialect, encoding, and jobs; destination execution, transactions, and receipts; engine-specific locks; registered schemas and commands |
+| Managed runner | Logical input and output lifecycle coordinated by core; engine execution and stopped-writer attestation supplied by its adapter                                              |
+| GRV backend    | Immutable storage operations, conditional writes, validators, backend credentials                                                                                            |
 
 One normalization path serves inline and file column contracts, all adapters,
-retries, and advanced sessions (execution companion, *Normalized plans and
-identity*). The authority split is strict:
+retries, and advanced sessions (execution companion, _Normalized plans and
+identity_). The authority split is strict:
 
 - Adapter modules do not allocate GRV versions, edit manifests, or write
   `LATEST`.
@@ -875,20 +875,20 @@ These are language-neutral obligations; the Rust SDK implements their process
 protocol equivalents.
 An optional method is required when the corresponding capability is advertised.
 
-| Method | Inputs and required result |
-| --------- | --------------------------- |
-| `validate_binding` | Common declaration and adapter fragments → normalized config and defaults; pure validation, with no authentication or storage I/O |
-| `bind_connection` | Normalized config → non-secret handle and, when knowable offline, the stable system identity; aliases are resolved, and secrets remain private. In the process protocol this is split into `locate_connection`, `bind_connection`, and `authenticate` (§4.2) |
-| `authenticate` | Bound handle → resolved stable system identity, compared with the recorded identity on retry; invoked only for new execution or a pending acknowledgement that needs it |
-| `extract` | Fixed context and output contracts, plus persisted source checkpoint → named table batches and explicit table and source completion |
-| `prepare_pull` | Fixed revision, selected files, and contracts, plus target config → physical mappings, output contracts, and an ownership, write, and recovery plan |
-| `resolve_pull` | Attempt and request identity → committed receipt, trustworthy not-committed, busy, or unknown; checked before reading source files |
-| `apply_pull` | Prepared plan and verified source provider → destination writes and durable receipt under the adapter's declared commit and recovery contract |
-| `prepare_build` | Core-held logical input and base bindings, plus output contracts → private engine mappings and controlled invocation handle |
-| `execute_build` | Prepared handle, plus declared queries or model integration → outputs, success or failure, stopped writers, and immutable completion facts |
-| `inspect_connection` | Optional read-only connection state → registered inspection details, with no binding, repair, or renewal |
-| `cancel`, `close` | Signal cancellation, stop adapter work and wait for it, and release handles and locks; preserve uncertain commit evidence |
-| `after_publish` | Confirmed GRV outcome → idempotent source acknowledgement or cursor update, if the adapter needs one |
+| Method               | Inputs and required result                                                                                                                                                                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `validate_binding`   | Common declaration and adapter fragments → normalized config and defaults; pure validation, with no authentication or storage I/O                                                                                                                            |
+| `bind_connection`    | Normalized config → non-secret handle and, when knowable offline, the stable system identity; aliases are resolved, and secrets remain private. In the process protocol this is split into `locate_connection`, `bind_connection`, and `authenticate` (§4.2) |
+| `authenticate`       | Bound handle → resolved stable system identity, compared with the recorded identity on retry; invoked only for new execution or a pending acknowledgement that needs it                                                                                      |
+| `extract`            | Fixed context and output contracts, plus persisted source checkpoint → named table batches and explicit table and source completion                                                                                                                          |
+| `prepare_pull`       | Fixed revision, selected files, and contracts, plus target config → physical mappings, output contracts, and an ownership, write, and recovery plan                                                                                                          |
+| `resolve_pull`       | Attempt and request identity → committed receipt, trustworthy not-committed, busy, or unknown; checked before reading source files                                                                                                                           |
+| `apply_pull`         | Prepared plan and verified source provider → destination writes and durable receipt under the adapter's declared commit and recovery contract                                                                                                                |
+| `prepare_build`      | Core-held logical input and base bindings, plus output contracts → private engine mappings and controlled invocation handle                                                                                                                                  |
+| `execute_build`      | Prepared handle, plus declared queries or model integration → outputs, success or failure, stopped writers, and immutable completion facts                                                                                                                   |
+| `inspect_connection` | Optional read-only connection state → registered inspection details, with no binding, repair, or renewal                                                                                                                                                     |
+| `cancel`, `close`    | Signal cancellation, stop adapter work and wait for it, and release handles and locks; preserve uncertain commit evidence                                                                                                                                    |
+| `after_publish`      | Confirmed GRV outcome → idempotent source acknowledgement or cursor update, if the adapter needs one                                                                                                                                                         |
 
 #### Extraction obligations
 
@@ -904,7 +904,7 @@ and one explicit `table_complete` (including for zero rows), followed by
 
 Batching does not prove completeness. The core stages Parquet and seals the
 capture only after all declared tables and all writers are complete (execution
-companion, *Extraction session preparation and capture*). Resumption uses
+companion, _Extraction session preparation and capture_). Resumption uses
 persisted source identity. Fragments from unrelated snapshots cannot be
 combined.
 
@@ -919,7 +919,7 @@ rows differ. It must fence the former writer and establish trustworthy receipt
 or journal state. When a committed receipt already proves success, no source
 download or re-evaluation occurs. Lost metadata produces an explicit
 `OUTCOME_UNKNOWN` or `PROTOCOL_FAILURE`, never an assumed outcome. Receipt lookup and ambiguous-commit resolution follow the
-execution companion, *The pull algorithm*.
+execution companion, _The pull algorithm_.
 
 #### State ownership and post-publication hooks
 
@@ -935,8 +935,8 @@ Source cursors advance only after confirmed publication. Hooks must be
 idempotent and monotone; they cannot roll back a later acknowledged cursor. An
 acknowledgement failure preserves the committed outcome and a durable pending
 acknowledgement. A same-attempt retry may retry that hook using its fixed state,
-without reacquiring data or publishing again (execution companion, *Extraction
-session preparation and capture*). Cleanup never discards evidence for an
+without reacquiring data or publishing again (execution companion, _Extraction
+session preparation and capture_). Cleanup never discards evidence for an
 unresolved commit.
 
 #### Managed runner
@@ -995,16 +995,16 @@ promise.
 
 Every adapter package runs the common contract suite plus its
 capability-specific suite. The concrete scenarios are in the execution
-companion (*Required conformance scenarios*) and the adapter process protocol
+companion (_Required conformance scenarios_) and the adapter process protocol
 (§9).
 
-| Suite | Covers |
-| --------- | --------- |
+| Suite                  | Covers                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Common (every adapter) | Closed configuration validation; unsupported direction rejected before side effects; stable identity and version on retries; schema, type, and check failure; zero-row completion; missing pages, tables, or completion; restart and cancellation; secret redaction; no cursor advancement before publication; confirmed versus unknown outcomes |
-| Pull adapters | Multi-output failure; receipt replay without source reads; re-evaluation on a new attempt; ownership and schema conflicts; ambiguous commit recovery |
-| Build adapters | Fixed inputs and holds; private mappings; cancelled or lost ownership; stopped writers; completion integrity; source provenance |
-| DuckDB | SQL bindings; one-statement files; partition acquisition scope; pre-write target snapshots; transactional rollback of data and receipt |
-| Salesforce | Complete pagination and counts; exact decimals |
+| Pull adapters          | Multi-output failure; receipt replay without source reads; re-evaluation on a new attempt; ownership and schema conflicts; ambiguous commit recovery                                                                                                                                                                                             |
+| Build adapters         | Fixed inputs and holds; private mappings; cancelled or lost ownership; stopped writers; completion integrity; source provenance                                                                                                                                                                                                                  |
+| DuckDB                 | SQL bindings; one-statement files; partition acquisition scope; pre-write target snapshots; transactional rollback of data and receipt                                                                                                                                                                                                           |
+| Salesforce             | Complete pagination and counts; exact decimals                                                                                                                                                                                                                                                                                                   |
 
 ## Inspection, administration, and advanced integrations
 
@@ -1032,13 +1032,13 @@ needs neither a declaration nor an adapter login.
 
 Read-only commands never establish bindings, create pins, renew leases, or
 repair state. Listing objects does not prove their commitment (execution
-companion, *Common command behavior*). Explicit pins protect retained revisions;
+companion, _Common command behavior_). Explicit pins protect retained revisions;
 merely choosing a revision does not. GC and recovery use the complete existing
-GRV protocols and report partial effects (execution companion, *`grv gc`* and
-*`grv recover`*).
+GRV protocols and report partial effects (execution companion, _`grv gc`_ and
+_`grv recover`_).
 
 Advanced root initialization accepts clock, lease, and grace parameters defined
-in the execution companion (*`grv init`*). External engines use
+in the execution companion (_`grv init`_). External engines use
 `grv session prepare/show/renew/abort` and
 `grv push --session ... --build-result ...`. Contexts are protected consumer
 state; inspection redacts tokens. These are integration tools beneath the
@@ -1056,17 +1056,17 @@ results.
 
 In summary, exit statuses are:
 
-| Exit | Meaning |
-| --------- | --------- |
-| 0 | Success |
-| 2 | Invalid request |
-| 3 | Conflict, busy, or ownership loss |
-| 4 | Unavailable or not found |
-| 5 | Integrity or protocol failure |
-| 6 | Adapter, backend, or engine failure, or unknown outcome |
+| Exit | Meaning                                                 |
+| ---- | ------------------------------------------------------- |
+| 0    | Success                                                 |
+| 2    | Invalid request                                         |
+| 3    | Conflict, busy, or ownership loss                       |
+| 4    | Unavailable or not found                                |
+| 5    | Integrity or protocol failure                           |
+| 6    | Adapter, backend, or engine failure, or unknown outcome |
 
 Error codes and full command and result contracts are defined in the execution
-companion (*Common command behavior* and *JSON result contracts*).
+companion (_Common command behavior_ and _JSON result contracts_).
 
 ## Scope and later additions
 

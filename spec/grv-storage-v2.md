@@ -1,7 +1,7 @@
 # GRV (Golden Record Vault) Storage v2 specification
 
 |         |            |
-|---------|------------|
+| ------- | ---------- |
 | Status  | draft      |
 | Version | 2          |
 | Date    | 2026-10-05 |
@@ -68,16 +68,16 @@ fulfil the **backend contract** below.
 
 **Backend contract.** The layout requires six operations:
 
-| operation            | meaning                                                             |
-|----------------------|---------------------------------------------------------------------|
-| `get`                | read an object's content and its validator                          |
-| `head`               | read an object's validator and size without returning its content   |
-| `list-by-prefix`     | list object names under a prefix; optionally with delimiter `/`, returning only the immediate child names (common prefixes) |
-| `delete`             | remove an object (idempotent)                                       |
+| operation            | meaning                                                                                                                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `get`                | read an object's content and its validator                                                                                                                                      |
+| `head`               | read an object's validator and size without returning its content                                                                                                               |
+| `list-by-prefix`     | list object names under a prefix; optionally with delimiter `/`, returning only the immediate child names (common prefixes)                                                     |
+| `delete`             | remove an object (idempotent)                                                                                                                                                   |
 | `conditional-create` | create only if the object does not exist, atomically with its full content; fail otherwise; returns the new validator. Readers observe either no object or the complete content |
-| `conditional-put`    | replace only if the object's validator matches one read earlier (compare-and-swap); readers observe the old or the new content, never a partial one; returns the new validator |
+| `conditional-put`    | replace only if the object's validator matches one read earlier (compare-and-swap); readers observe the old or the new content, never a partial one; returns the new validator  |
 
-A *validator* is an opaque, backend-specific string used for content
+A _validator_ is an opaque, backend-specific string used for content
 validation and conditional writes: the S3 `ETag`, the GCS object
 `generation`, or, locally, the lowercase hex SHA-256 of the object's
 content. It is not portable across backends or copies, and is not
@@ -133,14 +133,14 @@ and `version=1` never matches `version=10`.
 
 Per-backend mapping:
 
-| operation            | local filesystem                          | S3                                            | GCS                                     |
-|----------------------|-------------------------------------------|-----------------------------------------------|-------------------------------------------|
-| `get`               | read and hash the opened file; synchronize the file and path before returning | `GET` + `ETag`                               | `GET` + `generation`                      |
-| `head`              | `fstat` and hash the same opened file; synchronize the file and path before returning | `HEAD`                | object metadata `GET`                     |
-| `list-by-prefix`    | directory walk (`readdir` for delimiter)  | `ListObjectsV2` with `prefix` (+ `delimiter`) | object list with `prefix` (+ `delimiter`) |
-| `delete`            | `unlink`                                  | `DELETE`                                     | object delete                             |
-| `conditional-create`| write and synchronize a temp file, then `link(2)` it to the target (fails if it exists), unlink the temp, and synchronize the target's path before success | `PUT` (or multipart complete) with `If-None-Match: *` | write with `ifGenerationMatch=0` (`x-goog-if-generation-match: 0`) |
-| `conditional-put`   | under an exclusive `flock` on the containing directory: read and hash the current content, compare, write and synchronize a temp file, `rename`, and synchronize the target's path before success | `PUT` with `If-Match: <ETag>`   | write with `ifGenerationMatch=<generation>` |
+| operation            | local filesystem                                                                                                                                                                                  | S3                                                    | GCS                                                                |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------ |
+| `get`                | read and hash the opened file; synchronize the file and path before returning                                                                                                                     | `GET` + `ETag`                                        | `GET` + `generation`                                               |
+| `head`               | `fstat` and hash the same opened file; synchronize the file and path before returning                                                                                                             | `HEAD`                                                | object metadata `GET`                                              |
+| `list-by-prefix`     | directory walk (`readdir` for delimiter)                                                                                                                                                          | `ListObjectsV2` with `prefix` (+ `delimiter`)         | object list with `prefix` (+ `delimiter`)                          |
+| `delete`             | `unlink`                                                                                                                                                                                          | `DELETE`                                              | object delete                                                      |
+| `conditional-create` | write and synchronize a temp file, then `link(2)` it to the target (fails if it exists), unlink the temp, and synchronize the target's path before success                                        | `PUT` (or multipart complete) with `If-None-Match: *` | write with `ifGenerationMatch=0` (`x-goog-if-generation-match: 0`) |
+| `conditional-put`    | under an exclusive `flock` on the containing directory: read and hash the current content, compare, write and synchronize a temp file, `rename`, and synchronize the target's path before success | `PUT` with `If-Match: <ETag>`                         | write with `ifGenerationMatch=<generation>`                        |
 
 **Local validator cache.** For immutable objects only — data files,
 manifests, and other objects created once by `conditional-create` — a local
@@ -177,7 +177,7 @@ once with `conditional-create` or is a control record changed only by
 
 ### 2. Top-level layout
 
-```
+```text
 GRV_DIR/
 ├── grv.json                      # store format and shared parameters (below)
 └── datasets/
@@ -230,13 +230,13 @@ when the store is initialized:
 }
 ```
 
-| field                    | notes                                                        |
-|--------------------------|--------------------------------------------------------------|
-| `format`, `format_version` | `"grv"` and `2`; participants MUST refuse any other value  |
-| `mutation_id`            | fresh on every change (§1)                                   |
-| `max_clock_skew_seconds` | `max_clock_skew`: bound on the clock difference between any two participants (§5, §10) |
-| `max_lease_ttl_seconds`  | `max_lease_ttl`: upper bound on every claim and lease TTL (§5) |
-| `pending_grace_seconds`  | `pending_grace`: GC's grace period (§10)                     |
+| field                      | notes                                                                                  |
+| -------------------------- | -------------------------------------------------------------------------------------- |
+| `format`, `format_version` | `"grv"` and `2`; participants MUST refuse any other value                              |
+| `mutation_id`              | fresh on every change (§1)                                                             |
+| `max_clock_skew_seconds`   | `max_clock_skew`: bound on the clock difference between any two participants (§5, §10) |
+| `max_lease_ttl_seconds`    | `max_lease_ttl`: upper bound on every claim and lease TTL (§5)                         |
+| `pending_grace_seconds`    | `pending_grace`: GC's grace period (§10)                                               |
 
 Every participant, readers included, reads `grv.json` before using the
 store. A missing `grv.json` means the root is uninitialized: a participant
@@ -251,7 +251,7 @@ already in flight — a read of a superseded revision, or a run awaiting
 publication — so values are lowered only when that is acceptable.
 
 The `datasets/` level is deliberate, not ceremony: `GRV_DIR` is a
-*root*: it holds `grv.json`, and the layout reserves the right to place
+_root_: it holds `grv.json`, and the layout reserves the right to place
 other top-level structures there later (system state, GC staging, caches)
 without a breaking change. It also keeps "list all datasets" a single
 delimited prefix listing on object stores, where a root shared with other
@@ -265,7 +265,7 @@ There are two cases:
 
 **Case a — non-partitioned table:**
 
-```
+```text
 <table>/
 ├── .layout.json
 ├── .schema.json        # durable table-wide schema baseline (§4)
@@ -284,7 +284,7 @@ There are two cases:
 
 **Case b — partitioned table:**
 
-```
+```text
 <table>/
 ├── .layout.json
 ├── .schema.json        # shared across all partitions (§4)
@@ -306,10 +306,10 @@ There are two cases:
 
 `.layout.json` schema:
 
-| field            | type         | required | notes                                        |
-|------------------|--------------|----------|----------------------------------------------|
-| `table`          | string       | yes      | must equal the table folder name             |
-| `partition_keys` | string array | yes      | empty = case a; keys in path order = case b  |
+| field            | type         | required | notes                                                              |
+| ---------------- | ------------ | -------- | ------------------------------------------------------------------ |
+| `table`          | string       | yes      | must equal the table folder name                                   |
+| `partition_keys` | string array | yes      | empty = case a; keys in path order = case b                        |
 | `extensions`     | object       | no       | map of extension id → that extension's table configuration (below) |
 
 Rules:
@@ -339,7 +339,7 @@ Rules:
   non-conforming names or values are rejected. Values are always written
   as strings (a numeric year is `2025`). The restricted alphabet makes the
   `key=value` path form unambiguous — no escaping is defined or needed.
-- `version={n}` is always the *last* path segment. A version is therefore
+- `version={n}` is always the _last_ path segment. A version is therefore
   scoped to (table, partition); a non-partitioned table is the degenerate
   case of an empty partition. `n` is written in canonical decimal (no
   leading zeros) and satisfies `1 ≤ n ≤ 2^63−1`, matching the `int64`
@@ -421,23 +421,23 @@ and is unrelated to the `.pruned` tombstone.
 
 `manifest.json` schema:
 
-| field          | type    | required | notes                                         |
-|----------------|---------|----------|-----------------------------------------------|
-| `table`        | string  | yes      | table name (equals the folder name)           |
-| `partition`    | object  | yes      | `{}` for case a; else the key/value map      |
-| `version`      | integer | yes      | the version number of this directory          |
-| `run_id`       | string  | yes      | ULID of the run that produced it (§6)        |
-| `created_at`   | string  | yes      | RFC 3339 UTC time the manifest was written (the version's commit) |
-| `claim_token`  | string  | yes      | token of the claim that allocated this version (§5); the fence |
+| field          | type    | required | notes                                                                                                      |
+| -------------- | ------- | -------- | ---------------------------------------------------------------------------------------------------------- |
+| `table`        | string  | yes      | table name (equals the folder name)                                                                        |
+| `partition`    | object  | yes      | `{}` for case a; else the key/value map                                                                    |
+| `version`      | integer | yes      | the version number of this directory                                                                       |
+| `run_id`       | string  | yes      | ULID of the run that produced it (§6)                                                                      |
+| `created_at`   | string  | yes      | RFC 3339 UTC time the manifest was written (the version's commit)                                          |
+| `claim_token`  | string  | yes      | token of the claim that allocated this version (§5); the fence                                             |
 | `data_files`   | array   | yes      | the version's data files in index order; each element `{name, sha256, size, validator}` (below); the fence |
-| `row_count`    | integer | yes      | rows across all data files; 0 iff the version is empty |
-| `derived_from` | array   | no       | source references; present iff derived (§9)   |
-| `metadata`     | object  | no       | map of engine name → engine-specific fields; readers MUST ignore entries they do not understand (§11) |
+| `row_count`    | integer | yes      | rows across all data files; 0 iff the version is empty                                                     |
+| `derived_from` | array   | no       | source references; present iff derived (§9)                                                                |
+| `metadata`     | object  | no       | map of engine name → engine-specific fields; readers MUST ignore entries they do not understand (§11)      |
 
 Data file object (each element of `data_files`):
 
 | field       | type    | notes                                                         |
-|-------------|---------|---------------------------------------------------------------|
+| ----------- | ------- | ------------------------------------------------------------- |
 | `name`      | string  | `data.parquet` or `data-<i>.parquet`                          |
 | `sha256`    | string  | lowercase hex SHA-256 of the file's content                   |
 | `size`      | integer | size in bytes                                                 |
@@ -445,12 +445,12 @@ Data file object (each element of `data_files`):
 
 Source reference object (each element of `derived_from`):
 
-| field          | type    | required | notes                                                     |
-|----------------|---------|----------|-----------------------------------------------------------|
-| `dataset`      | string  | yes      | source dataset; never this version's own dataset (§9)     |
-| `revision`     | integer | yes      | committed source revision (§7)                            |
-| `retention_id` | string  | yes      | the run's dependency hold on that source revision (§9)    |
-| `table`        | string  | no       | source table; absent means the whole source revision      |
+| field          | type    | required | notes                                                             |
+| -------------- | ------- | -------- | ----------------------------------------------------------------- |
+| `dataset`      | string  | yes      | source dataset; never this version's own dataset (§9)             |
+| `revision`     | integer | yes      | committed source revision (§7)                                    |
+| `retention_id` | string  | yes      | the run's dependency hold on that source revision (§9)            |
+| `table`        | string  | no       | source table; absent means the whole source revision              |
 | `partition`    | object  | no       | source partition; only with `table`; absent means the whole table |
 
 Example (case b, derived from two sources):
@@ -494,7 +494,7 @@ non-partitioned table (case a), the manifest's `partition` is the empty
 object `{}`. The manifest does not duplicate the data's column schema: the
 parquet file is self-describing about its own schema.
 
-**Verifying a data file.** A data file *verifies* against its manifest
+**Verifying a data file.** A data file _verifies_ against its manifest
 entry if it exists, its size equals the recorded `size`, and either (a) its
 current validator (`head`) equals the recorded `validator`, or (b) its
 SHA-256 equals the recorded `sha256`.
@@ -502,7 +502,7 @@ Check (a) is a metadata read and is the normal path; check (b) reads the
 whole file and is the fallback when validators differ legitimately (the
 directory was copied or restored to another bucket or backend) and for
 full audits. On the local backend the validator is itself the SHA-256, so
-the two checks coincide. A version *verifies* when every listed data file
+the two checks coincide. A version _verifies_ when every listed data file
 verifies and no other `data*` file is present.
 
 The manifest is also part of the **fence** against stale writers:
@@ -515,26 +515,26 @@ differently. A data file's **logical schema** is the ordered list of its
 top-level columns, each `{"name": …, "type": …}`, derived from its Parquet
 schema by this mapping:
 
-| Parquet physical type and annotation                       | GRV type |
-|------------------------------------------------------------|----------|
-| `BOOLEAN`                                                  | `"boolean"` |
-| `INT32` without annotation, or with `INT(32, signed)`      | `"int32"` |
-| `INT32` with `INT(8, signed)` or `INT(16, signed)`         | `"int8"`, `"int16"` |
-| `INT64` without annotation, or with `INT(64, signed)`      | `"int64"` |
-| `INT32` or `INT64` with `INT(bits, unsigned)`              | `"uint8"`, `"uint16"`, `"uint32"`, `"uint64"` |
-| `FLOAT`, `DOUBLE`                                          | `"float32"`, `"float64"` |
-| `BYTE_ARRAY` with `STRING`, `ENUM`, or legacy `UTF8`       | `"string"` |
-| `BYTE_ARRAY` with `JSON`                                   | `"json"` |
-| `BYTE_ARRAY` without annotation                            | `"binary"` |
-| `FIXED_LEN_BYTE_ARRAY(16)` with `UUID`                     | `"uuid"` |
-| `FIXED_LEN_BYTE_ARRAY(n)` without annotation               | `{"fixed_binary": {"length": n}}` |
-| any physical type with `DECIMAL(p, s)`                     | `{"decimal": {"precision": p, "scale": s}}` |
-| `INT32` with `DATE`                                        | `"date"` |
-| `INT32` (`ms`) or `INT64` (`us`/`ns`) with `TIME(unit, isAdjustedToUTC)` | `{"time": {"unit": u, "utc": true or false}}` |
-| `INT64` with `TIMESTAMP(unit, isAdjustedToUTC)`            | `{"timestamp": {"unit": u, "utc": true or false}}` |
-| group with `LIST` (any conforming three-level or legacy two-level form), or a `repeated` field outside a `LIST` or `MAP` group | `{"list": {"element": T}}` |
-| group with `MAP` or legacy `MAP_KEY_VALUE`                 | `{"map": {"key": K, "value": V}}` |
-| group without annotation                                   | `{"struct": {"fields": [{"name": …, "type": T}, …]}}` |
+| Parquet physical type and annotation                                                                                           | GRV type                                              |
+| ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| `BOOLEAN`                                                                                                                      | `"boolean"`                                           |
+| `INT32` without annotation, or with `INT(32, signed)`                                                                          | `"int32"`                                             |
+| `INT32` with `INT(8, signed)` or `INT(16, signed)`                                                                             | `"int8"`, `"int16"`                                   |
+| `INT64` without annotation, or with `INT(64, signed)`                                                                          | `"int64"`                                             |
+| `INT32` or `INT64` with `INT(bits, unsigned)`                                                                                  | `"uint8"`, `"uint16"`, `"uint32"`, `"uint64"`         |
+| `FLOAT`, `DOUBLE`                                                                                                              | `"float32"`, `"float64"`                              |
+| `BYTE_ARRAY` with `STRING`, `ENUM`, or legacy `UTF8`                                                                           | `"string"`                                            |
+| `BYTE_ARRAY` with `JSON`                                                                                                       | `"json"`                                              |
+| `BYTE_ARRAY` without annotation                                                                                                | `"binary"`                                            |
+| `FIXED_LEN_BYTE_ARRAY(16)` with `UUID`                                                                                         | `"uuid"`                                              |
+| `FIXED_LEN_BYTE_ARRAY(n)` without annotation                                                                                   | `{"fixed_binary": {"length": n}}`                     |
+| any physical type with `DECIMAL(p, s)`                                                                                         | `{"decimal": {"precision": p, "scale": s}}`           |
+| `INT32` with `DATE`                                                                                                            | `"date"`                                              |
+| `INT32` (`ms`) or `INT64` (`us`/`ns`) with `TIME(unit, isAdjustedToUTC)`                                                       | `{"time": {"unit": u, "utc": true or false}}`         |
+| `INT64` with `TIMESTAMP(unit, isAdjustedToUTC)`                                                                                | `{"timestamp": {"unit": u, "utc": true or false}}`    |
+| group with `LIST` (any conforming three-level or legacy two-level form), or a `repeated` field outside a `LIST` or `MAP` group | `{"list": {"element": T}}`                            |
+| group with `MAP` or legacy `MAP_KEY_VALUE`                                                                                     | `{"map": {"key": K, "value": V}}`                     |
+| group without annotation                                                                                                       | `{"struct": {"fields": [{"name": …, "type": T}, …]}}` |
 
 Units `u` are `"ms"`, `"us"`, or `"ns"`. A present Parquet `LogicalType`
 annotation is authoritative; use the legacy `ConvertedType` only when
@@ -554,8 +554,8 @@ The logical schema deliberately ignores repetition (`REQUIRED` vs
 `OPTIONAL`: every GRV field is nullable to readers, and a writer may encode
 any field either way), the names of list and map wrapper groups, field ids,
 and file key-value metadata. Field names are compared exactly. Two logical
-schemas are equal when they are equal JSON; schema *S* is a **prefix** of
-*B* when *B*'s column list begins with *S*'s columns.
+schemas are equal when they are equal JSON; schema _S_ is a **prefix** of
+_B_ when _B_'s column list begins with _S_'s columns.
 
 **Schema baseline.** Each table has a durable, table-wide baseline at
 `<table>/.schema.json`, independent of version data and retained through
@@ -638,26 +638,26 @@ lifecycle below; **every transition is a `conditional-put` against the
 validator of the claim content the writer last read or wrote**; the holder
 recognizes its own claim by its `token`:
 
-| field         | type    | present in         | notes                                     |
-|---------------|---------|--------------------|-------------------------------------------|
-| `holder`      | string  | all states         | the allocating run ULID (§6) |
-| `token`       | string  | all states         | random identifier; identifies this claim |
-| `version`     | integer | allocated, released| the version reserved by this holder, if any |
-| `high_water`  | integer | all states         | greatest number ever reserved; initially 0, never decreases |
-| `mutation_id` | string  | all states         | fresh random id for every write (§1) |
-| `claimed_at`  | string  | acquired, allocated| RFC 3339 UTC, when the claim was taken     |
-| `expires_at`  | string  | acquired, allocated| RFC 3339 UTC, after which the claim is stale; advanced by renewal |
-| `released_at` | string  | released           | RFC 3339 UTC, when the holder finished     |
-| `outcome` | string | released | `finalized` or `abandoned`; recovery must distinguish them |
-| `last_release` | object | after a takeover of a release record | `{token, version, outcome}` of the release record it replaced, if that record had a `version` |
+| field          | type    | present in                           | notes                                                                                         |
+| -------------- | ------- | ------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `holder`       | string  | all states                           | the allocating run ULID (§6)                                                                  |
+| `token`        | string  | all states                           | random identifier; identifies this claim                                                      |
+| `version`      | integer | allocated, released                  | the version reserved by this holder, if any                                                   |
+| `high_water`   | integer | all states                           | greatest number ever reserved; initially 0, never decreases                                   |
+| `mutation_id`  | string  | all states                           | fresh random id for every write (§1)                                                          |
+| `claimed_at`   | string  | acquired, allocated                  | RFC 3339 UTC, when the claim was taken                                                        |
+| `expires_at`   | string  | acquired, allocated                  | RFC 3339 UTC, after which the claim is stale; advanced by renewal                             |
+| `released_at`  | string  | released                             | RFC 3339 UTC, when the holder finished                                                        |
+| `outcome`      | string  | released                             | `finalized` or `abandoned`; recovery must distinguish them                                    |
+| `last_release` | object  | after a takeover of a release record | `{token, version, outcome}` of the release record it replaced, if that record had a `version` |
 
 A claim is in one of three states:
 
-| state     | recognized by                     | transitions |
-|-----------|-----------------------------------|-------------|
-| acquired  | no `version`, no `released_at`    | holder: renew, allocate, or release as `abandoned`; anyone, once expired: take over |
-| allocated | `version`, no `released_at`       | holder: renew, or release as `finalized` or `abandoned`; run recovery, once expired: release on the run's behalf (§6); anyone, once expired: take over |
-| released  | `released_at` and `outcome`       | anyone: take over (a new acquisition) |
+| state     | recognized by                  | transitions                                                                                                                                            |
+| --------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| acquired  | no `version`, no `released_at` | holder: renew, allocate, or release as `abandoned`; anyone, once expired: take over                                                                    |
+| allocated | `version`, no `released_at`    | holder: renew, or release as `finalized` or `abandoned`; run recovery, once expired: release on the run's behalf (§6); anyone, once expired: take over |
+| released  | `released_at` and `outcome`    | anyone: take over (a new acquisition)                                                                                                                  |
 
 Protocol:
 
@@ -760,7 +760,7 @@ A run writes into exactly one dataset; a job writing to several datasets
 performs one run per dataset. Each run has a unique `run_id` and keeps
 three kinds of records:
 
-```
+```text
 <dataset>/.runs/<run-id>.control.json                     # mutable: run lease and phase
 <dataset>/.runs/<run-id>.allocations/<claim-token>.json   # mutable: one per version allocation
 <dataset>/.runs/<run-id>.json                             # immutable sealed run file
@@ -776,16 +776,16 @@ same form.
 
 Run file schema:
 
-| field           | type    | required | notes                                    |
-|-----------------|---------|----------|------------------------------------------|
-| `run_id`        | string  | yes      | the run's ULID; the file name is `<run_id>.json` |
-| `created_at`    | string  | yes      | RFC 3339 UTC, when the run started       |
-| `base_revision` | integer | yes      | this dataset's `LATEST.revision` when the run started; `0` if none; the base for conflict detection (§8) |
-| `inputs`        | array   | yes      | the source revisions the run reads, each `{dataset, revision, retention_id}`; fixed at the start of the run (§9, §11); may be empty |
-| `holds_confirmed` | boolean | yes    | true once every input's dependency hold passed its checks (§9); a run cites inputs only if true |
-| `sealed_at`     | string  | yes      | RFC 3339 UTC, when the run was sealed    |
-| `entries`       | array   | yes      | one entry per finalized version          |
-| `metadata`      | object  | no       | map of engine name → engine-specific fields (§11) |
+| field             | type    | required | notes                                                                                                                               |
+| ----------------- | ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `run_id`          | string  | yes      | the run's ULID; the file name is `<run_id>.json`                                                                                    |
+| `created_at`      | string  | yes      | RFC 3339 UTC, when the run started                                                                                                  |
+| `base_revision`   | integer | yes      | this dataset's `LATEST.revision` when the run started; `0` if none; the base for conflict detection (§8)                            |
+| `inputs`          | array   | yes      | the source revisions the run reads, each `{dataset, revision, retention_id}`; fixed at the start of the run (§9, §11); may be empty |
+| `holds_confirmed` | boolean | yes      | true once every input's dependency hold passed its checks (§9); a run cites inputs only if true                                     |
+| `sealed_at`       | string  | yes      | RFC 3339 UTC, when the run was sealed                                                                                               |
+| `entries`         | array   | yes      | one entry per finalized version                                                                                                     |
+| `metadata`        | object  | no       | map of engine name → engine-specific fields (§11)                                                                                   |
 
 Each entry: `table` (string), `partition` (object; `{}` for
 non-partitioned), `version` (integer), `claim_token` (string; the token of
@@ -797,23 +797,19 @@ the claim that allocated and released it, §5).
   "created_at": "2026-09-28T10:00:00Z",
   "base_revision": 12,
   "inputs": [
-    { "dataset": "raw_events", "revision": 7,
-      "retention_id": "28f68c81-dbdc-4ab6-a811-81d7b989c693" },
-    { "dataset": "ref_data", "revision": 2,
-      "retention_id": "fb9b64a3-aeeb-47b4-b60c-4ad5c5e997d0" }
+    { "dataset": "raw_events", "revision": 7, "retention_id": "28f68c81-dbdc-4ab6-a811-81d7b989c693" },
+    { "dataset": "ref_data", "revision": 2, "retention_id": "fb9b64a3-aeeb-47b4-b60c-4ad5c5e997d0" }
   ],
   "holds_confirmed": true,
   "sealed_at": "2026-09-28T10:20:00Z",
   "entries": [
-    { "table": "customers", "partition": {}, "version": 2,
-      "claim_token": "3b7d0c2e-1f4a-4e9b-8c6d-2a5e7f9b1c0d" },
-    { "table": "orders", "partition": { "region": "eu", "year": "2025" }, "version": 3,
-      "claim_token": "9f2c1e4a-7b3d-4c1e-9a02-6d5f8e1b2c3d" }
+    { "table": "customers", "partition": {}, "version": 2, "claim_token": "3b7d0c2e-1f4a-4e9b-8c6d-2a5e7f9b1c0d" },
+    { "table": "orders", "partition": { "region": "eu", "year": "2025" }, "version": 3, "claim_token": "9f2c1e4a-7b3d-4c1e-9a02-6d5f8e1b2c3d" }
   ]
 }
 ```
 
-A run only *commits* version directories (via the claim cycle, §5).
+A run only _commits_ version directories (via the claim cycle, §5).
 Versions enter a dataset's state only when a revision (§7) references
 them; the publish step (§8) is what advances `LATEST`. The lifecycle is
 therefore run → publish step → `LATEST`, in that order.
@@ -822,23 +818,23 @@ therefore run → publish step → `LATEST`, in that order.
 It carries the run file's `run_id`, `created_at`, `base_revision`,
 `inputs`, and `metadata`, fixed at creation, plus:
 
-| field                  | notes                                                    |
-|------------------------|----------------------------------------------------------|
-| `phase`                | `open`, `recovering`, or `sealed`                        |
-| `owner_token`          | token of the current owner: the run's driver, or a recovery worker |
-| `expires_at`           | lease expiry (§5 renewal rules); absent once sealed      |
-| `mutation_id`          | fresh on every write (§1)                                |
+| field                  | notes                                                                                                 |
+| ---------------------- | ----------------------------------------------------------------------------------------------------- |
+| `phase`                | `open`, `recovering`, or `sealed`                                                                     |
+| `owner_token`          | token of the current owner: the run's driver, or a recovery worker                                    |
+| `expires_at`           | lease expiry (§5 renewal rules); absent once sealed                                                   |
+| `mutation_id`          | fresh on every write (§1)                                                                             |
 | `holds_confirmed`      | `false` at creation; set to `true` by one CAS while `open`, once every input's hold is confirmed (§9) |
-| `sealed_at`, `entries` | present iff sealed; exactly the run file's values        |
+| `sealed_at`, `entries` | present iff sealed; exactly the run file's values                                                     |
 
-| from              | to           | by                                  | when |
-|-------------------|--------------|-------------------------------------|------|
-| —                 | `open`       | the driver                          | `conditional-create`, before any allocation |
-| `open`            | `open`       | the owner                           | lease renewal |
-| `open`            | `sealed`     | the owner                           | no allocation record is still `allocated` |
-| `open`, expired   | `recovering` | any process                         | with a fresh `owner_token` and lease |
-| `recovering`      | `recovering` | the owner; any process once expired | renewal; takeover |
-| `recovering`      | `sealed`     | the owner                           | every allocation record is resolved (below) |
+| from            | to           | by                                  | when                                        |
+| --------------- | ------------ | ----------------------------------- | ------------------------------------------- |
+| —               | `open`       | the driver                          | `conditional-create`, before any allocation |
+| `open`          | `open`       | the owner                           | lease renewal                               |
+| `open`          | `sealed`     | the owner                           | no allocation record is still `allocated`   |
+| `open`, expired | `recovering` | any process                         | with a fresh `owner_token` and lease        |
+| `recovering`    | `recovering` | the owner; any process once expired | renewal; takeover                           |
+| `recovering`    | `sealed`     | the owner                           | every allocation record is resolved (below) |
 
 Every transition is a CAS, so the transitions race atomically and exactly
 one sealed result exists. Sealing is irreversible. The **run file** is the
@@ -855,12 +851,12 @@ one version allocation: `run_id`, `table`, `partition`, `version`,
 and before writing any version object (§5 step 2). Its state then changes
 by CAS to exactly one terminal value:
 
-| state        | set by                                              | meaning |
-|--------------|-----------------------------------------------------|---------|
-| `allocated`  | the task                                            | reserved; version objects may exist |
-| `finalized`  | the task after its claim release, or recovery after proof | the version is finalized (§5 step 6) |
-| `abandoned`  | the task, or recovery                               | the claim was released as `abandoned` |
-| `unproven`   | recovery                                            | finalization could not be proven |
+| state       | set by                                                    | meaning                               |
+| ----------- | --------------------------------------------------------- | ------------------------------------- |
+| `allocated` | the task                                                  | reserved; version objects may exist   |
+| `finalized` | the task after its claim release, or recovery after proof | the version is finalized (§5 step 6)  |
+| `abandoned` | the task, or recovery                                     | the claim was released as `abandoned` |
+| `unproven`  | recovery                                                  | finalization could not be proven      |
 
 Allocation records are separate objects so that parallel tasks never
 contend on a shared journal. A record's first terminal CAS wins; a task and
@@ -930,7 +926,7 @@ expired run.
 
 The state of a dataset is described by a **revision**. A revision is a
 **complete snapshot** of the dataset's state: one entry per (table,
-partition) that is *in the state*, each with the current version of that
+partition) that is _in the state_, each with the current version of that
 (table, partition) and the `run_id` that produced it. A state may contain
 any subset of the dataset's tables, including none.
 
@@ -949,28 +945,28 @@ is revision `n`'s own entries.
 
 All historical revisions are stored as parquet:
 
-```
+```text
 <dataset>/.states/revisions/revision={n}/data.parquet
 ```
 
 Row schema — one row per (table, partition) in the state:
 
-| column              | type   | notes                                                    |
-|---------------------|--------|----------------------------------------------------------|
-| `table`             | string | table name                                               |
-| `partition`         | string | canonical path form, e.g. `key1=v1/key2=v2`; the empty string (not null) for non-partitioned |
-| `version`           | int64  | version of this (table, partition)                      |
-| `run_id`            | string | run that produced the (table, partition, version)       |
+| column      | type   | notes                                                                                        |
+| ----------- | ------ | -------------------------------------------------------------------------------------------- |
+| `table`     | string | table name                                                                                   |
+| `partition` | string | canonical path form, e.g. `key1=v1/key2=v2`; the empty string (not null) for non-partitioned |
+| `version`   | int64  | version of this (table, partition)                                                           |
+| `run_id`    | string | run that produced the (table, partition, version)                                            |
 
 Revision-level fields are stored in the parquet file's key-value metadata,
 so they survive a zero-row revision (an empty state):
 
-| key                      | value                                                |
-|--------------------------|------------------------------------------------------|
-| `grv.revision`           | this revision's number, in decimal                   |
-| `grv.previous_revision`  | the revision this one was derived from; `0` for the first |
-| `grv.created_at`         | RFC 3339 UTC time the revision was written           |
-| `grv.operation_id`       | the publish operation (§8) that describes this revision |
+| key                     | value                                                     |
+| ----------------------- | --------------------------------------------------------- |
+| `grv.revision`          | this revision's number, in decimal                        |
+| `grv.previous_revision` | the revision this one was derived from; `0` for the first |
+| `grv.created_at`        | RFC 3339 UTC time the revision was written                |
+| `grv.operation_id`      | the publish operation (§8) that describes this revision   |
 
 **Validity** is checked by the publisher when the revision is written
 (§8). A revision is valid iff (a) each (table, partition) appears at most
@@ -1019,13 +1015,13 @@ writes a revision, and advances the state. The dataset lease and current
 revision share one CAS object, `<dataset>/.states/LATEST`. There is no
 separate dataset claim. `LATEST` is JSON with these required fields:
 
-| field | meaning |
-|-------|---------|
-| `revision` | current revision number; `0` means no revision published yet |
-| `high_water` | greatest revision number ever reserved; initially 0, never decreases |
-| `mutation_id` | fresh random id on every mutation, even if `revision` is unchanged |
-| `lease` | null, or `{holder, token, claimed_at, expires_at}`; `holder` identifies the publisher, GC, or other tool instance |
-| `pending` | null, or the dataset-relative path of a committed operation description, e.g. `.states/operations/<operation-id>.json` |
+| field         | meaning                                                                                                                |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `revision`    | current revision number; `0` means no revision published yet                                                           |
+| `high_water`  | greatest revision number ever reserved; initially 0, never decreases                                                   |
+| `mutation_id` | fresh random id on every mutation, even if `revision` is unchanged                                                     |
+| `lease`       | null, or `{holder, token, claimed_at, expires_at}`; `holder` identifies the publisher, GC, or other tool instance      |
+| `pending`     | null, or the dataset-relative path of a committed operation description, e.g. `.states/operations/<operation-id>.json` |
 
 ```json
 {
@@ -1071,9 +1067,7 @@ and `payload`:
   "created_at": "2026-12-01T00:00:00Z",
   "created_by": "grv-gc/1.2.0",
   "payload": {
-    "targets": [
-      { "table": "orders", "partition": { "region": "eu", "year": "2025" }, "version": 3 }
-    ]
+    "targets": [{ "table": "orders", "partition": { "region": "eu", "year": "2025" }, "version": 3 }]
   }
 }
 ```
@@ -1081,14 +1075,14 @@ and `payload`:
 The payload holds every fact needed to replay the operation's effects
 without the original process:
 
-| `kind`         | `payload`                                              | effects (immutable markers) |
-|----------------|--------------------------------------------------------|-----------------------------|
+| `kind`         | `payload`                                                         | effects (immutable markers)                                                                   |
+| -------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `release_hold` | `releases`: array of `{consumer_dataset, revision, retention_id}` | each `.states/released-holds/<consumer_dataset>/revision={revision}/<retention_id>.json` (§9) |
-| `pin`          | `pin_id`, `scope`, optional `reason`                   | the scope's `.pins/<pin_id>.json` (§10) |
-| `unpin`        | `pin_id`, `scope`, optional `reason`                   | the scope's `.pins/<pin_id>.released.json` (§10) |
-| `retire`       | optional `reason`                                      | `<dataset>/.retired` (§10) |
-| `prune_intent` | `targets`: array of `{table, partition, version}`      | none: a proposal that makes the targets visible to hold checks (§9, §10) |
-| `prune`        | `targets`: array of `{table, partition, version}`      | each target's `.pruned` (§10) |
+| `pin`          | `pin_id`, `scope`, optional `reason`                              | the scope's `.pins/<pin_id>.json` (§10)                                                       |
+| `unpin`        | `pin_id`, `scope`, optional `reason`                              | the scope's `.pins/<pin_id>.released.json` (§10)                                              |
+| `retire`       | optional `reason`                                                 | `<dataset>/.retired` (§10)                                                                    |
+| `prune_intent` | `targets`: array of `{table, partition, version}`                 | none: a proposal that makes the targets visible to hold checks (§9, §10)                      |
+| `prune`        | `targets`: array of `{table, partition, version}`                 | each target's `.pruned` (§10)                                                                 |
 
 A publish step also writes a `publish` description, with payload
 `revision`, `previous_revision`, and `change_set` (below), as its audit
@@ -1405,7 +1399,7 @@ tombstoned.
 ### 10. Garbage collection: pins and `.pruned`
 
 The layout assumes a GC process that prunes old versions. Protection is
-declarative, via records whose *presence* is the signal:
+declarative, via records whose _presence_ is the signal:
 
 - **Pins**, each a `<pin-id>.json` under a `.pins/` directory, created and
   released only by pin and unpin operations (below):
@@ -1518,7 +1512,7 @@ re-evaluated, never cached. A cache must yield exactly what a full walk would
 compute; on any doubt, such as an unreadable cache or a head not found on the
 chain, fall back to the full walk.
 
-Holds are deliberately coarse: a held revision protects *its entire state*
+Holds are deliberately coarse: a held revision protects _its entire state_
 — every (table, partition, version) it names — even though a downstream
 version may have used only a few of them. Provenance dependencies are
 revision-wide, not selector-narrow.
@@ -1528,7 +1522,7 @@ and no longer needed by any kept state — may be marked
 `<dataset>/.retired` by a committed retirement operation under its dataset
 lease (§8); the marker records `operation_id`, `retired_at`, and an
 optional `reason`. Raw marker writes are not conforming. While the marker
-is present, the dataset's `LATEST` is *not* kept: the dataset is retained
+is present, the dataset's `LATEST` is _not_ kept: the dataset is retained
 only to the extent that its pins and holds still protect it, and
 may otherwise lose all version data while retaining revision and
 coordination records. Its `LATEST` then remains valid but may become
@@ -1639,7 +1633,7 @@ retried against the then-current state.
 
 **Final-product retention.** The intended workflow for data products:
 
-1. Identify the datasets that are *final* products.
+1. Identify the datasets that are _final_ products.
 2. Pin the revisions of those datasets that back the product states that
    must remain resolvable.
 3. The holds cited by those states' versions keep the upstream revisions
@@ -1649,7 +1643,7 @@ retried against the then-current state.
    passed over entirely. A non-final dataset that is no longer needed at
    all may be retired, making even its `LATEST` state prunable.
 
-**Consequences**
+#### Consequences
 
 - Pruning a version referenced only by non-kept revisions makes those
   historical states unresolvable — that is the point of pruning (and reads
@@ -1676,7 +1670,7 @@ datasets as new versions and revisions. Transformation engines are the
 **build layer** in between: they run in a warehouse, read materialized GRV
 state, and write working tables.
 
-```
+```text
 GRV (raw) → [pull] → warehouse → engine models → [publish] → GRV (product)
 ```
 
@@ -1792,13 +1786,13 @@ The engine name is the key, so entries for different engines cannot
 collide, and each sub-object uses that engine's own vocabulary. Core fields
 define all GRV semantics: GRV tools MUST NOT depend on `metadata`, and
 readers MUST ignore engine entries they do not understand. With it,
-`derived_from` and `inputs` answer *which upstream state* a version came
-from, and `metadata` answers *which code* produced it.
+`derived_from` and `inputs` answer _which upstream state_ a version came
+from, and `metadata` answers _which code_ produced it.
 
 **No double-versioning.** For any table released to GRV, the GRV
 version/revision history is the history of record. An engine's own history
 mechanisms may exist as warehouse-internal constructs — including as
-*inputs* to a model that releases to GRV, where the mechanics are
+_inputs_ to a model that releases to GRV, where the mechanics are
 flattened into ordinary table data at publish — but they must not be
 published as if their own history were the GRV history: publish the
 current state; history lives in the revision chain.
@@ -1815,11 +1809,11 @@ The concrete mapping for dbt:
   (incremental / event-time selection) SHOULD carry the batch's time key as
   a partition key on its GRV table (e.g. `date=`); partition keys are
   fixed per table (§3), so the alignment is a design-time decision. A
-  batch's output is then a *partition*, and a new batch is a *new version
-  of one or a few partitions* — not of the whole table: each batch run
+  batch's output is then a _partition_, and a new batch is a _new version
+  of one or a few partitions_ — not of the whole table: each batch run
   publishes only the partitions it touched, and the new revision records
   them as the current versions of those partitions. A batch rerun is safe:
-  it is a new run that publishes a *new version* of the same partition,
+  it is a new run that publishes a _new version_ of the same partition,
   and the superseded version is GC-eligible per §10; a rerun racing another
   run on the same partition conflicts instead of overwriting it (§8). A
   version is a full snapshot of its
@@ -1844,7 +1838,7 @@ The concrete mapping for dbt:
 
 ## Properties and trade-offs
 
-**Properties**
+### Properties
 
 - One path scheme for local / S3 / GCS; the backend contract (§1) is the
   only place backends differ, and the layout never requires rename,
@@ -1881,7 +1875,7 @@ The concrete mapping for dbt:
   dataset releases even its `LATEST` retention; pruning is
   tombstone-first; `.pruned` records who pruned and when.
 
-**Trade-offs**
+### Trade-offs
 
 - On object stores, updating `LATEST` is not atomic with writing the
   revision parquet. Convention: write `revision={n}/data.parquet` first,
@@ -1964,14 +1958,14 @@ The concrete mapping for dbt:
   it can prove finalized, and the rest are re-produced by a new run.
 - The fence assumes conforming writers: every version write follows the
   claim protocol. A non-conforming writer that rewrites an old version's
-  data, manifest, *and* run file consistently is undetectable; store-level
+  data, manifest, _and_ run file consistently is undetectable; store-level
   access control, not the layout, is the mitigation.
 
-**Out of scope (separate concern)**
+### Out of scope (separate concern)
 
 - **Retention policy** — how far back a dataset keeps (default keep-
-  windows, per-dataset policy). §10 defines what *may* be pruned; choosing
-  what *should* be kept is a separate concern.
+  windows, per-dataset policy). §10 defines what _may_ be pruned; choosing
+  what _should_ be kept is a separate concern.
 - **Compaction** — the revision history (a full snapshot per revision)
   grows without bound, as do allocation listings and GC's scan of committed
   revisions; a compaction/checkpoint mechanism is a separate concern.

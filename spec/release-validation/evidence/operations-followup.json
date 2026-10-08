@@ -14,9 +14,7 @@
       "command": null,
       "source_sha256": null,
       "binary_sha256": null,
-      "assertions": [
-        "Recorded outcome in retained log; no frozen candidate qualification."
-      ],
+      "assertions": ["Recorded outcome in retained log; no frozen candidate qualification."],
       "limitations": [
         "Recorded retrospectively; exact execution source interval unavailable.",
         "Mutation tests failed reset, not counted as complete passed gates."
@@ -42,9 +40,7 @@
       "command": null,
       "source_sha256": null,
       "binary_sha256": null,
-      "assertions": [
-        "Recorded outcome in retained log; no frozen candidate qualification."
-      ],
+      "assertions": ["Recorded outcome in retained log; no frozen candidate qualification."],
       "limitations": [
         "Recorded retrospectively; exact execution source interval unavailable.",
         "Mutation tests failed reset, not counted as complete passed gates."
@@ -74,9 +70,7 @@
       "command": null,
       "source_sha256": null,
       "binary_sha256": null,
-      "assertions": [
-        "Recorded outcome in retained log; no frozen candidate qualification."
-      ],
+      "assertions": ["Recorded outcome in retained log; no frozen candidate qualification."],
       "limitations": [
         "Recorded retrospectively; exact execution source interval unavailable.",
         "Mutation tests failed reset, not counted as complete passed gates."
@@ -102,9 +96,7 @@
       "command": null,
       "source_sha256": null,
       "binary_sha256": null,
-      "assertions": [
-        "Recorded outcome in retained log; no frozen candidate qualification."
-      ],
+      "assertions": ["Recorded outcome in retained log; no frozen candidate qualification."],
       "limitations": [
         "Recorded retrospectively; exact execution source interval unavailable.",
         "Mutation tests failed reset, not counted as complete passed gates."
@@ -130,9 +122,7 @@
       "command": null,
       "source_sha256": null,
       "binary_sha256": null,
-      "assertions": [
-        "Recorded outcome in retained log; no frozen candidate qualification."
-      ],
+      "assertions": ["Recorded outcome in retained log; no frozen candidate qualification."],
       "limitations": [
         "Recorded retrospectively; exact execution source interval unavailable.",
         "Mutation tests failed reset, not counted as complete passed gates."
@@ -158,9 +148,7 @@
       "command": null,
       "source_sha256": null,
       "binary_sha256": null,
-      "assertions": [
-        "Recorded outcome in retained log; no frozen candidate qualification."
-      ],
+      "assertions": ["Recorded outcome in retained log; no frozen candidate qualification."],
       "limitations": [
         "Recorded retrospectively; exact execution source interval unavailable.",
         "Mutation tests failed reset, not counted as complete passed gates."
@@ -186,9 +174,7 @@
       "command": null,
       "source_sha256": null,
       "binary_sha256": null,
-      "assertions": [
-        "Recorded outcome in retained log; no frozen candidate qualification."
-      ],
+      "assertions": ["Recorded outcome in retained log; no frozen candidate qualification."],
       "limitations": [
         "Recorded retrospectively; exact execution source interval unavailable.",
         "Mutation tests failed reset, not counted as complete passed gates."
@@ -214,9 +200,7 @@
       "command": null,
       "source_sha256": null,
       "binary_sha256": null,
-      "assertions": [
-        "Recorded outcome in retained log; no frozen candidate qualification."
-      ],
+      "assertions": ["Recorded outcome in retained log; no frozen candidate qualification."],
       "limitations": [
         "Recorded retrospectively; exact execution source interval unavailable.",
         "Mutation tests failed reset, not counted as complete passed gates."
@@ -242,9 +226,7 @@
       "command": null,
       "source_sha256": null,
       "binary_sha256": null,
-      "assertions": [
-        "Recorded outcome in retained log; no frozen candidate qualification."
-      ],
+      "assertions": ["Recorded outcome in retained log; no frozen candidate qualification."],
       "limitations": [
         "Recorded retrospectively; exact execution source interval unavailable.",
         "Mutation tests failed reset, not counted as complete passed gates."
@@ -270,9 +252,7 @@
       "command": null,
       "source_sha256": null,
       "binary_sha256": null,
-      "assertions": [
-        "Recorded outcome in retained log; no frozen candidate qualification."
-      ],
+      "assertions": ["Recorded outcome in retained log; no frozen candidate qualification."],
       "limitations": [
         "Recorded retrospectively; exact execution source interval unavailable.",
         "Mutation tests failed reset, not counted as complete passed gates."
@@ -298,9 +278,7 @@
       "command": null,
       "source_sha256": null,
       "binary_sha256": null,
-      "assertions": [
-        "Recorded outcome in retained log; no frozen candidate qualification."
-      ],
+      "assertions": ["Recorded outcome in retained log; no frozen candidate qualification."],
       "limitations": [
         "Recorded retrospectively; exact execution source interval unavailable.",
         "Mutation tests failed reset, not counted as complete passed gates."
@@ -326,9 +304,7 @@
       "command": null,
       "source_sha256": null,
       "binary_sha256": null,
-      "assertions": [
-        "Recorded outcome in retained log; no frozen candidate qualification."
-      ],
+      "assertions": ["Recorded outcome in retained log; no frozen candidate qualification."],
       "limitations": [
         "Recorded retrospectively; exact execution source interval unavailable.",
         "Mutation tests failed reset, not counted as complete passed gates."
@@ -354,9 +330,7 @@
       "command": null,
       "source_sha256": null,
       "binary_sha256": null,
-      "assertions": [
-        "Recorded outcome in retained log; no frozen candidate qualification."
-      ],
+      "assertions": ["Recorded outcome in retained log; no frozen candidate qualification."],
       "limitations": [
         "Recorded retrospectively; exact execution source interval unavailable.",
         "Mutation tests failed reset, not counted as complete passed gates."

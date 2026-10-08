@@ -37,10 +37,10 @@ tables:
           ORDER BY e.event_date DESC, e.amount DESC
         ) = 1
     columns:
-      - {name: source_event_id, type: utf8}
-      - {name: billing_account, type: utf8}
-      - {name: posted_date, type: date32}
-      - {name: net_amount, type: 'decimal128(38,6)'}
-      - {name: currency, type: utf8}
+      - { name: source_event_id, type: utf8 }
+      - { name: billing_account, type: utf8 }
+      - { name: posted_date, type: date32 }
+      - { name: net_amount, type: "decimal128(38,6)" }
+      - { name: currency, type: utf8 }
 checks:
-  - {table: events, not_null: [source_event_id, billing_account]}
+  - { table: events, not_null: [source_event_id, billing_account] }

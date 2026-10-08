@@ -20,9 +20,7 @@
           "sha256": "c04b11d876862ec528a679d2fa6cb93ef72cc8ff0da64253f1ec04b8f619358c"
         }
       ],
-      "limitations": [
-        "Pre-freeze baseline;exactUTC/source executioninterval unavailable;qualification rerun required."
-      ]
+      "limitations": ["Pre-freeze baseline;exactUTC/source executioninterval unavailable;qualification rerun required."]
     },
     {
       "version": 1,
@@ -42,9 +40,7 @@
           "sha256": "310d50bb3c9c6c26367e5392a0af022c304feb9fb132bbedac5789f86b225059"
         }
       ],
-      "limitations": [
-        "Pre-freeze baseline;exactUTC/source executioninterval unavailable;qualification rerun required."
-      ]
+      "limitations": ["Pre-freeze baseline;exactUTC/source executioninterval unavailable;qualification rerun required."]
     },
     {
       "version": 1,
@@ -64,9 +60,7 @@
           "sha256": "684db94e8c3630dd009ad1ef72def6ad156329a606e3d1f3a78729bc08bffe99"
         }
       ],
-      "limitations": [
-        "Pre-freeze baseline;exactUTC/source executioninterval unavailable;qualification rerun required."
-      ]
+      "limitations": ["Pre-freeze baseline;exactUTC/source executioninterval unavailable;qualification rerun required."]
     },
     {
       "version": 1,
@@ -86,9 +80,7 @@
           "sha256": "bc9b8460901b0b2615ea998fb35b09aa2512f5b6cc9932b2f53de68a98d5529e"
         }
       ],
-      "limitations": [
-        "Pre-freeze baseline;exactUTC/source executioninterval unavailable;qualification rerun required."
-      ]
+      "limitations": ["Pre-freeze baseline;exactUTC/source executioninterval unavailable;qualification rerun required."]
     },
     {
       "version": 1,

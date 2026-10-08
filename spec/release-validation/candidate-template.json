@@ -23,14 +23,14 @@
     "unresolved_impact": []
   },
   "gates": {
-    "G1": {"status": "planned", "run_ids": [], "review": null},
-    "G2": {"status": "planned", "run_ids": [], "review": null},
-    "G3": {"status": "planned", "run_ids": [], "review": null},
-    "G4": {"status": "planned", "run_ids": [], "review": null},
-    "G5": {"status": "planned", "run_ids": [], "review": null},
-    "G6": {"status": "planned", "run_ids": [], "review": null}
+    "G1": { "status": "planned", "run_ids": [], "review": null },
+    "G2": { "status": "planned", "run_ids": [], "review": null },
+    "G3": { "status": "planned", "run_ids": [], "review": null },
+    "G4": { "status": "planned", "run_ids": [], "review": null },
+    "G5": { "status": "planned", "run_ids": [], "review": null },
+    "G6": { "status": "planned", "run_ids": [], "review": null }
   },
   "compatibility_fixture_manifest": null,
-  "evidence_archive": {"uri": null, "sha256": null, "retention": null},
+  "evidence_archive": { "uri": null, "sha256": null, "retention": null },
   "publish_approval": null
 }

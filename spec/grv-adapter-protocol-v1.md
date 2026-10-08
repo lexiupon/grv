@@ -1,10 +1,10 @@
 # GRV Adapter Process Protocol v1
 
-|         |            |
-|---------|------------|
-| Status  | draft      |
-| Version | 1          |
-| Date    | 2026-10-05 |
+|         |               |
+| ------- | ------------- |
+| Status  | draft         |
+| Version | 1             |
+| Date    | 2026-10-05    |
 | Extends | GRV Client v1 |
 
 ## Purpose and relationship to the authoring specification
@@ -21,9 +21,9 @@ creates no new GRV object or commit marker.
 Authority is split as follows. The core does not interpret adapter-specific SQL
 or catalogs.
 
-| Side | Owns |
-|------|------|
-| parent | GRV backend operations, holds, runs, claims, leases, capture writing, and publication |
+| Side    | Owns                                                                                                                                                  |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| parent  | GRV backend operations, holds, runs, claims, leases, capture writing, and publication                                                                 |
 | adapter | connection and authentication, source jobs, destination execution and receipts, engine locks, private engine sessions, and stopped-writer attestation |
 
 **Process adapters and built-ins.** Every installed adapter discovered under
@@ -62,12 +62,12 @@ Adapters are operator-installed, semi-trusted executable code. The process
 split provides supervision and separates protocol authority. It is **not an OS
 sandbox** and does not confine a same-user process's filesystem access.
 
-| Crosses the channel | Never crosses the channel |
-|---------------------|---------------------------|
-| effective declarations, contracts, and non-secret source and destination mappings | GRV backend credentials or signed credential-bearing URLs |
-| canonical root **identity**, workspace, attempt, and run IDs, and request digests | owner, lease, and claim tokens |
+| Crosses the channel                                                               | Never crosses the channel                                                      |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| effective declarations, contracts, and non-secret source and destination mappings | GRV backend credentials or signed credential-bearing URLs                      |
+| canonical root **identity**, workspace, attempt, and run IDs, and request digests | owner, lease, and claim tokens                                                 |
 | verified local staging file metadata; exact S3 data-file URIs for S3-view readers | GRV controls, protected contexts containing tokens, or authority to mutate GRV |
-| adapter results, durable checkpoint references, and batch payloads | authentication credentials, private keys, or session cookies |
+| adapter results, durable checkpoint references, and batch payloads                | authentication credentials, private keys, or session cookies                   |
 
 Canonical root coordinates are non-secret identity data required for workspace
 binding. Receiving them does not authorize GRV access.
@@ -233,22 +233,22 @@ scopes the channel.
 
 Common types:
 
-| Type | Wire representation |
-|------|---------------------|
-| `J` | JSON-compatible value; objects closed by the named common or served schema |
-| `Doc<T>` | exactly `{"inline": T}` or `{"document_id": UUID}`; §2.4 verifies the latter |
-| `SafeInt` | JSON integer `0..2^53-1`, parsed without rounding |
-| `Req` | JSON integer `1..2^53-1` |
-| `U64` | canonical decimal string `0..2^63-1`; no sign or leading zeros |
-| `Revision` | `U64`; requested selector is `"latest"` or `Revision` |
-| `UUID` | canonical lowercase v4 or v7 UUID |
-| `RunId` | canonical uppercase ULID per GRV §6 |
-| `Digest` | 64 lowercase hexadecimal SHA-256 characters |
-| `Time` | validated RFC 3339 UTC timestamp ending in `Z` |
-| `Name` | canonical GRV identifier |
-| `Handle` | nonempty, non-secret, channel-local opaque string |
-| `Details(point, mode)` | value validated by the served schema at that point/mode |
-| `Mode` | `"extract"`, `"managed_build"`, `"external_build"`, `"pull"`, `"inspect"`, or `"command"` |
+| Type                   | Wire representation                                                                       |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| `J`                    | JSON-compatible value; objects closed by the named common or served schema                |
+| `Doc<T>`               | exactly `{"inline": T}` or `{"document_id": UUID}`; §2.4 verifies the latter              |
+| `SafeInt`              | JSON integer `0..2^53-1`, parsed without rounding                                         |
+| `Req`                  | JSON integer `1..2^53-1`                                                                  |
+| `U64`                  | canonical decimal string `0..2^63-1`; no sign or leading zeros                            |
+| `Revision`             | `U64`; requested selector is `"latest"` or `Revision`                                     |
+| `UUID`                 | canonical lowercase v4 or v7 UUID                                                         |
+| `RunId`                | canonical uppercase ULID per GRV §6                                                       |
+| `Digest`               | 64 lowercase hexadecimal SHA-256 characters                                               |
+| `Time`                 | validated RFC 3339 UTC timestamp ending in `Z`                                            |
+| `Name`                 | canonical GRV identifier                                                                  |
+| `Handle`               | nonempty, non-secret, channel-local opaque string                                         |
+| `Details(point, mode)` | value validated by the served schema at that point/mode                                   |
+| `Mode`                 | `"extract"`, `"managed_build"`, `"external_build"`, `"pull"`, `"inspect"`, or `"command"` |
 
 Byte lengths, counts, and revisions use decimal strings. Slot indices, sequence
 numbers, request IDs, schema versions, and metadata chunk indices use safe JSON
@@ -299,12 +299,12 @@ Large declarations, SQL, plans, file lists, checkpoints, sessions, and results
 use `Doc<T>`. Either side may transmit a document after `ready`, before the
 frame that references it. These controls have no `req` and no binary payload:
 
-| Frame | Direction | Fields beyond `msg` |
-|-------|-----------|---------------------|
-| `document_begin` | either | `document_id: UUID, size: U64, sha256: Digest` |
+| Frame            | Direction   | Fields beyond `msg`                               |
+| ---------------- | ----------- | ------------------------------------------------- |
+| `document_begin` | either      | `document_id: UUID, size: U64, sha256: Digest`    |
 | `document_chunk` | same sender | `document_id: UUID, index: SafeInt, data: string` |
-| `document_end` | same sender | `document_id: UUID` |
-| `document_ack` | receiver | `document_id: UUID` |
+| `document_end`   | same sender | `document_id: UUID`                               |
+| `document_ack`   | receiver    | `document_id: UUID`                               |
 
 **Encoding and verification.**
 
@@ -386,11 +386,11 @@ request.
 
 ### 3.1 Frame grammar
 
-| Frame | Sender | Fields beyond `msg` |
-|-------|--------|---------------------|
-| `hello` | parent | `interface_versions: [Req], core: {name: string, version: string}, attempt: UUID, resources: Resources` |
+| Frame        | Sender  | Fields beyond `msg`                                                                                                                                                          |
+| ------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hello`      | parent  | `interface_versions: [Req], core: {name: string, version: string}, attempt: UUID, resources: Resources`                                                                      |
 | `identified` | adapter | `name: Name, package_version: string, interface_versions: [Req], binding_schema_version: Req, capabilities: Capabilities, registry: Registry, commands: [CommandDescriptor]` |
-| `ready` | parent | `interface_version: Req, binding_schema_version: Req, resources: Resources` |
+| `ready`      | parent  | `interface_version: Req, binding_schema_version: Req, resources: Resources`                                                                                                  |
 
 `Resources` is closed:
 `{slots: Req, max_batch_bytes: U64, max_source_unit_bytes: U64, max_scratch_bytes: U64}`.
@@ -410,13 +410,19 @@ Parent-owned metadata, Parquet, and consumer budgets are accounted separately
 For example, this is a complete bootstrap request (no `req` field):
 
 ```json
-{"msg":"hello","interface_versions":[1],"core":{"name":"grv","version":"0.3.0"},"attempt":"359c6d0f-a9c1-4ae6-b804-0742a5e2b9de","resources":{"slots":4,"max_batch_bytes":"8388608","max_source_unit_bytes":"33554432","max_scratch_bytes":"33554432"}}
+{
+  "msg": "hello",
+  "interface_versions": [1],
+  "core": { "name": "grv", "version": "0.3.0" },
+  "attempt": "359c6d0f-a9c1-4ae6-b804-0742a5e2b9de",
+  "resources": { "slots": 4, "max_batch_bytes": "8388608", "max_source_unit_bytes": "33554432", "max_scratch_bytes": "33554432" }
+}
 ```
 
 `Capabilities` is closed and contains:
 
 - `push, pull, managed_build, external_build, resumable_extract, inspect_connection,
-  after_publish` (booleans);
+after_publish` (booleans);
 - `source_consistency` (`"snapshot"`, `"capture_window"`, or `"none"`);
 - `pull_write_modes` (unique array of `"replace" | "append"`);
 - `pull_materializations` (unique array of `"local" | "s3-view"`);
@@ -454,9 +460,9 @@ has_default: boolean}`. `schema_pointer` addresses the bundle.
 inspect, command`. Point names are:
 
 - Binding: `connection, options, table_source, target, table_target,
-  table_select, column_source, build_input`.
+table_select, column_source, build_input`.
 - Results and state: `connection_details, pull_plan, pull_result, push_result,
-  inspection_result, session_details, source_identity, source_job`.
+inspection_result, session_details, source_identity, source_job`.
 
 **Registration rules.**
 
@@ -477,11 +483,11 @@ inspect, command`. Point names are:
 - Every supported connection mode registers `connection` and
   `connection_details`.
 - Extraction registers `options, table_source, column_source, source_identity,
-  source_job, push_result`.
+source_job, push_result`.
 - Builds register `options, table_source, column_source, build_input,
-  session_details, push_result`.
+session_details, push_result`.
 - Pull registers `options, target, table_target, table_select, pull_plan,
-  pull_result`.
+pull_result`.
 - Inspection registers `inspection_result`.
 
 Points that are optional in the authoring envelope, such as SQL select or build
@@ -521,7 +527,7 @@ flows. No generic core interpretation of adapter-specific flags is needed.
 **Adapter identity.** The adapter identity is the closed object
 `{name: Name, package_version: string, interface_version: Req,
 binding_schema_version: Req}`. It and resolved connection identity are hashed
-exactly as the execution companion specifies (*Normalized plans and identity*).
+exactly as the execution companion specifies (_Normalized plans and identity_).
 Paths, mtimes, channel IDs, and bootstrap resource budgets are not additional
 declaration inputs (§6.1).
 
@@ -538,7 +544,6 @@ execution with a new adapter identity.
   not permission to execute again.
 - No result or exit version or public code is added.
 
-
 ## 4. Operation catalog and lifecycle ordering
 
 Every row below defines a parent request and its adapter terminal response.
@@ -553,24 +558,24 @@ the execution companion, the section names that rule instead of restating it.
 ### 4.1 Common records
 
 - **TableContract:** `{columns: [{name: string, type: J}], partition_keys: [Name],
-  extensions: J, column_ext: J}`. Columns use **GRV v2 §4 logical types**, not
+extensions: J, column_ext: J}`. Columns use **GRV v2 §4 logical types**, not
   a new Arrow-type JSON dialect. Supported values are restricted by the Client's
   type set and exact Arrow and engine round-trip rules. Extension objects follow
   their registered GRV contracts; defaults are `{}`. Names, order, and types are
   exact; nullability and incidental IPC metadata do not change logical equality.
   Required extension properties are not silently discarded.
 - **File:** `{table: Name, partition: J, version: U64,
-  schema: {columns: [{name: string, type: J}]},
-  access: "local" | "s3-view", location: string, size: U64, sha256: Digest,
-  validator: string}`. Version is positive. Partition objects have exactly the
+schema: {columns: [{name: string, type: J}]},
+access: "local" | "s3-view", location: string, size: U64, sha256: Digest,
+validator: string}`. Version is positive. Partition objects have exactly the
   table layout's keys and canonical values. Local locations are absolute verified
   staging paths; S3-view locations are exact credential-free S3 data-file URIs.
   File schema is that file's logical prefix schema, not a later table baseline.
 - **RequestRecord:** `{attempt_id: UUID, root: string, dataset: Name,
-  workspace_id: UUID, adapter_identity: AdapterIdentity,
-  connection_identity: string, effective_declaration: J, validation_input: J,
-  declaration_sha256: Digest, request_sha256: Digest, registry: Registry,
-  requested_revision: "latest" | Revision}`. The effective declaration follows
+workspace_id: UUID, adapter_identity: AdapterIdentity,
+connection_identity: string, effective_declaration: J, validation_input: J,
+declaration_sha256: Digest, request_sha256: Digest, registry: Registry,
+requested_revision: "latest" | Revision}`. The effective declaration follows
   the common and recorded adapter schemas. The registry is the recorded
   normalization and result-validation evidence, not a new execution
   registration.
@@ -580,26 +585,26 @@ the execution companion, the section names that rule instead of restating it.
   a replay cannot inherit a formerly explicit mapping simply because it is now
   omitted. This evidence is excluded from both identity hash inputs.
 - **Receipt:** `{request: RequestRecord, committed_revision: Revision,
-  generation_id: UUID, pulled_at: Time, row_counts: [{table: Name, rows: U64}],
-  source_contracts: [{table: Name, contract: TableContract}],
-  output_contracts: [{table: Name, contract: TableContract}], adapter_result: J}`.
+generation_id: UUID, pulled_at: Time, row_counts: [{table: Name, rows: U64}],
+source_contracts: [{table: Name, contract: TableContract}],
+output_contracts: [{table: Name, contract: TableContract}], adapter_result: J}`.
   Lists have unique table names. Details validate against the request's recorded
   pull-result schema. This is the original immutable successful pull receipt,
   with its original output facts. It contains enough evidence to render the
   execution companion's full pull result without source reads or re-evaluating
   SQL.
 - **BuildIdentity:** `{attempt_id: UUID, root: string, dataset: Name,
-  run_id: RunId, workspace_id: UUID, declaration_sha256: Digest,
-  adapter_identity: AdapterIdentity, connection_identity: string}`.
+run_id: RunId, workspace_id: UUID, declaration_sha256: Digest,
+adapter_identity: AdapterIdentity, connection_identity: string}`.
 - **InputBinding:** `{alias: Name, relation: J, dataset: Name, table: Name, revision: Revision,
-  generation_id: UUID, contract: TableContract,
-  materialization: "local" | "s3-view"}`. Relation validates against
+generation_id: UUID, contract: TableContract,
+materialization: "local" | "s3-view"}`. Relation validates against
   `build_input` for the selected mode. `table` is the recorded GRV source table,
   independent of the authored physical relation; the parent verifies that exact
   table in the fixed dataset and revision. Revision is positive. Metadata must
   establish a complete eligible identity materialization in the same bound root.
 - **OutputBinding:** `{table: Name, source: J, columns: J, engine_table: string,
-  contract: TableContract}`. Source is the fixed mode-specific table source.
+contract: TableContract}`. Source is the fixed mode-specific table source.
   Columns carry the ordered authored mappings unchanged, excluding core-derived
   columns, and match the logical input contract exactly. Each source selector
   validates against the selected build mode’s `column_source` registry point.
@@ -607,15 +612,15 @@ the execution companion, the section names that rule instead of restating it.
   qualified-name grammar; the adapter supplies and validates its physical
   mappings.
 - **BuildSession:** `{session_id: UUID, identity: BuildIdentity, options: J,
-  execution: "managed" | "external", base_revision: Revision,
-  base_contracts: [{table: Name, contract: TableContract}], inputs: [InputBinding], outputs: [OutputBinding], selected_outputs: [Name],
-  self_input: boolean, adapter_details: J}`. Details validate at
+execution: "managed" | "external", base_revision: Revision,
+base_contracts: [{table: Name, contract: TableContract}], inputs: [InputBinding], outputs: [OutputBinding], selected_outputs: [Name],
+self_input: boolean, adapter_details: J}`. Details validate at
   `session_details` for the execution mode. The session ID is durable, unlike a
   connection handle. Names and aliases are unique. Selected outputs are exactly
   the completion-required outputs computed by the execution companion's
   selection rules, not every prepared table.
 - **Outcome:** `{kind: "published" | "no-op" | "aborted",
-  revision: Revision | null, operation_id: RunId | null}`.
+revision: Revision | null, operation_id: RunId | null}`.
   Published has both identifiers; no-op has its observed predecessor revision
   and null operation; aborted has neither. This matches the execution companion.
 
@@ -629,12 +634,12 @@ no row counts, aliases, or renamed `engine` fields are added to that object.
 Binding proceeds in phases so that the parent can validate, take locks, and
 check identities before any authenticated or mutating adapter work.
 
-| Request | Request fields | Terminal response | Response fields |
-|---------|----------------|-------------------|-----------------|
-| `validate_binding` | `declaration: Doc<J>, mode: Mode, schema_version: Req` | `validate_result` | `effective_declaration: Doc<J>` |
-| `locate_connection` | `connection: Doc<J>, mode: Mode, run_id: RunId \| null` | `connection_located` | `connection: Doc<ConnectionLocator>` |
-| `bind_connection` | `locator: Doc<ConnectionLocator>, root: string \| null, expected_identity: string \| null, expected_workspace_id: UUID \| null, mode: Mode` | `bind_result` | `handle: Handle, identity: string \| null, workspace_id: UUID \| null, binding: "bound" \| "uninitialized" \| "not_applicable", details: Doc<J>` |
-| `authenticate` | `handle: Handle, expected_identity: string \| null` | `authenticate_result` | `identity: string` |
+| Request             | Request fields                                                                                                                              | Terminal response     | Response fields                                                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `validate_binding`  | `declaration: Doc<J>, mode: Mode, schema_version: Req`                                                                                      | `validate_result`     | `effective_declaration: Doc<J>`                                                                                                                  |
+| `locate_connection` | `connection: Doc<J>, mode: Mode, run_id: RunId \| null`                                                                                     | `connection_located`  | `connection: Doc<ConnectionLocator>`                                                                                                             |
+| `bind_connection`   | `locator: Doc<ConnectionLocator>, root: string \| null, expected_identity: string \| null, expected_workspace_id: UUID \| null, mode: Mode` | `bind_result`         | `handle: Handle, identity: string \| null, workspace_id: UUID \| null, binding: "bound" \| "uninitialized" \| "not_applicable", details: Doc<J>` |
+| `authenticate`      | `handle: Handle, expected_identity: string \| null`                                                                                         | `authenticate_result` | `identity: string`                                                                                                                               |
 
 `ConnectionLocator` is `{canonical_connection: J, identity: string | null,
 engine_path: string | null, session_lock_path: string | null}`. The connection
@@ -698,11 +703,11 @@ identity resolution.
 
 Extraction streams the declared source tables as row batches, with durable
 source checkpoints that fix each table's snapshot before any of its rows are
-sent. Capture and retry semantics follow the execution companion (*Extraction
-session preparation and capture*).
+sent. Capture and retry semantics follow the execution companion (_Extraction
+session preparation and capture_).
 
-| Request | Request fields | Terminal response | Response fields |
-|---------|----------------|-------------------|-----------------|
+| Request   | Request fields                                 | Terminal response | Response fields                     |
+| --------- | ---------------------------------------------- | ----------------- | ----------------------------------- |
 | `extract` | `handle: Handle, payload: Doc<ExtractRequest>` | `source_complete` | `completion: Doc<SourceCompletion>` |
 
 `SourceCompletion` is `{job: J, capture_window: {start: Time, end: Time},
@@ -735,12 +740,12 @@ resume: Checkpoint | null}`.
 
 Nonterminal adapter events:
 
-| Event | Fields beyond `msg, req` |
-|-------|--------------------------|
-| `extract_started` | none |
-| `checkpoint` | `checkpoint_id: UUID, payload: Doc<Checkpoint>` |
-| `batch` | §5.1 |
-| `table_complete` | `table: Name, row_count: U64, source_identity: Doc<J>, capture: {start: Time, end: Time}` |
+| Event             | Fields beyond `msg, req`                                                                  |
+| ----------------- | ----------------------------------------------------------------------------------------- |
+| `extract_started` | none                                                                                      |
+| `checkpoint`      | `checkpoint_id: UUID, payload: Doc<Checkpoint>`                                           |
+| `batch`           | §5.1                                                                                      |
+| `table_complete`  | `table: Name, row_count: U64, source_identity: Doc<J>, capture: {start: Time, end: Time}` |
 
 #### Checkpoints
 
@@ -804,8 +809,8 @@ All of these abort capture acceptance and publication; none implies omission.
 
 On successful terminal evidence, the parent still finishes, flushes, and stops
 its capture writers and verifies staged files and counts (§5.1), then atomically
-seals the capture receipt (execution companion, *Extraction session preparation
-and capture*, step 4). Source completion is not itself that receipt or a GRV
+seals the capture receipt (execution companion, _Extraction session preparation
+and capture_, step 4). Source completion is not itself that receipt or a GRV
 commit.
 
 ### 4.4 Pull resolution precedes source selection
@@ -813,12 +818,12 @@ commit.
 Pull resolution determines from durable destination evidence whether an attempt
 already committed. It runs before any source selection. Its semantics (receipt
 lookup before source resolution, ambiguous-commit resolution) follow the
-execution companion (*The pull algorithm*); this section defines the two-phase
+execution companion (_The pull algorithm_); this section defines the two-phase
 wire form and its result mapping.
 
-| Request | Request fields | Terminal response | Response fields |
-|---------|----------------|-------------------|-----------------|
-| `resolve_pull` | `handle: Handle, payload: Doc<ResolvePullRequest>` | `resolve_result` | `resolution: Doc<PullResolution>` |
+| Request        | Request fields                                     | Terminal response | Response fields                   |
+| -------------- | -------------------------------------------------- | ----------------- | --------------------------------- |
+| `resolve_pull` | `handle: Handle, payload: Doc<ResolvePullRequest>` | `resolve_result`  | `resolution: Doc<PullResolution>` |
 
 `ResolvePullRequest` is `{phase: "lookup" | "compare", attempt_id: UUID,
 root: string, request: RequestRecord | null}`. Lookup has a null request and
@@ -871,8 +876,8 @@ fixes the workspace, adapter, and connection identities and the request hash,
 and performs compare. A mismatching recorded request is rejected. Only a
 trustworthy `not_committed` result plus permitted journal repair authorizes
 source selection. Rediscovery of source contracts and revision on an
-uncommitted `latest` retry follows the execution companion (*Normalized plans
-and identity*); rediscovered facts are not substituted into the fixed request
+uncommitted `latest` retry follows the execution companion (_Normalized plans
+and identity_); rediscovered facts are not substituted into the fixed request
 hash.
 
 **Ordering.** Authentication for actual destination execution, if needed,
@@ -884,10 +889,10 @@ in a fresh process and repeat resolution.
 Preparation fixes a durable destination plan; application executes it and
 returns the immutable pull receipt.
 
-| Request | Request fields | Terminal response | Response fields |
-|---------|----------------|-------------------|-----------------|
-| `prepare_pull` | `handle: Handle, payload: Doc<PreparePullRequest>` | `prepare_result` | `plan: Doc<PullPlan>` |
-| `apply_pull` | `handle: Handle, plan: Doc<PullPlan>` | `apply_result` | `receipt: Doc<Receipt>` |
+| Request        | Request fields                                     | Terminal response | Response fields         |
+| -------------- | -------------------------------------------------- | ----------------- | ----------------------- |
+| `prepare_pull` | `handle: Handle, payload: Doc<PreparePullRequest>` | `prepare_result`  | `plan: Doc<PullPlan>`   |
+| `apply_pull`   | `handle: Handle, plan: Doc<PullPlan>`              | `apply_result`    | `receipt: Doc<Receipt>` |
 
 `PreparePullRequest` is `{request: RequestRecord, resolved_revision: Revision,
 tables: [PullTable], files: [File], recovery: J | null}`.
@@ -907,8 +912,8 @@ facts. Recovery must equal the advertised capability. The parent validates and
 durably stores the plan before apply; the adapter rejects a changed echoed plan.
 
 **Files.** Before `prepare_pull`, the parent has performed source selection and
-verification as the execution companion specifies (*Source selection and
-contracts*): it has proved revision commitment, selected entries before
+verification as the execution companion specifies (_Source selection and
+contracts_): it has proved revision commitment, selected entries before
 fetching, rejected selected tombstones, verified files, and resolved source and
 output contracts.
 
@@ -916,13 +921,13 @@ output contracts.
   empty files.
 - Unselected files are neither listed nor fetched.
 - The adapter reads the files under the execution companion's reader rules
-  (*Backends and S3 views*): it validates each reader schema, uses explicit
+  (_Backends and S3 views_): it validates each reader schema, uses explicit
   file lists with Hive inference disabled, and performs only permitted
   trailing-null padding.
 - Staging paths are not exposed to user SQL.
 
 **Transactional recovery.** DuckDB applies the whole pull in exactly the one
-transaction that the execution companion specifies (*The pull algorithm*,
+transaction that the execution companion specifies (_The pull algorithm_,
 step 4): all target data and catalog changes, checks over the
 completed resulting scope, ownership, role, and initial binding, the completion
 checkpoint or import metadata, and the immutable successful receipt. Failure
@@ -956,12 +961,12 @@ assumes a failed commit rolled back.
 A build fixes its inputs in two phases. `discover_build` chooses inputs before
 the parent creates the GRV run and holds. `prepare_build` creates the private
 session after holds are confirmed. Preparation semantics follow the execution
-companion (*DuckDB build session preparation and context*).
+companion (_DuckDB build session preparation and context_).
 
-| Request | Request fields | Terminal response | Response fields |
-|---------|----------------|-------------------|-----------------|
+| Request          | Request fields                                       | Terminal response  | Response fields                  |
+| ---------------- | ---------------------------------------------------- | ------------------ | -------------------------------- |
 | `discover_build` | `handle: Handle, payload: Doc<DiscoverBuildRequest>` | `build_discovered` | `discovery: Doc<BuildDiscovery>` |
-| `prepare_build` | `handle: Handle, payload: Doc<PrepareBuildRequest>` | `build_prepared` | `session: Doc<BuildSession>` |
+| `prepare_build`  | `handle: Handle, payload: Doc<PrepareBuildRequest>`  | `build_prepared`   | `session: Doc<BuildSession>`     |
 
 `DiscoverBuildRequest` is `{identity: BuildIdentity, options: J, execution: "managed" | "external",
 inputs: [{alias: Name, relation: J}],
@@ -992,7 +997,7 @@ transaction (§6.3).
 - Discovery selects completed generations of eligible identity
   materializations and returns their recorded contracts, logical revisions, and
   private output mappings.
-- Discovery only chooses *which* revision, contract, and generation each input
+- Discovery only chooses _which_ revision, contract, and generation each input
   uses. It never supplies the input rows.
 - No application import, revision 0, foreign-root input, mutable view
   dependency, or guessed table provenance is accepted.
@@ -1047,11 +1052,11 @@ may select new inputs.
 
 Managed execution runs the fixed output queries inside the engine and returns a
 completion record with row counts. Query semantics follow the execution
-companion (*Managed runner execution*).
+companion (_Managed runner execution_).
 
-| Request | Request fields | Terminal response | Response fields |
-|---------|----------------|-------------------|-----------------|
-| `execute_build` | `handle: Handle, payload: Doc<ExecuteBuildRequest>` | `build_finished` | `result: Doc<BuildExecutionResult>` |
+| Request         | Request fields                                      | Terminal response | Response fields                     |
+| --------------- | --------------------------------------------------- | ----------------- | ----------------------------------- |
+| `execute_build` | `handle: Handle, payload: Doc<ExecuteBuildRequest>` | `build_finished`  | `result: Doc<BuildExecutionResult>` |
 
 `BuildExecutionResult` is `{status: "succeeded" | "failed", completion: J | null,
 row_counts: [{table: Name, rows: U64}]}`. Completion and counts share one document
@@ -1101,13 +1106,13 @@ from leftover tables.
 
 Acceptance makes one completion record immutable in the engine session record.
 Only an accepted record authorizes export of the build's rows. Completion
-coverage and immutability rules follow the execution companion (*Build
-completion record*).
+coverage and immutability rules follow the execution companion (_Build
+completion record_).
 
-| Request | Request fields | Terminal response | Response fields |
-|---------|----------------|-------------------|-----------------|
-| `accept_build_completion` | `handle: Handle, session_id: UUID, completion: Doc<J>` | `completion_accepted` | `session_id: UUID, completion_sha256: Digest` |
-| `export_build` | `handle: Handle, session_id: UUID, completion_sha256: Digest, stream_id: UUID` | `export_complete` | `session_id: UUID, completion_sha256: Digest, adapter_result: Doc<J>` |
+| Request                   | Request fields                                                                 | Terminal response     | Response fields                                                       |
+| ------------------------- | ------------------------------------------------------------------------------ | --------------------- | --------------------------------------------------------------------- |
+| `accept_build_completion` | `handle: Handle, session_id: UUID, completion: Doc<J>`                         | `completion_accepted` | `session_id: UUID, completion_sha256: Digest`                         |
+| `export_build`            | `handle: Handle, session_id: UUID, completion_sha256: Digest, stream_id: UUID` | `export_complete`     | `session_id: UUID, completion_sha256: Digest, adapter_result: Doc<J>` |
 
 #### Acceptance
 
@@ -1145,7 +1150,7 @@ ownership and finalization authorization.
 
 The parent drains and finishes capture writers and records its durable export
 plan and completion digest before allocations (execution companion,
-*Finalization algorithm*). Accepted staging and capture are reused on retry. An
+_Finalization algorithm_). Accepted staging and capture are reused on retry. An
 incomplete export can reread the same immutable completed outputs while
 ownership is valid. A complete sealed-run retry does not reopen or export engine
 tables; it verifies the existing durable plan and sealed payload.
@@ -1158,13 +1163,13 @@ is durably retained with the accepted export and outcome for source-free replay.
 These operations act on an existing build session by its durable identity,
 whether in the process that prepared it or a fresh one.
 
-| Request | Request fields | Terminal response | Response fields |
-|---------|----------------|-------------------|-----------------|
-| `open_build` | `handle: Handle, payload: Doc<BuildIdentity>` | `build_opened` | `record: Doc<BuildRecord>` |
-| `inspect_build` | `handle: Handle, payload: Doc<BuildIdentity>` | `build_inspected` | `record: Doc<BuildRecord>` |
-| `abort_build` | `handle: Handle, session_id: UUID` | `build_aborted` | `session_id: UUID, writers_stopped: true` |
-| `record_build_outcome` | `handle: Handle, session_id: UUID, outcome: Outcome` | `build_outcome_recorded` | `session_id: UUID` |
-| `cleanup_build` | `handle: Handle, session_id: UUID` | `build_cleaned` | `session_id: UUID` |
+| Request                | Request fields                                       | Terminal response        | Response fields                           |
+| ---------------------- | ---------------------------------------------------- | ------------------------ | ----------------------------------------- |
+| `open_build`           | `handle: Handle, payload: Doc<BuildIdentity>`        | `build_opened`           | `record: Doc<BuildRecord>`                |
+| `inspect_build`        | `handle: Handle, payload: Doc<BuildIdentity>`        | `build_inspected`        | `record: Doc<BuildRecord>`                |
+| `abort_build`          | `handle: Handle, session_id: UUID`                   | `build_aborted`          | `session_id: UUID, writers_stopped: true` |
+| `record_build_outcome` | `handle: Handle, session_id: UUID, outcome: Outcome` | `build_outcome_recorded` | `session_id: UUID`                        |
+| `cleanup_build`        | `handle: Handle, session_id: UUID`                   | `build_cleaned`          | `session_id: UUID`                        |
 
 `BuildRecord` is `{session: BuildSession,
 state: "prepared" | "executing" | "completed" | "aborted",
@@ -1192,13 +1197,13 @@ acceptance, repair, renewal, or writer fencing with side effects.
 **External builds.** External preparation uses §4.6, then closes the adapter
 cleanly and releases workspace ownership. During its invocation the external
 driver holds the workspace lock and renews as the execution companion specifies
-(*External driver lifecycle and fencing*). Later finalization uses a fresh
+(_External driver lifecycle and fencing_). Later finalization uses a fresh
 adapter, opens the original session, accepts the actual driver record
 (`engine`, `direct`, or `omission-only`), and exports without `execute_build`.
 No result flag is needed once completion was accepted.
 
 **Abort.** Abort semantics follow the execution companion (`session abort`
-under *Build completion record*). On the wire:
+under _Build completion record_). On the wire:
 
 - `abort_build` is legal only after the parent resolves any recorded
   publication attempt; it cannot erase a committed publication.
@@ -1222,9 +1227,9 @@ require no adapter or engine connection.
 
 ### 4.10 Read-only connection inspection
 
-| Request | Request fields | Terminal response | Response fields |
-|---------|----------------|-------------------|-----------------|
-| `inspect_connection` | `handle: Handle, root: string \| null, declaration: Doc<J> \| null` | `inspect_result` | `details: Doc<J>` |
+| Request              | Request fields                                                      | Terminal response | Response fields   |
+| -------------------- | ------------------------------------------------------------------- | ----------------- | ----------------- |
+| `inspect_connection` | `handle: Handle, root: string \| null, declaration: Doc<J> \| null` | `inspect_result`  | `details: Doc<J>` |
 
 Details validate at `inspection_result`. The declaration scopes matching
 materializations and application imports; root identity permits foreign-root
@@ -1232,7 +1237,6 @@ rejection. No binding, receipt creation, repair, authentication renewal, or GRV
 renewal occurs. The adapter still acquires workspace ownership before engine
 reads. An unsupported inspection is `UNSUPPORTED_CAPABILITY`, not empty
 invented data.
-
 
 DuckDB inspection registers local `engine_materialization` and `engine_session`
 summaries. Engine materializations carry the committed revision, selector mode,
@@ -1248,13 +1252,13 @@ never recorded a build; malformed existing metadata is an error, never repair.
 
 ### 4.11 Post-publication acknowledgement
 
-| Request | Request fields | Terminal response | Response fields |
-|---------|----------------|-------------------|-----------------|
+| Request         | Request fields                                                                   | Terminal response      | Response fields      |
+| --------------- | -------------------------------------------------------------------------------- | ---------------------- | -------------------- |
 | `after_publish` | `handle: Handle, attempt_id: UUID, declaration_sha256: Digest, outcome: Outcome` | `after_publish_result` | `acknowledged: true` |
 
 This operation is required only when `after_publish` is advertised. Hook
-sequencing follows the execution companion (*Extraction session preparation and
-capture*).
+sequencing follows the execution companion (_Extraction session preparation and
+capture_).
 
 - The parent records the pending acknowledgement alongside the known `published`
   or `no-op` result **before** sending `after_publish`.
@@ -1269,10 +1273,10 @@ capture*).
 
 ### 4.12 Namespaced commands
 
-| Request | Request fields | Terminal response | Response fields |
-|---------|----------------|-------------------|-----------------|
-| `prepare_command` | `name: Name, argv: Doc<[string]>` | `command_prepared` | `call: Doc<CommandCall>` |
-| `command` | `command_id: UUID, handle: Handle \| null` | `command_result` | `details: Doc<J>` |
+| Request           | Request fields                             | Terminal response  | Response fields          |
+| ----------------- | ------------------------------------------ | ------------------ | ------------------------ |
+| `prepare_command` | `name: Name, argv: Doc<[string]>`          | `command_prepared` | `call: Doc<CommandCall>` |
+| `command`         | `command_id: UUID, handle: Handle \| null` | `command_result`   | `details: Doc<J>`        |
 
 `CommandCall` is `{command_id: UUID, name: Name, args: J, connection: J | null}`.
 
@@ -1295,13 +1299,13 @@ command IDs are protocol failures.
 
 ### 4.13 Cancellation, close, and errors
 
-| Frame | Sender | Fields beyond `msg` |
-|-------|--------|---------------------|
-| `cancel` | parent | `req: Req` |
-| `cancel_ack` | adapter | `req: Req, state: "stopped" \| "completed"` |
-| `close` | parent | `req: Req` |
-| `close_result` | adapter | `req: Req` |
-| `error` | either | `req: Req \| null, code: string, message: string, retryable: boolean, object: J \| null` |
+| Frame          | Sender  | Fields beyond `msg`                                                                      |
+| -------------- | ------- | ---------------------------------------------------------------------------------------- |
+| `cancel`       | parent  | `req: Req`                                                                               |
+| `cancel_ack`   | adapter | `req: Req, state: "stopped" \| "completed"`                                              |
+| `close`        | parent  | `req: Req`                                                                               |
+| `close_result` | adapter | `req: Req`                                                                               |
+| `error`        | either  | `req: Req \| null, code: string, message: string, retryable: boolean, object: J \| null` |
 
 #### Cancel
 
@@ -1441,7 +1445,6 @@ mutate an invalid declaration. Unsupported new work is refused before any
 login, run, or engine mutation; old terminal facts use their recorded interface
 and result contract.
 
-
 ## 5. Data plane: credited stream batches
 
 Only extraction and **accepted build export** produce row batches. Pull and
@@ -1458,11 +1461,11 @@ adapter consumes one credit when it sends a batch, and the matching
 `batch_ack` returns it. The adapter may reuse a slot number only after that
 ack. All active slots in the one active stream share the offered limit.
 
-| Frame | Direction | Fields beyond `msg, req` |
-|-------|-----------|--------------------------|
-| `batch` | adapter → parent | `table: Name, seq: SafeInt, slot: SafeInt, size: U64, rows: U64`, followed by exactly `size` payload bytes (§2.5) |
-| `batch_ack` | parent → adapter | `table: Name, seq: SafeInt, slot: SafeInt` |
-| `build_table_complete` | adapter → parent | `table: Name, row_count: U64` |
+| Frame                  | Direction        | Fields beyond `msg, req`                                                                                          |
+| ---------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `batch`                | adapter → parent | `table: Name, seq: SafeInt, slot: SafeInt, size: U64, rows: U64`, followed by exactly `size` payload bytes (§2.5) |
+| `batch_ack`            | parent → adapter | `table: Name, seq: SafeInt, slot: SafeInt`                                                                        |
+| `build_table_complete` | adapter → parent | `table: Name, row_count: U64`                                                                                     |
 
 **Field rules.**
 
@@ -1641,7 +1644,7 @@ sandboxing.
 ### 6.1 Normalization and durable identities
 
 Normalization and request hashing are owned by the execution companion
-(*Normalized plans and identity*). This section states when they happen
+(_Normalized plans and identity_). This section states when they happen
 relative to the channel and what the channel adds.
 
 **Timing.** The parent parses YAML, references, and the common shape before the
@@ -1657,7 +1660,7 @@ resolved stable connection identity. Capture-time facts, channel resources,
 attempt, run, and stream IDs, and chosen physical installation paths are not
 added to declaration inputs. Inferred successful pull schemas are receipt
 output facts, and a newer uncommitted `latest` selection does not alter the
-requested selector (execution companion, *Normalized plans and identity*).
+requested selector (execution companion, _Normalized plans and identity_).
 
 **Durable state.** Parent indexes, contexts, captures, completion files, and
 outcomes are atomic and durable consumer state, protected by canonical attempt
@@ -1687,8 +1690,8 @@ source job, or resumed incomplete build under the same attempt.
 
 Engine-specific locking belongs to the adapter, matching the Client. Lock file
 paths, lock order (session lock before workspace lock), and contention behavior
-are owned by the execution companion (*DuckDB process ownership*, *DuckDB build
-session preparation and context*, *External driver lifecycle and fencing*).
+are owned by the execution companion (_DuckDB process ownership_, _DuckDB build
+session preparation and context_, _External driver lifecycle and fencing_).
 This section maps them onto protocol operations.
 
 **Acquisition.**
@@ -1709,7 +1712,7 @@ hard-link aliases, and uses the persistent exclusive `flock` helper at
 `<canonical-engine-path>.grv-lock`. The parent session helper is
 `<canonical-engine-path>.grv-session-<run-id>.lock`. Neither lock file is
 unlinked or replaced during the workspace lifetime, and database move or
-replacement is rejected (execution companion, *DuckDB process ownership*).
+replacement is rejected (execution companion, _DuckDB process ownership_).
 Helper paths are trusted adapter binding information, checked as regular
 protected consumer lock files, never locations for reading arbitrary result
 data. Read-only extraction does not establish root or workspace metadata.
@@ -1746,15 +1749,15 @@ This section defines the deadlines on adapter interaction and the escalation
 used when one expires. Deadlines are operator-configurable, not declaration
 inputs. V1 defaults:
 
-| Deadline | Default | Meaning |
-|----------|---------|---------|
-| bootstrap | 30 s | spawn through validated `identified` and `ready` |
-| partial frame | 300 s | first byte through complete LF and, for `batch`, the last payload byte, irrespective of credits |
-| document transfer | 300 s | total time from begin through ack; bounded metadata cannot drip forever |
-| operation start / non-streaming response | 300 s | request through first allowed progress or terminal response |
-| producer progress | 300 s | meaningful checkpoint, batch, or table progress; paused only at zero credits |
-| consumer progress | 300 s | each unacked batch's decode and staging progress |
-| cancellation / shutdown grace | 10 s | each cooperative, signal, or shutdown step |
+| Deadline                                 | Default | Meaning                                                                                         |
+| ---------------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
+| bootstrap                                | 30 s    | spawn through validated `identified` and `ready`                                                |
+| partial frame                            | 300 s   | first byte through complete LF and, for `batch`, the last payload byte, irrespective of credits |
+| document transfer                        | 300 s   | total time from begin through ack; bounded metadata cannot drip forever                         |
+| operation start / non-streaming response | 300 s   | request through first allowed progress or terminal response                                     |
+| producer progress                        | 300 s   | meaningful checkpoint, batch, or table progress; paused only at zero credits                    |
+| consumer progress                        | 300 s   | each unacked batch's decode and staging progress                                                |
+| cancellation / shutdown grace            | 10 s    | each cooperative, signal, or shutdown step                                                      |
 
 - No mandatory total duration limit is imposed on a progressing stream; an
   operator may configure one.
@@ -1800,23 +1803,23 @@ deadline closes the failed channel. Resolve known durable effects before
 choosing the final public code. The adapter exit status never selects the CLI
 status.
 
-| Lost phase | Required next step / public classification |
-|------------|---------------------------------------------|
-| handshake | no mutation; `ADAPTER_FAILURE` for death or timeout, `UNSUPPORTED_CAPABILITY` for explicit version or platform refusal |
-| validation, locator, or prepare-command parsing | no execution effects; `ADAPTER_FAILURE` for death, `INVALID_DECLARATION` for established invalid input |
-| bind or authentication | no managed binding creation; close and fence users, then `ADAPTER_FAILURE` or `ENGINE_BUSY`; no GRV run yet |
-| pull lookup, compare, or prepare | no new application; fence and resolve the original attempt first; `ENGINE_BUSY`, `PROTOCOL_FAILURE`, or `OUTCOME_UNKNOWN` where evidence is untrustworthy |
-| pull apply or lost apply result | reopen under destination serialization, recover the engine or journal, and resolve the immutable receipt; report known success, `ENGINE_BUSY`, or `OUTCOME_UNKNOWN`, never inferred rollback |
-| build discovery or preparation | resolve the exact attempt index and session; recover a matching committed preparation and context, otherwise abandon the owned run or use normal recovery; `ADAPTER_FAILURE`, `ENGINE_BUSY`, or `OUTCOME_UNKNOWN`; never select new fixed inputs under an existing run |
-| managed execution | replay a durable successful candidate if one exists and ownership allows acceptance; otherwise `BUILD_INCOMPLETE` after stopping writers; no rerun from leftover tables |
-| completion acceptance | reopen and compare the accepted canonical record and digest; retry identical acceptance if absent and trustworthy; inconsistent identity is `REQUEST_MISMATCH` |
-| build export | accepted record remains fixed; discard incomplete export and reread the same stable outputs only with valid ownership; absent stable evidence is `BUILD_INCOMPLETE` |
-| extraction | no incomplete capture acceptance; `EXTRACTION_INCOMPLETE`; only §7.3 continuation is legal |
-| build open or inspect | no invented state or repair; `ADAPTER_FAILURE` or `ENGINE_BUSY`, or `PROTOCOL_FAILURE` for corrupt required records |
-| build abort, outcome sync, or cleanup | resolve the known session and GRV outcome first; preserve records and known effects; retry idempotent state synchronization or cleanup only after stopped writers |
-| namespaced command | `ADAPTER_FAILURE` unless a more specific declared result establishes effects; arbitrary commands are not automatically replayable |
-| after-publish hook | preserve and report the known GRV outcome and durable pending hook; `ADAPTER_FAILURE`; retry only the fixed idempotent hook |
-| close or exit after established result | preserve the successful receipt, accepted completion, or GRV outcome; report shutdown `ADAPTER_FAILURE` if needed, never label committed work rolled back |
+| Lost phase                                      | Required next step / public classification                                                                                                                                                                                                                             |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| handshake                                       | no mutation; `ADAPTER_FAILURE` for death or timeout, `UNSUPPORTED_CAPABILITY` for explicit version or platform refusal                                                                                                                                                 |
+| validation, locator, or prepare-command parsing | no execution effects; `ADAPTER_FAILURE` for death, `INVALID_DECLARATION` for established invalid input                                                                                                                                                                 |
+| bind or authentication                          | no managed binding creation; close and fence users, then `ADAPTER_FAILURE` or `ENGINE_BUSY`; no GRV run yet                                                                                                                                                            |
+| pull lookup, compare, or prepare                | no new application; fence and resolve the original attempt first; `ENGINE_BUSY`, `PROTOCOL_FAILURE`, or `OUTCOME_UNKNOWN` where evidence is untrustworthy                                                                                                              |
+| pull apply or lost apply result                 | reopen under destination serialization, recover the engine or journal, and resolve the immutable receipt; report known success, `ENGINE_BUSY`, or `OUTCOME_UNKNOWN`, never inferred rollback                                                                           |
+| build discovery or preparation                  | resolve the exact attempt index and session; recover a matching committed preparation and context, otherwise abandon the owned run or use normal recovery; `ADAPTER_FAILURE`, `ENGINE_BUSY`, or `OUTCOME_UNKNOWN`; never select new fixed inputs under an existing run |
+| managed execution                               | replay a durable successful candidate if one exists and ownership allows acceptance; otherwise `BUILD_INCOMPLETE` after stopping writers; no rerun from leftover tables                                                                                                |
+| completion acceptance                           | reopen and compare the accepted canonical record and digest; retry identical acceptance if absent and trustworthy; inconsistent identity is `REQUEST_MISMATCH`                                                                                                         |
+| build export                                    | accepted record remains fixed; discard incomplete export and reread the same stable outputs only with valid ownership; absent stable evidence is `BUILD_INCOMPLETE`                                                                                                    |
+| extraction                                      | no incomplete capture acceptance; `EXTRACTION_INCOMPLETE`; only §7.3 continuation is legal                                                                                                                                                                             |
+| build open or inspect                           | no invented state or repair; `ADAPTER_FAILURE` or `ENGINE_BUSY`, or `PROTOCOL_FAILURE` for corrupt required records                                                                                                                                                    |
+| build abort, outcome sync, or cleanup           | resolve the known session and GRV outcome first; preserve records and known effects; retry idempotent state synchronization or cleanup only after stopped writers                                                                                                      |
+| namespaced command                              | `ADAPTER_FAILURE` unless a more specific declared result establishes effects; arbitrary commands are not automatically replayable                                                                                                                                      |
+| after-publish hook                              | preserve and report the known GRV outcome and durable pending hook; `ADAPTER_FAILURE`; retry only the fixed idempotent hook                                                                                                                                            |
+| close or exit after established result          | preserve the successful receipt, accepted completion, or GRV outcome; report shutdown `ADAPTER_FAILURE` if needed, never label committed work rolled back                                                                                                              |
 
 Protocol or transport failure is `PROTOCOL_FAILURE`, but an in-flight commit
 still requires resolution. A malformed response cannot prove commit or rollback.
@@ -1826,15 +1829,15 @@ according to the execution companion's partial-result rules. There is no
 blanket "nothing published" rule after an already committed operation.
 
 On unresolved preparation, GRV controls and holds are not deleted as rollback;
-only source GC releases holds (execution companion, *Build completion
-record*, *Abort*). A replacement adapter opens original durable IDs. It
+only source GC releases holds (execution companion, _Build completion
+record_, _Abort_). A replacement adapter opens original durable IDs. It
 does not interpret a new handle as a new attempt or as permission to rebind the
 root.
 
 ### 7.3 Extraction resumption and stream loss
 
-Extraction retry semantics follow the execution companion (*Extraction session
-preparation and capture*). This section defines how a retry maps onto streams.
+Extraction retry semantics follow the execution companion (_Extraction session
+preparation and capture_). This section defines how a retry maps onto streams.
 
 **Same-attempt continuation.** The table is the retry unit, never an individual
 lost batch. Continuation requires unchanged fixed identities, valid original
@@ -1863,12 +1866,12 @@ hash-verified and reused without re-extraction.
 Only the parent's backend operation commits GRV. Adapter frames cannot commit,
 roll back, or rebase a revision. Publication is resolved through the recorded
 operation and committed chain under normal GRV fencing before another attempt
-(execution companion, *Finalization algorithm*). A pending source
+(execution companion, _Finalization algorithm_). A pending source
 acknowledgement never authorizes republication.
 
 External driver obligations (actual invocation success, stopped writers,
 workspace ownership, and between-command renewal) follow the execution
-companion (*External driver lifecycle and fencing*, *Build completion record*).
+companion (_External driver lifecycle and fencing_, _Build completion record_).
 Attestation is not independent proof of model correctness. Lost or recovered
 runs cannot adopt private tables; complete sealed runs may publish only when
 they match the durable plan. Remaining native or remote ownership is reported
@@ -1920,104 +1923,104 @@ content.
 
 ### Handshake, installation, and registration
 
-| Scenario | Required result |
-|----------|-----------------|
-| disjoint interface versions or unsupported platform | `UNSUPPORTED_CAPABILITY`; no operation or mutation |
-| manifest and handshake identity or version mismatch | `ADAPTER_FAILURE`; no binding |
-| unknown capability or data-plane offer | refusal without fallback |
-| user and system root shadowing, and explicit root override | one deterministic winning manifest; override suppresses every fallback |
-| unsafe owner or group permissions, or executable changed after hashing | refusal under §1 checks; no spawn of an observed changed object |
-| external schema reference or wrong mode's table source | offline rejection before authentication or mutation |
-| optional defaults, or inline versus file declarations | same normalized effective request and identity |
-| namespaced flags and requires-connection or requires-authentication descriptors | adapter parsing, capability checks, and sanitized result validation |
+| Scenario                                                                        | Required result                                                        |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| disjoint interface versions or unsupported platform                             | `UNSUPPORTED_CAPABILITY`; no operation or mutation                     |
+| manifest and handshake identity or version mismatch                             | `ADAPTER_FAILURE`; no binding                                          |
+| unknown capability or data-plane offer                                          | refusal without fallback                                               |
+| user and system root shadowing, and explicit root override                      | one deterministic winning manifest; override suppresses every fallback |
+| unsafe owner or group permissions, or executable changed after hashing          | refusal under §1 checks; no spawn of an observed changed object        |
+| external schema reference or wrong mode's table source                          | offline rejection before authentication or mutation                    |
+| optional defaults, or inline versus file declarations                           | same normalized effective request and identity                         |
+| namespaced flags and requires-connection or requires-authentication descriptors | adapter parsing, capability checks, and sanitized result validation    |
 
 ### Pull
 
-| Scenario | Required result |
-|----------|-----------------|
-| terminal pull after source pruning or authentication expiry | original receipt without source, authentication, preparation, or apply |
-| pull receipt under changed request, default, or source selector | `REQUEST_MISMATCH`; no reapplication |
-| latest pull without trustworthy prior commitment | no source resolution until not-committed is established |
-| initial managed transaction fails | no root or workspace binding or successful receipt left behind |
-| ambiguous first commit, or later checkpoint advancement | fence and recover, and return the original immutable receipt if committed |
-| initialized receipt store is missing | `PROTOCOL_FAILURE` or `OUTCOME_UNKNOWN`, never empty history |
-| journaled second-table failure or delayed old writer | preserve the dirty union, block consumers, fence and repair; no claimed rollback |
-| journaled append capability | prove replay cannot duplicate insertions, or refuse the capability |
+| Scenario                                                        | Required result                                                                  |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| terminal pull after source pruning or authentication expiry     | original receipt without source, authentication, preparation, or apply           |
+| pull receipt under changed request, default, or source selector | `REQUEST_MISMATCH`; no reapplication                                             |
+| latest pull without trustworthy prior commitment                | no source resolution until not-committed is established                          |
+| initial managed transaction fails                               | no root or workspace binding or successful receipt left behind                   |
+| ambiguous first commit, or later checkpoint advancement         | fence and recover, and return the original immutable receipt if committed        |
+| initialized receipt store is missing                            | `PROTOCOL_FAILURE` or `OUTCOME_UNKNOWN`, never empty history                     |
+| journaled second-table failure or delayed old writer            | preserve the dirty union, block consumers, fence and repair; no claimed rollback |
+| journaled append capability                                     | prove replay cannot duplicate insertions, or refuse the capability               |
 
 ### Builds
 
-| Scenario | Required result |
-|----------|-----------------|
-| foreign-root or application-import input during build discovery | reject before run, hold, or output execution |
-| tracking pull between external preparation and invocation | the immutable prepared generation is used |
-| pruning races with source hold confirmation | fail preparation, or retain the complete held input under GRV rules |
-| discovery response, preparation commit, or context write lost | exact original identities recovered, or incomplete preparation abandoned |
-| held, dropped, explicit-empty, or omission-only build | exact selected-output coverage and the correct existing completion schema |
-| second output query fails | no successful candidate or accepted completion; `BUILD_INCOMPLETE` |
-| source, self, or output query dependency violates the contract | fail before output writes; no implicit provenance |
-| successful build emits rows before completion acceptance | parent rejects; export is a separate phase |
-| wrong run, workspace, digest, or mapping in a candidate or driver record | rejected before export or allocation |
-| acceptance response lost, or retry changes the completion timestamp | recover the identical stored record, or `REQUEST_MISMATCH` |
-| no writers remain but a database connection is still open at attestation | completion forbidden until connection closure |
-| external session reopened in a fresh process | original session and accepted digest exported without managed invocation |
-| incomplete execution leaves prepared or seeded tables | no inferred completion, rerun, or adoption |
-| adapter loses GRV owner during execution or export | parent disables allocation and publication, and cancels and waits for writers |
-| build export response lost, or accepted capture present | fixed outputs or accepted capture reused, never SQL rerun |
+| Scenario                                                                 | Required result                                                               |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| foreign-root or application-import input during build discovery          | reject before run, hold, or output execution                                  |
+| tracking pull between external preparation and invocation                | the immutable prepared generation is used                                     |
+| pruning races with source hold confirmation                              | fail preparation, or retain the complete held input under GRV rules           |
+| discovery response, preparation commit, or context write lost            | exact original identities recovered, or incomplete preparation abandoned      |
+| held, dropped, explicit-empty, or omission-only build                    | exact selected-output coverage and the correct existing completion schema     |
+| second output query fails                                                | no successful candidate or accepted completion; `BUILD_INCOMPLETE`            |
+| source, self, or output query dependency violates the contract           | fail before output writes; no implicit provenance                             |
+| successful build emits rows before completion acceptance                 | parent rejects; export is a separate phase                                    |
+| wrong run, workspace, digest, or mapping in a candidate or driver record | rejected before export or allocation                                          |
+| acceptance response lost, or retry changes the completion timestamp      | recover the identical stored record, or `REQUEST_MISMATCH`                    |
+| no writers remain but a database connection is still open at attestation | completion forbidden until connection closure                                 |
+| external session reopened in a fresh process                             | original session and accepted digest exported without managed invocation      |
+| incomplete execution leaves prepared or seeded tables                    | no inferred completion, rerun, or adoption                                    |
+| adapter loses GRV owner during execution or export                       | parent disables allocation and publication, and cancels and waits for writers |
+| build export response lost, or accepted capture present                  | fixed outputs or accepted capture reused, never SQL rerun                     |
 
 ### Locks and processes
 
-| Scenario | Required result |
-|----------|-----------------|
+| Scenario                                                | Required result                                                                |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | context copies, engine aliases, or hard-linked database | canonical session and workspace lock serialization; hard-link aliases rejected |
-| adapter or driver dies with a live database child | the child's lock and file ownership remain busy; no stolen access |
-| engine-free renew during an external invocation | session and backend renewal without workspace contention |
+| adapter or driver dies with a live database child       | the child's lock and file ownership remain busy; no stolen access              |
+| engine-free renew during an external invocation         | session and backend renewal without workspace contention                       |
 
 ### Framing and transport
 
-| Scenario | Required result |
-|----------|-----------------|
-| closed, unknown, or duplicate frame fields, or non-safe numerics | `PROTOCOL_FAILURE`; no parser rounding or invented defaults |
-| started event followed by repeated stream req | valid correlation; the request stays active until terminal and drained |
-| byte-fragmented or coalesced frames and payloads, partial writes | exact frame and payload boundaries on Linux and macOS |
-| payload shorter than `size`, EOF mid-payload, or `size` above `max_batch_bytes` | `PROTOCOL_FAILURE`; partial payload discarded, channel closed |
-| another frame or document chunk interleaved inside a payload | `PROTOCOL_FAILURE` |
-| peer closes while parent writes | handled EPIPE or EOF, not parent SIGPIPE death |
-| metadata >1 MiB, malformed chunks or digest, >64 MiB declaration | bounded chunking or pre-mutation rejection; no unbounded buffering |
+| Scenario                                                                        | Required result                                                        |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| closed, unknown, or duplicate frame fields, or non-safe numerics                | `PROTOCOL_FAILURE`; no parser rounding or invented defaults            |
+| started event followed by repeated stream req                                   | valid correlation; the request stays active until terminal and drained |
+| byte-fragmented or coalesced frames and payloads, partial writes                | exact frame and payload boundaries on Linux and macOS                  |
+| payload shorter than `size`, EOF mid-payload, or `size` above `max_batch_bytes` | `PROTOCOL_FAILURE`; partial payload discarded, channel closed          |
+| another frame or document chunk interleaved inside a payload                    | `PROTOCOL_FAILURE`                                                     |
+| peer closes while parent writes                                                 | handled EPIPE or EOF, not parent SIGPIPE death                         |
+| metadata >1 MiB, malformed chunks or digest, >64 MiB declaration                | bounded chunking or pre-mutation rejection; no unbounded buffering     |
 
 ### Data plane
 
-| Scenario | Required result |
-|----------|-----------------|
-| standard V5 Schema + RecordBatch fixture across languages | correct body-relative offsets and identical logical rows |
-| legacy prefix, compression, dictionaries, extra messages, or offset overflow | structural rejection without parser crash |
-| bad schema, count, or partition values, or bad total table count | abort capture or export; no partial acceptance |
-| slot reuse, ack mismatch, non-dense seq, or terminal before draining | `PROTOCOL_FAILURE`; no invalid completion acceptance |
-| zero-row extraction or build table | explicit completion accepted under ordinary empty rules |
-| throttled, all credits occupied, and oversized source page | source and scratch budgets enforced; reader still receives cancel |
-| producer silent with only one busy slot | producer deadline remains armed |
-| all credits occupied, or one consumer stuck | producer timing pauses; independent consumer timeout still cancels |
-| encode, receive, decode, or Parquet failure, or oversized single row | bounded retry or typed failure where catchable; kernel death follows crash recovery |
+| Scenario                                                                     | Required result                                                                     |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| standard V5 Schema + RecordBatch fixture across languages                    | correct body-relative offsets and identical logical rows                            |
+| legacy prefix, compression, dictionaries, extra messages, or offset overflow | structural rejection without parser crash                                           |
+| bad schema, count, or partition values, or bad total table count             | abort capture or export; no partial acceptance                                      |
+| slot reuse, ack mismatch, non-dense seq, or terminal before draining         | `PROTOCOL_FAILURE`; no invalid completion acceptance                                |
+| zero-row extraction or build table                                           | explicit completion accepted under ordinary empty rules                             |
+| throttled, all credits occupied, and oversized source page                   | source and scratch budgets enforced; reader still receives cancel                   |
+| producer silent with only one busy slot                                      | producer deadline remains armed                                                     |
+| all credits occupied, or one consumer stuck                                  | producer timing pauses; independent consumer timeout still cancels                  |
+| encode, receive, decode, or Parquet failure, or oversized single row         | bounded retry or typed failure where catchable; kernel death follows crash recovery |
 
 ### Cancellation and recovery
 
-| Scenario | Required result |
-|----------|-----------------|
-| cancel races with committed apply result | preserve the result and resolve the receipt; late most-recent cancel is idempotent |
-| cancel races with batch or checkpoint ACK, or next request | serialized pre-cancel ACKs precede cancel; later events drained without ACK; matching cancel ACK required before another request |
-| cancel ACK before actual writer stop | conformance failure; ACK is not merely signal receipt |
-| handshake timeout, partial frame, or close timeout | applicable bounded ladder without illegal req-less cancel |
-| checkpoint lost before ACK, or crash mid-table | no unacknowledged-snapshot adoption; whole-table retry or fresh full attempt |
-| callback failure after publication, or shutdown failure after receipt | known commit plus durable pending or cleanup error; no duplicate work |
-| abort after ambiguous GRV publication actually committed | report the committed outcome; do not mark it unpublished |
-| cleanup while commit, outcome, or writers remain unresolved | preserve evidence and return `ENGINE_BUSY` or `OUTCOME_UNKNOWN` |
+| Scenario                                                              | Required result                                                                                                                  |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| cancel races with committed apply result                              | preserve the result and resolve the receipt; late most-recent cancel is idempotent                                               |
+| cancel races with batch or checkpoint ACK, or next request            | serialized pre-cancel ACKs precede cancel; later events drained without ACK; matching cancel ACK required before another request |
+| cancel ACK before actual writer stop                                  | conformance failure; ACK is not merely signal receipt                                                                            |
+| handshake timeout, partial frame, or close timeout                    | applicable bounded ladder without illegal req-less cancel                                                                        |
+| checkpoint lost before ACK, or crash mid-table                        | no unacknowledged-snapshot adoption; whole-table retry or fresh full attempt                                                     |
+| callback failure after publication, or shutdown failure after receipt | known commit plus durable pending or cleanup error; no duplicate work                                                            |
+| abort after ambiguous GRV publication actually committed              | report the committed outcome; do not mark it unpublished                                                                         |
+| cleanup while commit, outcome, or writers remain unresolved           | preserve evidence and return `ENGINE_BUSY` or `OUTCOME_UNKNOWN`                                                                  |
 
 ### Secrets and errors
 
-| Scenario | Required result |
-|----------|-----------------|
-| any control frame or document contains a credential canary | conformance failure |
-| backend credentials inherited, or raw credential stderr rendered | conformance failure |
-| malformed adapter or public error object, or new error enum | reject or map using the existing execution companion output schema |
+| Scenario                                                         | Required result                                                    |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------ |
+| any control frame or document contains a credential canary       | conformance failure                                                |
+| backend credentials inherited, or raw credential stderr rendered | conformance failure                                                |
+| malformed adapter or public error object, or new error enum      | reject or map using the existing execution companion output schema |
 
 ## 10. Later additions
 

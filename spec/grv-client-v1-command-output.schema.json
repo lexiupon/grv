@@ -4,7 +4,7 @@
   "$comment": "Success requires the full command result; errors permit null or a typed partial result. Validate int64 ranges, canonical identities, redaction, and cross-field state invariants through grv-client-v1.md.",
   "type": "object",
   "properties": {
-    "output_version": {"const": 1},
+    "output_version": { "const": 1 },
     "command": {
       "enum": [
         "init",
@@ -31,169 +31,146 @@
         "adapter command"
       ]
     },
-    "root": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
-    "ok": {"type": "boolean"},
-    "exit_status": {"enum": [0, 2, 3, 4, 5, 6]},
-    "result": {"type": ["object", "null"]},
-    "errors": {"type": "array", "items": {"$ref": "#/$defs/error"}}
+    "root": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+    "ok": { "type": "boolean" },
+    "exit_status": { "enum": [0, 2, 3, 4, 5, 6] },
+    "result": { "type": ["object", "null"] },
+    "errors": { "type": "array", "items": { "$ref": "#/$defs/error" } }
   },
   "additionalProperties": false,
   "required": ["output_version", "command", "root", "ok", "exit_status", "result", "errors"],
   "allOf": [
     {
-      "if": {"properties": {"ok": {"const": true}}},
+      "if": { "properties": { "ok": { "const": true } } },
       "then": {
-        "properties": {"exit_status": {"const": 0}, "errors": {"maxItems": 0}, "command": {"not": {"const": "unknown"}}}
+        "properties": { "exit_status": { "const": 0 }, "errors": { "maxItems": 0 }, "command": { "not": { "const": "unknown" } } }
       },
-      "else": {"properties": {"exit_status": {"enum": [2, 3, 4, 5, 6]}, "errors": {"minItems": 1}}}
+      "else": { "properties": { "exit_status": { "enum": [2, 3, 4, 5, 6] }, "errors": { "minItems": 1 } } }
     },
     {
-      "if": {"properties": {"command": {"const": "unknown"}}},
-      "then": {"properties": {"ok": {"const": false}, "result": {"type": "null"}, "exit_status": {"const": 2}}}
+      "if": { "properties": { "command": { "const": "unknown" } } },
+      "then": { "properties": { "ok": { "const": false }, "result": { "type": "null" }, "exit_status": { "const": 2 } } }
     },
     {
-      "if": {"properties": {"command": {"const": "init"}}},
+      "if": { "properties": { "command": { "const": "init" } } },
       "then": {
-        "if": {"properties": {"ok": {"const": true}}},
+        "if": { "properties": { "ok": { "const": true } } },
+        "then": {
+          "properties": {
+            "result": {
+              "allOf": [{ "$ref": "#/$defs/result_init" }, { "required": ["created", "format", "format_version", "parameters"] }]
+            }
+          }
+        },
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_init" }, { "type": "null" }] } } }
+      }
+    },
+    {
+      "if": { "properties": { "command": { "const": "ls" } } },
+      "then": {
+        "if": { "properties": { "ok": { "const": true } } },
+        "then": {
+          "properties": {
+            "result": {
+              "allOf": [{ "$ref": "#/$defs/result_ls" }, { "required": ["scope", "dataset", "revision", "items"] }]
+            }
+          }
+        },
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_ls" }, { "type": "null" }] } } }
+      }
+    },
+    {
+      "if": { "properties": { "command": { "const": "show" } } },
+      "then": {
+        "if": { "properties": { "ok": { "const": true } } },
         "then": {
           "properties": {
             "result": {
               "allOf": [
-                {"$ref": "#/$defs/result_init"},
-                {"required": ["created", "format", "format_version", "parameters"]}
-              ]
-            }
-          }
-        },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_init"}, {"type": "null"}]}}}
-      }
-    },
-    {
-      "if": {"properties": {"command": {"const": "ls"}}},
-      "then": {
-        "if": {"properties": {"ok": {"const": true}}},
-        "then": {
-          "properties": {
-            "result": {
-              "allOf": [{"$ref": "#/$defs/result_ls"}, {"required": ["scope", "dataset", "revision", "items"]}]
-            }
-          }
-        },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_ls"}, {"type": "null"}]}}}
-      }
-    },
-    {
-      "if": {"properties": {"command": {"const": "show"}}},
-      "then": {
-        "if": {"properties": {"ok": {"const": true}}},
-        "then": {
-          "properties": {
-            "result": {
-              "allOf": [
-                {"$ref": "#/$defs/result_show"},
+                { "$ref": "#/$defs/result_show" },
                 {
-                  "required": [
-                    "dataset",
-                    "revision",
-                    "previous_revision",
-                    "operation_id",
-                    "entries",
-                    "tables",
-                    "retention"
-                  ]
+                  "required": ["dataset", "revision", "previous_revision", "operation_id", "entries", "tables", "retention"]
                 }
               ]
             }
           }
         },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_show"}, {"type": "null"}]}}}
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_show" }, { "type": "null" }] } } }
       }
     },
     {
-      "if": {"properties": {"command": {"const": "status"}}},
+      "if": { "properties": { "command": { "const": "status" } } },
       "then": {
-        "if": {"properties": {"ok": {"const": true}}},
+        "if": { "properties": { "ok": { "const": true } } },
         "then": {
           "properties": {
             "result": {
               "allOf": [
-                {"$ref": "#/$defs/result_status"},
-                {"required": ["dataset", "current_revision", "retired", "lease", "pending", "runs", "adapter_state"]}
+                { "$ref": "#/$defs/result_status" },
+                { "required": ["dataset", "current_revision", "retired", "lease", "pending", "runs", "adapter_state"] }
               ]
             }
           }
         },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_status"}, {"type": "null"}]}}}
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_status" }, { "type": "null" }] } } }
       }
     },
     {
-      "if": {"properties": {"command": {"const": "log"}}},
+      "if": { "properties": { "command": { "const": "log" } } },
       "then": {
-        "if": {"properties": {"ok": {"const": true}}},
+        "if": { "properties": { "ok": { "const": true } } },
         "then": {
           "properties": {
             "result": {
-              "allOf": [{"$ref": "#/$defs/result_log"}, {"required": ["dataset", "limit", "has_more", "entries"]}]
+              "allOf": [{ "$ref": "#/$defs/result_log" }, { "required": ["dataset", "limit", "has_more", "entries"] }]
             }
           }
         },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_log"}, {"type": "null"}]}}}
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_log" }, { "type": "null" }] } } }
       }
     },
     {
-      "if": {"properties": {"command": {"const": "diff"}}},
+      "if": { "properties": { "command": { "const": "diff" } } },
       "then": {
-        "if": {"properties": {"ok": {"const": true}}},
+        "if": { "properties": { "ok": { "const": true } } },
         "then": {
           "properties": {
             "result": {
               "allOf": [
-                {"$ref": "#/$defs/result_diff"},
+                { "$ref": "#/$defs/result_diff" },
                 {
-                  "required": [
-                    "dataset",
-                    "from_revision",
-                    "to_revision",
-                    "changed",
-                    "entries",
-                    "tables_added",
-                    "tables_removed",
-                    "schemas"
-                  ]
+                  "required": ["dataset", "from_revision", "to_revision", "changed", "entries", "tables_added", "tables_removed", "schemas"]
                 }
               ]
             }
           }
         },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_diff"}, {"type": "null"}]}}}
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_diff" }, { "type": "null" }] } } }
       }
     },
     {
-      "if": {"properties": {"command": {"const": "verify"}}},
+      "if": { "properties": { "command": { "const": "verify" } } },
       "then": {
-        "if": {"properties": {"ok": {"const": true}}},
+        "if": { "properties": { "ok": { "const": true } } },
         "then": {
           "properties": {
             "result": {
-              "allOf": [
-                {"$ref": "#/$defs/result_verify"},
-                {"required": ["dataset", "revision", "full", "checks", "unavailable"]}
-              ]
+              "allOf": [{ "$ref": "#/$defs/result_verify" }, { "required": ["dataset", "revision", "full", "checks", "unavailable"] }]
             }
           }
         },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_verify"}, {"type": "null"}]}}}
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_verify" }, { "type": "null" }] } } }
       }
     },
     {
-      "if": {"properties": {"command": {"const": "pull"}}},
+      "if": { "properties": { "command": { "const": "pull" } } },
       "then": {
-        "if": {"properties": {"ok": {"const": true}}},
+        "if": { "properties": { "ok": { "const": true } } },
         "then": {
           "properties": {
             "result": {
               "allOf": [
-                {"$ref": "#/$defs/result_pull"},
+                { "$ref": "#/$defs/result_pull" },
                 {
                   "required": [
                     "adapter",
@@ -212,127 +189,115 @@
             }
           }
         },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_pull"}, {"type": "null"}]}}}
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_pull" }, { "type": "null" }] } } }
       }
     },
     {
-      "if": {"properties": {"command": {"const": "session prepare"}}},
+      "if": { "properties": { "command": { "const": "session prepare" } } },
       "then": {
-        "if": {"properties": {"ok": {"const": true}}},
+        "if": { "properties": { "ok": { "const": true } } },
+        "then": {
+          "properties": {
+            "result": {
+              "allOf": [{ "$ref": "#/$defs/result_session_prepare" }, { "required": ["context_path", "engine_path", "session", "state_path"] }]
+            }
+          }
+        },
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_session_prepare" }, { "type": "null" }] } } }
+      }
+    },
+    {
+      "if": { "properties": { "command": { "const": "session show" } } },
+      "then": {
+        "if": { "properties": { "ok": { "const": true } } },
+        "then": {
+          "properties": {
+            "result": {
+              "allOf": [{ "$ref": "#/$defs/result_session_show" }, { "required": ["context_path", "engine_path", "session", "state_path"] }]
+            }
+          }
+        },
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_session_show" }, { "type": "null" }] } } }
+      }
+    },
+    {
+      "if": { "properties": { "command": { "const": "session renew" } } },
+      "then": {
+        "if": { "properties": { "ok": { "const": true } } },
+        "then": {
+          "properties": {
+            "result": {
+              "allOf": [{ "$ref": "#/$defs/result_session_renew" }, { "required": ["dataset", "run_id", "phase", "expires_at", "renewed"] }]
+            }
+          }
+        },
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_session_renew" }, { "type": "null" }] } } }
+      }
+    },
+    {
+      "if": { "properties": { "command": { "const": "session abort" } } },
+      "then": {
+        "if": { "properties": { "ok": { "const": true } } },
+        "then": {
+          "properties": {
+            "result": {
+              "allOf": [{ "$ref": "#/$defs/result_session_abort" }, { "required": ["dataset", "run_id", "outcome", "finalized_entries"] }]
+            }
+          }
+        },
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_session_abort" }, { "type": "null" }] } } }
+      }
+    },
+    {
+      "if": { "properties": { "command": { "const": "push" } } },
+      "then": {
+        "if": { "properties": { "ok": { "const": true } } },
         "then": {
           "properties": {
             "result": {
               "allOf": [
-                {"$ref": "#/$defs/result_session_prepare"},
-                {"required": ["context_path", "engine_path", "session", "state_path"]}
+                { "$ref": "#/$defs/result_push" },
+                { "required": ["dataset", "run_id", "completion_sha256", "outcome", "replayed", "adapter", "mode", "attempt_id", "adapter_result"] }
               ]
             }
           }
         },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_session_prepare"}, {"type": "null"}]}}}
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_push" }, { "type": "null" }] } } }
       }
     },
     {
-      "if": {"properties": {"command": {"const": "session show"}}},
+      "if": { "properties": { "command": { "const": "pin" } } },
       "then": {
-        "if": {"properties": {"ok": {"const": true}}},
+        "if": { "properties": { "ok": { "const": true } } },
+        "then": {
+          "properties": { "result": { "allOf": [{ "$ref": "#/$defs/result_pin" }, { "required": ["pin", "no_op"] }] } }
+        },
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_pin" }, { "type": "null" }] } } }
+      }
+    },
+    {
+      "if": { "properties": { "command": { "const": "unpin" } } },
+      "then": {
+        "if": { "properties": { "ok": { "const": true } } },
+        "then": {
+          "properties": {
+            "result": {
+              "allOf": [{ "$ref": "#/$defs/result_unpin" }, { "required": ["pin", "no_op", "remaining_protections"] }]
+            }
+          }
+        },
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_unpin" }, { "type": "null" }] } } }
+      }
+    },
+    {
+      "if": { "properties": { "command": { "const": "gc" } } },
+      "then": {
+        "if": { "properties": { "ok": { "const": true } } },
         "then": {
           "properties": {
             "result": {
               "allOf": [
-                {"$ref": "#/$defs/result_session_show"},
-                {"required": ["context_path", "engine_path", "session", "state_path"]}
-              ]
-            }
-          }
-        },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_session_show"}, {"type": "null"}]}}}
-      }
-    },
-    {
-      "if": {"properties": {"command": {"const": "session renew"}}},
-      "then": {
-        "if": {"properties": {"ok": {"const": true}}},
-        "then": {
-          "properties": {
-            "result": {
-              "allOf": [
-                {"$ref": "#/$defs/result_session_renew"},
-                {"required": ["dataset", "run_id", "phase", "expires_at", "renewed"]}
-              ]
-            }
-          }
-        },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_session_renew"}, {"type": "null"}]}}}
-      }
-    },
-    {
-      "if": {"properties": {"command": {"const": "session abort"}}},
-      "then": {
-        "if": {"properties": {"ok": {"const": true}}},
-        "then": {
-          "properties": {
-            "result": {
-              "allOf": [
-                {"$ref": "#/$defs/result_session_abort"},
-                {"required": ["dataset", "run_id", "outcome", "finalized_entries"]}
-              ]
-            }
-          }
-        },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_session_abort"}, {"type": "null"}]}}}
-      }
-    },
-    {
-      "if": {"properties": {"command": {"const": "push"}}},
-      "then": {
-        "if": {"properties": {"ok": {"const": true}}},
-        "then": {
-          "properties": {
-            "result": {
-              "allOf": [
-                {"$ref": "#/$defs/result_push"},
-                {"required": ["dataset", "run_id", "completion_sha256", "outcome", "replayed", "adapter", "mode", "attempt_id", "adapter_result"]}
-              ]
-            }
-          }
-        },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_push"}, {"type": "null"}]}}}
-      }
-    },
-    {
-      "if": {"properties": {"command": {"const": "pin"}}},
-      "then": {
-        "if": {"properties": {"ok": {"const": true}}},
-        "then": {
-          "properties": {"result": {"allOf": [{"$ref": "#/$defs/result_pin"}, {"required": ["pin", "no_op"]}]}}
-        },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_pin"}, {"type": "null"}]}}}
-      }
-    },
-    {
-      "if": {"properties": {"command": {"const": "unpin"}}},
-      "then": {
-        "if": {"properties": {"ok": {"const": true}}},
-        "then": {
-          "properties": {
-            "result": {
-              "allOf": [{"$ref": "#/$defs/result_unpin"}, {"required": ["pin", "no_op", "remaining_protections"]}]
-            }
-          }
-        },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_unpin"}, {"type": "null"}]}}}
-      }
-    },
-    {
-      "if": {"properties": {"command": {"const": "gc"}}},
-      "then": {
-        "if": {"properties": {"ok": {"const": true}}},
-        "then": {
-          "properties": {
-            "result": {
-              "allOf": [
-                {"$ref": "#/$defs/result_gc"},
+                { "$ref": "#/$defs/result_gc" },
                 {
                   "required": [
                     "dataset",
@@ -350,38 +315,30 @@
             }
           }
         },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_gc"}, {"type": "null"}]}}}
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_gc" }, { "type": "null" }] } } }
       }
     },
     {
-      "if": {"properties": {"command": {"const": "recover"}}},
+      "if": { "properties": { "command": { "const": "recover" } } },
       "then": {
-        "if": {"properties": {"ok": {"const": true}}},
+        "if": { "properties": { "ok": { "const": true } } },
         "then": {
           "properties": {
             "result": {
               "allOf": [
-                {"$ref": "#/$defs/result_recover"},
+                { "$ref": "#/$defs/result_recover" },
                 {
-                  "required": [
-                    "dataset",
-                    "dry_run",
-                    "target_run_id",
-                    "runs",
-                    "completed_operation_ids",
-                    "pending",
-                    "waiting"
-                  ]
+                  "required": ["dataset", "dry_run", "target_run_id", "runs", "completed_operation_ids", "pending", "waiting"]
                 }
               ]
             }
           }
         },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_recover"}, {"type": "null"}]}}}
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_recover" }, { "type": "null" }] } } }
       }
     },
     {
-      "if": {"properties": {"exit_status": {"const": 2}}},
+      "if": { "properties": { "exit_status": { "const": 2 } } },
       "then": {
         "properties": {
           "errors": {
@@ -399,72 +356,77 @@
       }
     },
     {
-      "if": {"properties": {"exit_status": {"const": 3}}},
+      "if": { "properties": { "exit_status": { "const": 3 } } },
       "then": {
         "properties": {
           "errors": {
-            "prefixItems": [{"properties": {"code": {"enum": ["ENGINE_BUSY", "STATE_CONFLICT", "OWNERSHIP_LOST"]}}}]
+            "prefixItems": [{ "properties": { "code": { "enum": ["ENGINE_BUSY", "STATE_CONFLICT", "OWNERSHIP_LOST"] } } }]
           }
         }
       }
     },
     {
-      "if": {"properties": {"exit_status": {"const": 4}}},
+      "if": { "properties": { "exit_status": { "const": 4 } } },
       "then": {
-        "properties": {"errors": {"prefixItems": [{"properties": {"code": {"enum": ["NOT_FOUND", "UNAVAILABLE"]}}}]}}
+        "properties": { "errors": { "prefixItems": [{ "properties": { "code": { "enum": ["NOT_FOUND", "UNAVAILABLE"] } } }] } }
       }
     },
     {
-      "if": {"properties": {"exit_status": {"const": 5}}},
+      "if": { "properties": { "exit_status": { "const": 5 } } },
       "then": {
         "properties": {
-          "errors": {"prefixItems": [{"properties": {"code": {"enum": ["INTEGRITY_FAILURE", "PROTOCOL_FAILURE"]}}}]}
+          "errors": { "prefixItems": [{ "properties": { "code": { "enum": ["INTEGRITY_FAILURE", "PROTOCOL_FAILURE"] } } }] }
         }
       }
     },
     {
-      "if": {"properties": {"exit_status": {"const": 6}}},
+      "if": { "properties": { "exit_status": { "const": 6 } } },
       "then": {
         "properties": {
           "errors": {
-            "prefixItems": [{"properties": {"code": {"enum": ["BACKEND_FAILURE", "ENGINE_FAILURE", "OUTCOME_UNKNOWN", "EXTRACTION_INCOMPLETE", "ADAPTER_FAILURE"]}}}]
+            "prefixItems": [
+              {
+                "properties": {
+                  "code": { "enum": ["BACKEND_FAILURE", "ENGINE_FAILURE", "OUTCOME_UNKNOWN", "EXTRACTION_INCOMPLETE", "ADAPTER_FAILURE"] }
+                }
+              }
+            ]
           }
         }
       }
     },
     {
-      "if": {"properties": {"command": {"const": "adapter list"}}},
+      "if": { "properties": { "command": { "const": "adapter list" } } },
       "then": {
-        "if": {"properties": {"ok": {"const": true}}},
-        "then": {"properties": {"result": {"allOf": [{"$ref": "#/$defs/result_adapter_list"}, {"required": ["search_roots", "adapters"]}]}}},
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_adapter_list"}, {"type": "null"}]}}}
-      }
-    },
-    {
-      "if": {"properties": {"command": {"const": "adapter capabilities"}}},
-      "then": {
-        "if": {"properties": {"ok": {"const": true}}},
+        "if": { "properties": { "ok": { "const": true } } },
         "then": {
-          "properties": {"result": {"allOf": [{"$ref": "#/$defs/result_adapter_capabilities"}, {"required": ["adapter"]}]}}
+          "properties": { "result": { "allOf": [{ "$ref": "#/$defs/result_adapter_list" }, { "required": ["search_roots", "adapters"] }] } }
         },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_adapter_capabilities"}, {"type": "null"}]}}}
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_adapter_list" }, { "type": "null" }] } } }
       }
     },
     {
-      "if": {"properties": {"command": {"const": "adapter command"}}},
+      "if": { "properties": { "command": { "const": "adapter capabilities" } } },
       "then": {
-        "if": {"properties": {"ok": {"const": true}}},
+        "if": { "properties": { "ok": { "const": true } } },
+        "then": {
+          "properties": { "result": { "allOf": [{ "$ref": "#/$defs/result_adapter_capabilities" }, { "required": ["adapter"] }] } }
+        },
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_adapter_capabilities" }, { "type": "null" }] } } }
+      }
+    },
+    {
+      "if": { "properties": { "command": { "const": "adapter command" } } },
+      "then": {
+        "if": { "properties": { "ok": { "const": true } } },
         "then": {
           "properties": {
             "result": {
-              "allOf": [
-                {"$ref": "#/$defs/result_adapter_command"},
-                {"required": ["adapter", "package_version", "adapter_command", "details"]}
-              ]
+              "allOf": [{ "$ref": "#/$defs/result_adapter_command" }, { "required": ["adapter", "package_version", "adapter_command", "details"] }]
             }
           }
         },
-        "else": {"properties": {"result": {"anyOf": [{"$ref": "#/$defs/result_adapter_command"}, {"type": "null"}]}}}
+        "else": { "properties": { "result": { "anyOf": [{ "$ref": "#/$defs/result_adapter_command" }, { "type": "null" }] } } }
       }
     },
     {
@@ -491,10 +453,7 @@
                   "$ref": "#/$defs/result_adapter_install"
                 },
                 {
-                  "required": [
-                    "adapter",
-                    "replaced"
-                  ]
+                  "required": ["adapter", "replaced"]
                 }
               ]
             }
@@ -517,11 +476,11 @@
       }
     },
     {
-      "if": {"properties": {"command": {"enum": ["adapter list", "adapter install", "adapter capabilities", "adapter command"]}}},
-      "then": {"properties": {"root": {"type": "null"}}},
+      "if": { "properties": { "command": { "enum": ["adapter list", "adapter install", "adapter capabilities", "adapter command"] } } },
+      "then": { "properties": { "root": { "type": "null" } } },
       "else": {
-        "if": {"properties": {"ok": {"const": true}}},
-        "then": {"properties": {"root": {"type": "string", "minLength": 1}}}
+        "if": { "properties": { "ok": { "const": true } } },
+        "then": { "properties": { "root": { "type": "string", "minLength": 1 } } }
       }
     }
   ],
@@ -529,24 +488,24 @@
     "object_identity": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "table": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
         "partition": {
           "type": "object",
           "propertyNames": {
             "type": "string",
             "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
-            "not": {"enum": ["version", "revision"]}
+            "not": { "enum": ["version", "revision"] }
           },
-          "additionalProperties": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}
+          "additionalProperties": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" }
         },
-        "revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
-        "version": {"type": "string", "pattern": "^[1-9][0-9]*$"},
-        "run_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
-        "operation_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
-        "pin_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-        "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-        "path": {"type": "string", "minLength": 1}
+        "revision": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+        "version": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+        "run_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
+        "operation_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
+        "pin_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
+        "attempt_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
+        "path": { "type": "string", "minLength": 1 }
       },
       "additionalProperties": false,
       "required": [],
@@ -576,9 +535,9 @@
             "ADAPTER_FAILURE"
           ]
         },
-        "message": {"type": "string", "minLength": 1},
-        "object": {"anyOf": [{"$ref": "#/$defs/object_identity"}, {"type": "null"}]},
-        "retryable": {"type": "boolean"}
+        "message": { "type": "string", "minLength": 1 },
+        "object": { "anyOf": [{ "$ref": "#/$defs/object_identity" }, { "type": "null" }] },
+        "retryable": { "type": "boolean" }
       },
       "additionalProperties": false,
       "required": ["code", "message", "object", "retryable"]
@@ -586,18 +545,18 @@
     "state_entry": {
       "type": "object",
       "properties": {
-        "table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "table": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
         "partition": {
           "type": "object",
           "propertyNames": {
             "type": "string",
             "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
-            "not": {"enum": ["version", "revision"]}
+            "not": { "enum": ["version", "revision"] }
           },
-          "additionalProperties": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}
+          "additionalProperties": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" }
         },
-        "version": {"type": "string", "pattern": "^[1-9][0-9]*$"},
-        "run_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"}
+        "version": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+        "run_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" }
       },
       "additionalProperties": false,
       "required": ["table", "partition", "version", "run_id"]
@@ -605,8 +564,8 @@
     "version_selection": {
       "type": "object",
       "properties": {
-        "version": {"type": "string", "pattern": "^[1-9][0-9]*$"},
-        "run_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"}
+        "version": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+        "run_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" }
       },
       "additionalProperties": false,
       "required": ["version", "run_id"]
@@ -614,19 +573,19 @@
     "entry_change": {
       "type": "object",
       "properties": {
-        "table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "table": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
         "partition": {
           "type": "object",
           "propertyNames": {
             "type": "string",
             "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
-            "not": {"enum": ["version", "revision"]}
+            "not": { "enum": ["version", "revision"] }
           },
-          "additionalProperties": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}
+          "additionalProperties": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" }
         },
-        "kind": {"enum": ["added", "removed", "changed"]},
-        "before": {"anyOf": [{"$ref": "#/$defs/version_selection"}, {"type": "null"}]},
-        "after": {"anyOf": [{"$ref": "#/$defs/version_selection"}, {"type": "null"}]}
+        "kind": { "enum": ["added", "removed", "changed"] },
+        "before": { "anyOf": [{ "$ref": "#/$defs/version_selection" }, { "type": "null" }] },
+        "after": { "anyOf": [{ "$ref": "#/$defs/version_selection" }, { "type": "null" }] }
       },
       "additionalProperties": false,
       "required": ["table", "partition", "kind", "before", "after"]
@@ -634,9 +593,9 @@
     "change_summary": {
       "type": "object",
       "properties": {
-        "added": {"type": "integer", "minimum": 0},
-        "removed": {"type": "integer", "minimum": 0},
-        "changed": {"type": "integer", "minimum": 0}
+        "added": { "type": "integer", "minimum": 0 },
+        "removed": { "type": "integer", "minimum": 0 },
+        "changed": { "type": "integer", "minimum": 0 }
       },
       "additionalProperties": false,
       "required": ["added", "removed", "changed"]
@@ -644,7 +603,7 @@
     "lease": {
       "type": "object",
       "properties": {
-        "holder": {"type": "string", "minLength": 1},
+        "holder": { "type": "string", "minLength": 1 },
         "claimed_at": {
           "type": "string",
           "format": "date-time",
@@ -655,7 +614,7 @@
           "format": "date-time",
           "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
         },
-        "expired": {"type": "boolean"}
+        "expired": { "type": "boolean" }
       },
       "additionalProperties": false,
       "required": ["holder", "claimed_at", "expires_at", "expired"]
@@ -663,9 +622,9 @@
     "pending": {
       "type": "object",
       "properties": {
-        "operation_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
-        "kind": {"type": "string", "minLength": 1},
-        "path": {"type": "string", "minLength": 1}
+        "operation_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
+        "kind": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 }
       },
       "additionalProperties": false,
       "required": ["operation_id", "kind", "path"]
@@ -673,9 +632,9 @@
     "run_observation": {
       "type": "object",
       "properties": {
-        "run_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
-        "phase": {"enum": ["open", "recovering", "sealed"]},
-        "base_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
+        "run_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
+        "phase": { "enum": ["open", "recovering", "sealed"] },
+        "base_revision": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
         "expires_at": {
           "anyOf": [
             {
@@ -683,11 +642,11 @@
               "format": "date-time",
               "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
             },
-            {"type": "null"}
+            { "type": "null" }
           ]
         },
-        "expired": {"type": "boolean"},
-        "holds_confirmed": {"type": "boolean"}
+        "expired": { "type": "boolean" },
+        "holds_confirmed": { "type": "boolean" }
       },
       "additionalProperties": false,
       "required": ["run_id", "phase", "base_revision", "expires_at", "expired", "holds_confirmed"]
@@ -695,28 +654,28 @@
     "materialization": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "target_schema": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*$"},
-        "revision_mode": {"enum": ["latest", "fixed"]},
-        "materialization_mode": {"enum": ["local", "s3-view"]},
-        "committed_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
-        "generation_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-        "state": {"enum": ["current", "behind", "fixed"]},
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "target_schema": { "type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*$" },
+        "revision_mode": { "enum": ["latest", "fixed"] },
+        "materialization_mode": { "enum": ["local", "s3-view"] },
+        "committed_revision": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+        "generation_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
+        "state": { "enum": ["current", "behind", "fixed"] },
         "mappings": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "grv_table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-              "target_table": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*\\.[a-z0-9_][a-z0-9_-]*$"}
+              "grv_table": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+              "target_table": { "type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*\\.[a-z0-9_][a-z0-9_-]*$" }
             },
             "additionalProperties": false,
             "required": ["grv_table", "target_table"]
           }
         },
-        "adapter": {"const": "duckdb"},
-        "write_mode": {"const": "replace"},
-        "transform_mode": {"const": "identity"}
+        "adapter": { "const": "duckdb" },
+        "write_mode": { "const": "replace" },
+        "transform_mode": { "const": "identity" }
       },
       "additionalProperties": false,
       "required": [
@@ -736,10 +695,10 @@
     "protection": {
       "type": "object",
       "properties": {
-        "kind": {"enum": ["current", "grace", "missing-supersession-receipt", "pin", "hold"]},
-        "object": {"$ref": "#/$defs/object_identity"},
-        "active": {"type": "boolean"},
-        "releasable": {"type": "boolean"},
+        "kind": { "enum": ["current", "grace", "missing-supersession-receipt", "pin", "hold"] },
+        "object": { "$ref": "#/$defs/object_identity" },
+        "active": { "type": "boolean" },
+        "releasable": { "type": "boolean" },
         "until": {
           "anyOf": [
             {
@@ -747,7 +706,7 @@
               "format": "date-time",
               "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
             },
-            {"type": "null"}
+            { "type": "null" }
           ]
         },
         "details": {
@@ -761,18 +720,18 @@
     "pin": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "revision": {"type": "string", "pattern": "^[1-9][0-9]*$"},
-        "pin_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-        "reason": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
-        "active": {"type": "boolean"},
-        "operation_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "revision": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+        "pin_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
+        "reason": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+        "active": { "type": "boolean" },
+        "operation_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
         "created_at": {
           "type": "string",
           "format": "date-time",
           "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
         },
-        "created_by": {"type": "string", "minLength": 1},
+        "created_by": { "type": "string", "minLength": 1 },
         "released_at": {
           "anyOf": [
             {
@@ -780,10 +739,10 @@
               "format": "date-time",
               "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
             },
-            {"type": "null"}
+            { "type": "null" }
           ]
         },
-        "release_operation_id": {"anyOf": [{"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"}, {"type": "null"}]}
+        "release_operation_id": { "anyOf": [{ "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" }, { "type": "null" }] }
       },
       "additionalProperties": false,
       "required": [
@@ -802,9 +761,9 @@
     "input_revision": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "revision": {"type": "string", "pattern": "^[1-9][0-9]*$"},
-        "retention_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"}
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "revision": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+        "retention_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" }
       },
       "additionalProperties": false,
       "required": ["dataset", "revision", "retention_id"]
@@ -817,26 +776,17 @@
           "items": {
             "type": "object",
             "properties": {
-              "alias": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*$"},
-              "engine_table": {"type": "string", "minLength": 1},
-              "source_table": {"type": "string", "minLength": 1},
-              "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-              "grv_table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-              "revision": {"type": "string", "pattern": "^[1-9][0-9]*$"},
-              "generation_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-              "retention_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"}
+              "alias": { "type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*$" },
+              "engine_table": { "type": "string", "minLength": 1 },
+              "source_table": { "type": "string", "minLength": 1 },
+              "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+              "grv_table": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+              "revision": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+              "generation_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
+              "retention_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" }
             },
             "additionalProperties": false,
-            "required": [
-              "alias",
-              "engine_table",
-              "source_table",
-              "dataset",
-              "grv_table",
-              "revision",
-              "generation_id",
-              "retention_id"
-            ]
+            "required": ["alias", "engine_table", "source_table", "dataset", "grv_table", "revision", "generation_id", "retention_id"]
           }
         },
         "outputs": {
@@ -844,8 +794,8 @@
           "items": {
             "type": "object",
             "properties": {
-              "table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-              "engine_table": {"type": "string", "minLength": 1}
+              "table": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+              "engine_table": { "type": "string", "minLength": 1 }
             },
             "additionalProperties": false,
             "required": ["table", "engine_table"]
@@ -858,9 +808,9 @@
     "publication_attempt": {
       "type": "object",
       "properties": {
-        "operation_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
-        "reserved_revision": {"type": "string", "pattern": "^[1-9][0-9]*$"},
-        "state": {"enum": ["unknown", "committed", "not-committed"]}
+        "operation_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
+        "reserved_revision": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+        "state": { "enum": ["unknown", "committed", "not-committed"] }
       },
       "additionalProperties": false,
       "required": ["operation_id", "reserved_revision", "state"]
@@ -868,9 +818,9 @@
     "session_outcome": {
       "type": "object",
       "properties": {
-        "kind": {"enum": ["published", "no-op", "aborted"]},
-        "revision": {"anyOf": [{"type": "string", "pattern": "^(0|[1-9][0-9]*)$"}, {"type": "null"}]},
-        "operation_id": {"anyOf": [{"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"}, {"type": "null"}]}
+        "kind": { "enum": ["published", "no-op", "aborted"] },
+        "revision": { "anyOf": [{ "type": "string", "pattern": "^(0|[1-9][0-9]*)$" }, { "type": "null" }] },
+        "operation_id": { "anyOf": [{ "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" }, { "type": "null" }] }
       },
       "additionalProperties": false,
       "required": ["kind", "revision", "operation_id"]
@@ -878,26 +828,26 @@
     "export_plan": {
       "type": "object",
       "properties": {
-        "base_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
-        "completion_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "base_revision": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+        "completion_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
         "contributions": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+              "table": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
               "partition": {
                 "type": "object",
                 "propertyNames": {
                   "type": "string",
                   "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
-                  "not": {"enum": ["version", "revision"]}
+                  "not": { "enum": ["version", "revision"] }
                 },
-                "additionalProperties": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}
+                "additionalProperties": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" }
               },
-              "action": {"enum": ["write", "reuse", "empty"]},
-              "version": {"anyOf": [{"type": "string", "pattern": "^[1-9][0-9]*$"}, {"type": "null"}]},
-              "run_id": {"anyOf": [{"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"}, {"type": "null"}]}
+              "action": { "enum": ["write", "reuse", "empty"] },
+              "version": { "anyOf": [{ "type": "string", "pattern": "^[1-9][0-9]*$" }, { "type": "null" }] },
+              "run_id": { "anyOf": [{ "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" }, { "type": "null" }] }
             },
             "additionalProperties": false,
             "required": ["table", "partition", "action", "version", "run_id"]
@@ -905,31 +855,31 @@
         },
         "omissions": {
           "type": "array",
-          "items": {"oneOf": [{"$ref": "#/$defs/table_selector"}, {"$ref": "#/$defs/pair_selector"}]}
+          "items": { "oneOf": [{ "$ref": "#/$defs/table_selector" }, { "$ref": "#/$defs/pair_selector" }] }
         },
-        "held_tables": {"type": "array", "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}}
+        "held_tables": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" } }
       },
       "additionalProperties": false,
       "required": ["base_revision", "completion_sha256", "contributions", "omissions", "held_tables"]
     },
     "table_selector": {
       "type": "object",
-      "properties": {"table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}},
+      "properties": { "table": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" } },
       "additionalProperties": false,
       "required": ["table"]
     },
     "pair_selector": {
       "type": "object",
       "properties": {
-        "table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "table": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
         "partition": {
           "type": "object",
           "propertyNames": {
             "type": "string",
             "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
-            "not": {"enum": ["version", "revision"]}
+            "not": { "enum": ["version", "revision"] }
           },
-          "additionalProperties": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}
+          "additionalProperties": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" }
         }
       },
       "additionalProperties": false,
@@ -938,22 +888,22 @@
     "session": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "run_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
-        "workspace_id": {"anyOf": [{"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"}, {"type": "null"}]},
-        "base_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
-        "declaration_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "input_revisions": {"type": "array", "items": {"$ref": "#/$defs/input_revision"}},
-        "mappings": {"anyOf": [{"$ref": "#/$defs/session_mappings"}, {"type": "null"}]},
-        "completion_sha256": {"anyOf": [{"type": "string", "pattern": "^[0-9a-f]{64}$"}, {"type": "null"}]},
-        "export_plan": {"anyOf": [{"$ref": "#/$defs/export_plan"}, {"type": "null"}]},
-        "publication_attempt": {"anyOf": [{"$ref": "#/$defs/publication_attempt"}, {"type": "null"}]},
-        "outcome": {"anyOf": [{"$ref": "#/$defs/session_outcome"}, {"type": "null"}]},
-        "run": {"$ref": "#/$defs/run_observation"},
-        "adapter": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "mode": {"enum": ["extract", "build"]},
-        "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-        "capture": {"anyOf": [{"$ref": "#/$defs/capture"}, {"type": "null"}]},
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "run_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
+        "workspace_id": { "anyOf": [{ "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" }, { "type": "null" }] },
+        "base_revision": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+        "declaration_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "input_revisions": { "type": "array", "items": { "$ref": "#/$defs/input_revision" } },
+        "mappings": { "anyOf": [{ "$ref": "#/$defs/session_mappings" }, { "type": "null" }] },
+        "completion_sha256": { "anyOf": [{ "type": "string", "pattern": "^[0-9a-f]{64}$" }, { "type": "null" }] },
+        "export_plan": { "anyOf": [{ "$ref": "#/$defs/export_plan" }, { "type": "null" }] },
+        "publication_attempt": { "anyOf": [{ "$ref": "#/$defs/publication_attempt" }, { "type": "null" }] },
+        "outcome": { "anyOf": [{ "$ref": "#/$defs/session_outcome" }, { "type": "null" }] },
+        "run": { "$ref": "#/$defs/run_observation" },
+        "adapter": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "mode": { "enum": ["extract", "build"] },
+        "attempt_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
+        "capture": { "anyOf": [{ "$ref": "#/$defs/capture" }, { "type": "null" }] },
         "adapter_context": {
           "type": "object",
           "$comment": "Registered adapter session details. Generic logical mappings are separate from engine-owned identifiers."
@@ -981,21 +931,21 @@
       ],
       "allOf": [
         {
-          "if": {"properties": {"mode": {"const": "build"}}},
+          "if": { "properties": { "mode": { "const": "build" } } },
           "then": {
             "properties": {
-              "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-              "capture": {"type": "null"},
-              "workspace_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-              "mappings": {"$ref": "#/$defs/session_mappings"}
+              "attempt_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
+              "capture": { "type": "null" },
+              "workspace_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
+              "mappings": { "$ref": "#/$defs/session_mappings" }
             }
           },
           "else": {
             "properties": {
-              "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-              "mappings": {"type": "null"},
-              "workspace_id": {"type": "null"},
-              "input_revisions": {"maxItems": 0}
+              "attempt_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
+              "mappings": { "type": "null" },
+              "workspace_id": { "type": "null" },
+              "input_revisions": { "maxItems": 0 }
             }
           }
         }
@@ -1004,31 +954,22 @@
     "version_progress": {
       "type": "object",
       "properties": {
-        "table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "table": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
         "partition": {
           "type": "object",
           "propertyNames": {
             "type": "string",
             "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
-            "not": {"enum": ["version", "revision"]}
+            "not": { "enum": ["version", "revision"] }
           },
-          "additionalProperties": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}
+          "additionalProperties": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" }
         },
-        "version": {"type": "string", "pattern": "^[1-9][0-9]*$"},
+        "version": { "type": "string", "pattern": "^[1-9][0-9]*$" },
         "state": {
-          "enum": [
-            "protected",
-            "eligible",
-            "needs-hold-release",
-            "needs-recovery",
-            "decided",
-            "tombstoned",
-            "deleted",
-            "cleanup-pending"
-          ]
+          "enum": ["protected", "eligible", "needs-hold-release", "needs-recovery", "decided", "tombstoned", "deleted", "cleanup-pending"]
         },
-        "reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
-        "bytes": {"anyOf": [{"type": "string", "pattern": "^(0|[1-9][0-9]*)$"}, {"type": "null"}]}
+        "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "bytes": { "anyOf": [{ "type": "string", "pattern": "^(0|[1-9][0-9]*)$" }, { "type": "null" }] }
       },
       "additionalProperties": false,
       "required": ["table", "partition", "version", "state", "reasons", "bytes"]
@@ -1036,8 +977,8 @@
     "run_progress": {
       "type": "object",
       "properties": {
-        "run_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
-        "state": {"enum": ["eligible", "recovering", "sealed", "complete", "skipped-live", "waiting", "failed"]},
+        "run_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
+        "state": { "enum": ["eligible", "recovering", "sealed", "complete", "skipped-live", "waiting", "failed"] },
         "details": {
           "type": "object",
           "$comment": "Registered extension or redacted core metadata; validate its separate normative contract."
@@ -1049,9 +990,9 @@
     "parameters": {
       "type": "object",
       "properties": {
-        "max_clock_skew": {"type": "integer", "minimum": 0},
-        "max_lease_ttl": {"type": "integer", "minimum": 1},
-        "pending_grace": {"type": "integer", "minimum": 1}
+        "max_clock_skew": { "type": "integer", "minimum": 0 },
+        "max_lease_ttl": { "type": "integer", "minimum": 1 },
+        "pending_grace": { "type": "integer", "minimum": 1 }
       },
       "additionalProperties": false,
       "required": ["max_clock_skew", "max_lease_ttl", "pending_grace"]
@@ -1059,20 +1000,20 @@
     "pin_record": {
       "type": "object",
       "properties": {
-        "pin_id": {"type": "string", "minLength": 1},
+        "pin_id": { "type": "string", "minLength": 1 },
         "scope": {
           "type": "object",
           "$comment": "Registered extension or redacted core metadata; validate its separate normative contract."
         },
-        "active": {"type": "boolean"},
-        "reason": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
+        "active": { "type": "boolean" },
+        "reason": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
         "created_at": {
           "type": "string",
           "format": "date-time",
           "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
         },
-        "created_by": {"type": "string", "minLength": 1},
-        "operation_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+        "created_by": { "type": "string", "minLength": 1 },
+        "operation_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
         "released_at": {
           "anyOf": [
             {
@@ -1080,31 +1021,21 @@
               "format": "date-time",
               "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
             },
-            {"type": "null"}
+            { "type": "null" }
           ]
         },
-        "release_operation_id": {"anyOf": [{"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"}, {"type": "null"}]}
+        "release_operation_id": { "anyOf": [{ "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" }, { "type": "null" }] }
       },
       "additionalProperties": false,
-      "required": [
-        "pin_id",
-        "scope",
-        "active",
-        "reason",
-        "created_at",
-        "created_by",
-        "operation_id",
-        "released_at",
-        "release_operation_id"
-      ]
+      "required": ["pin_id", "scope", "active", "reason", "created_at", "created_by", "operation_id", "released_at", "release_operation_id"]
     },
     "result_init": {
       "type": "object",
       "properties": {
-        "created": {"type": "boolean"},
-        "format": {"type": "string", "minLength": 1},
-        "format_version": {"type": "integer", "minimum": 1},
-        "parameters": {"$ref": "#/$defs/parameters"}
+        "created": { "type": "boolean" },
+        "format": { "type": "string", "minLength": 1 },
+        "format_version": { "type": "integer", "minimum": 1 },
+        "parameters": { "$ref": "#/$defs/parameters" }
       },
       "additionalProperties": false,
       "minProperties": 1
@@ -1112,18 +1043,18 @@
     "result_ls": {
       "type": "object",
       "properties": {
-        "scope": {"enum": ["datasets", "tables", "partitions"]},
-        "dataset": {"anyOf": [{"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}, {"type": "null"}]},
-        "revision": {"anyOf": [{"type": "string", "pattern": "^(0|[1-9][0-9]*)$"}, {"type": "null"}]},
+        "scope": { "enum": ["datasets", "tables", "partitions"] },
+        "dataset": { "anyOf": [{ "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" }, { "type": "null" }] },
+        "revision": { "anyOf": [{ "type": "string", "pattern": "^(0|[1-9][0-9]*)$" }, { "type": "null" }] },
         "items": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "object": {"$ref": "#/$defs/object_identity"},
-              "current_revision": {"anyOf": [{"type": "string", "pattern": "^(0|[1-9][0-9]*)$"}, {"type": "null"}]},
-              "retired": {"anyOf": [{"type": "boolean"}, {"type": "null"}]},
-              "coordination": {"enum": ["present", "missing", "unknown"]},
+              "object": { "$ref": "#/$defs/object_identity" },
+              "current_revision": { "anyOf": [{ "type": "string", "pattern": "^(0|[1-9][0-9]*)$" }, { "type": "null" }] },
+              "retired": { "anyOf": [{ "type": "boolean" }, { "type": "null" }] },
+              "coordination": { "enum": ["present", "missing", "unknown"] },
               "details": {
                 "type": "object",
                 "$comment": "Registered extension or redacted core metadata; validate its separate normative contract."
@@ -1140,17 +1071,17 @@
     "result_show": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
-        "previous_revision": {"anyOf": [{"type": "string", "pattern": "^(0|[1-9][0-9]*)$"}, {"type": "null"}]},
-        "operation_id": {"anyOf": [{"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"}, {"type": "null"}]},
-        "entries": {"type": "array", "items": {"$ref": "#/$defs/state_entry"}},
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "revision": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+        "previous_revision": { "anyOf": [{ "type": "string", "pattern": "^(0|[1-9][0-9]*)$" }, { "type": "null" }] },
+        "operation_id": { "anyOf": [{ "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" }, { "type": "null" }] },
+        "entries": { "type": "array", "items": { "$ref": "#/$defs/state_entry" } },
         "tables": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+              "table": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
               "layout": {
                 "type": "object",
                 "$comment": "Registered extension or redacted core metadata; validate its separate normative contract."
@@ -1165,10 +1096,10 @@
                     "type": "object",
                     "$comment": "Registered extension or redacted core metadata; validate its separate normative contract."
                   },
-                  {"type": "null"}
+                  { "type": "null" }
                 ]
               },
-              "availability": {"enum": ["available", "unavailable", "not-checked"]},
+              "availability": { "enum": ["available", "unavailable", "not-checked"] },
               "provenance": {
                 "type": "array",
                 "items": {
@@ -1186,13 +1117,13 @@
             {
               "type": "object",
               "properties": {
-                "pins": {"type": "array", "items": {"$ref": "#/$defs/pin_record"}},
-                "protections": {"type": "array", "items": {"$ref": "#/$defs/protection"}}
+                "pins": { "type": "array", "items": { "$ref": "#/$defs/pin_record" } },
+                "protections": { "type": "array", "items": { "$ref": "#/$defs/protection" } }
               },
               "additionalProperties": false,
               "required": ["pins", "protections"]
             },
-            {"type": "null"}
+            { "type": "null" }
           ]
         }
       },
@@ -1202,24 +1133,24 @@
     "result_status": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "current_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
-        "retired": {"type": "boolean"},
-        "lease": {"anyOf": [{"$ref": "#/$defs/lease"}, {"type": "null"}]},
-        "pending": {"anyOf": [{"$ref": "#/$defs/pending"}, {"type": "null"}]},
-        "runs": {"type": "array", "items": {"$ref": "#/$defs/run_observation"}},
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "current_revision": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+        "retired": { "type": "boolean" },
+        "lease": { "anyOf": [{ "$ref": "#/$defs/lease" }, { "type": "null" }] },
+        "pending": { "anyOf": [{ "$ref": "#/$defs/pending" }, { "type": "null" }] },
+        "runs": { "type": "array", "items": { "$ref": "#/$defs/run_observation" } },
         "adapter_state": {
           "anyOf": [
             {
               "type": "object",
               "properties": {
-                "adapter": {"type": "string", "minLength": 1},
-                "details": {"type": "object", "$comment": "Validate using the registered read-only inspection schema."}
+                "adapter": { "type": "string", "minLength": 1 },
+                "details": { "type": "object", "$comment": "Validate using the registered read-only inspection schema." }
               },
               "required": ["adapter", "details"],
               "additionalProperties": false
             },
-            {"type": "null"}
+            { "type": "null" }
           ]
         }
       },
@@ -1229,26 +1160,26 @@
     "result_log": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "limit": {"type": "integer", "minimum": 1},
-        "has_more": {"type": "boolean"},
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "limit": { "type": "integer", "minimum": 1 },
+        "has_more": { "type": "boolean" },
         "entries": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "revision": {"type": "string", "pattern": "^[1-9][0-9]*$"},
-              "previous_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
-              "operation_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+              "revision": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+              "previous_revision": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+              "operation_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
               "created_at": {
                 "type": "string",
                 "format": "date-time",
                 "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
               },
-              "changes": {"$ref": "#/$defs/change_summary"},
+              "changes": { "$ref": "#/$defs/change_summary" },
               "run_ids": {
                 "type": "array",
-                "items": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+                "items": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
                 "uniqueItems": true
               },
               "metadata": {
@@ -1267,27 +1198,27 @@
     "result_diff": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "from_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
-        "to_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
-        "changed": {"type": "boolean"},
-        "entries": {"type": "array", "items": {"$ref": "#/$defs/entry_change"}},
-        "tables_added": {"type": "array", "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}},
-        "tables_removed": {"type": "array", "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}},
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "from_revision": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+        "to_revision": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+        "changed": { "type": "boolean" },
+        "entries": { "type": "array", "items": { "$ref": "#/$defs/entry_change" } },
+        "tables_added": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" } },
+        "tables_removed": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" } },
         "schemas": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-              "state": {"enum": ["equal", "changed", "unknown"]},
+              "table": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+              "state": { "enum": ["equal", "changed", "unknown"] },
               "before": {
                 "anyOf": [
                   {
                     "type": "object",
                     "$comment": "Registered extension or redacted core metadata; validate its separate normative contract."
                   },
-                  {"type": "null"}
+                  { "type": "null" }
                 ]
               },
               "after": {
@@ -1296,7 +1227,7 @@
                     "type": "object",
                     "$comment": "Registered extension or redacted core metadata; validate its separate normative contract."
                   },
-                  {"type": "null"}
+                  { "type": "null" }
                 ]
               }
             },
@@ -1311,15 +1242,15 @@
     "result_verify": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
-        "full": {"type": "boolean"},
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "revision": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+        "full": { "type": "boolean" },
         "checks": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "object": {"$ref": "#/$defs/object_identity"},
+              "object": { "$ref": "#/$defs/object_identity" },
               "check": {
                 "enum": [
                   "commitment",
@@ -1335,13 +1266,13 @@
                   "tombstone"
                 ]
               },
-              "state": {"enum": ["passed", "unavailable", "failed"]}
+              "state": { "enum": ["passed", "unavailable", "failed"] }
             },
             "additionalProperties": false,
             "required": ["object", "check", "state"]
           }
         },
-        "unavailable": {"type": "array", "items": {"$ref": "#/$defs/object_identity"}}
+        "unavailable": { "type": "array", "items": { "$ref": "#/$defs/object_identity" } }
       },
       "additionalProperties": false,
       "minProperties": 1
@@ -1349,19 +1280,19 @@
     "result_pull": {
       "type": "object",
       "properties": {
-        "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-        "workspace_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "requested_revision": {"oneOf": [{"const": "latest"}, {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"}]},
-        "committed_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
-        "generation_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
+        "attempt_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
+        "workspace_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "requested_revision": { "oneOf": [{ "const": "latest" }, { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" }] },
+        "committed_revision": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+        "generation_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
         "pulled_at": {
           "type": "string",
           "format": "date-time",
           "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
         },
-        "replayed": {"type": "boolean"},
-        "adapter": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "replayed": { "type": "boolean" },
+        "adapter": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
         "adapter_result": {
           "type": "object",
           "$comment": "Every adapter, including built-ins, validates details with its registered pull-result schema; no credentials."
@@ -1373,79 +1304,79 @@
     "result_session_prepare": {
       "type": "object",
       "properties": {
-        "context_path": {"type": "string", "minLength": 1},
-        "engine_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
-        "session": {"$ref": "#/$defs/session"},
-        "state_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]}
+        "context_path": { "type": "string", "minLength": 1 },
+        "engine_path": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+        "session": { "$ref": "#/$defs/session" },
+        "state_path": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] }
       },
       "additionalProperties": false,
       "minProperties": 1,
       "allOf": [
         {
           "if": {
-            "properties": {"session": {"properties": {"mode": {"const": "build"}}, "required": ["mode"]}},
+            "properties": { "session": { "properties": { "mode": { "const": "build" } }, "required": ["mode"] } },
             "required": ["session"]
           },
           "then": {
             "properties": {
-              "engine_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
-              "state_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]}
+              "engine_path": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+              "state_path": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] }
             }
           }
         },
         {
           "if": {
-            "properties": {"session": {"properties": {"mode": {"const": "extract"}}, "required": ["mode"]}},
+            "properties": { "session": { "properties": { "mode": { "const": "extract" } }, "required": ["mode"] } },
             "required": ["session"]
           },
-          "then": {"properties": {"engine_path": {"type": "null"}, "state_path": {"type": "string", "minLength": 1}}}
+          "then": { "properties": { "engine_path": { "type": "null" }, "state_path": { "type": "string", "minLength": 1 } } }
         }
       ]
     },
     "result_session_show": {
       "type": "object",
       "properties": {
-        "context_path": {"type": "string", "minLength": 1},
-        "engine_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
-        "session": {"$ref": "#/$defs/session"},
-        "state_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]}
+        "context_path": { "type": "string", "minLength": 1 },
+        "engine_path": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+        "session": { "$ref": "#/$defs/session" },
+        "state_path": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] }
       },
       "additionalProperties": false,
       "minProperties": 1,
       "allOf": [
         {
           "if": {
-            "properties": {"session": {"properties": {"mode": {"const": "build"}}, "required": ["mode"]}},
+            "properties": { "session": { "properties": { "mode": { "const": "build" } }, "required": ["mode"] } },
             "required": ["session"]
           },
           "then": {
             "properties": {
-              "engine_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
-              "state_path": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]}
+              "engine_path": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+              "state_path": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] }
             }
           }
         },
         {
           "if": {
-            "properties": {"session": {"properties": {"mode": {"const": "extract"}}, "required": ["mode"]}},
+            "properties": { "session": { "properties": { "mode": { "const": "extract" } }, "required": ["mode"] } },
             "required": ["session"]
           },
-          "then": {"properties": {"engine_path": {"type": "null"}, "state_path": {"type": "string", "minLength": 1}}}
+          "then": { "properties": { "engine_path": { "type": "null" }, "state_path": { "type": "string", "minLength": 1 } } }
         }
       ]
     },
     "result_session_renew": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "run_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
-        "phase": {"const": "open"},
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "run_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
+        "phase": { "const": "open" },
         "expires_at": {
           "type": "string",
           "format": "date-time",
           "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
         },
-        "renewed": {"const": true}
+        "renewed": { "const": true }
       },
       "additionalProperties": false,
       "minProperties": 1
@@ -1453,10 +1384,10 @@
     "result_session_abort": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "run_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
-        "outcome": {"$ref": "#/$defs/session_outcome"},
-        "finalized_entries": {"type": "array", "items": {"$ref": "#/$defs/state_entry"}}
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "run_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
+        "outcome": { "$ref": "#/$defs/session_outcome" },
+        "finalized_entries": { "type": "array", "items": { "$ref": "#/$defs/state_entry" } }
       },
       "additionalProperties": false,
       "minProperties": 1
@@ -1464,41 +1395,41 @@
     "result_push": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "run_id": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
-        "completion_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "outcome": {"$ref": "#/$defs/session_outcome"},
-        "replayed": {"type": "boolean"},
-        "adapter": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "mode": {"enum": ["extract", "build"]},
-        "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-        "adapter_result": {"type": "object", "$comment": "All adapters validate their result details through the registry."}
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "run_id": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
+        "completion_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "outcome": { "$ref": "#/$defs/session_outcome" },
+        "replayed": { "type": "boolean" },
+        "adapter": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "mode": { "enum": ["extract", "build"] },
+        "attempt_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
+        "adapter_result": { "type": "object", "$comment": "All adapters validate their result details through the registry." }
       },
       "additionalProperties": false,
       "minProperties": 1,
       "allOf": [
         {
-          "if": {"properties": {"mode": {"const": "build"}}, "required": ["mode"]},
-          "then": {"properties": {"attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"}}}
+          "if": { "properties": { "mode": { "const": "build" } }, "required": ["mode"] },
+          "then": { "properties": { "attempt_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" } } }
         },
         {
-          "if": {"properties": {"mode": {"const": "extract"}}, "required": ["mode"]},
-          "then": {"properties": {"attempt_id": {"$ref": "#/$defs/object_identity/properties/attempt_id"}}}
+          "if": { "properties": { "mode": { "const": "extract" } }, "required": ["mode"] },
+          "then": { "properties": { "attempt_id": { "$ref": "#/$defs/object_identity/properties/attempt_id" } } }
         }
       ]
     },
     "result_pin": {
       "type": "object",
-      "properties": {"pin": {"$ref": "#/$defs/pin"}, "no_op": {"type": "boolean"}},
+      "properties": { "pin": { "$ref": "#/$defs/pin" }, "no_op": { "type": "boolean" } },
       "additionalProperties": false,
       "minProperties": 1
     },
     "result_unpin": {
       "type": "object",
       "properties": {
-        "pin": {"$ref": "#/$defs/pin"},
-        "no_op": {"type": "boolean"},
-        "remaining_protections": {"type": "array", "items": {"$ref": "#/$defs/protection"}}
+        "pin": { "$ref": "#/$defs/pin" },
+        "no_op": { "type": "boolean" },
+        "remaining_protections": { "type": "array", "items": { "$ref": "#/$defs/protection" } }
       },
       "additionalProperties": false,
       "minProperties": 1
@@ -1506,15 +1437,15 @@
     "result_gc": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "mode": {"enum": ["dry-run", "apply"]},
-        "versions": {"type": "array", "items": {"$ref": "#/$defs/version_progress"}},
-        "releasable_holds": {"type": "array", "items": {"$ref": "#/$defs/object_identity"}},
-        "released_holds": {"type": "array", "items": {"$ref": "#/$defs/object_identity"}},
-        "completed_operation_ids": {"type": "array", "items": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"}},
-        "known_bytes": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
-        "unknown_size_versions": {"type": "integer", "minimum": 0},
-        "waiting": {"type": "array", "items": {"$ref": "#/$defs/object_identity"}}
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "mode": { "enum": ["dry-run", "apply"] },
+        "versions": { "type": "array", "items": { "$ref": "#/$defs/version_progress" } },
+        "releasable_holds": { "type": "array", "items": { "$ref": "#/$defs/object_identity" } },
+        "released_holds": { "type": "array", "items": { "$ref": "#/$defs/object_identity" } },
+        "completed_operation_ids": { "type": "array", "items": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" } },
+        "known_bytes": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+        "unknown_size_versions": { "type": "integer", "minimum": 0 },
+        "waiting": { "type": "array", "items": { "$ref": "#/$defs/object_identity" } }
       },
       "additionalProperties": false,
       "minProperties": 1
@@ -1522,13 +1453,13 @@
     "result_recover": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "dry_run": {"type": "boolean"},
-        "target_run_id": {"anyOf": [{"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"}, {"type": "null"}]},
-        "runs": {"type": "array", "items": {"$ref": "#/$defs/run_progress"}},
-        "completed_operation_ids": {"type": "array", "items": {"type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$"}},
-        "pending": {"anyOf": [{"$ref": "#/$defs/pending"}, {"type": "null"}]},
-        "waiting": {"type": "array", "items": {"$ref": "#/$defs/object_identity"}}
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "dry_run": { "type": "boolean" },
+        "target_run_id": { "anyOf": [{ "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" }, { "type": "null" }] },
+        "runs": { "type": "array", "items": { "$ref": "#/$defs/run_progress" } },
+        "completed_operation_ids": { "type": "array", "items": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" } },
+        "pending": { "anyOf": [{ "$ref": "#/$defs/pending" }, { "type": "null" }] },
+        "waiting": { "type": "array", "items": { "$ref": "#/$defs/object_identity" } }
       },
       "additionalProperties": false,
       "minProperties": 1
@@ -1536,8 +1467,8 @@
     "capture_table": {
       "type": "object",
       "properties": {
-        "table": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "row_count": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
+        "table": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "row_count": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
         "started_at": {
           "type": "string",
           "format": "date-time",
@@ -1548,8 +1479,8 @@
           "format": "date-time",
           "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
         },
-        "capture_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "job_ids": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        "capture_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "job_ids": { "type": "array", "items": { "type": "string", "minLength": 1 } }
       },
       "additionalProperties": false,
       "required": ["table", "row_count", "started_at", "completed_at", "capture_sha256", "job_ids"]
@@ -1557,9 +1488,9 @@
     "capture": {
       "type": "object",
       "properties": {
-        "source_identity": {"type": "string", "minLength": 1},
-        "source_consistency": {"enum": ["transaction-snapshot", "capture-window", "adapter-defined"]},
-        "tables": {"type": "array", "items": {"$ref": "#/$defs/capture_table"}, "minItems": 1}
+        "source_identity": { "type": "string", "minLength": 1 },
+        "source_consistency": { "enum": ["transaction-snapshot", "capture-window", "adapter-defined"] },
+        "tables": { "type": "array", "items": { "$ref": "#/$defs/capture_table" }, "minItems": 1 }
       },
       "additionalProperties": false,
       "required": ["source_identity", "source_consistency", "tables"]
@@ -1567,19 +1498,19 @@
     "application_import": {
       "type": "object",
       "properties": {
-        "dataset": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "target_schema": {"type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*$"},
-        "write_mode": {"enum": ["replace", "append"]},
-        "transform_mode": {"enum": ["identity", "sql"]},
-        "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"},
-        "source_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
-        "declaration_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "target_schema": { "type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*$" },
+        "write_mode": { "enum": ["replace", "append"] },
+        "transform_mode": { "enum": ["identity", "sql"] },
+        "attempt_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
+        "source_revision": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+        "declaration_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
         "pulled_at": {
           "type": "string",
           "format": "date-time",
           "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
         },
-        "scope_mode": {"enum": ["complete", "selected"]}
+        "scope_mode": { "enum": ["complete", "selected"] }
       },
       "additionalProperties": false,
       "required": [
@@ -1597,34 +1528,25 @@
     "adapter_descriptor": {
       "type": "object",
       "properties": {
-        "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "package_version": {"type": "string", "minLength": 1},
-        "interface_version": {"const": 1},
+        "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "package_version": { "type": "string", "minLength": 1 },
+        "interface_version": { "const": 1 },
         "capabilities": {
           "type": "object",
           "properties": {
-            "push": {"type": "boolean"},
-            "pull": {"type": "boolean"},
-            "source_consistency": {"enum": ["transaction-snapshot", "capture-window", "adapter-defined"]},
-            "resumable_extract": {"type": "boolean"},
-            "pull_write_modes": {"type": "array", "items": {"enum": ["replace", "append"]}},
-            "commands": {"type": "array", "items": {"type": "string", "minLength": 1}},
-            "managed_build": {"type": "boolean"},
-            "external_build": {"type": "boolean"}
+            "push": { "type": "boolean" },
+            "pull": { "type": "boolean" },
+            "source_consistency": { "enum": ["transaction-snapshot", "capture-window", "adapter-defined"] },
+            "resumable_extract": { "type": "boolean" },
+            "pull_write_modes": { "type": "array", "items": { "enum": ["replace", "append"] } },
+            "commands": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "managed_build": { "type": "boolean" },
+            "external_build": { "type": "boolean" }
           },
           "additionalProperties": false,
-          "required": [
-            "push",
-            "pull",
-            "source_consistency",
-            "resumable_extract",
-            "pull_write_modes",
-            "commands",
-            "managed_build",
-            "external_build"
-          ]
+          "required": ["push", "pull", "source_consistency", "resumable_extract", "pull_write_modes", "commands", "managed_build", "external_build"]
         },
-        "binding_schema_version": {"type": "integer", "minimum": 1}
+        "binding_schema_version": { "type": "integer", "minimum": 1 }
       },
       "additionalProperties": false,
       "required": ["name", "package_version", "interface_version", "capabilities", "binding_schema_version"]
@@ -1661,13 +1583,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "name",
-        "package_version",
-        "interface_versions",
-        "binding_schema_version",
-        "manifest"
-      ]
+      "required": ["name", "package_version", "interface_versions", "binding_schema_version", "manifest"]
     },
     "result_adapter_list": {
       "type": "object",
@@ -1705,16 +1621,16 @@
     },
     "result_adapter_capabilities": {
       "type": "object",
-      "properties": {"adapter": {"$ref": "#/$defs/adapter_descriptor"}},
+      "properties": { "adapter": { "$ref": "#/$defs/adapter_descriptor" } },
       "additionalProperties": false,
       "required": []
     },
     "result_adapter_command": {
       "type": "object",
       "properties": {
-        "adapter": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
-        "package_version": {"type": "string", "minLength": 1},
-        "adapter_command": {"type": "string", "minLength": 1},
+        "adapter": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "package_version": { "type": "string", "minLength": 1 },
+        "adapter_command": { "type": "string", "minLength": 1 },
         "details": {
           "type": "object",
           "$comment": "Must additionally validate against the named adapter command/result schema; secrets are omitted."

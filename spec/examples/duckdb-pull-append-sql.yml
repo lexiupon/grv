@@ -35,9 +35,9 @@ tables:
                    s.credit_amount DESC
         ) = 1
     columns:
-      - {name: source_case_id, type: utf8}
-      - {name: note_number, type: utf8}
-      - {name: amount, type: 'decimal128(38,6)'}
-      - {name: currency, type: utf8}
+      - { name: source_case_id, type: utf8 }
+      - { name: note_number, type: utf8 }
+      - { name: amount, type: "decimal128(38,6)" }
+      - { name: currency, type: utf8 }
 checks:
-  - {table: cases, not_null: [source_case_id, amount]}
+  - { table: cases, not_null: [source_case_id, amount] }

@@ -57,14 +57,14 @@ source records. No remote upload is authorized just by this document.
 
 ## Initial macOS ARM64 scoped release gates
 
-| Gate | Required closure |
-|---|---|
-| G1 Candidate | Reviewed source/lockfile/contracts frozen; release-profile build; candidate full automated/native/scripts/lint run; declared MSRV proved or explicitly revised. |
-| G2 Installation | Relocated release bundle, protected directory/tarball installs, CLI and both production adapters/native dependencies load without build tree/cache/network INSTALL; representative production workflow. |
-| G3 Distribution | Exact shipped dependency notices/licenses/provenance, checksums and artifact/secret/fixture scan. No preview exemption. |
-| G4 Safety | Exact omission/complete snapshot behavior; destination commit/receipt and publication ambiguity; accepted/terminal source-free replay and mismatch refusal; cancellation/stopped writers. Live Salesforce mutation/omission/reset/restored oracle. Target the remaining gaps. |
-| G5 Integrations | Production candidate lifecycle for each advertised provider/transport: independent exact values/schema/bytes/no-op/replay. Successful eligible Bulk/paging or explicit reviewed qualification limitation; primitives/fixture CLI do not qualify production integration. |
-| G6 Review | Exact critical scenario mappings; explicit noncritical deferrals, capability/platform/recovery limits, immutable evidence archive and compatibility baseline. Separate approval for final tag/destination/publication. |
+| Gate            | Required closure                                                                                                                                                                                                                                                              |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G1 Candidate    | Reviewed source/lockfile/contracts frozen; release-profile build; candidate full automated/native/scripts/lint run; declared MSRV proved or explicitly revised.                                                                                                               |
+| G2 Installation | Relocated release bundle, protected directory/tarball installs, CLI and both production adapters/native dependencies load without build tree/cache/network INSTALL; representative production workflow.                                                                       |
+| G3 Distribution | Exact shipped dependency notices/licenses/provenance, checksums and artifact/secret/fixture scan. No preview exemption.                                                                                                                                                       |
+| G4 Safety       | Exact omission/complete snapshot behavior; destination commit/receipt and publication ambiguity; accepted/terminal source-free replay and mismatch refusal; cancellation/stopped writers. Live Salesforce mutation/omission/reset/restored oracle. Target the remaining gaps. |
+| G5 Integrations | Production candidate lifecycle for each advertised provider/transport: independent exact values/schema/bytes/no-op/replay. Successful eligible Bulk/paging or explicit reviewed qualification limitation; primitives/fixture CLI do not qualify production integration.       |
+| G6 Review       | Exact critical scenario mappings; explicit noncritical deferrals, capability/platform/recovery limits, immutable evidence archive and compatibility baseline. Separate approval for final tag/destination/publication.                                                        |
 
 A green suite is not alone a gate closure. Unknown outcomes can be correct
 safety results, but do not prove eventual cleanup/progress. No actual contract
@@ -76,6 +76,7 @@ claimed by this initial release.
 ## Rerun policy
 
 Every release, including a small patch:
+
 - Freeze the candidate and review the diff against the last qualified baseline.
 - Run automated workspace/native guard/format/lint/script gates, build and inspect
   the actual bundle, verify installation/loading, checksums/notices and secret
@@ -83,15 +84,15 @@ Every release, including a small patch:
 - Run a representative production local workflow from the relocated bundle.
 - Add the change-triggered gates below. Classify uncertainty as requiring rerun.
 
-| Changes | Additional mandatory evidence |
-|---|---|
-| Capture, scalar conversion, schema, canonical writer, Arrow/Parquet/native versions | Exact scalar/canonical/empty/boundary tests; actual extraction/pull; relevant identity/old-schema compatibility and affected adapter live acquisition. |
-| Publication, ownership, receipts, journal, retry, locks, cancellation, GC/recovery | Affected deterministic fault/omission/transaction/replay/race tests; production process-death coverage; affected real backend ambiguous/precondition behavior. |
-| Backend/auth/HTTP/helper or cloud dependency changes | Affected provider primitives, production lifecycle/no-op/replay, isolation/sanitization, fault and owned cleanup tests. |
-| Salesforce Describe/SOQL/conversion/transport/auth changes | Pinned-org exact REST/auto/relationship/empty acquisition; wrong identity and refusal; successful Bulk where claimed; relevant checkpoint/loss/mutation/reset gates. |
-| Packaging/install/capability manifest/toolchain/OS/native/extension/license changes | Clean-environment loading/relocation, install protection, notice inventory, toolchain/MSRV and affected production workflows. |
-| Contract/format/default/identity/CLI changes | Exact affected normative mappings; old persisted data/receipt/attempt compatibility and request-mismatch checks. |
-| Documentation only | Validate links/register/claims; any executable/schema/config change is not documentation-only. A new release still gets the candidate/package baseline. |
+| Changes                                                                             | Additional mandatory evidence                                                                                                                                        |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Capture, scalar conversion, schema, canonical writer, Arrow/Parquet/native versions | Exact scalar/canonical/empty/boundary tests; actual extraction/pull; relevant identity/old-schema compatibility and affected adapter live acquisition.               |
+| Publication, ownership, receipts, journal, retry, locks, cancellation, GC/recovery  | Affected deterministic fault/omission/transaction/replay/race tests; production process-death coverage; affected real backend ambiguous/precondition behavior.       |
+| Backend/auth/HTTP/helper or cloud dependency changes                                | Affected provider primitives, production lifecycle/no-op/replay, isolation/sanitization, fault and owned cleanup tests.                                              |
+| Salesforce Describe/SOQL/conversion/transport/auth changes                          | Pinned-org exact REST/auto/relationship/empty acquisition; wrong identity and refusal; successful Bulk where claimed; relevant checkpoint/loss/mutation/reset gates. |
+| Packaging/install/capability manifest/toolchain/OS/native/extension/license changes | Clean-environment loading/relocation, install protection, notice inventory, toolchain/MSRV and affected production workflows.                                        |
+| Contract/format/default/identity/CLI changes                                        | Exact affected normative mappings; old persisted data/receipt/attempt compatibility and request-mismatch checks.                                                     |
+| Documentation only                                                                  | Validate links/register/claims; any executable/schema/config change is not documentation-only. A new release still gets the candidate/package baseline.              |
 
 Do a full in-scope provider/safety qualification for the first release, broad
 changes, a new advertised platform/provider, or uncertain impact. For a small

@@ -29,7 +29,7 @@ REST/Bulk access, and **at least about 3 MB available data storage** for the
 1,010 records (about 2 KiB/custom record plus headroom). Do not infer storage
 from CSV file length. A Developer Edition org can deploy the schema yet have
 only 5 MB of data storage; actual capacity and reload success must be verified. The
-script checks capacity *before* deleting existing fixture records. Storage
+script checks capacity _before_ deleting existing fixture records. Storage
 accounting is asynchronous; this is a conservative planning check, not a
 promise that a server will accept every subsequent load.
 
@@ -83,7 +83,7 @@ this fixture/load path; the checkbox metadata explicitly specifies `false`.
 ## Provision a new disposable org
 
 1. Obtain a disposable org meeting the capacity requirements. Alternatively,
-   enable **Dev Hub** in a *personal* Developer Edition org (Setup -> Dev Hub),
+   enable **Dev Hub** in a _personal_ Developer Edition org (Setup -> Dev Hub),
    authorize it as `grv-personal-hub`, and create an isolated auto-expiring
    scratch org:
    ```console
@@ -152,6 +152,7 @@ not evidence of a successful clean provisioning run.
 ## Mutation and reset (REL-SF-05)
 
 Only mutate allowlisted fixture records. For example:
+
 ```console
 sf data update record -o grv-fixture -s GrvFix__c \
   -r '<Id of GRVFIX-00001>' -v 'GrvStatus__c=Inactive'
@@ -159,6 +160,7 @@ sf data update record -o grv-fixture -s GrvFix__c \
   -r '<Id of GRVFIX-00001>' -v 'GrvPartitionDate__c=2026-08-15'
 ./reset.sh grv-fixture "$GRV_SALESFORCE_TEST_ORG_ID"
 ```
+
 Expected post-mutation values are the pristine oracle with that mutation
 applied. Reset uses bulk operations, not thousands of individual DELETE
 requests. The reviewed storage waiver is explicit:

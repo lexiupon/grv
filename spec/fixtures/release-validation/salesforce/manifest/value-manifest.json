@@ -1510,13 +1510,7 @@
         "2026-09": 300
       },
       "rest_test_batch_size": 200,
-      "rest_page_sizes_example": [
-        200,
-        200,
-        200,
-        200,
-        100
-      ],
+      "rest_page_sizes_example": [200, 200, 200, 200, 100],
       "rest_page_note": "Actual page sizes depend on selected fields/payload; traverse all nextRecordsUrl pages and verify count and unique Ids.",
       "bulk": "all rows across one or more result files; total must equal row_count with unique Ids"
     },
@@ -1530,13 +1524,7 @@
         "2026-09": 333
       },
       "rest_test_batch_size": 200,
-      "rest_page_sizes_example": [
-        200,
-        200,
-        200,
-        200,
-        200
-      ]
+      "rest_page_sizes_example": [200, 200, 200, 200, 200]
     },
     "empty": {
       "declaration": "decl/push-empty.yml",

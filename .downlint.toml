@@ -1,0 +1,12 @@
+[core]
+# The `artifacts` symlink points at the external OneDrive asset store and
+# `notices/` holds vendored third-party LICENSE/NOTICE material: both are
+# excluded from wiki-link linting (their broken links are not ours to fix).
+ignore = ["artifacts/**", "notices/**"]
+
+[completion]
+candidates = 50
+# * "title-slug"
+# * "file-stem" to complete using file name without an extension,
+# * "file-path-stem" same as above but using file path.
+wiki.style = "title"

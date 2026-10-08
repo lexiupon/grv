@@ -13,8 +13,8 @@ authoritative, and this companion adds no storage layout.
 The [adapter process protocol](grv-adapter-protocol-v1.md) defines the local
 channel that carries these obligations between the CLI and an adapter. See the
 [specification guide](README.md) for document scopes and version relationships.
-Terms such as *attempt*, *fixed request*, *capture*, *materialization*, and
-*export plan* are used as defined in the client document's *Terms* section.
+Terms such as _attempt_, _fixed request_, _capture_, _materialization_, and
+_export plan_ are used as defined in the client document's _Terms_ section.
 
 ### Normalized plans and identity
 
@@ -41,7 +41,7 @@ YAML and reference parsing follows these rules:
   batches or other messages.
 
 Unsupported Arrow types and extensions fail before acquisition or mutation. The
-supported types are defined in the client document, *Output columns and types*.
+supported types are defined in the client document, _Output columns and types_.
 
 #### Internal plan fields
 
@@ -89,7 +89,7 @@ fields**, not a second authoring format:
 
 Field selectors, source predicates, `derive` mappings, checks, and the
 optional `columns` assertion of an identity pull follow the client document,
-*Output columns and types* and *Push selection*. In short, a `derive` mapping
+_Output columns and types_ and _Push selection_. In short, a `derive` mapping
 lets an extraction compute a `_{key}_` partition column from another output
 column. The core computes derived columns from the mapped batch values before
 partition grouping. Derived columns are not part of the contract sent to the
@@ -101,7 +101,12 @@ adapter; the adapter never produces or sees them.
 of exactly this closed object (no LF, prefix, or domain separator):
 
 ```json
-{"effective_declaration":{},"adapter_identity":{"name":"salesforce","package_version":"1.0.0","interface_version":1,"binding_schema_version":1},"connection_identity":"00D000000000001","canonical_connection":{"org_id":"00D000000000001","api_version":"v66.0"}}
+{
+  "effective_declaration": {},
+  "adapter_identity": { "name": "salesforce", "package_version": "1.0.0", "interface_version": 1, "binding_schema_version": 1 },
+  "connection_identity": "00D000000000001",
+  "canonical_connection": { "org_id": "00D000000000001", "api_version": "v66.0" }
+}
 ```
 
 The example's empty declaration is illustrative; the real value is the complete
@@ -143,8 +148,8 @@ successful pull receipt, not mutable inputs to its request hash. An uncommitted
 `latest` retry may rediscover them with a newer revision. Accepted push
 captures and export plans remain fixed on retry.
 
-A pull retry checks its receipt before any source contact (*The pull
-algorithm*, step 1). A terminal receipt can be returned without the source and
+A pull retry checks its receipt before any source contact (_The pull
+algorithm_, step 1). A terminal receipt can be returned without the source and
 without re-authentication. If receipts are lost, the operator must restore
 them from backup; until then, a replay of an affected attempt fails with
 `PROTOCOL_FAILURE` and is never re-executed.
@@ -156,7 +161,7 @@ document. The advanced flags are:
 
 - `--attempt <uuid>` and `--state <dir>` on push;
 - `--attempt <uuid>` on pull; and
-- the root initialization parameters in *`grv init`*.
+- the root initialization parameters in _`grv init`_.
 
 The explicit integration API is:
 
@@ -239,7 +244,7 @@ error result. It cannot report an unobserved checkpoint.
 Mutating CLI operations on one build session are serialized by a non-expiring
 local process lock, released by process exit. Extraction sessions do not use
 this lock; they serialize on the `session.lock` in their state directory
-(*Extraction session preparation and capture*).
+(_Extraction session preparation and capture_).
 
 - Its persistent file is `<canonical-engine-path>.grv-session-<run-id>.lock`.
   Use an exclusive `flock`, never unlink the file during the workspace
@@ -356,13 +361,13 @@ Exit status is `0` for a completed request, including an informational stale
 status, a diff with changes, a dry run, or an idempotent no-op. Nonzero
 statuses are:
 
-| exit | meaning |
-| ------ | --------- |
-| `2` | Invalid arguments or declarations |
-| `3` | Conflict, busy resources, or lost ownership |
-| `4` | Not-found or unavailable requested state |
-| `5` | Integrity or protocol failure |
-| `6` | Backend or engine failure, or an outcome that could not be resolved |
+| exit | meaning                                                             |
+| ---- | ------------------------------------------------------------------- |
+| `2`  | Invalid arguments or declarations                                   |
+| `3`  | Conflict, busy resources, or lost ownership                         |
+| `4`  | Not-found or unavailable requested state                            |
+| `5`  | Integrity or protocol failure                                       |
+| `6`  | Backend or engine failure, or an outcome that could not be resolved |
 
 Partial mutation is reported with a nonzero status and its known committed
 effects. The client never reports rollback of an already committed GRV
@@ -376,25 +381,25 @@ change, requires a new output version. Producers emit only schema-defined
 fields. Consumers must select a supported version before interpreting a
 response.
 
-| code | exit | meaning |
-| ------ | ------ | --------- |
-| `INVALID_ARGUMENT` | 2 | Invalid command, flags, or identifier |
-| `INVALID_DECLARATION` | 2 | Invalid declaration, unsupported type or extension, or failed declared check |
-| `REQUEST_MISMATCH` | 2 | Attempt or completion identity reused with another fixed request |
-| `BUILD_INCOMPLETE` | 2 | Missing successful build completion evidence |
-| `UNSUPPORTED_CAPABILITY` | 2 | Adapter does not implement the requested direction or write behavior |
-| `EXTRACTION_INCOMPLETE` | 6 | Source acquisition has not completed all declared outputs |
-| `ADAPTER_FAILURE` | 6 | Adapter authentication, source, or destination operation failed |
-| `ENGINE_BUSY` | 3 | Workspace lock, session mutation lock, extraction `session.lock`, or DuckDB connection is busy |
-| `STATE_CONFLICT` | 3 | Target ownership, output-plan, or GRV state conflict |
-| `OWNERSHIP_LOST` | 3 | Required run, claim, or dataset ownership was lost |
-| `NOT_FOUND` | 4 | Requested root, dataset, revision, session, or scoped pin is absent |
-| `UNAVAILABLE` | 4 | Committed data needed by the command is missing or pruned |
-| `INTEGRITY_FAILURE` | 5 | Hash, schema, or immutable-object contents are inconsistent |
-| `PROTOCOL_FAILURE` | 5 | Malformed coordination, uncommitted references, or inconsistent consumer metadata |
-| `BACKEND_FAILURE` | 6 | Backend operation failed without another established classification |
-| `ENGINE_FAILURE` | 6 | Engine operation failed without another established classification |
-| `OUTCOME_UNKNOWN` | 6 | A committing attempt cannot yet be resolved |
+| code                     | exit | meaning                                                                                        |
+| ------------------------ | ---- | ---------------------------------------------------------------------------------------------- |
+| `INVALID_ARGUMENT`       | 2    | Invalid command, flags, or identifier                                                          |
+| `INVALID_DECLARATION`    | 2    | Invalid declaration, unsupported type or extension, or failed declared check                   |
+| `REQUEST_MISMATCH`       | 2    | Attempt or completion identity reused with another fixed request                               |
+| `BUILD_INCOMPLETE`       | 2    | Missing successful build completion evidence                                                   |
+| `UNSUPPORTED_CAPABILITY` | 2    | Adapter does not implement the requested direction or write behavior                           |
+| `EXTRACTION_INCOMPLETE`  | 6    | Source acquisition has not completed all declared outputs                                      |
+| `ADAPTER_FAILURE`        | 6    | Adapter authentication, source, or destination operation failed                                |
+| `ENGINE_BUSY`            | 3    | Workspace lock, session mutation lock, extraction `session.lock`, or DuckDB connection is busy |
+| `STATE_CONFLICT`         | 3    | Target ownership, output-plan, or GRV state conflict                                           |
+| `OWNERSHIP_LOST`         | 3    | Required run, claim, or dataset ownership was lost                                             |
+| `NOT_FOUND`              | 4    | Requested root, dataset, revision, session, or scoped pin is absent                            |
+| `UNAVAILABLE`            | 4    | Committed data needed by the command is missing or pruned                                      |
+| `INTEGRITY_FAILURE`      | 5    | Hash, schema, or immutable-object contents are inconsistent                                    |
+| `PROTOCOL_FAILURE`       | 5    | Malformed coordination, uncommitted references, or inconsistent consumer metadata              |
+| `BACKEND_FAILURE`        | 6    | Backend operation failed without another established classification                            |
+| `ENGINE_FAILURE`         | 6    | Engine operation failed without another established classification                             |
+| `OUTCOME_UNKNOWN`        | 6    | A committing attempt cannot yet be resolved                                                    |
 
 ### JSON result contracts
 
@@ -406,27 +411,27 @@ cross-field invariants below remain mandatory even where JSON Schema cannot
 express them. Core and registered extension objects are the only open metadata
 objects; client-defined result objects have no unspecified fields.
 
-| command | result contract |
-| --------- | ----------------- |
-| `init` | Creation flag, core format and version, and effective root parameters |
-| `ls` | Scope, nullable dataset and revision, and object-identified items with observed coordination and details |
-| `show` | Revision, predecessor, and operation; state entries; per-table layout, baseline schema, revision schema, and provenance; optional retention explanation |
-| `status` | Current state, lease and pending operation, runs, and optional registered adapter state |
-| `log` | Limit, `has_more`, and newest-first committed entries with change counts and run IDs |
-| `diff` | Resolved endpoints, `changed`, entry changes, table membership changes, and known or unknown schema comparisons |
-| `verify` | Resolved scope, full-hash mode, named check outcomes, and unavailable objects |
-| `pull` | Adapter and write mode, attempt and workspace IDs, fixed scope and selector, committed revision, generation, and time, and `replayed` |
+| command                           | result contract                                                                                                                                                |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `init`                            | Creation flag, core format and version, and effective root parameters                                                                                          |
+| `ls`                              | Scope, nullable dataset and revision, and object-identified items with observed coordination and details                                                       |
+| `show`                            | Revision, predecessor, and operation; state entries; per-table layout, baseline schema, revision schema, and provenance; optional retention explanation        |
+| `status`                          | Current state, lease and pending operation, runs, and optional registered adapter state                                                                        |
+| `log`                             | Limit, `has_more`, and newest-first committed entries with change counts and run IDs                                                                           |
+| `diff`                            | Resolved endpoints, `changed`, entry changes, table membership changes, and known or unknown schema comparisons                                                |
+| `verify`                          | Resolved scope, full-hash mode, named check outcomes, and unavailable objects                                                                                  |
+| `pull`                            | Adapter and write mode, attempt and workspace IDs, fixed scope and selector, committed revision, generation, and time, and `replayed`                          |
 | `session prepare`, `session show` | Context and state location, adapter and mode, nullable engine path, fixed inputs, mappings or capture, completion, plan, attempt and outcome, and observed run |
-| `session renew` | Dataset and run, open phase, renewed expiry, and `renewed: true` |
-| `session abort` | Dataset and run, known terminal outcome, and finalized entries |
-| `push` | Adapter and mode, nullable extraction attempt ID, dataset and run, completion digest, known published or no-op outcome, and `replayed` |
-| `adapter list` | Ordered search roots and manifest-derived winning installations; no child starts |
-| `adapter install` | Installed manifest entry and whether explicit replacement occurred |
-| `adapter capabilities` | Handshake-backed adapter identity, directions, consistency, write modes, and command names |
-| `adapter command` | Adapter identity, namespaced command name, and separately validated redacted adapter result |
-| `pin`, `unpin` | Fully scoped pin, audit, and release information, and `no_op`; unpin also reports remaining protections |
-| `gc` | Mode, per-version progress and reasons, releasable and released holds, completed operations, byte estimates, and waiting work |
-| `recover` | Mode and scope, per-run progress, completed operations, pending and waiting work |
+| `session renew`                   | Dataset and run, open phase, renewed expiry, and `renewed: true`                                                                                               |
+| `session abort`                   | Dataset and run, known terminal outcome, and finalized entries                                                                                                 |
+| `push`                            | Adapter and mode, nullable extraction attempt ID, dataset and run, completion digest, known published or no-op outcome, and `replayed`                         |
+| `adapter list`                    | Ordered search roots and manifest-derived winning installations; no child starts                                                                               |
+| `adapter install`                 | Installed manifest entry and whether explicit replacement occurred                                                                                             |
+| `adapter capabilities`            | Handshake-backed adapter identity, directions, consistency, write modes, and command names                                                                     |
+| `adapter command`                 | Adapter identity, namespaced command name, and separately validated redacted adapter result                                                                    |
+| `pin`, `unpin`                    | Fully scoped pin, audit, and release information, and `no_op`; unpin also reports remaining protections                                                        |
+| `gc`                              | Mode, per-version progress and reasons, releasable and released holds, completed operations, byte estimates, and waiting work                                  |
+| `recover`                         | Mode and scope, per-run progress, completed operations, pending and waiting work                                                                               |
 
 #### Field semantics
 
@@ -515,23 +520,23 @@ For example, a successful first pull returns:
 
 This section defines how the DuckDB adapter stores each declared type. The
 mapping from declaration types to GRV logical types, and the rule for
-unsupported types, are in the client document, *Output columns and types*. The
+unsupported types, are in the client document, _Output columns and types_. The
 engine adapter preserves both the values and the declared GRV logical type when
 importing and exporting. V1's supported DuckDB mappings are:
 
-| Arrow / GRV meaning | DuckDB |
-| --------------------- | -------- |
-| `date32` | `DATE` |
-| `int64` | `BIGINT` |
-| `double` | `DOUBLE` |
-| `utf8` | `VARCHAR` |
-| `binary` | `BLOB` |
-| `decimal128(p, s)` | `DECIMAL(p, s)` |
-| `timestamp(ms)` without timezone | `TIMESTAMP_MS` |
-| `timestamp(us)` without timezone | `TIMESTAMP` |
-| `timestamp(ns)` without timezone | `TIMESTAMP_NS` |
-| timezone-aware `timestamp(ms)` or `timestamp(us)` | `TIMESTAMPTZ` |
-| `bool` | `BOOLEAN` |
+| Arrow / GRV meaning                               | DuckDB          |
+| ------------------------------------------------- | --------------- |
+| `date32`                                          | `DATE`          |
+| `int64`                                           | `BIGINT`        |
+| `double`                                          | `DOUBLE`        |
+| `utf8`                                            | `VARCHAR`       |
+| `binary`                                          | `BLOB`          |
+| `decimal128(p, s)`                                | `DECIMAL(p, s)` |
+| `timestamp(ms)` without timezone                  | `TIMESTAMP_MS`  |
+| `timestamp(us)` without timezone                  | `TIMESTAMP`     |
+| `timestamp(ns)` without timezone                  | `TIMESTAMP_NS`  |
+| timezone-aware `timestamp(ms)` or `timestamp(us)` | `TIMESTAMPTZ`   |
+| `bool`                                            | `BOOLEAN`       |
 
 - The adapter keeps the declared unit and UTC flag in consumer schema metadata,
   so a native engine type does not by itself determine the export schema.
@@ -559,11 +564,11 @@ or registering schemas, as GRV §3 requires.
 of `grv.json`. Its parameters configure the store; they are not per-command
 timing overrides. Values are integer seconds:
 
-| Parameter | CLI default for a new root | Constraint |
-| --------- | --------- | --------- |
-| Maximum clock skew | 30 | Nonnegative |
-| Maximum lease TTL | 900 | Positive, and greater than the skew so a conforming lease can be renewed |
-| Pending grace | 604800 | Positive |
+| Parameter          | CLI default for a new root | Constraint                                                               |
+| ------------------ | -------------------------- | ------------------------------------------------------------------------ |
+| Maximum clock skew | 30                         | Nonnegative                                                              |
+| Maximum lease TTL  | 900                        | Positive, and greater than the skew so a conforming lease can be renewed |
+| Pending grace      | 604800                     | Positive                                                                 |
 
 Creation rules:
 
@@ -582,7 +587,7 @@ dataset, revision, engine binding, or build session.
 ## Inspection commands
 
 These commands report committed GRV state and observed coordination. They
-follow the read-only rules in *Common command behavior*.
+follow the read-only rules in _Common command behavior_.
 
 ### `grv ls`
 
@@ -739,8 +744,8 @@ need continuing availability first establish a revision pin.
 
 This part specifies how the core and the DuckDB adapter execute a pull. The
 user-visible selection, SQL bindings, write behavior, and empty-source rules
-are defined in the client document (*Pull selection and write behavior*, *SQL
-bindings and transaction*, and *SQL execution boundary*).
+are defined in the client document (_Pull selection and write behavior_, _SQL
+bindings and transaction_, and _SQL execution boundary_).
 
 Core orchestration is adapter-neutral and runs in this order:
 
@@ -811,13 +816,13 @@ The DuckDB implementation adds two rules:
    - Resolve the selected partition entries and every manifest-listed data
      file in the selected source scope. Reject `.pruned` versions, and check
      source logical schemas.
-   - Derive the source and output contracts as in *Source selection and
-     contracts*, and ask the adapter for its physical mappings and ownership
+   - Derive the source and output contracts as in _Source selection and
+     contracts_, and ask the adapter for its physical mappings and ownership
      plan.
    - Destination not-null checks run after selection and writes, not against
      source-only columns.
    - Local mode verifies size and SHA-256 into staging outside the managed
-     tables. S3-view verification follows *Backends and S3 views*.
+     tables. S3-view verification follows _Backends and S3 views_.
    - Any source failure aborts before the refresh.
 3. **Plan under serialization.** Keep the workspace lock throughout this
    invocation, so that no other engine command or external build can replace
@@ -850,7 +855,7 @@ The DuckDB implementation adds two rules:
    - Rolled-back work has no success receipt.
    - Remove the transient source and target schemas before commit.
 
-For complete identity replacement, the refresh plan (*Internal plan fields*)
+For complete identity replacement, the refresh plan (_Internal plan fields_)
 chooses the strategy:
 
 - `refresh: full` rebuilds every managed table from the target revision.
@@ -950,7 +955,7 @@ import_attempt_details (keyed by successful attempt):
 #### Replacement ownership
 
 Replacement ownership follows the scope and role rules in the client document,
-*SQL bindings and transaction*. The ownership scope is stable across requests
+_SQL bindings and transaction_. The ownership scope is stable across requests
 and is keyed by the bound root and workspace, dataset, adapter, and adapter
 destination namespace (`target.schema` for DuckDB). Mappings, source
 selectors, and query text identify the request, not the owner. When a mapping
@@ -959,7 +964,7 @@ change updates the scope, it claims new unowned targets under normal checks.
 #### Request hash and receipts
 
 - `request_sha256` hashes the canonical pull request identity defined in
-  *Declaration and request identity*, including the effective declaration and
+  _Declaration and request identity_, including the effective declaration and
   adapter options. It does not hash an automatically chosen diff plan or
   inferred source facts. It excludes the attempt ID itself.
 - `requested_revision` is `latest` or an explicit decimal string, so a retry of
@@ -1050,7 +1055,7 @@ temporary paths happen to look partitioned.
 - All query failures are surfaced.
 - Advanced external S3-view builds require network access and pay remote read
   costs. Managed SQL builds materialize the held file sets locally instead
-  (*Input materialization*).
+  (_Input materialization_).
 
 ## `grv session`
 
@@ -1068,7 +1073,7 @@ source jobs remain adapter state.
 - `session renew` uses only the context and the backend.
 - `session abort` resolves any recorded publication first, then abandons the
   session through the normal run and claim protocols. It cannot undo a
-  committed revision (see *Abort* under *Build completion record*).
+  committed revision (see _Abort_ under _Build completion record_).
 - `push --session` completes an extraction or finalizes an attested build. It
   uses the fixed context, without new declaration overrides.
 - `session show` validates identities and reads the authoritative session
@@ -1105,11 +1110,11 @@ An extraction session runs these steps:
    capture start and end times, source and job identity, and staged-file sizes
    and hashes. The receipt's SHA-256 becomes the session completion digest.
    Capture files are immutable after acceptance.
-5. **Publish.** Finalize and publish using the common push protocol (*Push
-   finalization*). The capture receipt is completion evidence, not a commit
+5. **Publish.** Finalize and publish using the common push protocol (_Push
+   finalization_). The capture receipt is completion evidence, not a commit
    marker. Store the resolved result in consumer state after GRV commitment is
    established; adapter checkpoints follow that result. If the adapter requires
-   `after_publish`, run it as described in *After-publish hook*.
+   `after_publish`, run it as described in _After-publish hook_.
 
 #### State directory and locking
 
@@ -1195,7 +1200,7 @@ connection, and the chosen run ID.
   same index entry.
 - Before mutating a preparation, select its new run ID or discover the run ID
   of an existing recorded preparation. Then acquire that session's mutation
-  lock and the workspace lock as specified in *Lock ordering*: discovery
+  lock and the workspace lock as specified in _Lock ordering_: discovery
   releases the workspace lock before reacquiring the session lock and then the
   workspace lock.
 - Under both the session lock and the workspace lock, recheck the recorded
@@ -1230,7 +1235,7 @@ connection, and the chosen run ID.
    again.
 4. **Create private tables.** Create private input tables and output tables
    under namespaces unique to this run, and load the inputs as described in
-   *Input materialization*. Record the fixed schemas and mappings with the
+   _Input materialization_. Record the fixed schemas and mappings with the
    prepared engine session, and commit that engine transaction.
 5. **Write the context.** Materialize the context file atomically and durably
    from the committed session record. A retry may recreate an identical context
@@ -1345,14 +1350,14 @@ Query evaluation follows these rules:
 - Suppressed hold and drop outputs are not executed or attested.
 - A successful zero-row query completes its output.
 
-Inputs are materialized locally from held GRV files as described in *Input
-materialization*.
+Inputs are materialized locally from held GRV files as described in _Input
+materialization_.
 
 Completion and failure:
 
 - The runner records the successful invocation, verified selected outputs,
-  stopped writers, and fixed mappings internally, using the contract in *Build
-  completion record*. No user-produced completion file or renewal loop is
+  stopped writers, and fixed mappings internally, using the contract in _Build
+  completion record_. No user-produced completion file or renewal loop is
   required.
 - On query failure, cancellation, or ownership loss, the runner stops writers
   and waits for them to stop, accepts no completion, and abandons the run
@@ -1384,14 +1389,14 @@ Renewal and ownership:
   still owns an open GRV run.
 
 CLI mutations of one session are serialized by the session mutation lock
-(*DuckDB process ownership*). During the external invocation the driver holds
+(_DuckDB process ownership_). During the external invocation the driver holds
 the workspace lock, not the session mutation lock.
 
 Finalization preconditions:
 
 - Finalization is called only after the engine invocation completed
   successfully and all writers to its private output tables have stopped.
-- The driver supplies the completion record (*Build completion record*) to
+- The driver supplies the completion record (_Build completion record_) to
   attest these conditions and the completed outputs. The CLI cannot infer
   engine success from the presence of a table.
 - Outputs remain stable during export. The client exports them from one
@@ -1428,8 +1433,8 @@ completion list. Each still has a driver-assigned invocation ID. Example:
   "writers_stopped": true,
   "completed_at": "2026-10-03T10:15:00Z",
   "completed_outputs": [
-    {"table": "fct_x", "engine_table": "grv_out_01m3kqa080r6y8c2d9f0g1h2j3.fct_x"},
-    {"table": "dim_y", "engine_table": "grv_out_01m3kqa080r6y8c2d9f0g1h2j3.dim_y"}
+    { "table": "fct_x", "engine_table": "grv_out_01m3kqa080r6y8c2d9f0g1h2j3.fct_x" },
+    { "table": "dim_y", "engine_table": "grv_out_01m3kqa080r6y8c2d9f0g1h2j3.dim_y" }
   ]
 }
 ```
@@ -1588,7 +1593,7 @@ run cannot continue.
      dedup also receive this check; dedup cannot conceal a concurrent change.
    - Explicit omissions are guarded by `expected_revision` equal to the
      prepared base.
-   - After the no-op decision (*Build selection and no-op rules*), execute
+   - After the no-op decision (_Build selection and no-op rules_), execute
      the complete GRV §8 publish protocol: revision reservation, validation,
      publish description, revision parquet, `LATEST` CAS, and supersession
      receipt.
@@ -1641,8 +1646,8 @@ versions, which base versions are reused, and which entries are omitted.
 
 These selector lists apply to build declarations. Extraction declarations
 accept only `selection.policy: changed | all` and whole-table
-`selection.drop`; their complete-snapshot membership rules are in *Extraction
-snapshot membership*.
+`selection.drop`; their complete-snapshot membership rules are in _Extraction
+snapshot membership_.
 
 #### Selector grammar
 
@@ -1699,10 +1704,10 @@ must already exist, and the hold must not overlap selected outputs:
 ```yaml
 selection:
   policy: explicit
-  include: [{table: fct_x, partition: {period: '2026-10'}}]
-  drop: [{table: old_dimension}]
-  hold: [{table: dim_y}]
-  empty: [{table: fct_x, partition: {period: '2026-10'}}]
+  include: [{ table: fct_x, partition: { period: "2026-10" } }]
+  drop: [{ table: old_dimension }]
+  hold: [{ table: dim_y }]
+  empty: [{ table: fct_x, partition: { period: "2026-10" } }]
 ```
 
 ### Canonical encoding and equality
@@ -1743,7 +1748,7 @@ costs at most one round of new versions per partition.
 An extraction declaration defines a complete snapshot of its target dataset.
 All declared source tables succeed, their selected rows form full partition
 snapshots, and the resulting dataset contains exactly the declared tables and
-captured partition groups. The client document's *Push selection* describes
+captured partition groups. The client document's _Push selection_ describes
 this behavior for users.
 
 - The adapter's row filter is evaluated before mapping and grouping.
@@ -2071,153 +2076,153 @@ scenarios are in the adapter process protocol, §9.
 
 ### Pull transactions, receipts, and ownership
 
-| scenario | required result |
-| ---------- | ----------------- |
-| Failure while refreshing the second table | All table, schema, ownership, and checkpoint changes roll back |
-| Ambiguous pull commit | Fence the prior writer, recover DuckDB, and resolve the immutable attempt receipt |
-| A committed pull crashes, then another pull advances the checkpoint | Retry with the original ID returns the original receipt without reapplying or rewinding |
-| A successful pull's source data is later pruned | Receipt replay still returns its committed outcome without downloading again |
-| A pull retry changes its declaration, target, or requested selector | Reject reuse with `REQUEST_MISMATCH` |
-| Receipt metadata is missing in a previously initialized workspace | Report inconsistent metadata; do not infer rollback or invent an empty history |
-| A declared not-null check fails in an otherwise unchanged table | Roll back the whole pull, including the checkpoint and attempt receipt |
-| Adapter cancellation sees an unresolved destination commit | Preserve receipts and journal, and resolve the outcome; never report an assumed rollback |
-| Another binding overlaps an owned replacement scope | Reject before mutation regardless of source selector |
-| A replacement declaration changes its mapping members | Update the stable owner scope atomically and clear obsolete owned targets |
-| Pull uses a fixed revision | Write the declared destination; create no generated historical schema |
-| The same owned replacement scope switches between latest and fixed selectors | Permit the explicit request without changing ownership or target naming |
-| Identity replacement gains a partition selector or SQL | Require a separate application scope; never retain build-input eligibility |
+| scenario                                                                     | required result                                                                          |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Failure while refreshing the second table                                    | All table, schema, ownership, and checkpoint changes roll back                           |
+| Ambiguous pull commit                                                        | Fence the prior writer, recover DuckDB, and resolve the immutable attempt receipt        |
+| A committed pull crashes, then another pull advances the checkpoint          | Retry with the original ID returns the original receipt without reapplying or rewinding  |
+| A successful pull's source data is later pruned                              | Receipt replay still returns its committed outcome without downloading again             |
+| A pull retry changes its declaration, target, or requested selector          | Reject reuse with `REQUEST_MISMATCH`                                                     |
+| Receipt metadata is missing in a previously initialized workspace            | Report inconsistent metadata; do not infer rollback or invent an empty history           |
+| A declared not-null check fails in an otherwise unchanged table              | Roll back the whole pull, including the checkpoint and attempt receipt                   |
+| Adapter cancellation sees an unresolved destination commit                   | Preserve receipts and journal, and resolve the outcome; never report an assumed rollback |
+| Another binding overlaps an owned replacement scope                          | Reject before mutation regardless of source selector                                     |
+| A replacement declaration changes its mapping members                        | Update the stable owner scope atomically and clear obsolete owned targets                |
+| Pull uses a fixed revision                                                   | Write the declared destination; create no generated historical schema                    |
+| The same owned replacement scope switches between latest and fixed selectors | Permit the explicit request without changing ownership or target naming                  |
+| Identity replacement gains a partition selector or SQL                       | Require a separate application scope; never retain build-input eligibility               |
 
 ### Pull source selection and reading
 
-| scenario | required result |
-| ---------- | ----------------- |
-| A Parquet file is below partition and `version=N` directories | Read only its logical file columns with Hive inference disabled |
-| An older compatible version lacks appended columns | Add typed nulls after per-file validation; reject retyped or reordered schemas |
-| SQL selects a partition column from one chosen revision | Read only its manifest-selected versions with Hive inference disabled |
-| Partition-selected import excludes a pruned unrelated month | Acquire and validate only selected entries; unrelated data availability does not fail the import |
-| Selected partition itself is pruned | Fail unavailable before destination mutation |
-| An explicit empty partition list has no known source contract | Request `expect.columns`; never invent an older revision schema from the current baseline |
-| A baseline appended a column after the selected old revision | Discover the schema from selected versions; do not assert the later column existed |
-| A pull's selected source schema contains `int32`, `time`, or `list` | `INVALID_DECLARATION` naming the column, before destination mutation |
-| A timestamp mapping would truncate nanoseconds or change UTC semantics | Reject before table mutation or version allocation |
+| scenario                                                               | required result                                                                                  |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| A Parquet file is below partition and `version=N` directories          | Read only its logical file columns with Hive inference disabled                                  |
+| An older compatible version lacks appended columns                     | Add typed nulls after per-file validation; reject retyped or reordered schemas                   |
+| SQL selects a partition column from one chosen revision                | Read only its manifest-selected versions with Hive inference disabled                            |
+| Partition-selected import excludes a pruned unrelated month            | Acquire and validate only selected entries; unrelated data availability does not fail the import |
+| Selected partition itself is pruned                                    | Fail unavailable before destination mutation                                                     |
+| An explicit empty partition list has no known source contract          | Request `expect.columns`; never invent an older revision schema from the current baseline        |
+| A baseline appended a column after the selected old revision           | Discover the schema from selected versions; do not assert the later column existed               |
+| A pull's selected source schema contains `int32`, `time`, or `list`    | `INVALID_DECLARATION` naming the column, before destination mutation                             |
+| A timestamp mapping would truncate nanoseconds or change UTC semantics | Reject before table mutation or version allocation                                               |
 
 ### SQL imports
 
-| scenario | required result |
-| ---------- | ----------------- |
-| DuckDB append SQL excludes an existing business ID | Preserve existing rows; insert only query-selected rows |
-| Incoming rows duplicate an ID and SQL uses a window rule | Apply the declared rule; infer no extra business-key policy |
-| SQL append runs again with the same successful attempt ID | Return its receipt without re-evaluating SQL or duplicating rows |
-| SQL append runs with a fresh attempt against the same revision | Evaluate current local conditions; infer no snapshot-ledger no-op |
-| Two output queries inspect destination rows | Both see the same pre-write state; no query sees another output's inserts |
-| Append SQL fails while writing its second target | Roll back rows, schema and binding metadata, checks, and receipts together |
-| Append produces zero rows | Commit a successful zero-row import receipt |
-| Append targets an existing ordinary table with a different schema | Reject before inserting or altering existing application rows |
-| SQL uses DML, multiple statements, or external-read functions | Reject before destination mutation |
-| SQL output names, order, or types differ from the resolved output column contract | Reject without silent projection or lossy casts |
-| A SQL file contains two statements or an external-scanning local view | Reject before writes, using the adapter parser and execution dependency contract |
+| scenario                                                                          | required result                                                                  |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| DuckDB append SQL excludes an existing business ID                                | Preserve existing rows; insert only query-selected rows                          |
+| Incoming rows duplicate an ID and SQL uses a window rule                          | Apply the declared rule; infer no extra business-key policy                      |
+| SQL append runs again with the same successful attempt ID                         | Return its receipt without re-evaluating SQL or duplicating rows                 |
+| SQL append runs with a fresh attempt against the same revision                    | Evaluate current local conditions; infer no snapshot-ledger no-op                |
+| Two output queries inspect destination rows                                       | Both see the same pre-write state; no query sees another output's inserts        |
+| Append SQL fails while writing its second target                                  | Roll back rows, schema and binding metadata, checks, and receipts together       |
+| Append produces zero rows                                                         | Commit a successful zero-row import receipt                                      |
+| Append targets an existing ordinary table with a different schema                 | Reject before inserting or altering existing application rows                    |
+| SQL uses DML, multiple statements, or external-read functions                     | Reject before destination mutation                                               |
+| SQL output names, order, or types differ from the resolved output column contract | Reject without silent projection or lossy casts                                  |
+| A SQL file contains two statements or an external-scanning local view             | Reject before writes, using the adapter parser and execution dependency contract |
 
 ### Engine ownership and locks
 
-| scenario | required result |
-| ---------- | ----------------- |
-| Pull or engine inspection runs while the external engine owns DuckDB | Return `ENGINE_BUSY`, with no engine mutation or invented engine observation |
-| Session renewal runs while the external engine owns DuckDB | Renew using only the context and backend, without opening DuckDB |
-| A driver exits but its engine child still owns the database | Respect the remaining file owner; do not steal access or fence it with lease expiry |
-| Different context copies mutate the same session | Serialize on the lock keyed by canonical engine path and run ID, not on the context-file spelling |
+| scenario                                                             | required result                                                                                   |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Pull or engine inspection runs while the external engine owns DuckDB | Return `ENGINE_BUSY`, with no engine mutation or invented engine observation                      |
+| Session renewal runs while the external engine owns DuckDB           | Renew using only the context and backend, without opening DuckDB                                  |
+| A driver exits but its engine child still owns the database          | Respect the remaining file owner; do not steal access or fence it with lease expiry               |
+| Different context copies mutate the same session                     | Serialize on the lock keyed by canonical engine path and run ID, not on the context-file spelling |
 
 ### Build sessions and completion
 
-| scenario | required result |
-| ---------- | ----------------- |
-| A pull changes tracking inputs between preparation and invocation | The session reads its fixed private input generation |
-| A tracking input table is edited after its pull | The build loads verified held GRV files; the edited rows never reach its outputs |
-| A build tries to use append, partition-selected, or SQL-import targets as identity GRV inputs | Reject unsupported provenance; do not infer a complete source materialization |
-| An input belongs to another GRV root | Reject preparation |
-| A build input's dataset is the target dataset | `INVALID_DECLARATION` before run creation; direct the user to `self_input` |
-| Input datasets reach the target through current states | `INVALID_DECLARATION` reporting the cycle path, before run creation |
-| Source pruning before preparation confirms holds | Preparation fails; cached rows cannot authorize derived publication |
-| A source GC runs after session hold confirmation | The held input revision remains complete |
-| A model requests self-input | Seed from the prepared target base, with no self-hold |
-| Self-input seeds an output that the invocation does not complete | Seeded table existence does not authorize export |
-| Managed self-input query omits an old row | Replace private outputs with the complete result; do not retain or duplicate seeded rows |
-| A successful partial invocation leaves a declared output untouched | Reject missing completion evidence before allocation; do not publish its prepared emptiness |
-| A selected output genuinely completed with zero rows | Accept its completion evidence; publish an empty unpartitioned version or explicitly named empty partition |
-| A completion record names another run, workspace, digest, or mapping | Reject before staging or allocation |
-| Push retries with its accepted completion record and no result file | Reuse the immutable accepted record and fixed plan |
-| A retry supplies a different completion record | Reject `REQUEST_MISMATCH`; preserve the accepted record |
-| An omission-only session has no output tables | Require a bound omission-only completion record with an empty completion list |
-| A driver loses ownership while its engine process continues | No new allocations under that owner; private outputs cannot affect another session |
-| Managed build SQL fails on its second output | Accept no complete build result and publish no output from that invocation |
-| Managed build owner is lost while execution remains active | Stop publication and allocation, cancel writers and wait for them, never adopt its tables |
-| Managed build completes an empty output | Attest completion internally and apply normal empty output rules |
+| scenario                                                                                      | required result                                                                                            |
+| --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| A pull changes tracking inputs between preparation and invocation                             | The session reads its fixed private input generation                                                       |
+| A tracking input table is edited after its pull                                               | The build loads verified held GRV files; the edited rows never reach its outputs                           |
+| A build tries to use append, partition-selected, or SQL-import targets as identity GRV inputs | Reject unsupported provenance; do not infer a complete source materialization                              |
+| An input belongs to another GRV root                                                          | Reject preparation                                                                                         |
+| A build input's dataset is the target dataset                                                 | `INVALID_DECLARATION` before run creation; direct the user to `self_input`                                 |
+| Input datasets reach the target through current states                                        | `INVALID_DECLARATION` reporting the cycle path, before run creation                                        |
+| Source pruning before preparation confirms holds                                              | Preparation fails; cached rows cannot authorize derived publication                                        |
+| A source GC runs after session hold confirmation                                              | The held input revision remains complete                                                                   |
+| A model requests self-input                                                                   | Seed from the prepared target base, with no self-hold                                                      |
+| Self-input seeds an output that the invocation does not complete                              | Seeded table existence does not authorize export                                                           |
+| Managed self-input query omits an old row                                                     | Replace private outputs with the complete result; do not retain or duplicate seeded rows                   |
+| A successful partial invocation leaves a declared output untouched                            | Reject missing completion evidence before allocation; do not publish its prepared emptiness                |
+| A selected output genuinely completed with zero rows                                          | Accept its completion evidence; publish an empty unpartitioned version or explicitly named empty partition |
+| A completion record names another run, workspace, digest, or mapping                          | Reject before staging or allocation                                                                        |
+| Push retries with its accepted completion record and no result file                           | Reuse the immutable accepted record and fixed plan                                                         |
+| A retry supplies a different completion record                                                | Reject `REQUEST_MISMATCH`; preserve the accepted record                                                    |
+| An omission-only session has no output tables                                                 | Require a bound omission-only completion record with an empty completion list                              |
+| A driver loses ownership while its engine process continues                                   | No new allocations under that owner; private outputs cannot affect another session                         |
+| Managed build SQL fails on its second output                                                  | Accept no complete build result and publish no output from that invocation                                 |
+| Managed build owner is lost while execution remains active                                    | Stop publication and allocation, cancel writers and wait for them, never adopt its tables                  |
+| Managed build completes an empty output                                                       | Attest completion internally and apply normal empty output rules                                           |
 
 ### Push selection and publication
 
-| scenario | required result |
-| ---------- | ----------------- |
-| Explicit include covers an explicit empty pair | Treat include as eligibility; require completion and zero rows, without duplicate contribution |
-| A held or wholly dropped output has a precreated table | Suppress automatic export; table existence causes no empty contribution |
-| Another publication changes and then restores an output partition | The old session conflicts |
-| A publication contains only an effective omission | A new revision is committed |
-| An unchanged extraction reruns under `changed` | Staged canonical file hashes equal the base manifest; no new version, and no revision when the whole state is equal |
-| A base version was written by another tool or `canonical_writer` | Publish a new version; unequal bytes are not an error |
-| A crash occurs after GRV publication but before consumer result recording | Retry recovers the existing committed publication |
-| Abort follows an ambiguous publication that actually committed | Report the committed outcome; do not mark it unpublished |
-| Session inspection sees an ambiguous publication attempt | Report the attempt read-only; a mutating retry resolves it |
-| A sealed run matches the durable export plan exactly | Resume publication without changing inputs, outputs, or run entries |
-| A recovery seals the run without an expected output version | Require a new session and build |
+| scenario                                                                  | required result                                                                                                     |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Explicit include covers an explicit empty pair                            | Treat include as eligibility; require completion and zero rows, without duplicate contribution                      |
+| A held or wholly dropped output has a precreated table                    | Suppress automatic export; table existence causes no empty contribution                                             |
+| Another publication changes and then restores an output partition         | The old session conflicts                                                                                           |
+| A publication contains only an effective omission                         | A new revision is committed                                                                                         |
+| An unchanged extraction reruns under `changed`                            | Staged canonical file hashes equal the base manifest; no new version, and no revision when the whole state is equal |
+| A base version was written by another tool or `canonical_writer`          | Publish a new version; unequal bytes are not an error                                                               |
+| A crash occurs after GRV publication but before consumer result recording | Retry recovers the existing committed publication                                                                   |
+| Abort follows an ambiguous publication that actually committed            | Report the committed outcome; do not mark it unpublished                                                            |
+| Session inspection sees an ambiguous publication attempt                  | Report the attempt read-only; a mutating retry resolves it                                                          |
+| A sealed run matches the durable export plan exactly                      | Resume publication without changing inputs, outputs, or run entries                                                 |
+| A recovery seals the run without an expected output version               | Require a new session and build                                                                                     |
 
 ### Extraction
 
-| scenario | required result |
-| ---------- | ----------------- |
-| Salesforce receives a pull declaration | Reject `UNSUPPORTED_CAPABILITY` before source login or mutation |
-| An extraction fails on the second object or page | Accept no capture receipt; publish no partial snapshot or omission |
-| A successful source query genuinely selects zero rows | Record completion and publish the defined empty snapshot |
-| A Salesforce case stops matching the declared filter | The next full snapshot removes it from dataset state |
-| A source alias or adapter version changes on an unfinished retry | Reject `REQUEST_MISMATCH`; preserve the fixed source identity |
-| A retry has a sealed complete capture | Verify and reuse it without querying the changing source again |
-| A captured decimal cannot be represented exactly | Reject the whole extraction before allocation |
-| Another revision commits during an extraction | Reject snapshot publication against the stale prepared base |
-| A table or partition disappears from a successful extraction snapshot | Omit it with the prepared-base guard; failures never authorize omission |
-| An extraction's base contains a table the declaration neither declares nor drops | `STATE_CONFLICT` naming the table, before source acquisition or run creation |
-| An extraction lists a base table in `selection.drop` | Omit that table under the base guard; a dropped table already absent is a no-op |
-| A declaration maps two source columns to one output name | Reject duplicate or incomplete mappings before source acquisition |
-| An extraction derives `_month_` from a UTC timestamp | Values are `YYYY-MM` from the UTC date; a null source value fails the extraction |
-| Source acknowledgement fails after confirmed publication | Preserve and report the committed outcome; retry acknowledgement idempotently without re-extraction |
+| scenario                                                                         | required result                                                                                     |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Salesforce receives a pull declaration                                           | Reject `UNSUPPORTED_CAPABILITY` before source login or mutation                                     |
+| An extraction fails on the second object or page                                 | Accept no capture receipt; publish no partial snapshot or omission                                  |
+| A successful source query genuinely selects zero rows                            | Record completion and publish the defined empty snapshot                                            |
+| A Salesforce case stops matching the declared filter                             | The next full snapshot removes it from dataset state                                                |
+| A source alias or adapter version changes on an unfinished retry                 | Reject `REQUEST_MISMATCH`; preserve the fixed source identity                                       |
+| A retry has a sealed complete capture                                            | Verify and reuse it without querying the changing source again                                      |
+| A captured decimal cannot be represented exactly                                 | Reject the whole extraction before allocation                                                       |
+| Another revision commits during an extraction                                    | Reject snapshot publication against the stale prepared base                                         |
+| A table or partition disappears from a successful extraction snapshot            | Omit it with the prepared-base guard; failures never authorize omission                             |
+| An extraction's base contains a table the declaration neither declares nor drops | `STATE_CONFLICT` naming the table, before source acquisition or run creation                        |
+| An extraction lists a base table in `selection.drop`                             | Omit that table under the base guard; a dropped table already absent is a no-op                     |
+| A declaration maps two source columns to one output name                         | Reject duplicate or incomplete mappings before source acquisition                                   |
+| An extraction derives `_month_` from a UTC timestamp                             | Values are `YYYY-MM` from the UTC date; a null source value fails the extraction                    |
+| Source acknowledgement fails after confirmed publication                         | Preserve and report the committed outcome; retry acknowledgement idempotently without re-extraction |
 
 ### Declarations, results, and adapters
 
-| scenario | required result |
-| ---------- | ----------------- |
-| A declaration has duplicate YAML keys, unknown fields, an invalid selector, or an unsupported Arrow type | Reject before engine or GRV mutation |
-| A column or SQL file changes on an unfinished retry | Reject the changed effective request; preserve accepted capture and outcome evidence |
-| A DuckDB `INTEGER` source column is declared `int64` | Accept the exact widening; a narrowing or lossy declaration fails |
-| A command emits success or a partial error in JSON | Validate its command-specific schema, error-to-exit correspondence, precision, and token redaction |
-| A namespaced adapter command returns JSON | Validate the common envelope and registered redacted adapter-result schema |
-| An adapter adds unknown binding fields | Reject through its registered closed schema without modifying the common envelope |
-| Built-in and third-party bindings use equivalent capabilities | Follow the same registration, validation, lifecycle, and result paths |
-| A built-in runs in-process | Same registration, authority split, and logical conformance results as a process adapter |
+| scenario                                                                                                 | required result                                                                                    |
+| -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| A declaration has duplicate YAML keys, unknown fields, an invalid selector, or an unsupported Arrow type | Reject before engine or GRV mutation                                                               |
+| A column or SQL file changes on an unfinished retry                                                      | Reject the changed effective request; preserve accepted capture and outcome evidence               |
+| A DuckDB `INTEGER` source column is declared `int64`                                                     | Accept the exact widening; a narrowing or lossy declaration fails                                  |
+| A command emits success or a partial error in JSON                                                       | Validate its command-specific schema, error-to-exit correspondence, precision, and token redaction |
+| A namespaced adapter command returns JSON                                                                | Validate the common envelope and registered redacted adapter-result schema                         |
+| An adapter adds unknown binding fields                                                                   | Reject through its registered closed schema without modifying the common envelope                  |
+| Built-in and third-party bindings use equivalent capabilities                                            | Follow the same registration, validation, lifecycle, and result paths                              |
+| A built-in runs in-process                                                                               | Same registration, authority split, and logical conformance results as a process adapter           |
 
 ### Roots, inspection, and administration
 
-| scenario | required result |
-| ---------- | ----------------- |
-| Initialization finds dataset objects without `grv.json` | Report a damaged root; create no configuration |
-| Initialization repeats against a valid root | Reuse its configuration; reject conflicting explicit parameters |
-| Listing discovers orphan version directories | Do not include them in a committed revision's table and partition state |
-| Historical manifests have been pruned | Log and revision-entry diff still work; unavailable schema and provenance details are labeled |
-| Status inspects an unbound engine or a pending operation | Report it without binding, renewing, or repairing anything |
-| Full verification encounters concurrent pruning | Report unavailable objects; create no automatic pin or repair |
-| Two independent pins protect one revision | Releasing one leaves the other protection active |
-| Pin creation retries with the same active ID and matching request | Return that pin without creating another protection |
-| Pin creation attempts to reuse a released ID in the same revision | Reject reuse; preserve the release record |
-| The same pin UUID exists in two revisions | Treat them independently; unpin addresses only the specified revision |
-| Unpin's ID exists only in another revision | Return `NOT_FOUND`; perform no dataset-wide lookup or release |
-| Unpin receives a table, partition, or version pin ID | Reject the unsupported mutation scope |
-| GC dry run finds a missing supersession receipt | Report protection and write no receipt or other object |
-| A new hold or pin appears after a GC preview | Applying GC rechecks protection and preserves protected versions |
-| Physical deletion fails after a committed prune decision | Report tombstoned data and incomplete cleanup; retry preserves the decision |
-| Recovery targets an unexpired run or claim | Respect its lease; report waiting or busy work rather than force takeover |
-| Recovery resolves an expired run | Seal its authorized entries without publishing or changing its base or inputs |
+| scenario                                                          | required result                                                                               |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Initialization finds dataset objects without `grv.json`           | Report a damaged root; create no configuration                                                |
+| Initialization repeats against a valid root                       | Reuse its configuration; reject conflicting explicit parameters                               |
+| Listing discovers orphan version directories                      | Do not include them in a committed revision's table and partition state                       |
+| Historical manifests have been pruned                             | Log and revision-entry diff still work; unavailable schema and provenance details are labeled |
+| Status inspects an unbound engine or a pending operation          | Report it without binding, renewing, or repairing anything                                    |
+| Full verification encounters concurrent pruning                   | Report unavailable objects; create no automatic pin or repair                                 |
+| Two independent pins protect one revision                         | Releasing one leaves the other protection active                                              |
+| Pin creation retries with the same active ID and matching request | Return that pin without creating another protection                                           |
+| Pin creation attempts to reuse a released ID in the same revision | Reject reuse; preserve the release record                                                     |
+| The same pin UUID exists in two revisions                         | Treat them independently; unpin addresses only the specified revision                         |
+| Unpin's ID exists only in another revision                        | Return `NOT_FOUND`; perform no dataset-wide lookup or release                                 |
+| Unpin receives a table, partition, or version pin ID              | Reject the unsupported mutation scope                                                         |
+| GC dry run finds a missing supersession receipt                   | Report protection and write no receipt or other object                                        |
+| A new hold or pin appears after a GC preview                      | Applying GC rechecks protection and preserves protected versions                              |
+| Physical deletion fails after a committed prune decision          | Report tombstoned data and incomplete cleanup; retry preserves the decision                   |
+| Recovery targets an unexpired run or claim                        | Respect its lease; report waiting or busy work rather than force takeover                     |
+| Recovery resolves an expired run                                  | Seal its authorized entries without publishing or changing its base or inputs                 |

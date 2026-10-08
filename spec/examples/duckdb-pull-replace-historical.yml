@@ -13,4 +13,4 @@ tables:
     target:
       table: credit_notes
 checks:
-  - {table: cases, not_null: [id, credit_amount]}
+  - { table: cases, not_null: [id, credit_amount] }

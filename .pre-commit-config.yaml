@@ -1,0 +1,69 @@
+# Pre-commit configuration for the grv project.
+#
+# Orchestrated by prek (https://prek.j178.dev/), which is a drop-in
+# Rust reimplementation of the Python `pre-commit` framework. The YAML
+# schema below is the upstream `.pre-commit-config.yaml` format.
+#
+# After cloning this repo, run once:
+#
+#     prek install            # register the git pre-commit hook
+#     prek install-hooks      # prepare hook environments
+#
+# Hook ordering is significant and enforced with `priority` (prek-only):
+# hooks with distinct priorities run in ascending priority order, one
+# phase at a time, while hooks sharing a priority would run concurrently.
+#   1. prettier formats before markdownlint lints, so prettier's
+#      whitespace fixes are not undone by the linter.
+#
+# Each hook is responsible for re-staging any files it modifies via
+# `git add` (prek does not auto-stage modified files, mirroring the
+# behavior of upstream `pre-commit`).
+#
+# Division of labor (aligned with the KB standard — see
+# notes/20261006-prek-prettier-markdownlint-config.md in ~/kb):
+#   - Prettier owns all blank-line and whitespace structure and runs
+#     first. It is invoked with `--ignore-path .prettierignore` so
+#     tooling-owned files (build output, vendored notices, local state)
+#     are never rewritten, even when passed via pass_filenames.
+#   - markdownlint checks semantics only; its config disables the
+#     blank-line rules (MD022/MD031/MD032) that would fight Prettier.
+#   - Both hooks auto-fix and re-stage, so a commit never fails on
+#     formatting; it is fixed in place instead.
+
+repos:
+  - repo: local
+    hooks:
+      - id: format-md
+        name: format markdown and project text with prettier
+        language: system
+        # Run prettier, then re-stage the rewritten files. With
+        # `shell: bash`, `entry` is treated as bash source and the
+        # filenames are passed as `"$@"`.
+        entry: |
+          bunx prettier --write --ignore-path .prettierignore "$@" && git add -- "$@"
+        shell: bash
+        files: \.(md|json|jsonc|ya?ml|toml)$
+        pass_filenames: true
+        require_serial: true
+        priority: 0
+
+      - id: lint-md
+        name: lint markdown with markdownlint-cli2 (auto-fix)
+        language: system
+        entry: |
+          markdownlint-cli2 --fix "$@" && git add -- "$@"
+        shell: bash
+        files: \.md$
+        pass_filenames: true
+        require_serial: true
+        priority: 10
+
+      - id: downlint-md
+        name: lint markdown wiki links with downlint
+        language: system
+        # Whole-workspace check (downlint takes a single PATH); wiki-link
+        # resolution needs the full workspace context anyway. Read-only,
+        # so no re-staging.
+        entry: downlint
+        pass_filenames: false
+        priority: 20

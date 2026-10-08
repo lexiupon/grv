@@ -55,10 +55,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "name",
-        "type"
-      ]
+      "required": ["name", "type"]
     },
     "bound_field": {
       "type": "object",
@@ -122,30 +119,17 @@
               "minLength": 1
             },
             "format": {
-              "enum": [
-                "year",
-                "month",
-                "day"
-              ]
+              "enum": ["year", "month", "day"]
             }
           },
           "additionalProperties": false,
-          "required": [
-            "from",
-            "format"
-          ]
+          "required": ["from", "format"]
         }
       },
       "additionalProperties": false,
-      "required": [
-        "name",
-        "type"
-      ],
+      "required": ["name", "type"],
       "not": {
-        "required": [
-          "source",
-          "derive"
-        ]
+        "required": ["source", "derive"]
       }
     },
     "column_reference": {
@@ -159,9 +143,7 @@
             }
           },
           "additionalProperties": false,
-          "required": [
-            "file"
-          ]
+          "required": ["file"]
         },
         {
           "type": "object",
@@ -172,9 +154,7 @@
             }
           },
           "additionalProperties": false,
-          "required": [
-            "ipc"
-          ]
+          "required": ["ipc"]
         }
       ]
     },
@@ -212,10 +192,7 @@
         "type": "string",
         "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
         "not": {
-          "enum": [
-            "version",
-            "revision"
-          ]
+          "enum": ["version", "revision"]
         }
       },
       "additionalProperties": {
@@ -235,10 +212,7 @@
             "type": "string",
             "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
             "not": {
-              "enum": [
-                "version",
-                "revision"
-              ]
+              "enum": ["version", "revision"]
             }
           },
           "uniqueItems": true
@@ -264,10 +238,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "table",
-        "not_null"
-      ]
+      "required": ["table", "not_null"]
     },
     "table_selector": {
       "type": "object",
@@ -278,9 +249,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "table"
-      ]
+      "required": ["table"]
     },
     "pair_selector": {
       "type": "object",
@@ -295,10 +264,7 @@
             "type": "string",
             "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
             "not": {
-              "enum": [
-                "version",
-                "revision"
-              ]
+              "enum": ["version", "revision"]
             }
           },
           "additionalProperties": {
@@ -308,10 +274,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "table",
-        "partition"
-      ]
+      "required": ["table", "partition"]
     },
     "selector": {
       "oneOf": [
@@ -327,11 +290,7 @@
       "type": "object",
       "properties": {
         "policy": {
-          "enum": [
-            "changed",
-            "all",
-            "explicit"
-          ]
+          "enum": ["changed", "all", "explicit"]
         },
         "include": {
           "type": "array",
@@ -372,14 +331,10 @@
                 "const": "explicit"
               }
             },
-            "required": [
-              "policy"
-            ]
+            "required": ["policy"]
           },
           "then": {
-            "required": [
-              "include"
-            ],
+            "required": ["include"],
             "properties": {
               "include": {
                 "minItems": 1
@@ -400,10 +355,7 @@
       "type": "object",
       "properties": {
         "policy": {
-          "enum": [
-            "changed",
-            "all"
-          ]
+          "enum": ["changed", "all"]
         },
         "drop": {
           "$comment": "Extraction accepts only whole-table drops: base tables that this declaration intentionally removes. Undeclared base tables not listed here fail with STATE_CONFLICT.",
@@ -421,10 +373,7 @@
       "type": "object",
       "properties": {
         "execution": {
-          "enum": [
-            "managed",
-            "external"
-          ]
+          "enum": ["managed", "external"]
         },
         "inputs": {
           "type": "array",
@@ -441,10 +390,7 @@
               }
             },
             "additionalProperties": false,
-            "required": [
-              "table",
-              "as"
-            ]
+            "required": ["table", "as"]
           }
         },
         "self_input": {
@@ -483,10 +429,7 @@
             "type": "string",
             "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
             "not": {
-              "enum": [
-                "version",
-                "revision"
-              ]
+              "enum": ["version", "revision"]
             }
           },
           "uniqueItems": true
@@ -522,11 +465,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "name",
-        "source",
-        "columns"
-      ]
+      "required": ["name", "source", "columns"]
     },
     "pull_table": {
       "type": "object",
@@ -556,20 +495,14 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "name"
-      ],
+      "required": ["name"],
       "allOf": [
         {
           "if": {
-            "required": [
-              "select"
-            ]
+            "required": ["select"]
           },
           "then": {
-            "required": [
-              "columns"
-            ]
+            "required": ["columns"]
           }
         }
       ]
@@ -617,21 +550,12 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "declaration_version",
-        "kind",
-        "dataset",
-        "adapter",
-        "connection",
-        "tables"
-      ],
+      "required": ["declaration_version", "kind", "dataset", "adapter", "connection", "tables"],
       "allOf": [
         {
           "if": {
             "not": {
-              "required": [
-                "build"
-              ]
+              "required": ["build"]
             }
           },
           "then": {
@@ -689,10 +613,7 @@
           ]
         },
         "write": {
-          "enum": [
-            "replace",
-            "append"
-          ]
+          "enum": ["replace", "append"]
         },
         "target": {
           "type": "object"
@@ -706,15 +627,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "declaration_version",
-        "kind",
-        "dataset",
-        "adapter",
-        "connection",
-        "target",
-        "tables"
-      ]
+      "required": ["declaration_version", "kind", "dataset", "adapter", "connection", "target", "tables"]
     }
   }
 }

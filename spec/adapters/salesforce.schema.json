@@ -16,19 +16,13 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "org"
-      ]
+      "required": ["org"]
     },
     "options": {
       "type": "object",
       "properties": {
         "transport": {
-          "enum": [
-            "auto",
-            "rest",
-            "bulk"
-          ]
+          "enum": ["auto", "rest", "bulk"]
         },
         "all_rows": {
           "type": "boolean"
@@ -49,9 +43,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "object"
-      ]
+      "required": ["object"]
     },
     "column_source": {
       "type": "string",
@@ -82,10 +74,7 @@
             }
           },
           "additionalProperties": false,
-          "required": [
-            "org_id",
-            "api_version"
-          ],
+          "required": ["org_id", "api_version"],
           "$comment": "Resolved org identity after authentication; the alias and credentials are never reported."
         }
       ],
@@ -108,21 +97,14 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "org_id",
-        "object",
-        "query_sha256"
-      ],
+      "required": ["org_id", "object", "query_sha256"],
       "$comment": "query_sha256 hashes the exact generated SOQL text."
     },
     "source_job": {
       "type": "object",
       "properties": {
         "transport": {
-          "enum": [
-            "rest",
-            "bulk"
-          ]
+          "enum": ["rest", "bulk"]
         },
         "api_version": {
           "type": "string",
@@ -138,11 +120,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "transport",
-        "api_version",
-        "job_ids"
-      ],
+      "required": ["transport", "api_version", "job_ids"],
       "$comment": "Bulk job IDs or REST query locators recorded durably; job_ids may be empty when REST has no locator or Bulk creation is unresolved. Persist ambiguous creation intent and return OUTCOME_UNKNOWN without repeating the POST."
     }
   }

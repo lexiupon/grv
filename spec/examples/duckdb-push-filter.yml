@@ -10,13 +10,13 @@ tables:
       table: billing.crm_cases
       filter: case_type = 'Credit Note' AND amount > 0
     columns:
-      - {name: id, source: case_id, type: utf8}
-      - {name: case_number, type: utf8}
-      - {name: account_id, type: utf8}
-      - {name: credit_note_number, source: credit_number, type: utf8}
-      - {name: status, type: utf8}
-      - {name: credit_amount, source: amount, type: 'decimal128(38,6)'}
-      - {name: currency_code, source: currency, type: utf8}
-      - {name: modified_at, type: 'timestamp(us,UTC)'}
+      - { name: id, source: case_id, type: utf8 }
+      - { name: case_number, type: utf8 }
+      - { name: account_id, type: utf8 }
+      - { name: credit_note_number, source: credit_number, type: utf8 }
+      - { name: status, type: utf8 }
+      - { name: credit_amount, source: amount, type: "decimal128(38,6)" }
+      - { name: currency_code, source: currency, type: utf8 }
+      - { name: modified_at, type: "timestamp(us,UTC)" }
 checks:
-  - {table: cases, not_null: [id, credit_amount]}
+  - { table: cases, not_null: [id, credit_amount] }

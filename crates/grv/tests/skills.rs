@@ -167,3 +167,16 @@ fn uninstall_removes_a_symlink_not_its_target() {
         "symlink target must survive"
     );
 }
+
+#[test]
+fn version_flag() {
+    let out = Command::new(env!("CARGO_BIN_EXE_grv"))
+        .arg("--version")
+        .output()
+        .unwrap();
+    assert!(out.status.success());
+    assert_eq!(
+        String::from_utf8(out.stdout).unwrap().trim(),
+        format!("grv {}", env!("CARGO_PKG_VERSION"))
+    );
+}

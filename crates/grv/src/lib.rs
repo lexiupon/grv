@@ -23,6 +23,10 @@ pub fn entry() {
     } else {
         false
     };
+    if matches!(args.first().map(String::as_str), Some("--version" | "-V")) && !json {
+        println!("grv {}", env!("CARGO_PKG_VERSION"));
+        std::process::exit(0);
+    }
     if args.first().map(String::as_str) == Some("skills") {
         // Local agent tooling, outside the client v1 result envelope.
         skills::main(&args[1..], json);

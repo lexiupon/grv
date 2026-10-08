@@ -1,31 +1,23 @@
-# Homebrew formula template for GRV. Copy into the tap repository
-# (Formula/grv.rb) and fill in url/sha256 from the published release bundle.
 class Grv < Formula
   desc "Versioned, auditable Parquet store with declarative push/pull adapters"
-  homepage "https://github.com/OWNER/grv"
-  version "0.1.0"
+  homepage "https://github.com/lexiupon/grv"
+  url "https://github.com/lexiupon/grv/archive/refs/tags/v0.1.0.tar.gz"
+  sha256 "REPLACE_WITH_TAG_TARBALL_SHA256"
   license "Apache-2.0"
+  head "https://github.com/lexiupon/grv.git", branch: "main"
 
-  on_macos do
-    on_arm do
-      url "https://github.com/OWNER/grv/releases/download/v0.1.0/grv-0.1.0-macos-arm64.tar.gz"
-      sha256 "REPLACE_WITH_BUNDLE_SHA256"
-    end
-  end
+  depends_on "rust" => :build
 
   def install
-    # The relocatable bundle from scripts/package.py: bin/, adapters/, notices/.
-    libexec.install Dir["*"]
-    bin.install_symlink libexec/"bin/grv"
+    system "cargo", "install", *std_cargo_args(path: "crates/grv")
   end
 
   def caveats
     <<~EOS
-      Adapters must run from a protected directory, which the Homebrew prefix
-      is not. Copy them into your user adapter directory once (and again after
-      upgrades):
-        grv adapter install #{opt_libexec}/adapters/duckdb --replace
-        grv adapter install #{opt_libexec}/adapters/salesforce --replace
+      This formula installs the grv CLI: store commands (init, ls, show, log,
+      diff, verify, pin, gc, recover) on local, S3 and GCS roots, and the
+      AI agent skill. Data adapters (DuckDB, Salesforce) are not included yet;
+      see https://github.com/lexiupon/grv/blob/main/docs/building.md
 
       To teach your AI coding agent how to use grv:
         grv skills install -g
@@ -33,7 +25,8 @@ class Grv < Formula
   end
 
   test do
+    assert_match version.to_s, shell_output("#{bin}/grv --version")
     system bin/"grv", "init", "--grv", testpath/"store"
-    assert_match "grv-cli", shell_output("#{bin}/grv skills list")
+    assert_match "grv-cli", shell_output("#{bin}/grv skills list --dir #{testpath}/skills")
   end
 end

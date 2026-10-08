@@ -1,21 +1,23 @@
 # Homebrew packaging
 
-`grv.rb` is a formula **template**. It is not published yet.
+`grv.rb` is the source of truth for the formula published in
+[lexiupon/homebrew-tap](https://github.com/lexiupon/homebrew-tap). Like the
+other formulae there, it builds the tagged source archive with Homebrew's
+`rust`, so no prebuilt release artifacts are needed.
 
-To publish:
+The formula installs the `grv` CLI only. Adapters (DuckDB, Salesforce) are
+not packaged yet: the DuckDB adapter needs the pinned native guard and signed
+extensions, which need either declared Homebrew resources or a prebuilt
+bundle attached to the release.
 
-1. Create a tap repository (for example `OWNER/homebrew-grv`).
-2. Attach the release bundle tarball built by `scripts/package.py` to a
-   GitHub release.
-3. Copy `grv.rb` to `Formula/grv.rb` in the tap, replace `OWNER`, the URL and
-   `sha256` (`shasum -a 256 <tarball>`), and commit.
-4. Check it with `brew install --build-from-source OWNER/grv/grv` and
-   `brew test grv`.
+## Releasing a new version
 
-Only macOS ARM64 is covered today, matching the initial release scope. Add
-`on_intel`/`on_linux` blocks as those platforms are qualified.
+1. Bump `version` in the workspace `Cargo.toml`, commit, and tag `vX.Y.Z` on
+   `main`. Push the tag and create the GitHub release.
+2. In the tap repository, run `./scripts/update-grv-formula.py X.Y.Z`. It
+   fetches the tag tarball and rewrites the URL and SHA256.
+3. Check: `brew install --build-from-source lexiupon/tap/grv`,
+   `brew test grv`, `brew audit --strict grv`. Commit and push the tap.
 
-Open question to verify against the first real bundle: whether
-`grv adapter install` accepts a source directory under the Homebrew prefix
-(it copies the adapter into `~/.config/grv/adapters`, which must itself be
-protected).
+If you change the formula's structure, change it here first and copy it into
+the tap.

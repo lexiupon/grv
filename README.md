@@ -56,23 +56,21 @@ to it, in a single transaction.
 
 ## Install
 
-### Homebrew (macOS ARM64)
+### Homebrew
 
 ```console
-brew install OWNER/grv/grv
-grv adapter install "$(brew --prefix grv)/libexec/adapters/duckdb" --replace
-grv adapter install "$(brew --prefix grv)/libexec/adapters/salesforce" --replace
+brew install lexiupon/tap/grv
+grv --version
 ```
 
-The formula is being prepared (see [packaging/homebrew](packaging/homebrew/)).
-Adapters run from your user adapter directory
-(`~/.config/grv/adapters`), which must be a
-[protected directory](#how-it-works), so they are copied there once after
-install or upgrade.
+The Homebrew package builds the `grv` CLI from source. It includes all store
+commands (on local, S3 and GCS roots) and the AI agent skill. The DuckDB and
+Salesforce adapters that `push` and `pull` need are not packaged yet; build
+them with [docs/building.md](docs/building.md).
 
 ### From source
 
-Other platforms, and anyone who wants a development bundle: see
+To build the CLI and adapters yourself, see
 [docs/building.md](docs/building.md).
 
 ## Use with AI agents
@@ -91,8 +89,8 @@ grv skills list                          # what is installed, and whether it is 
 The skill is built into the binary, so it always matches the installed
 version. `grv skills install` never overwrites a copy you edited unless you
 pass `--force`. The skill uses the standard `skills/<name>/SKILL.md` layout, so
-repository-based installers such as `npx skills add` can also pick it up once
-the repository is public.
+repository-based installers such as `npx skills add` can also pick it up:
+`npx skills add lexiupon/grv --skill grv-cli`.
 
 ## How it works
 

@@ -291,7 +291,11 @@ def main():
                              staging / "adapters/duckdb/bin/lib" / library,
                              *sorted((staging / "adapters/duckdb/bin/extensions").glob("*.duckdb_extension"))]:
                 commands = subprocess.check_output(["otool", "-l", str(artifact)], text=True)
-                match = re.search(r"\bminos\s+([0-9.]+)", commands)
+                # LC_BUILD_VERSION reports "minos"; older x86-64 objects (for
+                # example prebuilt extensions) use LC_VERSION_MIN_MACOSX instead.
+                match = (re.search(r"\bminos\s+([0-9.]+)", commands)
+                         or re.search(r"cmd LC_VERSION_MIN_MACOSX\b[^\n]*\n(?:[^\n]*\n)*?\s*version\s+([0-9.]+)",
+                                      commands))
                 if not match:
                     raise SystemExit("Mach-O minimum OS version missing")
                 macos_minimums[str(artifact.relative_to(staging))] = match.group(1)

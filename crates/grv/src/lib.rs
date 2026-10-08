@@ -6,6 +6,7 @@ mod gc;
 mod inspect;
 mod pull;
 mod recover;
+mod skills;
 mod transfer;
 mod writer_attester;
 use grv_adapter_host::{
@@ -22,6 +23,10 @@ pub fn entry() {
     } else {
         false
     };
+    if args.first().map(String::as_str) == Some("skills") {
+        // Local agent tooling, outside the client v1 result envelope.
+        skills::main(&args[1..], json);
+    }
     let command = if args.first().is_some_and(|command| {
         ["ls", "show", "status", "log", "diff", "verify"].contains(&command.as_str())
     }) {

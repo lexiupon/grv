@@ -574,14 +574,15 @@ impl<'a, B: Backend> Admin<'a, B> {
         mut persist: impl FnMut(&AdminIntent, &AdminProgress) -> Result<()>,
     ) -> Result<AdminOutcome> {
         intent.operation.validate().map_err(backend_error)?;
-        if !matches!(
-            intent.operation.body,
+        let supported = match intent.operation.body {
             OperationPayload::Pin(_)
-                | OperationPayload::Unpin(_)
-                | OperationPayload::ReleaseHold(_)
-        ) && !(keep_pending && matches!(intent.operation.body, OperationPayload::PruneIntent(_)))
-            && !(previous.is_some() && matches!(intent.operation.body, OperationPayload::Prune(_)))
-        {
+            | OperationPayload::Unpin(_)
+            | OperationPayload::ReleaseHold(_) => true,
+            OperationPayload::PruneIntent(_) => keep_pending,
+            OperationPayload::Prune(_) => previous.is_some(),
+            _ => false,
+        };
+        if !supported {
             return Err(public_error(
                 ErrorCode::UnsupportedCapability,
                 "admin operation lifecycle is not implemented for this kind",

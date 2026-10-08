@@ -845,11 +845,11 @@ impl<'a, B: Backend> Gc<'a, B> {
                             Counter::new(protecting.get()).map_err(backend_error)?,
                             scratch,
                         )?;
-                        if !protecting
+                        let protects_target = protecting
                             .state
                             .get(&(target.table.clone(), partition.clone()))
-                            .is_some_and(|entry| entry.version == target.version)
-                        {
+                            .is_some_and(|entry| entry.version == target.version);
+                        if !protects_target {
                             continue;
                         }
                     }

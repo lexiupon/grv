@@ -617,7 +617,6 @@ struct Active {
     request: Frame,
 }
 
-#[allow(clippy::manual_is_multiple_of)] // Preserve Rust 1.85 compatibility.
 fn produce(
     adapter: &mut dyn Adapter,
     handle: Handle,
@@ -678,7 +677,7 @@ fn produce(
             } => {
                 if payload.is_empty()
                     || payload.len() as u64 > max_batch
-                    || payload.len() % 8 != 0
+                    || !payload.len().is_multiple_of(8)
                     || rows.get() == 0
                     || rows.get() > i32::MAX as u64
                 {
@@ -741,7 +740,6 @@ fn produce(
     Ok(None)
 }
 
-#[allow(clippy::manual_is_multiple_of)] // Preserve Rust 1.85 compatibility.
 fn produce_build(
     mut stream: Box<dyn BuildExport>,
     session_id: Uuid,
@@ -770,7 +768,7 @@ fn produce_build(
             } => {
                 if payload.is_empty()
                     || payload.len() as u64 > max_batch
-                    || payload.len() % 8 != 0
+                    || !payload.len().is_multiple_of(8)
                     || rows.get() == 0
                     || rows.get() > i32::MAX as u64
                 {

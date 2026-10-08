@@ -446,7 +446,7 @@ fn local_recovery_requires_unlocked_complete_capture_and_exact_original_owner() 
             .high_water,
         claim.high_water
     );
-    assert!(result.to_string().find("owner_token").is_none());
+    assert!(!result.to_string().contains("owner_token"));
 }
 #[test]
 fn abort_resolves_exact_allocated_claim_without_allocating_pending_export_work() {

@@ -80,7 +80,7 @@ impl Selection {
         outputs: &BTreeMap<Name, TablePlan>,
         layouts: &BTreeMap<Name, TableLayout>,
     ) -> Result<()> {
-        if (self.policy == Policy::Explicit) != !self.include.is_empty() {
+        if (self.policy == Policy::Explicit) == self.include.is_empty() {
             return Err(invalid(
                 "explicit selection requires include; other policies forbid it",
             ));

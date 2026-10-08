@@ -107,12 +107,11 @@ impl Default for Resources {
     }
 }
 impl Resources {
-    #[allow(clippy::manual_is_multiple_of)] // Preserve Rust 1.85 compatibility.
     pub fn validate(&self) -> Result<(), ValidationError> {
         let batch = self.max_batch_bytes.get();
         if self.slots.get() > 64
             || !(262144..=67108864).contains(&batch)
-            || batch % 8 != 0
+            || !batch.is_multiple_of(8)
             || self.max_source_unit_bytes.get() == 0
             || self.max_source_unit_bytes.get() > 67108864
             || self.max_scratch_bytes.get() == 0

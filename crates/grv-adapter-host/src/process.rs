@@ -6,7 +6,7 @@ use std::{
     io::{self, Read, Write},
     os::{
         fd::AsRawFd,
-        unix::{fs::MetadataExt, net::UnixStream, process::CommandExt},
+        unix::{net::UnixStream, process::CommandExt},
     },
     process::{Child, Command, Stdio},
     sync::{
@@ -153,6 +153,7 @@ impl Session {
         deadlines: Deadlines,
         working_directory: Option<&std::path::Path>,
     ) -> Result<Self> {
+        #[cfg_attr(target_os = "linux", allow(unused_variables))]
         let (executable, verified) = installation.verified_executable()?;
         let (parent, adapter) = UnixStream::pair()?;
         let child_fd = adapter.as_raw_fd();
@@ -184,6 +185,17 @@ impl Session {
         }
         #[cfg(target_os = "linux")]
         let exe_fd = executable.as_raw_fd();
+        // fexecve of a `#!` script makes the kernel hand `/dev/fd/4` to the
+        // interpreter, so that descriptor must survive exec. Binaries keep it
+        // close-on-exec. The descriptor is read-only and names the verified file.
+        #[cfg(target_os = "linux")]
+        let script = {
+            use std::os::unix::fs::FileExt;
+            let mut magic = [0u8; 2];
+            matches!(executable.read_at(&mut magic, 0), Ok(2)) && magic == *b"#!"
+        };
+        #[cfg(target_os = "linux")]
+        let exe_flags = if script { 0 } else { libc::FD_CLOEXEC };
         #[cfg(target_os = "linux")]
         {
             use std::ffi::CString;
@@ -217,7 +229,7 @@ impl Session {
                     if libc::dup2(child_fd, 3) < 0
                         || libc::dup2(exec_copy, 4) < 0
                         || libc::fcntl(3, libc::F_SETFD, 0) < 0
-                        || libc::fcntl(4, libc::F_SETFD, libc::FD_CLOEXEC) < 0
+                        || libc::fcntl(4, libc::F_SETFD, exe_flags) < 0
                         || libc::setpgid(0, 0) < 0
                     {
                         return Err(io::Error::last_os_error());
@@ -235,6 +247,7 @@ impl Session {
                     .map_err(|_| {
                         Error::new(ErrorCode::AdapterFailure, "invalid executable path")
                     })?;
+            use std::os::unix::fs::MetadataExt;
             let dev = verified.dev();
             let ino = verified.ino();
             let len = verified.len();

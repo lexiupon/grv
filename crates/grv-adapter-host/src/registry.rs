@@ -85,10 +85,11 @@ impl CheckedRegistry {
         }
         let mut names = BTreeSet::new();
         for c in out.commands.clone() {
+            // Authentication implies a connection, so a login command that
+            // needs neither is exactly one that does not need a connection.
             if !names.insert(c.name.clone())
                 || (c.requires_authentication && !c.requires_connection)
-                || (c.name.as_str() == "login"
-                    && (c.requires_connection || c.requires_authentication))
+                || (c.name.as_str() == "login" && c.requires_connection)
             {
                 return Err(bad("invalid command descriptor"));
             }

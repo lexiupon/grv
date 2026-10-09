@@ -1,0 +1,85 @@
+name: Release adapters
+
+# On a version tag, build the release adapter bundle (DuckDB with its pinned
+# native library and signed extensions, and Salesforce) and attach it to the
+# GitHub release for that tag. The Homebrew formula installs this asset.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to build, e.g. v0.2.0
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  adapters:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            platform: osx_arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      CARGO_BUILD_JOBS: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - name: Install declared Rust minimum
+        run: |
+          rustup toolchain install 1.89.0 --profile minimal
+          rustup override set 1.89.0
+      - name: Check tag matches workspace version
+        shell: bash
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          test "v$version" = "$TAG" || { echo "tag $TAG != workspace $version"; exit 1; }
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - name: Fetch and build pinned native guard
+        shell: bash
+        run: |
+          curl --fail --location --retry 3 --max-time 180 \
+            https://github.com/duckdb/duckdb/archive/refs/tags/v1.5.6.tar.gz \
+            --output "$RUNNER_TEMP/duckdb-1.5.6.tar.gz"
+          python3 crates/grv-adapter-duckdb/native/build.py \
+            --archive "$RUNNER_TEMP/duckdb-1.5.6.tar.gz" \
+            --build "$RUNNER_TEMP/grv-native" --jobs 3
+          echo "GRV_DUCKDB_NATIVE_LIB_DIR=$RUNNER_TEMP/grv-native/cmake" >> "$GITHUB_ENV"
+      - name: Fetch pinned signed platform extensions
+        run: |
+          python3 scripts/fetch-duckdb-extensions.py \
+            --output "$GITHUB_WORKSPACE/artifacts/grv-extensions" \
+            --platform "${{ matrix.platform }}"
+      - name: Build, package and verify release bundle
+        shell: bash
+        run: |
+          cargo fetch --locked
+          python3 scripts/package.py --native-dir "$GRV_DUCKDB_NATIVE_LIB_DIR" \
+            --extensions-dir "$GITHUB_WORKSPACE/artifacts/grv-extensions" \
+            --profile release --output "$GITHUB_WORKSPACE/artifacts/grv-bundle"
+          python3 scripts/verify-bundle.py artifacts/grv-bundle
+      - name: Archive adapters
+        shell: bash
+        run: |
+          asset="grv-adapters-$VERSION-${{ matrix.platform }}.tar.gz"
+          # Fixed owner, order and mtime so the archive is reproducible.
+          tar -C artifacts/grv-bundle --uid 0 --gid 0 --uname root --gname wheel \
+            -cf - adapters notices bundle.json | gzip -n -9 > "$asset"
+          shasum -a 256 "$asset" | tee "$asset.sha256"
+          echo "ASSET=$asset" >> "$GITHUB_ENV"
+      - name: Attach to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 ||
+            gh release create "$TAG" --draft --verify-tag --title "GRV $VERSION" --notes "Draft; notes pending."
+          gh release upload "$TAG" "$ASSET" "$ASSET.sha256" --clobber

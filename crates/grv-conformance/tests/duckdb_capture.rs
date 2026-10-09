@@ -112,7 +112,7 @@ fn native_duckdb_shared_snapshot_exact_capture_publication_and_source_free_repla
     );
     let package = temp.path().join("adapters/duckdb");
     std::fs::create_dir_all(&package).unwrap();
-    std::fs::write(package.join("adapter.toml"),format!("name = 'duckdb'\nversion = '0.1.0'\ninterface_versions = [1]\nbinding_schema_version = 1\nentrypoint = {:?}\n",env!("CARGO_BIN_EXE_fixture-duckdb"))).unwrap();
+    std::fs::write(package.join("adapter.toml"),format!("name = 'duckdb'\nversion = {:?}\ninterface_versions = [1]\nbinding_schema_version = 1\nentrypoint = {:?}\n",env!("CARGO_PKG_VERSION"),env!("CARGO_BIN_EXE_fixture-duckdb"))).unwrap();
     let installations = discovery::discover(&[SearchRoot {
         path: temp.path().join("adapters"),
         kind: RootKind::User,

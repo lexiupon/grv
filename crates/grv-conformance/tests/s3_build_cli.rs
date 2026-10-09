@@ -478,7 +478,7 @@ fn live_external_s3_build_fixed_view_inputs_self_base_accepted_export_restart_an
     let adapters = temp.path().join("adapters");
     let package = adapters.join("duckdb");
     fs::create_dir_all(&package).unwrap();
-    fs::write(package.join("adapter.toml"),format!("name='duckdb'\nversion='0.1.0'\ninterface_versions=[1]\nbinding_schema_version=1\nentrypoint={:?}\n",env!("CARGO_BIN_EXE_fixture-duckdb-build"))).unwrap();
+    fs::write(package.join("adapter.toml"),format!("name='duckdb'\nversion={:?}\ninterface_versions=[1]\nbinding_schema_version=1\nentrypoint={:?}\n",env!("CARGO_PKG_VERSION"),env!("CARGO_BIN_EXE_fixture-duckdb-build"))).unwrap();
     let state = temp.path().join("state");
     let seed_decl = temp.path().join("seed.yml");
     let pull_decl = temp.path().join("pull.yml");

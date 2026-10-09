@@ -24,7 +24,13 @@ fn cli(adapters: &Path, args: &[&str]) -> Value {
 fn package(adapters: &Path, name: &str, executable: &str) {
     let path = adapters.join(name);
     std::fs::create_dir_all(&path).unwrap();
-    std::fs::write(path.join("adapter.toml"),format!("name = '{name}'\nversion = '0.1.0'\ninterface_versions = [1]\nbinding_schema_version = 1\nentrypoint = {executable:?}\n")).unwrap();
+    // Test fixtures report 0.1.0; real adapters report the crate version.
+    let v = if name == "fixture" {
+        "0.1.0"
+    } else {
+        env!("CARGO_PKG_VERSION")
+    };
+    std::fs::write(path.join("adapter.toml"),format!("name = '{name}'\nversion = '{v}'\ninterface_versions = [1]\nbinding_schema_version = 1\nentrypoint = {executable:?}\n")).unwrap();
 }
 fn delete_engine_build_history(path: &Path) {
     use std::ffi::{CString, c_char, c_void};

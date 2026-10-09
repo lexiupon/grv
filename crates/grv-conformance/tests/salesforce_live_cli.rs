@@ -147,8 +147,8 @@ impl Harness {
         fs::copy(&environment.executable, &binary).unwrap();
         fs::set_permissions(&binary, fs::Permissions::from_mode(0o700)).unwrap();
         fs::write(package.join("adapter.toml"), format!(
-            "name = 'salesforce'\nversion = '0.1.0'\ninterface_versions = [1]\nbinding_schema_version = 1\nentrypoint = {:?}\nentrypoint_sha256 = {:?}\n",
-            binary, grv_types::sha256(&fs::read(&binary).unwrap()).as_str())).unwrap();
+            "name = 'salesforce'\nversion = {:?}\ninterface_versions = [1]\nbinding_schema_version = 1\nentrypoint = {:?}\nentrypoint_sha256 = {:?}\n",
+            env!("CARGO_PKG_VERSION"), binary, grv_types::sha256(&fs::read(&binary).unwrap()).as_str())).unwrap();
         let root = temp.path().join("grv");
         let state = temp.path().join("state");
         assert_eq!(

@@ -1,5 +1,5 @@
 name = "salesforce"
-version = "0.1.0"
+version = "0.2.0"
 interface_versions = [1]
 binding_schema_version = 1
 entrypoint = "grv-adapter-salesforce"

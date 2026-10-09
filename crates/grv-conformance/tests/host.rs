@@ -549,3 +549,87 @@ fn extraction_checkpoint_credited_rows_empty_completion_and_bounded_sink() {
     assert_eq!(tables.len(), 2);
     s.close().unwrap();
 }
+
+mod bundled_trust {
+    use super::*;
+    use grv_adapter_host::discovery::{Trust, trusted, trusted_with};
+    use std::{
+        fs,
+        os::unix::fs::{MetadataExt, PermissionsExt},
+        process::Command,
+    };
+
+    fn mode(path: &Path, mode: u32) {
+        fs::set_permissions(path, fs::Permissions::from_mode(mode)).unwrap();
+    }
+    /// `<temp>/prefix/lib/grv/adapters/demo/bin`, like a Homebrew prefix.
+    fn layout() -> (tempfile::TempDir, PathBuf, PathBuf) {
+        let temp = protected();
+        let root = temp.path().join("prefix/lib/grv/adapters");
+        let bin = root.join("demo/bin");
+        fs::create_dir_all(&bin).unwrap();
+        fs::write(bin.join("tool"), "x").unwrap();
+        (temp, root, bin.join("tool"))
+    }
+    /// Make `path` group-owned by macOS `admin` (gid 80); false if not allowed.
+    fn admin_group(path: &Path) -> bool {
+        cfg!(target_os = "macos")
+            && Command::new("chgrp")
+                .arg("admin")
+                .arg(path)
+                .status()
+                .is_ok_and(|s| s.success())
+    }
+    fn me() -> u32 {
+        unsafe { libc::geteuid() }
+    }
+
+    #[test]
+    fn world_writable_is_refused_even_above_the_bundled_root() {
+        let (temp, root, tool) = layout();
+        let prefix = temp.path().join("prefix");
+        mode(&prefix, 0o777);
+        let trust = Trust::bundled_at(&root, me()).unwrap();
+        assert!(trusted_with(&tool, None, &trust).is_err());
+        mode(&prefix, 0o755);
+        assert!(trusted_with(&tool, None, &trust).is_ok());
+    }
+
+    #[test]
+    fn admin_group_write_is_allowed_only_above_the_bundled_root() {
+        let (temp, root, tool) = layout();
+        let lib = temp.path().join("prefix/lib");
+        if !admin_group(&lib) || !admin_group(&root) || !admin_group(&root.join("demo")) {
+            eprintln!("skipped: cannot assign the macOS admin group here");
+            return;
+        }
+        mode(&lib, 0o775);
+        let trust = Trust::bundled_at(&root, me()).unwrap();
+        // Default policy refuses Homebrew-style admin-writable prefixes.
+        assert!(trusted(&tool, None).is_err());
+        assert!(trusted_with(&tool, None, &trust).is_ok());
+        // The bundled root itself and anything inside it stay owner-only.
+        mode(&root, 0o775);
+        assert!(trusted_with(&tool, None, &trust).is_err());
+        mode(&root, 0o755);
+        mode(&root.join("demo"), 0o775);
+        assert!(trusted_with(&tool, None, &trust).is_err());
+        mode(&root.join("demo"), 0o755);
+        // A policy for another root does not extend to this one.
+        let other = Trust::bundled_at(temp.path(), me()).unwrap();
+        assert!(trusted_with(&tool, None, &other).is_err());
+    }
+
+    #[test]
+    fn group_write_by_a_non_admin_group_is_refused() {
+        let (temp, root, tool) = layout();
+        let lib = temp.path().join("prefix/lib");
+        let gid = fs::metadata(&lib).unwrap().gid();
+        if gid == 80 {
+            return;
+        }
+        mode(&lib, 0o775);
+        let trust = Trust::bundled_at(&root, me()).unwrap();
+        assert!(trusted_with(&tool, None, &trust).is_err());
+    }
+}

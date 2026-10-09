@@ -97,7 +97,7 @@ fn salesforce_capture_publication_and_source_free_replay(transport: &str) {
         &package.join("curl"),
         if transport == "bulk" { BULK } else { REST },
     );
-    std::fs::write(package.join("adapter.toml"),format!("name = 'salesforce'\nversion = '0.1.0'\ninterface_versions = [1]\nbinding_schema_version = 1\nentrypoint = {:?}\n",entry)).unwrap();
+    std::fs::write(package.join("adapter.toml"),format!("name = 'salesforce'\nversion = {:?}\ninterface_versions = [1]\nbinding_schema_version = 1\nentrypoint = {:?}\n",env!("CARGO_PKG_VERSION"),entry)).unwrap();
     let installations = discovery::discover(&[SearchRoot {
         path: temp.path().join("adapters"),
         kind: RootKind::User,
@@ -508,7 +508,7 @@ fn later_page_failure_preserves_snapshot(
             .unwrap()
     );
     write_script(&package.join("curl"), &curl);
-    std::fs::write(package.join("adapter.toml"), format!("name='salesforce'\nversion='0.1.0'\ninterface_versions=[1]\nbinding_schema_version=1\nentrypoint={entry:?}\n")).unwrap();
+    std::fs::write(package.join("adapter.toml"), format!("name='salesforce'\nversion={:?}\ninterface_versions=[1]\nbinding_schema_version=1\nentrypoint={entry:?}\n", env!("CARGO_PKG_VERSION"))).unwrap();
     let installations = discovery::discover(&[SearchRoot {
         path: temp.join("adapters"),
         kind: RootKind::User,

@@ -63,10 +63,15 @@ brew install lexiupon/tap/grv
 grv --version
 ```
 
-The Homebrew package builds the `grv` CLI from source. It includes all store
-commands (on local, S3 and GCS roots) and the AI agent skill. The DuckDB and
-Salesforce adapters that `push` and `pull` need are not packaged yet; build
-them with [docs/building.md](docs/building.md).
+On Apple silicon Macs this installs the `grv` CLI, the DuckDB and Salesforce
+adapters that `push` and `pull` use, and the AI agent skill. The CLI builds
+from source; the adapters (with DuckDB's pinned native library and signed
+extensions) come prebuilt from the GitHub release. `grv adapter list` shows
+them. On other platforms Homebrew installs the CLI only; build adapters with
+[docs/building.md](docs/building.md).
+
+Adapters you install yourself (`grv adapter install`) go into
+`~/.config/grv/adapters` and take precedence over the Homebrew ones.
 
 ### From source
 

@@ -53,7 +53,7 @@ fn native_process_core_build_preparation_acceptance_credited_empty_export_public
     fs::set_permissions(temp.path(), fs::Permissions::from_mode(0o700)).unwrap();
     let package = temp.path().join("adapters/duckdb");
     fs::create_dir_all(&package).unwrap();
-    fs::write(package.join("adapter.toml"),format!("name='duckdb'\nversion='0.1.0'\ninterface_versions=[1]\nbinding_schema_version=1\nentrypoint={:?}\n",env!("CARGO_BIN_EXE_fixture-duckdb-build"))).unwrap();
+    fs::write(package.join("adapter.toml"),format!("name='duckdb'\nversion={:?}\ninterface_versions=[1]\nbinding_schema_version=1\nentrypoint={:?}\n",env!("CARGO_PKG_VERSION"),env!("CARGO_BIN_EXE_fixture-duckdb-build"))).unwrap();
     let installs = discovery::discover(&[SearchRoot {
         path: temp.path().join("adapters"),
         kind: RootKind::User,

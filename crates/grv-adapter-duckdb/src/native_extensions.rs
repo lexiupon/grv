@@ -26,7 +26,8 @@ impl Extensions {
             .parent()
             .ok_or_else(|| io::Error::other("executable directory unavailable"))?
             .join("extensions");
-        let source = if packaged.exists() {
+        let is_packaged = packaged.exists();
+        let source = if is_packaged {
             packaged
         } else {
             PathBuf::from(
@@ -35,6 +36,13 @@ impl Extensions {
             )
         };
         let source = fs::canonicalize(source)?;
+        // Packaged extensions live inside the adapter package; the directory
+        // holding the packages is the bundled root (e.g. Homebrew's
+        // `lib/grv/adapters`). See `check_packaged_ancestors`.
+        let package_owner = fs::metadata(fs::canonicalize(std::env::current_exe()?)?)?.uid();
+        let bundled_root = is_packaged
+            .then(|| source.parent()?.parent()?.parent().map(Path::to_path_buf))
+            .flatten();
         let platform = match (std::env::consts::OS, std::env::consts::ARCH) {
             ("macos", "aarch64") => "osx_arm64",
             ("macos", "x86_64") => "osx_amd64",
@@ -65,7 +73,10 @@ impl Extensions {
                 .find(|a| a["platform"] == platform && a["name"] == *name)
                 .ok_or_else(|| io::Error::other("pinned extension artifact unavailable"))?;
             let path = source.join(format!("{name}.duckdb_extension"));
-            crate::lock::check_ancestors(&path)?;
+            match &bundled_root {
+                Some(root) => check_packaged_ancestors(&path, root, package_owner)?,
+                None => crate::lock::check_ancestors(&path)?,
+            }
             let mut input = OpenOptions::new()
                 .read(true)
                 .custom_flags(libc::O_NOFOLLOW | libc::O_CLOEXEC)
@@ -73,7 +84,8 @@ impl Extensions {
             let before = input.metadata()?;
             if !before.is_file()
                 || before.nlink() != 1
-                || before.uid() != unsafe { libc::geteuid() }
+                || (before.uid() != unsafe { libc::geteuid() }
+                    && !(bundled_root.is_some() && before.uid() == package_owner))
                 || before.mode() & 0o022 != 0
                 || Some(before.len()) != artifact["bytes"].as_u64()
             {
@@ -125,3 +137,72 @@ impl Extensions {
     }
 }
 use std::os::unix::fs::DirBuilderExt;
+
+/// Ancestor policy for extensions shipped inside the adapter package, matching
+/// the host's bundled-adapter trust: owners may be root, the caller, or the
+/// owner of this adapter executable. On macOS, directories strictly above the
+/// bundled root may be writable by the `admin` group (gid 80), as Homebrew's
+/// prefix is. Nothing may be world-writable.
+fn check_packaged_ancestors(path: &Path, root: &Path, owner: u32) -> io::Result<()> {
+    const MACOS_ADMIN_GID: u32 = 80;
+    let uid = unsafe { libc::geteuid() };
+    for ancestor in path.ancestors().skip(1) {
+        let m = fs::metadata(ancestor)?;
+        let owner_ok = m.uid() == 0 || m.uid() == uid || m.uid() == owner;
+        let group_ok = m.mode() & 0o020 == 0
+            || (cfg!(target_os = "macos")
+                && m.gid() == MACOS_ADMIN_GID
+                && ancestor != root
+                && root.starts_with(ancestor));
+        if !m.is_dir() || !owner_ok || m.mode() & 0o002 != 0 || !group_ok {
+            return Err(io::Error::other("untrusted packaged extension ancestor"));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::check_packaged_ancestors;
+    use std::{fs, os::unix::fs::PermissionsExt, path::Path, process::Command};
+
+    fn mode(path: &Path, mode: u32) {
+        fs::set_permissions(path, fs::Permissions::from_mode(mode)).unwrap();
+    }
+
+    #[test]
+    fn packaged_ancestors_allow_admin_write_only_above_the_bundled_root() {
+        let temp = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).unwrap();
+        let root = temp.path().join("lib/grv/adapters");
+        let ext = root.join("duckdb/bin/extensions");
+        fs::create_dir_all(&ext).unwrap();
+        let file = ext.join("aws.duckdb_extension");
+        fs::write(&file, "x").unwrap();
+        let me = unsafe { libc::geteuid() };
+        assert!(check_packaged_ancestors(&file, &root, me).is_ok());
+
+        let lib = temp.path().join("lib");
+        mode(&lib, 0o777);
+        assert!(check_packaged_ancestors(&file, &root, me).is_err());
+        mode(&lib, 0o775);
+        let admin = cfg!(target_os = "macos")
+            && [&lib, &root, &ext].iter().all(|p| {
+                Command::new("chgrp")
+                    .arg("admin")
+                    .arg(p)
+                    .status()
+                    .is_ok_and(|s| s.success())
+            });
+        if !admin {
+            // Group write by an ordinary group is never accepted.
+            assert!(check_packaged_ancestors(&file, &root, me).is_err());
+            return;
+        }
+        assert!(check_packaged_ancestors(&file, &root, me).is_ok());
+        mode(&ext, 0o775);
+        assert!(check_packaged_ancestors(&file, &root, me).is_err());
+        mode(&ext, 0o755);
+        mode(&root, 0o775);
+        assert!(check_packaged_ancestors(&file, &root, me).is_err());
+    }
+}

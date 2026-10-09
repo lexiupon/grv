@@ -699,7 +699,7 @@ dependencies = [
 
 [[package]]
 name = "grv"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "grv-adapter-api",
  "grv-adapter-host",
@@ -724,7 +724,7 @@ dependencies = [
 
 [[package]]
 name = "grv-adapter-duckdb"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "arrow-array",
  "arrow-ipc",
@@ -745,7 +745,7 @@ dependencies = [
 
 [[package]]
 name = "grv-adapter-host"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64 0.22.1",
  "flate2",
@@ -764,7 +764,7 @@ dependencies = [
 
 [[package]]
 name = "grv-adapter-salesforce"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "arrow-array",
  "arrow-ipc",
@@ -786,7 +786,7 @@ dependencies = [
 
 [[package]]
 name = "grv-adapter-sdk"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64 0.22.1",
  "grv-adapter-api",
@@ -799,7 +799,7 @@ dependencies = [
 
 [[package]]
 name = "grv-adapter-wire"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "arrow-array",
  "arrow-buffer",
@@ -818,7 +818,7 @@ dependencies = [
 
 [[package]]
 name = "grv-conformance"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "arrow-array",
  "arrow-ipc",
@@ -844,7 +844,7 @@ dependencies = [
 
 [[package]]
 name = "grv-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "arrow-array",
  "arrow-ipc",
@@ -871,7 +871,7 @@ dependencies = [
 
 [[package]]
 name = "grv-storage"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "bytes",

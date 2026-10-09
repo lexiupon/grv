@@ -9,10 +9,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RootKind {
     User,
     System,
+    /// Adapters shipped beside the running `grv`, e.g. by Homebrew at
+    /// `<prefix>/lib/grv/adapters`. See [`Trust::bundled`].
+    Bundled,
 }
 #[derive(Debug, Clone)]
 pub struct SearchRoot {
@@ -25,6 +28,68 @@ pub struct Installation {
     pub manifest_path: PathBuf,
     pub directory: PathBuf,
     pub executable: PathBuf,
+    trust: Trust,
+}
+
+/// Ownership and permission policy for an adapter path and its ancestors.
+///
+/// The default policy accepts only root- or caller-owned paths that are not
+/// group- or world-writable. The bundled policy relaxes exactly two things,
+/// and only for adapters shipped beside the running `grv` binary:
+///
+/// - Paths may also be owned by the owner of the running `grv` binary. Whoever
+///   can replace that binary already controls everything `grv` does.
+/// - On macOS, ancestors strictly above the bundled root may be writable by
+///   the `admin` group (gid 80), as Homebrew's prefix is. Admin members can
+///   already become root. The adapter tree itself stays owner-only, and
+///   world-writable paths are always refused.
+#[derive(Debug, Clone, Default)]
+pub struct Trust {
+    owner: Option<u32>,
+    admin_writable_above: Option<PathBuf>,
+}
+impl Trust {
+    pub fn bundled(root: &Path) -> Result<Self> {
+        let exe = fs::canonicalize(std::env::current_exe()?)?;
+        Self::bundled_at(root, fs::metadata(exe)?.uid())
+    }
+    /// The bundled policy for `root` with an explicit package owner.
+    pub fn bundled_at(root: &Path, owner: u32) -> Result<Self> {
+        Ok(Self {
+            owner: Some(owner),
+            admin_writable_above: Some(fs::canonicalize(root)?),
+        })
+    }
+    fn for_root(root: &SearchRoot) -> Result<Self> {
+        match root.kind {
+            RootKind::Bundled => Self::bundled(&root.path),
+            _ => Ok(Self::default()),
+        }
+    }
+    fn owner_ok(&self, uid: u32) -> bool {
+        uid == 0 || uid == unsafe { libc::geteuid() } || self.owner == Some(uid)
+    }
+    fn mode_ok(&self, part: &Path, m: &Metadata) -> bool {
+        if m.mode() & 0o002 != 0 {
+            return false;
+        }
+        if m.mode() & 0o020 == 0 {
+            return true;
+        }
+        cfg!(target_os = "macos")
+            && m.gid() == MACOS_ADMIN_GID
+            && self
+                .admin_writable_above
+                .as_deref()
+                .is_some_and(|root| root != part && root.starts_with(part))
+    }
+}
+const MACOS_ADMIN_GID: u32 = 80;
+
+/// The bundled adapter root for a `grv` executable at `<prefix>/bin/grv`.
+pub fn bundled_root() -> Option<PathBuf> {
+    let exe = fs::canonicalize(std::env::current_exe().ok()?).ok()?;
+    Some(exe.parent()?.parent()?.join("lib/grv/adapters"))
 }
 pub fn search_roots(system: Option<PathBuf>) -> Result<Vec<SearchRoot>> {
     if let Some(path) = std::env::var_os("GRV_ADAPTERS_DIR") {
@@ -52,6 +117,12 @@ pub fn search_roots(system: Option<PathBuf>) -> Result<Vec<SearchRoot>> {
             kind: RootKind::System,
         });
     }
+    if let Some(path) = bundled_root() {
+        roots.push(SearchRoot {
+            path,
+            kind: RootKind::Bundled,
+        });
+    }
     Ok(roots)
 }
 fn absolute(p: PathBuf) -> Result<PathBuf> {
@@ -62,12 +133,14 @@ fn absolute(p: PathBuf) -> Result<PathBuf> {
     }
 }
 pub fn trusted(path: &Path, required_owner: Option<u32>) -> Result<PathBuf> {
+    trusted_with(path, required_owner, &Trust::default())
+}
+pub fn trusted_with(path: &Path, required_owner: Option<u32>, trust: &Trust) -> Result<PathBuf> {
     let canonical = fs::canonicalize(path)?;
-    let uid = unsafe { libc::geteuid() };
     for (i, part) in canonical.ancestors().enumerate() {
         let m = fs::metadata(part)?;
-        if (m.uid() != 0 && m.uid() != uid)
-            || m.mode() & 0o022 != 0
+        if !trust.owner_ok(m.uid())
+            || !trust.mode_ok(part, &m)
             || (i == 0 && required_owner.is_some_and(|u| m.uid() != u))
         {
             return Err(Error::new(
@@ -79,18 +152,25 @@ pub fn trusted(path: &Path, required_owner: Option<u32>) -> Result<PathBuf> {
     Ok(canonical)
 }
 pub fn read_installation(directory: &Path, kind: RootKind) -> Result<Installation> {
-    let owner = match kind {
-        RootKind::User => unsafe { libc::geteuid() },
-        RootKind::System => 0,
+    let root = SearchRoot {
+        path: directory.parent().unwrap_or(directory).to_owned(),
+        kind,
     };
-    let resolved_dir = trusted(directory, Some(owner))?;
+    let trust = Trust::for_root(&root)?;
+    let owner = match kind {
+        RootKind::User => Some(unsafe { libc::geteuid() }),
+        RootKind::System => Some(0),
+        // Checked by `Trust::owner_ok` for every path component.
+        RootKind::Bundled => None,
+    };
+    let resolved_dir = trusted_with(directory, owner, &trust)?;
     if !fs::metadata(&resolved_dir)?.is_dir() {
         return Err(Error::new(
             ErrorCode::AdapterFailure,
             "adapter directory is not a directory",
         ));
     }
-    let manifest_path = trusted(&resolved_dir.join("adapter.toml"), Some(owner))?;
+    let manifest_path = trusted_with(&resolved_dir.join("adapter.toml"), owner, &trust)?;
     let metadata = fs::metadata(&manifest_path)?;
     if !metadata.is_file() || metadata.len() > 1024 * 1024 {
         return Err(Error::new(
@@ -115,7 +195,7 @@ pub fn read_installation(directory: &Path, kind: RootKind) -> Result<Installatio
     } else {
         resolved_dir.join(path)
     };
-    let executable = trusted(&executable, None)?;
+    let executable = trusted_with(&executable, None, &trust)?;
     let m = fs::metadata(&executable)?;
     if !m.is_file() || m.mode() & 0o111 == 0 {
         return Err(Error::new(
@@ -128,6 +208,7 @@ pub fn read_installation(directory: &Path, kind: RootKind) -> Result<Installatio
         manifest_path,
         directory: resolved_dir,
         executable,
+        trust,
     })
 }
 pub fn discover(roots: &[SearchRoot]) -> Result<Vec<Installation>> {
@@ -136,7 +217,7 @@ pub fn discover(roots: &[SearchRoot]) -> Result<Vec<Installation>> {
         if !root.path.exists() {
             continue;
         }
-        trusted(&root.path, None)?;
+        trusted_with(&root.path, None, &Trust::for_root(root)?)?;
         let mut dirs: Vec<_> = fs::read_dir(&root.path)?.collect::<std::io::Result<Vec<_>>>()?;
         dirs.sort_by_key(|e| e.file_name());
         for entry in dirs {
@@ -165,7 +246,7 @@ impl Installation {
         }
     }
     pub(crate) fn verified_executable(&self) -> Result<(File, Metadata)> {
-        trusted(&self.executable, None)?;
+        trusted_with(&self.executable, None, &self.trust)?;
         let mut f = File::open(&self.executable)?;
         let metadata = f.metadata()?;
         if !metadata.is_file() || metadata.mode() & 0o111 == 0 {

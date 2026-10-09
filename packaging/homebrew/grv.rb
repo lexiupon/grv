@@ -21,7 +21,7 @@ class Grv < Formula
 
   def install
     system "cargo", "install", *std_cargo_args(path: "crates/grv")
-    return unless OS.mac? && Hardware::CPU.arm?
+    return if !OS.mac? || !Hardware::CPU.arm?
 
     # grv discovers adapters at <prefix>/lib/grv/adapters next to bin/grv.
     resource("adapters").stage do

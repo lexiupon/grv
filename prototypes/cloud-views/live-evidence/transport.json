@@ -1,0 +1,37 @@
+{
+  "status": "passed",
+  "transport": "real-gcs-json-api",
+  "project": "entit-finance-prod",
+  "bucket": "grv-view-probe-cbd6142146e5436e90558e19",
+  "checks": {
+    "special_key_roundtrip": true,
+    "full_sha256": true,
+    "generation_string": true,
+    "invalid_credentials_refused": true,
+    "retained_generation_read_after_overwrite": true,
+    "deleted_pinned_generation_refused": true,
+    "encoding_change_after_pin_refused": true,
+    "restored_identity_range": true,
+    "requester_pays_enabled_explicit_project_passed": true,
+    "absent_project_request_refused_for_selected_principal": false,
+    "conflicting_generation_precondition_refused": true,
+    "full_hash_and_magic_requests": 8,
+    "full_hash_and_magic_accepted_media_bytes": 287560
+  },
+  "timestamp": "2026-10-10T17:35:33.657157+00:00",
+  "limitations": [
+    "Same available reader/provisioning principal; independent least-privilege identity not tested.",
+    "Billing attribution is not established by response behavior."
+  ],
+  "observed_header_range": {
+    "status": 206,
+    "content_length": "4",
+    "content_range": "bytes 0-3/287548",
+    "content_encoding": null,
+    "generation_header_present": true,
+    "generation_matches": true
+  },
+  "fixture_size": 287548,
+  "fixture_data": "synthetic ids and deterministic text only",
+  "scope": "HTTP transport only; not a DuckDB scan"
+}

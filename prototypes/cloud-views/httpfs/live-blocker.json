@@ -1,0 +1,10 @@
+{
+  "http_status": 412,
+  "constraints": ["constraints/iam.disableServiceAccountKeyCreation"],
+  "key_created": false,
+  "project": "entit-finance-prod",
+  "status": "blocked",
+  "authentication": "GCS interoperability HMAC",
+  "management_account": "jiacao@on.sinch.com",
+  "no_policy_bypass": true
+}

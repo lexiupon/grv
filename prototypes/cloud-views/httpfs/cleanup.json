@@ -1,0 +1,12 @@
+{
+  "bucket": "grv-httpfs-probe-d0bc1322c06f4033bd90",
+  "service_account": "grv-hmac-d0bc1322c06f4033bd90@entit-finance-prod.iam.gserviceaccount.com",
+  "bucket_scoped_grant_removed": true,
+  "bucket_empty_before_delete": true,
+  "bucket_absence_404": true,
+  "service_account_absent": true,
+  "owned_hmac_inventory_empty": true,
+  "hmac_created": false,
+  "organization_policy_changed": false,
+  "project_iam_grant_created": false
+}

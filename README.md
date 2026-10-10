@@ -183,6 +183,9 @@ The complete command reference is in the
 
 Settings for cloud storage (single-PUT mode, buffer limits, timeouts and
 credentials) are in [docs/cloud-storage.md](docs/cloud-storage.md).
+A [draft cloud-view and DuckDB pushdown RFC](spec/grv-cloud-views-pushdown-v1-rfc.md)
+and [experimental prototypes](prototypes/cloud-views/README.md) explore GCS
+views and measured S3/GCS scan pruning; they do not add an advertised capability.
 
 ### Environment variables
 

@@ -1,0 +1,718 @@
+{
+  "extension_verified": true,
+  "stock_httpfs": true,
+  "live": false,
+  "trials": [
+    {
+      "trial": "wide",
+      "engine": "v1.5.6",
+      "mode": "TEST",
+      "correct": true,
+      "rows": 65536,
+      "plan": "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502__internal_decompress_integ\u2502\n\u2502     ral_bigint(#0, 0)     \u2502\n\u2502             #1            \u2502\n\u2502             #2            \u2502\n\u2502             #3            \u2502\n\u2502             #4            \u2502\n\u2502                           \u2502\n\u2502          ~0 rows          \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502          ORDER_BY         \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502  memory.main.cloud.id ASC \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502__internal_compress_integra\u2502\n\u2502     l_usmallint(#0, 0)    \u2502\n\u2502             #1            \u2502\n\u2502             #2            \u2502\n\u2502             #3            \u2502\n\u2502             #4            \u2502\n\u2502                           \u2502\n\u2502        ~65,536 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502           UNION           \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518              \u2502\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502             id            \u2502\u2502         Function:         \u2502\n\u2502           amount          \u2502\u2502        READ_PARQUET       \u2502\n\u2502             ts            \u2502\u2502                           \u2502\n\u2502          payload          \u2502\u2502        Projections:       \u2502\n\u2502           extra           \u2502\u2502             id            \u2502\n\u2502                           \u2502\u2502           amount          \u2502\n\u2502                           \u2502\u2502             ts            \u2502\n\u2502                           \u2502\u2502          payload          \u2502\n\u2502                           \u2502\u2502           extra           \u2502\n\u2502                           \u2502\u2502                           \u2502\n\u2502        ~32,768 rows       \u2502\u2502        ~32,768 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502         Function:         \u2502\n\u2502        READ_PARQUET       \u2502\n\u2502                           \u2502\n\u2502        Projections:       \u2502\n\u2502             id            \u2502\n\u2502           amount          \u2502\n\u2502             ts            \u2502\n\u2502          payload          \u2502\n\u2502                           \u2502\n\u2502        ~32,768 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n",
+      "native_http": {
+        "source": "stock_httpfs_http_state",
+        "byte_semantics": "HTTP body bytes, not wire/header/TLS bytes",
+        "capture": "pending result ready, before fetch and QueryEnd reset",
+        "view_binding": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "query": {
+          "requests": 20,
+          "head": 2,
+          "get": 18,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 18655696,
+          "bytes_sent": 0
+        },
+        "explain": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "measured_total": {
+          "requests": 28,
+          "head": 6,
+          "get": 22,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 18721232,
+          "bytes_sent": 0
+        }
+      },
+      "nonallowlisted_rejected": 1,
+      "glob_rejected": 1,
+      "nested_nonallowlisted_rejected": 1,
+      "mock": {
+        "requests": 28,
+        "body_bytes": 18721232,
+        "all_signatures_valid": true,
+        "requester_pays_requests": 0,
+        "unrecognized": 0,
+        "methods": {
+          "HEAD": 6,
+          "GET": 22
+        }
+      },
+      "native_http_mock_validated": true
+    },
+    {
+      "trial": "narrow",
+      "engine": "v1.5.6",
+      "mode": "TEST",
+      "correct": true,
+      "rows": 65536,
+      "plan": "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502__internal_decompress_integ\u2502\n\u2502     ral_bigint(#0, 0)     \u2502\n\u2502             #1            \u2502\n\u2502                           \u2502\n\u2502          ~0 rows          \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502          ORDER_BY         \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502  memory.main.cloud.id ASC \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502__internal_compress_integra\u2502\n\u2502     l_usmallint(#0, 0)    \u2502\n\u2502             #1            \u2502\n\u2502                           \u2502\n\u2502        ~65,536 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502           UNION           \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518              \u2502\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502             id            \u2502\u2502         Function:         \u2502\n\u2502           extra           \u2502\u2502        READ_PARQUET       \u2502\n\u2502                           \u2502\u2502                           \u2502\n\u2502                           \u2502\u2502        Projections:       \u2502\n\u2502                           \u2502\u2502             id            \u2502\n\u2502                           \u2502\u2502           extra           \u2502\n\u2502                           \u2502\u2502                           \u2502\n\u2502        ~32,768 rows       \u2502\u2502        ~32,768 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502         Function:         \u2502\n\u2502        READ_PARQUET       \u2502\n\u2502                           \u2502\n\u2502      Projections: id      \u2502\n\u2502                           \u2502\n\u2502        ~32,768 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n",
+      "native_http": {
+        "source": "stock_httpfs_http_state",
+        "byte_semantics": "HTTP body bytes, not wire/header/TLS bytes",
+        "capture": "pending result ready, before fetch and QueryEnd reset",
+        "view_binding": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "query": {
+          "requests": 28,
+          "head": 2,
+          "get": 26,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 566336,
+          "bytes_sent": 0
+        },
+        "explain": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "measured_total": {
+          "requests": 36,
+          "head": 6,
+          "get": 30,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 631872,
+          "bytes_sent": 0
+        }
+      },
+      "nonallowlisted_rejected": 1,
+      "glob_rejected": 1,
+      "nested_nonallowlisted_rejected": 1,
+      "mock": {
+        "requests": 36,
+        "body_bytes": 631872,
+        "all_signatures_valid": true,
+        "requester_pays_requests": 0,
+        "unrecognized": 0,
+        "methods": {
+          "HEAD": 6,
+          "GET": 30
+        }
+      },
+      "native_http_mock_validated": true
+    },
+    {
+      "trial": "selective",
+      "engine": "v1.5.6",
+      "mode": "TEST",
+      "correct": true,
+      "rows": 16,
+      "plan": "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502          ORDER_BY         \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502  memory.main.cloud.id ASC \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502           UNION           \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518              \u2502\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\u2502        EMPTY_RESULT       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\u2502                           \u2502\n\u2502             id            \u2502\u2502                           \u2502\n\u2502           extra           \u2502\u2502                           \u2502\n\u2502                           \u2502\u2502                           \u2502\n\u2502        ~6,553 rows        \u2502\u2502                           \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502         Function:         \u2502\n\u2502        READ_PARQUET       \u2502\n\u2502                           \u2502\n\u2502      Projections: id      \u2502\n\u2502                           \u2502\n\u2502          Filters:         \u2502\n\u2502    id>=4096 AND id<4112   \u2502\n\u2502                           \u2502\n\u2502        ~6,553 rows        \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n",
+      "native_http": {
+        "source": "stock_httpfs_http_state",
+        "byte_semantics": "HTTP body bytes, not wire/header/TLS bytes",
+        "capture": "pending result ready, before fetch and QueryEnd reset",
+        "view_binding": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "query": {
+          "requests": 5,
+          "head": 2,
+          "get": 3,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 65565,
+          "bytes_sent": 0
+        },
+        "explain": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "measured_total": {
+          "requests": 13,
+          "head": 6,
+          "get": 7,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 131101,
+          "bytes_sent": 0
+        }
+      },
+      "nonallowlisted_rejected": 1,
+      "glob_rejected": 1,
+      "nested_nonallowlisted_rejected": 1,
+      "mock": {
+        "requests": 13,
+        "body_bytes": 131101,
+        "all_signatures_valid": true,
+        "requester_pays_requests": 0,
+        "unrecognized": 0,
+        "methods": {
+          "HEAD": 6,
+          "GET": 7
+        }
+      },
+      "native_http_mock_validated": true
+    },
+    {
+      "trial": "selective-wide",
+      "engine": "v1.5.6",
+      "mode": "TEST",
+      "correct": true,
+      "rows": 16,
+      "plan": "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502          ORDER_BY         \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502  memory.main.cloud.id ASC \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502           UNION           \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518              \u2502\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\u2502        EMPTY_RESULT       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\u2502                           \u2502\n\u2502             id            \u2502\u2502                           \u2502\n\u2502           amount          \u2502\u2502                           \u2502\n\u2502             ts            \u2502\u2502                           \u2502\n\u2502          payload          \u2502\u2502                           \u2502\n\u2502           extra           \u2502\u2502                           \u2502\n\u2502                           \u2502\u2502                           \u2502\n\u2502        ~6,553 rows        \u2502\u2502                           \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502         Function:         \u2502\n\u2502        READ_PARQUET       \u2502\n\u2502                           \u2502\n\u2502        Projections:       \u2502\n\u2502             id            \u2502\n\u2502           amount          \u2502\n\u2502             ts            \u2502\n\u2502          payload          \u2502\n\u2502                           \u2502\n\u2502          Filters:         \u2502\n\u2502    id>=4096 AND id<4112   \u2502\n\u2502                           \u2502\n\u2502        ~6,553 rows        \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n",
+      "native_http": {
+        "source": "stock_httpfs_http_state",
+        "byte_semantics": "HTTP body bytes, not wire/header/TLS bytes",
+        "capture": "pending result ready, before fetch and QueryEnd reset",
+        "view_binding": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "query": {
+          "requests": 6,
+          "head": 2,
+          "get": 4,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 1196150,
+          "bytes_sent": 0
+        },
+        "explain": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "measured_total": {
+          "requests": 14,
+          "head": 6,
+          "get": 8,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 1261686,
+          "bytes_sent": 0
+        }
+      },
+      "nonallowlisted_rejected": 1,
+      "glob_rejected": 1,
+      "nested_nonallowlisted_rejected": 1,
+      "mock": {
+        "requests": 14,
+        "body_bytes": 1261686,
+        "all_signatures_valid": true,
+        "requester_pays_requests": 0,
+        "unrecognized": 0,
+        "methods": {
+          "HEAD": 6,
+          "GET": 8
+        }
+      },
+      "native_http_mock_validated": true
+    },
+    {
+      "trial": "null-elimination",
+      "engine": "v1.5.6",
+      "mode": "TEST",
+      "correct": true,
+      "rows": 16384,
+      "plan": "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502__internal_decompress_integ\u2502\n\u2502   ral_bigint(#0, 32768)   \u2502\n\u2502             #1            \u2502\n\u2502             #2            \u2502\n\u2502             #3            \u2502\n\u2502             #4            \u2502\n\u2502                           \u2502\n\u2502          ~0 rows          \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502          ORDER_BY         \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502  memory.main.cloud.id ASC \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502__internal_compress_integra\u2502\n\u2502   l_usmallint(#0, 32768)  \u2502\n\u2502             #1            \u2502\n\u2502             #2            \u2502\n\u2502             #3            \u2502\n\u2502             #4            \u2502\n\u2502                           \u2502\n\u2502        ~6,553 rows        \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502           UNION           \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502         Function:         \u2502\n\u2502        READ_PARQUET       \u2502\n\u2502                           \u2502\n\u2502        Projections:       \u2502\n\u2502             id            \u2502\n\u2502           amount          \u2502\n\u2502             ts            \u2502\n\u2502          payload          \u2502\n\u2502           extra           \u2502\n\u2502                           \u2502\n\u2502          Filters:         \u2502\n\u2502      extra='present'      \u2502\n\u2502                           \u2502\n\u2502        ~6,553 rows        \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n",
+      "native_http": {
+        "source": "stock_httpfs_http_state",
+        "byte_semantics": "HTTP body bytes, not wire/header/TLS bytes",
+        "capture": "pending result ready, before fetch and QueryEnd reset",
+        "view_binding": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "query": {
+          "requests": 20,
+          "head": 2,
+          "get": 18,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 9348640,
+          "bytes_sent": 0
+        },
+        "explain": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "measured_total": {
+          "requests": 28,
+          "head": 6,
+          "get": 22,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 9414176,
+          "bytes_sent": 0
+        }
+      },
+      "nonallowlisted_rejected": 1,
+      "glob_rejected": 1,
+      "nested_nonallowlisted_rejected": 1,
+      "mock": {
+        "requests": 28,
+        "body_bytes": 9414176,
+        "all_signatures_valid": true,
+        "requester_pays_requests": 0,
+        "unrecognized": 0,
+        "methods": {
+          "HEAD": 6,
+          "GET": 22
+        }
+      },
+      "native_http_mock_validated": true
+    },
+    {
+      "trial": "payer",
+      "engine": "v1.5.6",
+      "mode": "TEST",
+      "correct": true,
+      "rows": 65536,
+      "plan": "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502__internal_decompress_integ\u2502\n\u2502     ral_bigint(#0, 0)     \u2502\n\u2502             #1            \u2502\n\u2502             #2            \u2502\n\u2502             #3            \u2502\n\u2502             #4            \u2502\n\u2502                           \u2502\n\u2502          ~0 rows          \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502          ORDER_BY         \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502  memory.main.cloud.id ASC \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502__internal_compress_integra\u2502\n\u2502     l_usmallint(#0, 0)    \u2502\n\u2502             #1            \u2502\n\u2502             #2            \u2502\n\u2502             #3            \u2502\n\u2502             #4            \u2502\n\u2502                           \u2502\n\u2502        ~65,536 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502           UNION           \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518              \u2502\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502             id            \u2502\u2502         Function:         \u2502\n\u2502           amount          \u2502\u2502        READ_PARQUET       \u2502\n\u2502             ts            \u2502\u2502                           \u2502\n\u2502          payload          \u2502\u2502        Projections:       \u2502\n\u2502           extra           \u2502\u2502             id            \u2502\n\u2502                           \u2502\u2502           amount          \u2502\n\u2502                           \u2502\u2502             ts            \u2502\n\u2502                           \u2502\u2502          payload          \u2502\n\u2502                           \u2502\u2502           extra           \u2502\n\u2502                           \u2502\u2502                           \u2502\n\u2502        ~32,768 rows       \u2502\u2502        ~32,768 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502         Function:         \u2502\n\u2502        READ_PARQUET       \u2502\n\u2502                           \u2502\n\u2502        Projections:       \u2502\n\u2502             id            \u2502\n\u2502           amount          \u2502\n\u2502             ts            \u2502\n\u2502          payload          \u2502\n\u2502                           \u2502\n\u2502        ~32,768 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n",
+      "native_http": {
+        "source": "stock_httpfs_http_state",
+        "byte_semantics": "HTTP body bytes, not wire/header/TLS bytes",
+        "capture": "pending result ready, before fetch and QueryEnd reset",
+        "view_binding": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "query": {
+          "requests": 20,
+          "head": 2,
+          "get": 18,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 18655696,
+          "bytes_sent": 0
+        },
+        "explain": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "measured_total": {
+          "requests": 28,
+          "head": 6,
+          "get": 22,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 18721232,
+          "bytes_sent": 0
+        }
+      },
+      "nonallowlisted_rejected": 1,
+      "glob_rejected": 1,
+      "nested_nonallowlisted_rejected": 1,
+      "mock": {
+        "requests": 28,
+        "body_bytes": 18721232,
+        "all_signatures_valid": true,
+        "requester_pays_requests": 28,
+        "unrecognized": 0,
+        "methods": {
+          "HEAD": 6,
+          "GET": 22
+        }
+      },
+      "native_http_mock_validated": true
+    },
+    {
+      "trial": "empty",
+      "engine": "v1.5.6",
+      "mode": "TEST",
+      "correct": true,
+      "rows": 0,
+      "plan": "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502          ORDER_BY         \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502  memory.main.cloud.id ASC \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502         Function:         \u2502\n\u2502        READ_PARQUET       \u2502\n\u2502                           \u2502\n\u2502        Projections:       \u2502\n\u2502             id            \u2502\n\u2502           amount          \u2502\n\u2502             ts            \u2502\n\u2502          payload          \u2502\n\u2502           extra           \u2502\n\u2502                           \u2502\n\u2502          ~0 rows          \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n",
+      "native_http": {
+        "source": "stock_httpfs_http_state",
+        "byte_semantics": "HTTP body bytes, not wire/header/TLS bytes",
+        "capture": "pending result ready, before fetch and QueryEnd reset",
+        "view_binding": {
+          "requests": 2,
+          "head": 1,
+          "get": 1,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 178,
+          "bytes_sent": 0
+        },
+        "query": {
+          "requests": 2,
+          "head": 1,
+          "get": 1,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 178,
+          "bytes_sent": 0
+        },
+        "explain": {
+          "requests": 2,
+          "head": 1,
+          "get": 1,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 178,
+          "bytes_sent": 0
+        },
+        "measured_total": {
+          "requests": 6,
+          "head": 3,
+          "get": 3,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 534,
+          "bytes_sent": 0
+        }
+      },
+      "nonallowlisted_rejected": 1,
+      "glob_rejected": 1,
+      "nested_nonallowlisted_rejected": 1,
+      "mock": {
+        "requests": 6,
+        "body_bytes": 534,
+        "all_signatures_valid": true,
+        "requester_pays_requests": 0,
+        "unrecognized": 0,
+        "methods": {
+          "HEAD": 3,
+          "GET": 3
+        }
+      },
+      "native_http_mock_validated": true
+    },
+    {
+      "trial": "special",
+      "engine": "v1.5.6",
+      "mode": "TEST",
+      "correct": true,
+      "rows": 65536,
+      "plan": "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502__internal_decompress_integ\u2502\n\u2502     ral_bigint(#0, 0)     \u2502\n\u2502             #1            \u2502\n\u2502             #2            \u2502\n\u2502             #3            \u2502\n\u2502             #4            \u2502\n\u2502                           \u2502\n\u2502          ~0 rows          \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502          ORDER_BY         \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502  memory.main.cloud.id ASC \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502__internal_compress_integra\u2502\n\u2502     l_usmallint(#0, 0)    \u2502\n\u2502             #1            \u2502\n\u2502             #2            \u2502\n\u2502             #3            \u2502\n\u2502             #4            \u2502\n\u2502                           \u2502\n\u2502        ~65,536 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502           UNION           \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518              \u2502\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502             id            \u2502\u2502         Function:         \u2502\n\u2502           amount          \u2502\u2502        READ_PARQUET       \u2502\n\u2502             ts            \u2502\u2502                           \u2502\n\u2502          payload          \u2502\u2502        Projections:       \u2502\n\u2502           extra           \u2502\u2502             id            \u2502\n\u2502                           \u2502\u2502           amount          \u2502\n\u2502                           \u2502\u2502             ts            \u2502\n\u2502                           \u2502\u2502          payload          \u2502\n\u2502                           \u2502\u2502           extra           \u2502\n\u2502                           \u2502\u2502                           \u2502\n\u2502        ~32,768 rows       \u2502\u2502        ~32,768 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502         Function:         \u2502\n\u2502        READ_PARQUET       \u2502\n\u2502                           \u2502\n\u2502        Projections:       \u2502\n\u2502             id            \u2502\n\u2502           amount          \u2502\n\u2502             ts            \u2502\n\u2502          payload          \u2502\n\u2502                           \u2502\n\u2502        ~32,768 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n",
+      "native_http": {
+        "source": "stock_httpfs_http_state",
+        "byte_semantics": "HTTP body bytes, not wire/header/TLS bytes",
+        "capture": "pending result ready, before fetch and QueryEnd reset",
+        "view_binding": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "query": {
+          "requests": 20,
+          "head": 2,
+          "get": 18,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 18655696,
+          "bytes_sent": 0
+        },
+        "explain": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "measured_total": {
+          "requests": 28,
+          "head": 6,
+          "get": 22,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 18721232,
+          "bytes_sent": 0
+        }
+      },
+      "nonallowlisted_rejected": 1,
+      "glob_rejected": 1,
+      "nested_nonallowlisted_rejected": 1,
+      "mock": {
+        "requests": 28,
+        "body_bytes": 18721232,
+        "all_signatures_valid": true,
+        "requester_pays_requests": 0,
+        "unrecognized": 0,
+        "methods": {
+          "HEAD": 6,
+          "GET": 22
+        }
+      },
+      "native_http_mock_validated": true
+    },
+    {
+      "trial": "gcs",
+      "engine": "v1.5.6",
+      "mode": "TEST",
+      "correct": true,
+      "rows": 65536,
+      "plan": "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502__internal_decompress_integ\u2502\n\u2502     ral_bigint(#0, 0)     \u2502\n\u2502             #1            \u2502\n\u2502             #2            \u2502\n\u2502             #3            \u2502\n\u2502             #4            \u2502\n\u2502                           \u2502\n\u2502          ~0 rows          \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502          ORDER_BY         \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502  memory.main.cloud.id ASC \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502__internal_compress_integra\u2502\n\u2502     l_usmallint(#0, 0)    \u2502\n\u2502             #1            \u2502\n\u2502             #2            \u2502\n\u2502             #3            \u2502\n\u2502             #4            \u2502\n\u2502                           \u2502\n\u2502        ~65,536 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502           UNION           \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518              \u2502\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502             id            \u2502\u2502         Function:         \u2502\n\u2502           amount          \u2502\u2502        READ_PARQUET       \u2502\n\u2502             ts            \u2502\u2502                           \u2502\n\u2502          payload          \u2502\u2502        Projections:       \u2502\n\u2502           extra           \u2502\u2502             id            \u2502\n\u2502                           \u2502\u2502           amount          \u2502\n\u2502                           \u2502\u2502             ts            \u2502\n\u2502                           \u2502\u2502          payload          \u2502\n\u2502                           \u2502\u2502           extra           \u2502\n\u2502                           \u2502\u2502                           \u2502\n\u2502        ~32,768 rows       \u2502\u2502        ~32,768 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502         Function:         \u2502\n\u2502        READ_PARQUET       \u2502\n\u2502                           \u2502\n\u2502        Projections:       \u2502\n\u2502             id            \u2502\n\u2502           amount          \u2502\n\u2502             ts            \u2502\n\u2502          payload          \u2502\n\u2502                           \u2502\n\u2502        ~32,768 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n",
+      "native_http": {
+        "source": "stock_httpfs_http_state",
+        "byte_semantics": "HTTP body bytes, not wire/header/TLS bytes",
+        "capture": "pending result ready, before fetch and QueryEnd reset",
+        "view_binding": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "query": {
+          "requests": 20,
+          "head": 2,
+          "get": 18,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 18655696,
+          "bytes_sent": 0
+        },
+        "explain": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "measured_total": {
+          "requests": 28,
+          "head": 6,
+          "get": 22,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 18721232,
+          "bytes_sent": 0
+        }
+      },
+      "nonallowlisted_rejected": 1,
+      "glob_rejected": 1,
+      "nested_nonallowlisted_rejected": 1,
+      "mock": {
+        "requests": 28,
+        "body_bytes": 18721232,
+        "all_signatures_valid": true,
+        "requester_pays_requests": 0,
+        "unrecognized": 0,
+        "methods": {
+          "HEAD": 6,
+          "GET": 22
+        }
+      },
+      "native_http_mock_validated": true
+    },
+    {
+      "trial": "no-stats-selective",
+      "engine": "v1.5.6",
+      "mode": "TEST",
+      "correct": true,
+      "rows": 16,
+      "plan": "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502          ORDER_BY         \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502  memory.main.cloud.id ASC \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502           UNION           \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518              \u2502\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502         PROJECTION        \u2502\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502             id            \u2502\u2502         Function:         \u2502\n\u2502           amount          \u2502\u2502        READ_PARQUET       \u2502\n\u2502             ts            \u2502\u2502                           \u2502\n\u2502          payload          \u2502\u2502        Projections:       \u2502\n\u2502           extra           \u2502\u2502             id            \u2502\n\u2502                           \u2502\u2502           amount          \u2502\n\u2502                           \u2502\u2502             ts            \u2502\n\u2502                           \u2502\u2502          payload          \u2502\n\u2502                           \u2502\u2502           extra           \u2502\n\u2502                           \u2502\u2502                           \u2502\n\u2502                           \u2502\u2502          Filters:         \u2502\n\u2502                           \u2502\u2502    id>=4096 AND id<4112   \u2502\n\u2502                           \u2502\u2502                           \u2502\n\u2502        ~6,553 rows        \u2502\u2502        ~6,553 rows        \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502        READ_PARQUET       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502         Function:         \u2502\n\u2502        READ_PARQUET       \u2502\n\u2502                           \u2502\n\u2502        Projections:       \u2502\n\u2502             id            \u2502\n\u2502           amount          \u2502\n\u2502             ts            \u2502\n\u2502          payload          \u2502\n\u2502                           \u2502\n\u2502          Filters:         \u2502\n\u2502    id>=4096 AND id<4112   \u2502\n\u2502                           \u2502\n\u2502        ~6,553 rows        \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n",
+      "native_http": {
+        "source": "stock_httpfs_http_state",
+        "byte_semantics": "HTTP body bytes, not wire/header/TLS bytes",
+        "capture": "pending result ready, before fetch and QueryEnd reset",
+        "view_binding": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "query": {
+          "requests": 21,
+          "head": 2,
+          "get": 19,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 1688105,
+          "bytes_sent": 0
+        },
+        "explain": {
+          "requests": 4,
+          "head": 2,
+          "get": 2,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 32768,
+          "bytes_sent": 0
+        },
+        "measured_total": {
+          "requests": 29,
+          "head": 6,
+          "get": 23,
+          "put": 0,
+          "post": 0,
+          "delete": 0,
+          "bytes_received": 1753641,
+          "bytes_sent": 0
+        }
+      },
+      "nonallowlisted_rejected": 1,
+      "glob_rejected": 1,
+      "nested_nonallowlisted_rejected": 1,
+      "mock": {
+        "requests": 29,
+        "body_bytes": 1753641,
+        "all_signatures_valid": true,
+        "requester_pays_requests": 0,
+        "unrecognized": 0,
+        "methods": {
+          "HEAD": 6,
+          "GET": 23
+        }
+      },
+      "native_http_mock_validated": true
+    },
+    {
+      "trial": "guard",
+      "engine": "v1.5.6",
+      "mode": "TEST",
+      "production_owner_direct_rejected": 1,
+      "production_owner_nested_rejected": 1,
+      "production_owner_glob_rejected": 1,
+      "allowlisted_write_open_succeeded": 0,
+      "mock": {
+        "requests": 0,
+        "body_bytes": 0,
+        "all_signatures_valid": true,
+        "requester_pays_requests": 0,
+        "unrecognized": 0,
+        "methods": {
+          "HEAD": 0,
+          "GET": 0
+        }
+      }
+    }
+  ],
+  "scope": "Pinned stock HTTPFS GCS secret with synthetic HMAC and loopback S3-compatible server; not live GCS",
+  "limitations": [
+    "No real GCS HMAC credential available; live auth/IAM/billing not tested.",
+    "Standalone allowed_paths test is not production GRV guarded scan integration.",
+    "Direct allowlisted write-open attempt was refused; this negative probe does not establish general read-only authority.",
+    "Production owner rejects direct/nested/glob scans by default; approved positive GCS scanner integration remains unimplemented.",
+    "REQUESTER_PAYS emits x-amz-request-payer: requester; Google billing-project support not established.",
+    "Account/project are explicit supplied metadata, not proof of HMAC-associated service-account identity.",
+    "Native HTTPState body/request counters use pinned internal extension layout; loopback totals exactly match server, real GCS TLS/backend metrics not yet exercised.",
+    "Measured totals include view binding and EXPLAIN; native_http.query excludes these phases but includes scan binding."
+  ]
+}

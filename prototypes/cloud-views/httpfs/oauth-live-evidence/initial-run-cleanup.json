@@ -1,0 +1,9 @@
+{
+  "bucket": "grv-httpfs-oauth-b1276cbe6c6746e5aa085b0e",
+  "deleted_object_generations": 7,
+  "all_versions_inventory_empty": true,
+  "bucket_absence_http_status": 404,
+  "iam_changes": false,
+  "key_creation": false,
+  "organization_policy_changes": false
+}

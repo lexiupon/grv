@@ -24,10 +24,15 @@ advertisement. No push, tag or publication is recorded by this checkpoint.
   nested-unlisted/glob denial, source-free reopen replay and empty refresh.
   Bucket/object generation removed; empty all-version inventory and HTTP404
   confirmed. Private evidence: `~/grv-shipping-gcs-27mbgze_`.
-- That live proof predates revision 3 request hook. The rerun refused explicit
-  gcloud token acquisition before bucket creation. No fallback identity used.
-  Reauthentication under the explicitly authorized account is required for
-  subsequent live qualification; credentials/errors were not disclosed.
+- After user reauthentication, revision-3 guarded live pull passed with explicit
+  `jiacao@on.sinch.com` / `entit-finance-prod`, without fallback. Nonempty GCS
+  external self-input preparation also passed: one-row output seeding and private
+  remote view reads, unheld-request rejection, source-free reopen, abort and
+  repeated terminal cleanup, plus injected precommit rollback leaving no durable
+  session. This test supplies confirmed-hold evidence directly; it does not
+  establish actual parent revision-hold creation/release or external execution/
+  publication. Private evidence: `~/grv-shipping-gcs-mcwbxcbc`; owned generation
+  deleted, all-version inventory empty and bucket HTTP404 verified.
 - Revision 3 native proofs: **9/9 passed**, including expiry between requests,
   exact wrong-URL/write rejection and unchanged ordinary-stock control.
 - Native adapter regression: **76 passed**, credential/fixture-dependent tests

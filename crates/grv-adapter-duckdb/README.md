@@ -39,9 +39,11 @@ file-operation and stock-request deadline checks, a computation interrupt
 watchdog, transactional pull/replay and held external-build dispatch. The engine
 request hook changes no signed extension or transport; it removes cached clients
 before stock initialization with remaining-lease timeouts. A deterministic proof
-fences a second request after expiry. An owned live guarded pull passed before
-this request-hook revision; its revision-3 rerun is blocked by selected gcloud
-login/token acquisition. The shipping matrices, full fault/resource/cancellation
+fences a second request after expiry. An owned live guarded pull and nonempty
+GCS external self-input preparation passed on revision 3 after selected-account
+login renewal, including reopen/cleanup and precommit rollback. Actual parent
+revision holds and external invocation/publication remain unqualified. The
+shipping matrices, full fault/resource/cancellation
 qualification and packaging remain pending: `gcs-view` is **not advertised**.
 No token is persisted in the view; ordinary DuckDB users need independent
 short-lived HTTPS HTTP secrets and are not protected by the GRV guard. See the

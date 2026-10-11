@@ -1733,6 +1733,144 @@ mod tests {
         }
     }
     #[test]
+    #[ignore = "requires explicitly authorized GRV_TEST_GCS_URI/size/hash and selected account/project with signed extensions"]
+    fn live_nonempty_gcs_external_self_prepare_reopen_and_cleanup() {
+        let uri = std::env::var("GRV_TEST_GCS_URI").unwrap();
+        let root = uri.rsplit_once('/').unwrap().0.to_owned();
+        let account = std::env::var("GRV_GCS_ACCOUNT").unwrap();
+        let project = std::env::var("GRV_GCS_PROJECT").unwrap();
+        let reader = crate::gcs_config::GcsReader {
+            scope: root.clone(),
+            provider: "gcloud".into(),
+            account,
+            project,
+        };
+        for fail_before_commit in [false, true] {
+            let directory = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).unwrap();
+            let path = directory.path().join("external-gcs.duckdb");
+            let mut fixed = fixed(&path);
+            fixed.identity.root = root.clone();
+            fixed.execution = BuildExecution::External;
+            fixed.self_input = true;
+            fixed.outputs[0].source = json!({"table":"rows"});
+            let mut store = BuildStore::open(
+                &path,
+                root.clone(),
+                Some(fixed.identity.workspace_id.clone()),
+                &Resources::default(),
+            )
+            .unwrap();
+            let discovery = store.discover(fixed.clone()).unwrap();
+            let file = VerifiedFile {
+                table: name("rows"),
+                partition: json!({}),
+                version: U64::new(1).unwrap(),
+                schema: FileSchema {
+                    columns: fixed.outputs[0].contract.columns.clone(),
+                },
+                access: FileAccess::GcsView,
+                location: uri.clone(),
+                size: std::env::var("GRV_TEST_GCS_SIZE").unwrap().parse().unwrap(),
+                sha256: Digest::new(std::env::var("GRV_TEST_GCS_SHA256").unwrap()).unwrap(),
+                validator: "owned-generation".into(),
+            };
+            let preparation = PrepareBuildRequest {
+                discovery,
+                base_revision: U64::new(1).unwrap(),
+                self_input: true,
+                base_contracts: vec![NamedContract {
+                    table: name("rows"),
+                    contract: fixed.outputs[0].contract.clone(),
+                }],
+                base_files: vec![file.clone()],
+                input_files: vec![],
+                holds_confirmed: true,
+            };
+            let mut unheld = preparation.clone();
+            unheld.holds_confirmed = false;
+            assert!(unheld.validate().is_err());
+            store.configure_gcs_reader(&reader).unwrap();
+            if fail_before_commit {
+                store.preparation_fault = Some(false);
+            }
+            let result = store.prepare(preparation);
+            if fail_before_commit {
+                assert!(result.is_err());
+                drop(store);
+                let mut reopened = BuildStore::open(
+                    &path,
+                    root.clone(),
+                    Some(fixed.identity.workspace_id.clone()),
+                    &Resources::default(),
+                )
+                .unwrap();
+                assert!(reopened.open_session(&fixed.identity).is_err());
+                assert!(
+                    !reopened
+                        .engine
+                        .base_table("_grv", "build_sessions")
+                        .unwrap()
+                );
+                continue;
+            }
+            let session = result.unwrap();
+            let namespace = BuildStore::namespace(&session);
+            assert!(store.engine.is_view(&namespace, "self_0").unwrap());
+            let private = BuildStore::private_self(&session, 0);
+            assert_eq!(
+                store
+                    .engine
+                    .remote_metadata(&file, &format!("SELECT id::BIGINT FROM {private}"))
+                    .unwrap(),
+                vec![vec![Some("42".into())]]
+            );
+            let output = BuildStore::output(&session.outputs[0]);
+            assert_eq!(
+                store
+                    .query(&format!("SELECT id::BIGINT FROM {output}"))
+                    .unwrap(),
+                vec![vec![Some("42".into())]]
+            );
+            assert!(
+                store
+                    .engine
+                    .metadata_query(&format!("SELECT * FROM {private}"))
+                    .is_err()
+            );
+            drop(store);
+            // Reopening and terminal cleanup must not acquire any remote reader.
+            let mut reopened = BuildStore::open(
+                &path,
+                root.clone(),
+                Some(fixed.identity.workspace_id.clone()),
+                &Resources::default(),
+            )
+            .unwrap();
+            assert_eq!(
+                reopened.open_session(&session.identity).unwrap().session,
+                session
+            );
+            reopened.abort(&session.identity).unwrap();
+            reopened
+                .record_outcome(
+                    &session.identity,
+                    BuildOutcome {
+                        kind: OutcomeKind::Aborted,
+                        revision: None,
+                        operation_id: None,
+                    },
+                )
+                .unwrap();
+            reopened.cleanup(&session.identity).unwrap();
+            assert!(!reopened.engine.schema_exists(&namespace).unwrap());
+            assert_eq!(
+                reopened.open_session(&session.identity).unwrap().state,
+                BuildState::Aborted
+            );
+            reopened.cleanup(&session.identity).unwrap();
+        }
+    }
+    #[test]
     fn build_history_witness_refuses_deleted_or_emptied_session_store() {
         use std::os::unix::fs::PermissionsExt;
         fn after_close<T>(mut reopen: impl FnMut() -> Result<T>) -> Result<T> {

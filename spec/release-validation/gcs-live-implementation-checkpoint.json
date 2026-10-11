@@ -1,0 +1,35 @@
+{
+  "status": "implementation-checkpoint-not-release-qualified",
+  "native_guard_revision": 3,
+  "identity": {
+    "provider": "gcloud",
+    "account": "jiacao@on.sinch.com",
+    "project": "entit-finance-prod",
+    "fallback": false
+  },
+  "tests": [
+    {
+      "name": "native_live_gcs_guarded_pull_refresh_and_source_free_replay",
+      "passed": true,
+      "scope": "owned one-row fixture; pull, exact and nested/glob denial, source-free receipt replay, empty refresh"
+    },
+    {
+      "name": "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup",
+      "passed": true,
+      "scope": "adapter-level nonempty self-input preparation, output seeding, guarded reads, reopen, abort, repeated cleanup, unheld request rejection and injected precommit rollback"
+    }
+  ],
+  "hold_evidence": "confirmed-hold flag supplied directly; actual parent revision-hold lifecycle not tested",
+  "external_invocation_publication_tested": false,
+  "cleanup": {
+    "bucket": "grv-httpfs-oauth-b53bfb382c4248ba8eec688c",
+    "deleted_object_generations": 1,
+    "all_versions_inventory_empty": true,
+    "bucket_absence_http_status": 404,
+    "iam_changes": false,
+    "key_creation": false,
+    "organization_policy_changes": false
+  },
+  "capability_advertised": false,
+  "release_published": false
+}

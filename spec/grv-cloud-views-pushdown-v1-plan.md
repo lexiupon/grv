@@ -41,10 +41,14 @@ approval; this request authorizes planning/committing, not publication.
   Guard revision 3 adds a pinned engine pre-request hook retaining stock transport:
   no late second request, wrong URL or write request in deterministic proof.
   A synthetic-token native watchdog test interrupts computation and rolls back.
-- Not complete: revision-3 live rerun (selected gcloud login now refuses token
-  acquisition), complete cloud projection/predicate matrices, request cancellation
-  races and bounded in-flight transport behavior, held-build/fault/resource tests,
-  ordinary DuckDB consumption and supported-target package/install qualification.
+- Revision-3 live pull rerun passed after explicit selected-account login renewal.
+  Nonempty GCS self-build preparation, reopen/abort/cleanup and injected rollback
+  passed; this adapter-level test supplies confirmed-hold evidence, not actual
+  parent hold creation/release or external invocation/publication qualification.
+- Not complete: complete cloud projection/predicate matrices, request cancellation
+  races and bounded in-flight transport behavior, full held-build/fault/resource
+  tests, ordinary DuckDB consumption and supported-target package/install
+  qualification.
 - Requester Pays: explicit header and no-header both succeeded for the selected
   principal. Billing attribution/mandatory enforcement is unproven. Initially
   **refuse Requester-Pays view inputs** unless a separate qualification gate

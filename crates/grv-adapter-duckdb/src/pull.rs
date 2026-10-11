@@ -2203,6 +2203,30 @@ mod tests {
                 )
                 .is_err()
         );
+        // A late remote target failure must restore every previous view and
+        // receipt, rather than commit a partial refresh.
+        let mut late = plan.clone();
+        late.identity.attempt_id = Uuid::v4();
+        late.identity.request_sha256 = Digest::new("d".repeat(64)).unwrap();
+        let mut missing = late.tables[0].clone();
+        missing.name = Name::new("missing").unwrap();
+        missing.target_table = RelationName::new("missing").unwrap();
+        let remote_missing = missing.files[0].remote.as_mut().unwrap();
+        remote_missing.table = missing.name.clone();
+        remote_missing.location.push_str("-missing");
+        late.tables.push(missing);
+        assert!(store.apply(&late).is_err());
+        assert!(!store.target_is_view("app", "missing").unwrap());
+        assert_eq!(store.apply(&plan).unwrap(), receipt);
+        for denied in [
+            "SELECT * FROM duckdb_secrets()",
+            "SET enable_external_access=true",
+            "INSTALL httpfs",
+            "COPY (SELECT 1) TO 'https://storage.googleapis.com/test-bucket/output'",
+            "SELECT * FROM read_csv('https://storage.googleapis.com/test-bucket/other')",
+        ] {
+            assert!(store.engine.remote_metadata(&remote, denied).is_err());
+        }
         drop(store);
         let mut reopened = PullStore::open(&database).unwrap();
         assert_eq!(reopened.apply(&plan).unwrap(), receipt);

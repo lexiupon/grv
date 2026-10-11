@@ -34,17 +34,25 @@ Its synthetic two-origin proof runs with
 `bash prototypes/cloud-views/httpfs/policy_probe.sh`. The redirect target must
 receive no request under policy; the unhardened stock control follows it.
 
-Guard revision 3 integrates exact read-only HTTPS admission, per-handle epochs,
-file-operation and stock-request deadline checks, a computation interrupt
-watchdog, transactional pull/replay and held external-build dispatch. The engine
-request hook changes no signed extension or transport; it removes cached clients
-before stock initialization with remaining-lease timeouts. A deterministic proof
-fences a second request after expiry. An owned live guarded pull and nonempty
-GCS external self-input preparation passed on revision 3 after selected-account
-login renewal, including reopen/cleanup and precommit rollback. Actual parent
-revision holds and external invocation/publication remain unqualified. The
-shipping matrices, full fault/resource/cancellation
-qualification and packaging remain pending: `gcs-view` is **not advertised**.
+Guard revision 4 integrates exact read-only HTTPS admission, per-handle epochs,
+file-operation and request-delegate deadline checks, a computation interrupt
+watchdog, transactional pull/replay and held external-build dispatch. Revision 3's
+engine request hook was bypassed by signed HTTPFS's private methods; its mock
+proof does not qualify that shipping boundary. Revision 4 binds pinned
+HTTPFSParams to a virtual policy delegate forwarding to signed stock **httplib**.
+Stock curl has no hard transfer deadline and is not admitted for bounded GCS mode.
+The delegate removes cached clients, bounds remaining timeout and checks GET
+content delivery. Signed-extension direct/redirect/stalled-HEAD/trickling-GET
+proofs pass, but continuously trickling HEAD headers exceed the lease: stock
+httplib timeouts are not absolute either. Hard in-flight owner stop/join,
+request-parameter isolation and failed-setup cleanup remain release blockers.
+A ten-trial shipping-scanner GCS slice passed with local oracles and query body
+projection/selective-wide savings of **99.43% / 96.69%** on its fixed fixture;
+preparation was not measured and still downloads/verifies complete objects.
+Earlier live pull and adapter-level self-preparation passed, including rollback
+and source-free replay. Independent final review, actual held lifecycle closure,
+complete shipping matrices, fault/resource/cancellation qualification and
+packaging remain pending: `gcs-view` is **not advertised**.
 No token is persisted in the view; ordinary DuckDB users need independent
 short-lived HTTPS HTTP secrets and are not protected by the GRV guard. See the
 [implementation plan](../../spec/grv-cloud-views-pushdown-v1-plan.md).

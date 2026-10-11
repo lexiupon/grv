@@ -165,13 +165,22 @@ before token acquisition; require expiry beyond requested execution plus a
 **120-second skew/cleanup margin**. Setup/bind consumes that same budget. The
 worker/native integration must enforce cancellation/rollback at the deadline,
 then reacquire on a fresh owner for the next execution. Provider acquisition,
-computation watchdog and precommit checks are implemented. Native guard revision
-3 also checks every stock `HTTPUtil::Request` before signed HTTPFS transport,
-refuses late/non-admitted/non-read requests and discards cached clients before
-stock initialization with remaining-lease timeouts. An already-started request
-may remain in flight until its bounded stock timeout; cancellation/rollback
-races and backend timeout behavior still require qualification. This is a pinned
-engine policy hook, not a custom network transport. Do not replace a secret during a query
+computation watchdog and precommit checks are implemented. Revision-3 engine
+`HTTPUtil::Request` hooks were bypassed by the signed extension's privately
+linked methods; mock proofs are not evidence of that shipping boundary.
+Revision 4 binds an exact pinned HTTPFSParams allocation to a virtual request
+policy delegate, then forwards to signed stock transport. It refuses
+late/non-admitted/non-read requests, checks GET content delivery and discards
+cached clients before stock initialization with remaining-lease timeouts.
+Initial GCS execution selects signed stock **httplib**: pinned stock curl has
+only connect/low-speed timeouts, not a hard transfer deadline, and is not admitted
+for this bounded mode. Synthetic signed-extension redirect/stalled-HEAD/trickling-GET proofs
+pass, but **continuously trickling HEAD headers exceed the lease**: httplib's
+per-read timeouts are not an absolute transfer bound either. Hard in-flight
+stop/join is a release blocker; GET callbacks and pre-request checks do not solve
+DNS/TLS/status/header/trailer stalls. Cancellation/rollback and supported-target
+behavior remain qualification gates. This is a pinned policy delegate, not a custom transport.
+Do not replace a secret during a query
 and assume open handles refresh. No whole-operation automatic retry after
 results/effects, partial refresh commit or seamless mid-query renewal. Test
 bind/execute/rebind expiry and cancellation races. If reliable expiry/deadline
@@ -248,14 +257,17 @@ not justification to reintroduce a custom signing/range/generation transport.
 If exact-path restrictions cannot be enforced, that is a blocking integration
 issue, not something made safe merely by running locally.
 
-The parameter-only `native/gcs_http_policy.hpp` wrapper delegates initialization
-and clients to signed stock HTTPFS while disabling redirects, clearing proxies,
-requiring TLS verification and capping retries/timeouts. Its two-origin offline
-probe verifies direct bearer reads, all initialization overloads, zero redirect
-target requests under policy, and redirect-following in the stock control. It
-is not a new transport or exact-path fence. Install after verified extension
-load and before any remote handle on GCS-only engines; production installation,
-curl/backend coverage and client-cache isolation are still qualification gates.
+`native/gcs_http_policy.hpp` delegates initialization and clients to signed
+stock HTTPFS while disabling redirects/proxies and enforcing TLS/retries.
+Its historical parameter-only two-origin probe is supplemental. Revision 4 uses
+an exact pinned HTTPFSParams subtype bound to the policy's virtual SendRequest;
+all upstream fields must be copied without slicing, and signed extension/header
+compatibility is a package gate. A separate signed-stock proof exercises direct
+read, redirect denial (zero destination requests), stalled HEAD and trickling GET.
+Install after verified extension load, select stock httplib and create the policy
+before any remote handle on GCS-only engines. Backend/cancellation and
+client-cache isolation remain qualification gates; curl is not an admitted GCS
+backend. Existing protected S3 transport is unchanged.
 
 Set clear engine/network/resource limits, cancellation and failure behavior.
 Use pinned HTTPFS's range/cache/retry behavior rather than promising the

@@ -32,7 +32,7 @@ parquet = { version = "=58.3.0", default-features = false, features = ["arrow"] 
 
 [package.metadata.grv]
 duckdb-version = "1.5.6"
-native-guard-revision = 3
+native-guard-revision = 4
 duckdb-memory-bytes = 536870912
 source-budget-bytes = 33554432
 scratch-budget-bytes = 33554432

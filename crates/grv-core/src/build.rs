@@ -1026,6 +1026,101 @@ mod tests {
         assert!(paths.iter().all(|p| !Path::new(p).exists()));
     }
 
+    struct GcsCoordinates<'a>(&'a grv_storage::LocalBackend);
+    impl Backend for GcsCoordinates<'_> {
+        fn gcs_data_uri(&self, key: &ObjectKey) -> grv_storage::Result<Option<String>> {
+            Ok(Some(format!("gs://test-bucket/held/{}", key.as_str())))
+        }
+        fn gcs_view_eligible(&self) -> grv_storage::Result<()> {
+            Ok(())
+        }
+        fn get(
+            &self,
+            key: &ObjectKey,
+            sink: &mut dyn std::io::Write,
+        ) -> grv_storage::Result<grv_storage::ObjectMeta> {
+            self.0.get(key, sink)
+        }
+        fn head(&self, key: &ObjectKey) -> grv_storage::Result<grv_storage::ObjectMeta> {
+            self.0.head(key)
+        }
+        fn list(
+            &self,
+            prefix: &grv_storage::ObjectPrefix,
+            mode: grv_storage::ListMode,
+        ) -> grv_storage::Result<Vec<grv_storage::ListEntry>> {
+            self.0.list(prefix, mode)
+        }
+        fn delete(&self, _: &ObjectKey) -> grv_storage::Result<()> {
+            panic!("verification mutated source")
+        }
+        fn conditional_create(
+            &self,
+            _: &ObjectKey,
+            _: &mut dyn std::io::Read,
+        ) -> grv_storage::Result<grv_storage::Validator> {
+            panic!("verification mutated source")
+        }
+        fn conditional_put(
+            &self,
+            _: &ObjectKey,
+            _: &grv_storage::Validator,
+            _: &mut dyn std::io::Read,
+        ) -> grv_storage::Result<grv_storage::Validator> {
+            panic!("verification mutated source")
+        }
+    }
+    #[test]
+    fn external_gcs_build_verifies_real_holds_for_local_and_remote_materializations() {
+        for materialization in [Materialization::Local, Materialization::GcsView] {
+            let f = Fixture::new();
+            f.source();
+            let (mut request, mut discovery) = discovery(&f, &["input"], false);
+            discovery.inputs[0].materialization = materialization;
+            request.execution = BuildExecution::External;
+            let intent =
+                prepare_intent(&f.store, &f.clock, 60, request, discovery, f.root.path()).unwrap();
+            let ownership = Ownership::new(&f.store, &f.clock, 60).unwrap();
+            ownership.commit_run(&intent.run).unwrap();
+            let mut owner = intent.run.clone();
+            let store = Store::open(GcsCoordinates(&f.store.backend)).unwrap();
+            assert!(verify_inputs(&store, &f.clock, 60, &intent, &owner, f.root.path()).is_err());
+            let proofs = intent
+                .holds
+                .iter()
+                .map(|hold| {
+                    Holds::new(&f.store, &f.clock, f.root.path())
+                        .acquire(hold)
+                        .unwrap()
+                })
+                .collect::<Vec<_>>();
+            ownership
+                .confirm_dependency_holds(&mut owner, f.root.path(), &proofs)
+                .unwrap();
+            let external =
+                verify_inputs(&store, &f.clock, 60, &intent, &owner, f.root.path()).unwrap();
+            let files = &external.preparation.input_files[0].files;
+            assert_eq!(files.len(), 1);
+            assert_eq!(files[0].access, FileAccess::GcsView);
+            assert!(
+                files[0]
+                    .location
+                    .starts_with("gs://test-bucket/held/datasets/upstream/rows/")
+            );
+            assert_eq!(
+                external.preparation.discovery.inputs[0].materialization,
+                materialization
+            );
+            let mut managed = intent.clone();
+            managed.request.execution = BuildExecution::Managed;
+            let local =
+                verify_inputs(&store, &f.clock, 60, &managed, &owner, f.root.path()).unwrap();
+            assert_eq!(
+                local.preparation.input_files[0].files[0].access,
+                FileAccess::Local
+            );
+        }
+    }
     struct S3Coordinates<'a>(&'a grv_storage::LocalBackend);
     impl Backend for S3Coordinates<'_> {
         fn s3_data_uri(&self, key: &ObjectKey) -> grv_storage::Result<Option<String>> {

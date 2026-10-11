@@ -1,0 +1,61 @@
+{
+  "valid": [
+    {
+      "key": "plain/data.parquet",
+      "gs": "gs://test-bucket/plain/data.parquet",
+      "https": "https://storage.googleapis.com/test-bucket/plain/data.parquet"
+    },
+    {
+      "key": "owner's/a+b.parquet",
+      "gs": "gs://test-bucket/owner's/a+b.parquet",
+      "https": "https://storage.googleapis.com/test-bucket/owner%27s/a%2Bb.parquet"
+    },
+    {
+      "key": "space key/🍕.parquet",
+      "gs": "gs://test-bucket/space%20key/%F0%9F%8D%95.parquet",
+      "https": "https://storage.googleapis.com/test-bucket/space%20key/%F0%9F%8D%95.parquet"
+    },
+    {
+      "key": "literal%20/literal%2F.parquet",
+      "gs": "gs://test-bucket/literal%2520/literal%252F.parquet",
+      "https": "https://storage.googleapis.com/test-bucket/literal%2520/literal%252F.parquet"
+    },
+    {
+      "key": "glob*[01]/query?#.parquet",
+      "gs": "gs://test-bucket/glob%2A%5B01%5D/query%3F%23.parquet",
+      "https": "https://storage.googleapis.com/test-bucket/glob%2A%5B01%5D/query%3F%23.parquet"
+    },
+    {
+      "key": "owner@example/partition=value.parquet",
+      "gs": "gs://test-bucket/owner@example/partition=value.parquet",
+      "https": "https://storage.googleapis.com/test-bucket/owner%40example/partition%3Dvalue.parquet"
+    },
+    {
+      "key": "quote\"/brace{}.parquet",
+      "gs": "gs://test-bucket/quote%22/brace%7B%7D.parquet",
+      "https": "https://storage.googleapis.com/test-bucket/quote%22/brace%7B%7D.parquet"
+    }
+  ],
+  "invalid_exact": [
+    "gs://test-bucket/%61/data.parquet",
+    "gs://test-bucket/%2a/data.parquet",
+    "gs://test-bucket/%0A/data.parquet",
+    "gs://test-bucket/%C2%85/data.parquet",
+    "gs://test-bucket/%2F/data.parquet",
+    "gs://test-bucket/%2E%2E/data.parquet",
+    "gs://test-bucket/%FF/data.parquet",
+    "gs://test-bucket/%/data.parquet",
+    "gs://test-bucket/a//data.parquet",
+    "gs://test-bucket/a/../data.parquet",
+    "gs://test-bucket/raw*.parquet",
+    "gs://test-bucket/raw[01].parquet",
+    "gs://test-bucket/raw\\data.parquet",
+    "gs://test-bucket/raw space/data.parquet",
+    "gs://test-bucket/raw🍕.parquet",
+    "gs://test-bucket/data.parquet?token=synthetic",
+    "gs://test-bucket/data.parquet#fragment",
+    "gs://abc.-def/data.parquet",
+    "gs://abc-.def/data.parquet",
+    "gs://abc..def/data.parquet"
+  ]
+}

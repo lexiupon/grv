@@ -64,6 +64,10 @@ def main():
             if not actual.is_file() or hashlib.sha256(actual.read_bytes()).digest() != hashlib.sha256(expected).digest():
                 raise SystemExit(f"pinned upstream source changed: {relative}")
     native = pathlib.Path(__file__).resolve().parent
+    # Exact upstream HTTPFSParams layout used by the signed transport delegate.
+    # Source: duckdb-httpfs 4bc690dba4496c765777a0269d48fdbaff7cdc11.
+    if hashlib.sha256((native / "httpfs_client_pinned.hpp").read_bytes()).hexdigest() != "0dcbe1e3f9981fda00e23cd1e85e797d0c31a47b970a7a52dc637429d1b1c317":
+        raise SystemExit("pinned signed HTTPFS client header mismatch")
     for relative, (expected, replacements) in SITES.items():
         path = source / relative
         backup = path.with_suffix(path.suffix + ".grv-original")

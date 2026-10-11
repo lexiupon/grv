@@ -76,9 +76,12 @@ impl VerifiedFile {
                     .ok_or_else(|| invalid("S3 view requires an exact data file"))?;
                 if !(3..=if gcs { 222 } else { 63 }).contains(&bucket.len())
                     || (gcs
-                        && bucket
-                            .split('.')
-                            .any(|part| part.is_empty() || part.len() > 63))
+                        && bucket.split('.').any(|part| {
+                            part.is_empty()
+                                || part.len() > 63
+                                || part.starts_with('-')
+                                || part.ends_with('-')
+                        }))
                     || bucket.starts_with(['-', '.'])
                     || bucket.ends_with(['-', '.'])
                     || !bucket.bytes().all(|b| {
@@ -106,12 +109,26 @@ impl VerifiedFile {
                 // Core locators encode each path component separately. An
                 // encoded delimiter or traversal component is not an alias for
                 // another object. Decode once, preserving literal percent keys.
+                let gcs_literal = |byte: u8| {
+                    byte == b'/'
+                        || ((33..=126).contains(&byte) && !b"\"#%<>?`{}[]*\\".contains(&byte))
+                };
                 let mut decoded = Vec::with_capacity(key.len());
                 let mut bytes = key.bytes();
                 while let Some(byte) = bytes.next() {
                     if byte == b'%' {
-                        let high = bytes.next().and_then(|b| (b as char).to_digit(16));
-                        let low = bytes.next().and_then(|b| (b as char).to_digit(16));
+                        let high_byte = bytes.next();
+                        let low_byte = bytes.next();
+                        if gcs
+                            && high_byte
+                                .into_iter()
+                                .chain(low_byte)
+                                .any(|b| !b.is_ascii_digit() && !(b'A'..=b'F').contains(&b))
+                        {
+                            return Err(invalid("noncanonical GCS percent escape"));
+                        }
+                        let high = high_byte.and_then(|b| (b as char).to_digit(16));
+                        let low = low_byte.and_then(|b| (b as char).to_digit(16));
                         let byte = high
                             .zip(low)
                             .map(|(h, l)| (h * 16 + l) as u8)
@@ -119,14 +136,22 @@ impl VerifiedFile {
                         if byte == b'/' {
                             return Err(invalid("encoded S3 path delimiter"));
                         }
+                        if gcs && gcs_literal(byte) {
+                            return Err(invalid("noncanonical GCS encoded literal"));
+                        }
                         decoded.push(byte);
                     } else {
+                        if gcs && !gcs_literal(byte) {
+                            return Err(invalid("noncanonical GCS key byte"));
+                        }
                         decoded.push(byte);
                     }
                 }
                 let decoded =
                     std::str::from_utf8(&decoded).map_err(|_| invalid("invalid S3 path UTF-8"))?;
                 if decoded.contains(['\0', '\\'])
+                    || (gcs && decoded.chars().any(char::is_control))
+                    || (gcs && self.location.len() > 8192)
                     || decoded.split('/').any(|s| s == "." || s == "..")
                 {
                     return Err(invalid("encoded S3 path traversal"));
@@ -229,6 +254,8 @@ mod file_tests {
             ),
             (format!("{}.b", "a".repeat(64)), false),
             ("abc..def".into(), false),
+            ("abc.-def".into(), false),
+            ("abc-.def".into(), false),
             (
                 format!(
                     "{}.{}.{}.{}",
@@ -243,8 +270,30 @@ mod file_tests {
             file.location = format!("gs://{bucket}/data.parquet");
             assert_eq!(file.validate().is_ok(), valid, "{bucket}");
         }
+        for invalid in [
+            "gs://bucket/%61/data.parquet",
+            "gs://bucket/%2a/data.parquet",
+            "gs://bucket/%0A/data.parquet",
+            "gs://bucket/%C2%85/data.parquet",
+            "gs://bucket/raw\"quote/data.parquet",
+        ] {
+            file.location = invalid.into();
+            assert!(file.validate().is_err(), "{invalid}");
+        }
         file.location = "gs://bucket/literal%2A%5B01%5D%252F%3F%23/data.parquet".into();
         file.validate().unwrap();
+        let corpus: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../spec/fixtures/gcs-coordinate-vectors.json"
+        ))
+        .unwrap();
+        for vector in corpus["valid"].as_array().unwrap() {
+            file.location = vector["gs"].as_str().unwrap().into();
+            file.validate().unwrap();
+        }
+        for vector in corpus["invalid_exact"].as_array().unwrap() {
+            file.location = vector.as_str().unwrap().into();
+            assert!(file.validate().is_err(), "{}", file.location);
+        }
     }
 }
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

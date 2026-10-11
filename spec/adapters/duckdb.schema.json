@@ -18,7 +18,7 @@
       "type": "object",
       "properties": {
         "materialization": {
-          "enum": ["local", "s3-view"]
+          "enum": ["local", "s3-view", "gcs-view"]
         },
         "refresh": {
           "enum": ["auto", "full"]
@@ -136,7 +136,7 @@
           "enum": ["complete", "selected"]
         },
         "materialization_mode": {
-          "enum": ["local", "s3-view"]
+          "enum": ["local", "s3-view", "gcs-view"]
         },
         "source_partitions": {
           "type": "array",
@@ -411,7 +411,7 @@
           "enum": ["latest", "fixed"]
         },
         "materialization_mode": {
-          "enum": ["local", "s3-view"]
+          "enum": ["local", "s3-view", "gcs-view"]
         },
         "committed_revision": {
           "type": "string",

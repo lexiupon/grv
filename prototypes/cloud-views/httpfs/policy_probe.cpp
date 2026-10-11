@@ -4,7 +4,6 @@
 #include "duckdb/main/config.hpp"
 #include "duckdb/main/client_context_file_opener.hpp"
 #include "duckdb/main/secret/secret_manager.hpp"
-#include "httpfs.hpp"
 #include "../../../crates/grv-adapter-duckdb/native/gcs_http_policy.hpp"
 #include <cstdlib>
 #include <iostream>

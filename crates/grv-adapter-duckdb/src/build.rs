@@ -1007,10 +1007,10 @@ impl BuildStore {
                     &input.contract,
                     &group.files,
                     session.execution == BuildExecution::External
-                        && matches!(
-                            input.materialization,
-                            Materialization::S3View | Materialization::GcsView
-                        ),
+                        && (group.files.iter().any(|file| {
+                            matches!(file.access, FileAccess::S3View | FileAccess::GcsView)
+                        }) || (group.files.is_empty()
+                            && (self.root.starts_with("s3://") || self.root.starts_with("gs://")))),
                 )?;
             }
             for (index, base) in session.base_contracts.iter().enumerate() {

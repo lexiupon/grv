@@ -1,0 +1,46 @@
+{
+  "status": "held-lifecycle-slice-not-release-qualified",
+  "native_guard_revision": 4,
+  "test": "live_external_gcs_build_fixed_view_inputs_self_base_accepted_export_restart_and_terminal_replay",
+  "passed": true,
+  "elapsed_seconds": 1832.9,
+  "identity": {
+    "provider": "gcloud",
+    "account": "jiacao@on.sinch.com",
+    "project": "entit-finance-prod",
+    "fallback": false
+  },
+  "assertions": [
+    "Actual parent dependency holds acquired and confirmed.",
+    "Fixed local-materialized and remote-materialized GCS inputs reconstructed as private exact remote views.",
+    "Empty input and self-base supported; tracking refresh cannot redirect fixed accepted inputs.",
+    "Independent ordinary DuckDB obtains its own OAuth token and temporary HTTPFS secret; real external writer completes.",
+    "Accepted export fault leaves destination unallocated; restart preserves accepted identity and publishes exact outputs.",
+    "Exact output value, empty output, derived-from provenance and full destination verification pass.",
+    "Published dependencies retain their holds; no release marker is falsely created.",
+    "Terminal replay succeeds without adapter package, reader config, engine, completion or acquisition declaration."
+  ],
+  "limitations": [
+    "Not abort/prune/hold-release/expiry/cancellation qualification.",
+    "The native shared library was kept unchanged for this run; later private-request and setup-cleanup source fixes were validated by separate scanner and live pull/self-preparation reruns, not another full held lifecycle.",
+    "Not an immutable release candidate or supported-target installation test.",
+    "No absolute in-flight deadline qualification; header-trickle gate remains failed."
+  ],
+  "private_evidence_directory": "~/grv-held-gcs-vmm02qcj",
+  "evidence_sha256": {
+    "result.txt": "a695e24de47ac1ff0a0e44dc7da500afdf52b2a45829d7d66c887a6807c022e3",
+    "cleanup.json": "8c6a6e17922b59b9fa8e7d3d877589f3e8b8166a2ecaaf2f4bb3396063a47004"
+  },
+  "cleanup": {
+    "bucket": "grv-httpfs-oauth-f95e59ab742f4dada7aae08b",
+    "outer_cleanup_deleted_object_generations": 0,
+    "note": "Test-level prefix cleanup removed objects before the outer all-version inventory; zero is not a total generation deletion count.",
+    "all_versions_inventory_empty": true,
+    "bucket_absence_http_status": 404,
+    "iam_changes": false,
+    "key_creation": false,
+    "organization_policy_changes": false
+  },
+  "capability_advertised": false,
+  "release_published": false
+}

@@ -38,13 +38,37 @@ approval; this request authorizes planning/committing, not publication.
   full-object preparation, authenticated Requester Pays refusal, pure URI mapping,
   guarded stock HTTPFS pulls and held-build dispatch. An owned live one-row native
   pull passed exact/nested/glob denials, source-free reopen replay and empty refresh.
-  Guard revision 3 adds a pinned engine pre-request hook retaining stock transport:
-  no late second request, wrong URL or write request in deterministic proof.
-  A synthetic-token native watchdog test interrupts computation and rolls back.
+  Guard revision 3 attempted a pinned engine pre-request hook; mock request
+  fencing passed, but subsequent signed-extension qualification found HTTPFS's
+  private `HTTPUtil::Request` bypasses that engine hook. Revision 4 uses a pinned
+  HTTPFSParams virtual request delegate forwarding to signed stock httplib;
+  signed direct/redirect/stalled-HEAD/trickling-GET proofs pass. A new
+  continuously trickling HEAD-header proof **fails the hard in-flight bound**;
+  neither backend's timeout fields establish an absolute deadline. Stock curl
+  remains unadmitted. Independent review flagged shared request-parameter
+  mutation and failed-setup secret cleanup. Private request/parameter copies and
+  secret revocation are added in source, pending production rerun. Hard owner
+  stop/join remains unresolved; capability remains blocked.
+- Revision-4 shipping-scanner GCS slice: ten local-oracle trials passed on a fixed
+  137,136,798-byte uncompressed fixture. Query body bytes wide/narrow/selective
+  wide: **137,244,704 / 788,768 / 4,542,849**, projection **99.43%**, selective
+  wide **96.69%** savings. View binding and each EXPLAIN add **262,144 bytes**.
+  Preparation is not measured by this native-scanner harness and remains a full
+  verified-object operation; this slice is not the complete cloud matrix.
+  A second ZSTD/dictionary/no-statistics 19,780,713-byte fixture passed the same
+  ten oracles; wide/narrow/selective-wide **19,790,639 / 193,188 / 805,574 bytes**.
+  With no statistics, selective narrow reads all 32 row groups; selective-wide
+  savings include late column materialization, not demonstrated statistics pruning.
 - Revision-3 live pull rerun passed after explicit selected-account login renewal.
   Nonempty GCS self-build preparation, reopen/abort/cleanup and injected rollback
   passed; this adapter-level test supplies confirmed-hold evidence, not actual
   parent hold creation/release or external invocation/publication qualification.
+  Subsequently, actual parent-held GCS external conformance passed on a stable
+  revision-4 library: dependency holds, fixed local/remote/self/empty views,
+  independent DuckDB writer, accepted export fault/restart/publication, exact
+  provenance/output, full verify and terminal source-free replay. Evidence:
+  `~/grv-held-gcs-vmm02qcj`, cleaned/bucket HTTP404. Successful published dependencies
+  retain holds by design; abort/prune/release/expiry qualification remains open.
 - Not complete: complete cloud projection/predicate matrices, request cancellation
   races and bounded in-flight transport behavior, full held-build/fault/resource
   tests, ordinary DuckDB consumption and supported-target package/install
@@ -290,7 +314,40 @@ transactions/holds/replay and packaged ordinary consumption pass. Eligible
 filters/projections save measured bytes on qualified S3/GCS fixtures without
 weakening verified preparation or promising universal pushdown/generation pins.
 
-**Start I1**, then I2/I3/I5 in parallel after contract decisions. I4 is the main
-integration bottleneck. R1–R3 stay blocked until shipping evidence passes; no
-production feature implementation or release publication is performed by this
-planning commit.
+### Reconciled remaining execution order
+
+Contract decisions (I1 / task #22) and the duplicate I3 foundation (#33) are
+complete. I2/I3/I4 code is implemented; open tasks track remaining acceptance,
+not a request to rebuild completed foundations. Latest evidence is in
+[gcs-implementation-checkpoint.md](gcs-implementation-checkpoint.md).
+The [absolute in-flight deadline blocker](gcs-deadline-qualification-blocker.md)
+requires an owner/process-boundary design decision; no timeout-field adjustment
+or passing pushdown matrix alone closes it.
+
+1. **Final independent review** (#23/#24/#32/#34): revision-4 stock request delegate,
+   subtype/header compatibility, owner lifetime, token/setup isolation, canonical cross-peer records,
+   TLS/proxy/cache/backend behavior. Verify findings with executable tests and
+   fix them before declaring security acceptance.
+2. **Actual held external lifecycle** (#27): parent revision holds, pruning
+   protection, real external command, accepted capture/publication/restart,
+   abort/repeated terminal cleanup and hold release. Adapter-only hold flags do
+   not satisfy this gate. Independently configured ordinary DuckDB remains part
+   of this qualification, including token expiry and saved-view secret absence.
+3. **Shipping measurements and faults** (#25/#26/#28): protected S3 unchanged;
+   stock GCS exact scanner correctness/projection/predicate matrices, preparation
+   versus bind/query/EXPLAIN bytes, special/evolved/empty/no-statistics fixtures;
+   late multi-table rollback, cancellation/expiry/commit races, missing/overwritten
+   objects and resource bounds. Use reviewed bounded test counters, not production
+   internal-layout telemetry or historical prototype percentages.
+4. **Integration closure**: serial workspace/native/conformance, strict lint,
+   script/schema/MSRV gates; update evidence and close only passed acceptance
+   packages. Explicit selected login is restored; no current auth blocker.
+5. **Packaging and candidate** (#29/#30): supported-target signed artifacts,
+   coordinated docs/skills/capability and relocated install. Keep advertisement
+   gated until mandatory implementation/security qualification is complete.
+6. **Publication** (#31): separate approval for exact qualified artifact hashes;
+   no push/tag/release implied by implementation/testing authorization.
+
+Live tests remain restricted to explicitly selected identities and isolated
+owned synthetic fixtures with cleanup proof. A new permission/identity or an
+unavailable supported target is reported as a blocker, never silently waived.

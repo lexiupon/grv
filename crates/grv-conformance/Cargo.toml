@@ -45,6 +45,11 @@ path = "tests/duckdb_capture.rs"
 required-features = ["native-duckdb"]
 
 [[bin]]
+name = "fixture-duckdb-gcs-build"
+path = "src/bin/fixture-duckdb-gcs-build.rs"
+required-features = ["native-duckdb"]
+
+[[bin]]
 name = "fixture-duckdb-build"
 path = "src/bin/fixture-duckdb-build.rs"
 required-features = ["native-duckdb"]

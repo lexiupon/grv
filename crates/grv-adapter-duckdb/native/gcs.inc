@@ -1,4 +1,9 @@
 namespace {
+struct GCSPrivateString {
+    string value;
+    explicit GCSPrivateString(const char *input):value(input){}
+    ~GCSPrivateString(){volatile char *data=value.empty()?nullptr:&value[0];for(size_t i=0;i<value.size();++i)data[i]=0;}
+};
 void GCSTrusted(Engine &engine,const string &query) {
     auto result=engine.connection.Query(query);
     if(result->HasError())throw IOException("trusted GCS setup failed");
@@ -30,22 +35,25 @@ extern "C" int grv_native_gcs_configure(void *owner,const char *httpfs,const cha
     try {
         auto &state=*engine.exact_gcs;
         if(engine.snapshot_started||engine.result||engine.verified_s3->configured||state.configured||state.failed||remaining_millis==0||remaining_millis>300000)throw PermissionException("invalid GCS reader lifecycle");
-        string fixed_scope(scope),fixed_project(project),token(bearer);GCSValidate(fixed_scope,true);
+        string fixed_scope(scope),fixed_project(project);GCSPrivateString private_token(bearer);auto &token=private_token.value;GCSValidate(fixed_scope,true);
         if(token.empty()||token.size()>16384||token.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~+/=")!=string::npos||fixed_project.empty()||fixed_project.size()>128||fixed_project.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789-")!=string::npos)throw PermissionException("invalid private GCS setup");
         state.deadline=std::chrono::steady_clock::now()+std::chrono::milliseconds(remaining_millis);
         engine.connection.context->registered_state->Remove("grv.native.guard.v1");
         config.SetOptionByName("enable_external_access",Value(true));config.AddAllowedPath(httpfs);
         SecretManager::Get(*engine.connection.context).SetEnablePersistentSecrets(false);
         GCSTrusted(engine,"SET enable_logging=false");GCSTrusted(engine,"LOAD "+S3Literal(httpfs));
+        // Pinned curl's timeout is low-speed/connect only (no hard transfer
+        // deadline and ignores subsecond fields). Only signed stock httplib
+        // is admitted for bounded GCS executions; no new transport is introduced.
+        GCSTrusted(engine,"SET httpfs_client_implementation='httplib'");
         GCSTrusted(engine,"SET enable_http_metadata_cache=false");GCSTrusted(engine,"SET enable_external_file_cache=false");
         GCSTrusted(engine,"SET http_retries=0");GCSTrusted(engine,"SET http_timeout=30");
         GCSTrusted(engine,"SET force_download=false");GCSTrusted(engine,"SET auto_fallback_to_full_download=false");
         GCSTrusted(engine,"CREATE TEMPORARY SECRET _grv_exact_gcs_reader (TYPE http,BEARER_TOKEN "+S3Literal(token)+",SCOPE "+S3Literal(fixed_scope)+",VERIFY_SSL true)");
         std::fill(token.begin(),token.end(),'\0');
-        auto &stock=config.GetHTTPUtil();config.SetHTTPUtil(make_shared_ptr<grv::GCSHTTPPolicy>(stock,fixed_project));
+        auto &stock=config.GetHTTPUtil();
         std::weak_ptr<ExactGCSState> weak=engine.exact_gcs;
-        GRVHTTPRequestGuard::Register(stock,[weak](BaseRequest &request,unique_ptr<HTTPClient> &client){auto state=weak.lock();if(!state)throw PermissionException("GCS owner no longer exists");state->BeforeRequest(request,client);});
-        state.utility=&stock;
+        config.SetHTTPUtil(make_shared_ptr<grv::GCSHTTPPolicy>(stock,fixed_project,[weak](BaseRequest &request,unique_ptr<HTTPClient> &client){auto state=weak.lock();if(!state)throw PermissionException("GCS owner no longer exists");state->BeforeRequest(request,client);}));
         auto &fs=FileSystem::GetFileSystem(*engine.connection.context);auto original=fs.ExtractSubSystem("HTTPFileSystem");
         if(!original)throw IOException("signed stock HTTPFS filesystem unavailable");
         fs.RegisterSubSystem(make_uniq<ExactGCSFileSystem>(engine.exact_gcs,std::move(original)));
@@ -55,6 +63,10 @@ extern "C" int grv_native_gcs_configure(void *owner,const char *httpfs,const cha
         engine.connection.context->registered_state->Insert("grv.native.guard.v1",policy);return 0;
     } catch(...) {
         engine.exact_gcs->failed=true;
+        // Setup can fail after installing the private temporary secret. Revoke
+        // it before restoring the user guard; never retain failed credentials.
+        engine.connection.context->registered_state->Remove("grv.native.guard.v1");
+        try {GCSTrusted(engine,"DROP SECRET IF EXISTS _grv_exact_gcs_reader");}catch(...) {}
         config.SetOptionByName("enable_external_access",Value(false));config.options.allowed_paths=std::move(paths);
         engine.connection.context->registered_state->Remove("grv.native.guard.v1");engine.connection.context->registered_state->Insert("grv.native.guard.v1",policy);
         if(capacity){std::strncpy(error,"trusted GCS reader initialization failed",capacity-1);error[capacity-1]=0;}return -1;

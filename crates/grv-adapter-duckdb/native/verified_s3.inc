@@ -5,6 +5,9 @@
 #include "mbedtls_wrapper.hpp"
 #include "s3_limits.hpp"
 #include <ctime>
+#ifdef GRV_CLOUD_QUALIFICATION
+#include <atomic>
+#endif
 namespace {
 using S3Crypto = duckdb_mbedtls::MbedTlsWrapper;
 string S3Encode(const string &value,bool slash=false) {
@@ -45,6 +48,10 @@ struct VerifiedS3State {
     std::set<string> active;
     int stage=0,status=0;
     size_t metadata_bytes=0;
+#ifdef GRV_CLOUD_QUALIFICATION
+    // Test-only accepted transport bytes, not logical scanner bytes or wire overhead.
+    std::atomic<uint64_t> qualification_heads{0}, qualification_gets{0}, qualification_body_bytes{0};
+#endif
     bool configured=false;
     ~VerifiedS3State(){std::fill(secret.begin(),secret.end(),0);std::fill(token.begin(),token.end(),0);}
     void Check() {if(!configured||!context) {throw PermissionException("independent S3 reader is not configured");}if(context->interrupted) {throw InterruptException();}}
@@ -72,6 +79,9 @@ struct VerifiedS3State {
         params->follow_location=false;params->override_verify_ssl=true;params->verify_ssl=true;params->timeout=10;params->timeout_usec=0;params->retries=0;params->keep_alive=false;params->extra_headers.clear();params->http_proxy.clear();params->http_proxy_username.clear();params->http_proxy_password.clear();params->logger.reset();
         auto client=util.InitializeClient(*params,base);stage=head?21:31;auto headers=Headers(head?"HEAD":"GET",file,path,query);
         unique_ptr<HTTPResponse> response;
+#ifdef GRV_CLOUD_QUALIFICATION
+        if(head) {++qualification_heads;} else {++qualification_gets;}
+#endif
         if(head) {HeadRequestInfo info(url,headers,*params);response=client->Head(info);status=response?int(response->status):0;stage=22;}
         else {
             if(bytes==0||bytes>65536||start>file.size||bytes>file.size-start) {throw IOException("S3 bounded read is outside verified object");}
@@ -79,7 +89,11 @@ struct VerifiedS3State {
             GetRequestInfo info(url,headers,*params,[&](const HTTPResponse &value) {
                 status=int(value.status);stage=32;accepted=int(value.status)==206 && value.GetHeaderValue("etag")==file.etag && value.GetHeaderValue("content-length")==std::to_string(bytes) && value.GetHeaderValue("content-range")=="bytes "+std::to_string(start)+"-"+std::to_string(start+bytes-1)+"/"+std::to_string(file.size) && (file.version.empty()||value.GetHeaderValue("x-amz-version-id")==file.version);
                 return accepted;
-            },[&](const_data_ptr_t data,idx_t count) {if(!accepted||context->interrupted||count>bytes-done) {return false;}std::memcpy(static_cast<char *>(output)+done,data,count);done+=count;return true;});
+            },[&](const_data_ptr_t data,idx_t count) {if(!accepted||context->interrupted||count>bytes-done) {return false;}std::memcpy(static_cast<char *>(output)+done,data,count);done+=count;
+#ifdef GRV_CLOUD_QUALIFICATION
+                qualification_body_bytes.fetch_add(count);
+#endif
+                return true;});
             response=client->Get(info);if(!accepted||done!=bytes) {throw IOException("S3 conditional bounded read refused");}
         }
         // Do not return clients to an extension-wide cache or retain per-file buffers.

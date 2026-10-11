@@ -87,7 +87,7 @@ shared_ptr<GRVGuard> Policy(ClientContext &context) {
 extern "C" {
 // Each function catches C++ exceptions; none cross the FFI boundary.
 const char *grv_native_version() { return DuckDB::LibraryVersion(); }
-unsigned int grv_native_guard_revision() { return 3; }
+unsigned int grv_native_guard_revision() { return 4; }
 // A standalone C-API database uses the same compiled static Parquet extension as
 // Engine. This initializer changes no connection state, guard, or configuration
 // and deliberately offers no SQL execution seam.

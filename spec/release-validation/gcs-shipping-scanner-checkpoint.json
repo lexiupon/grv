@@ -1,0 +1,115 @@
+{
+  "status": "qualification-slice-not-release-qualified",
+  "native_guard_revision": 4,
+  "source": "actual shipping native scanner and owner code with compile-time-only counters",
+  "backend": "signed stock HTTPFS httplib",
+  "identity": {
+    "provider": "gcloud",
+    "account": "jiacao@on.sinch.com",
+    "project": "entit-finance-prod",
+    "fallback": false
+  },
+  "fixture": {
+    "rows": 65536,
+    "row_group_rows": 2048,
+    "columns": "id BIGINT and eight VARCHAR payload columns",
+    "bytes": 137136798,
+    "compression": "NONE",
+    "dictionary": false,
+    "statistics": true
+  },
+  "trials": 10,
+  "local_oracles_equal": true,
+  "query_body_bytes": {
+    "wide": 137244704,
+    "narrow": 788768,
+    "selective_wide": 4542849,
+    "selective_narrow": 278601,
+    "and_range": 278601,
+    "or_range": 295058,
+    "null": 262144,
+    "string": 262144,
+    "wrapper": 278601,
+    "nonidentity_cast": 788768
+  },
+  "view_binding_body_bytes": 262144,
+  "each_explain_body_bytes": 262144,
+  "denials_passed": ["direct", "unlisted", "nested_glob", "secrets"],
+  "limitations": [
+    "Full verified preparation traffic not measured by the native scanner harness.",
+    "One fixed uncompressed file; not complete typed/evolved/empty/special-name/no-statistics/compressed/many-file/cold-warm matrix.",
+    "Accepted GET content bytes exclude HTTP headers, rejected bodies and TLS/wire overhead.",
+    "Repeated footer/range overfetch can make query bytes exceed object bytes.",
+    "No generation-pinning or universal savings claim.",
+    "Current source/binary hashes were captured after execution, not an immutable release candidate freeze.",
+    "Continuously trickling HEAD headers exceed the 250ms lease (observed 3792ms); absolute in-flight deadline gate FAILS.",
+    "Original and companion slices precede private request-parameter and setup-cleanup fixes; separately labeled post-review rerun covers the changed scanner source.",
+    "Independent security review, broad fault/cancellation/resource, protected S3 and package gates remain open."
+  ],
+  "private_evidence_directory": "~/grv-shipping-matrix-5evtjcwh",
+  "evidence_sha256": {
+    "results.json": "360f615eceebbb965bc51b4ed798023a4944f52ced3c097bc31f84fdbb3e52d0",
+    "cleanup.json": "db91262a1d0a6e6d24ebe044517e67344c13330da3cf400f0bbc707c7cb39462"
+  },
+  "binary_sha256_captured_after_execution": {
+    "grv_cloud_qualification": "1dec47d3b515d8d67612b1ca0cbe67cb18cf930e08b17003d41194f69cca84f0",
+    "libgrv_duckdb_guard.dylib": "e04b6467a85ebae71a79e8bdc8dc34c29d05b829127e4437b6097f2be259f552"
+  },
+  "cleanup": {
+    "bucket": "grv-httpfs-oauth-727be0dbbc30459096c8bf87",
+    "deleted_object_generations": 1,
+    "all_versions_inventory_empty": true,
+    "bucket_absence_http_status": 404,
+    "iam_changes": false,
+    "key_creation": false,
+    "organization_policy_changes": false
+  },
+  "post_review_fix_rerun": {
+    "scope": "same ten uncompressed local-oracle trials after private request-parameter and cleanup source fixes",
+    "passed": true,
+    "private_evidence_directory": "~/grv-shipping-matrix-61mln9wb",
+    "binary_sha256": "8775dff989fb76b0fa90552ebda8d8fc909d8a3a8b9489ec37bedd8a9d0cdee4",
+    "results_sha256": "360f615eceebbb965bc51b4ed798023a4944f52ced3c097bc31f84fdbb3e52d0",
+    "cleanup_sha256": "d3eaf9320e8d0932fbaf7371892113ed9a7ad85682ba44a903bd478bc91f03c6",
+    "cleanup": {
+      "bucket": "grv-httpfs-oauth-a001411eae804f91a8fb3a13",
+      "deleted_object_generations": 1,
+      "all_versions_inventory_empty": true,
+      "bucket_absence_http_status": 404,
+      "iam_changes": false,
+      "key_creation": false,
+      "organization_policy_changes": false
+    },
+    "absolute_in_flight_deadline_qualified": false
+  },
+  "companion_slice": {
+    "fixture_bytes": 19780713,
+    "compression": "ZSTD",
+    "dictionary": true,
+    "statistics": false,
+    "trials": 10,
+    "local_oracles_equal": true,
+    "query_body_bytes": {
+      "wide": 19790639,
+      "narrow": 193188,
+      "selective_wide": 805574,
+      "selective_narrow": 193188
+    },
+    "limitation": "Selective narrow scans every row group; selective-wide savings include late column materialization, not demonstrated statistics pruning.",
+    "private_evidence_directory": "~/grv-shipping-matrix-scm55xtv",
+    "binary_sha256_before_and_after": "1dec47d3b515d8d67612b1ca0cbe67cb18cf930e08b17003d41194f69cca84f0",
+    "results_sha256": "fec6a3c43fce00a54c70a0b47f9f22f8c09029267f75907f177dfface10a4318",
+    "cleanup_sha256": "91ad5820ad2121dfb4c74b4a174c36655ac50644a936fe6806d01c456d4fa7f5",
+    "cleanup": {
+      "bucket": "grv-httpfs-oauth-c1e533b8c7cf44368c6069ab",
+      "deleted_object_generations": 1,
+      "all_versions_inventory_empty": true,
+      "bucket_absence_http_status": 404,
+      "iam_changes": false,
+      "key_creation": false,
+      "organization_policy_changes": false
+    }
+  },
+  "capability_advertised": false,
+  "release_published": false
+}

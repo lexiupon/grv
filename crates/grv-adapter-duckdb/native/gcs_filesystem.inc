@@ -45,6 +45,9 @@ struct ExactGCSState {
     bool configured=false, failed=false, active=false;
     uint64_t epoch=0;
     string scope;
+#ifdef GRV_CLOUD_QUALIFICATION
+    std::atomic<uint64_t> qualification_heads{0},qualification_gets{0},qualification_body_bytes{0};
+#endif
     std::set<string> admitted;
     std::chrono::steady_clock::time_point deadline;
     void BeforeRequest(BaseRequest &request, unique_ptr<HTTPClient> &client) {
@@ -56,6 +59,13 @@ struct ExactGCSState {
         request.params.timeout=static_cast<uint64_t>(remaining/1000000);
         request.params.timeout_usec=static_cast<uint64_t>(remaining%1000000);
         request.params.retries=0;
+        if(request.type==RequestType::GET_REQUEST){auto &get=request.Cast<GetRequestInfo>();auto original=get.content_handler;auto path=request.url;
+            get.content_handler=[this,original,path](const_data_ptr_t data,idx_t count){Require(path);return !original||original(data,count);};}
+#ifdef GRV_CLOUD_QUALIFICATION
+        if(request.type==RequestType::HEAD_REQUEST){++qualification_heads;}
+        else {++qualification_gets;auto &get=request.Cast<GetRequestInfo>();auto original=get.content_handler;
+            get.content_handler=[this,original](const_data_ptr_t data,idx_t count){bool accepted=!original||original(data,count);if(accepted)qualification_body_bytes+=count;return accepted;};}
+#endif
         // Cached stock clients were initialized with an earlier timeout. Revoke
         // them at each request boundary, then stock initializes its own client
         // from the bounded original HTTPFSParams subtype. No custom transport.

@@ -1,6 +1,6 @@
 DuckDB native guard and extraction seam
 
-Engine: DuckDB v1.5.6, native guard revision 1. The build requires the official
+Engine: DuckDB v1.5.6, native guard revision 4. The build requires the official
 source archive at https://github.com/duckdb/duckdb/archive/refs/tags/v1.5.6.tar.gz
 SHA-256: 1fadcbe9e69e1470f9093b6bcde08daf477d729c449e59a807f45c346622099b
 
@@ -14,7 +14,33 @@ From the repository root:
     cargo clippy -p grv-adapter-duckdb --features native --all-targets --no-deps -- -D warnings
 
 The build hashes the archive, exact upstream binding-site files and reused
-unmodified source. An upstream change requires a reviewed guard revision.
+unmodified source. The GCS policy's exact upstream HTTPFS client header is pinned
+from duckdb-httpfs 4bc690dba4496c765777a0269d48fdbaff7cdc11, SHA-256
+0dcbe1e3f9981fda00e23cd1e85e797d0c31a47b970a7a52dc637429d1b1c317.
+Header/extension compatibility and required licenses/notices are package gates.
+
+GCS revision 4 uses a virtual SendRequest policy delegate with pinned
+HTTPFSParams, forwarding to signed stock httplib, not a replacement transport.
+Revision 3's engine Request patch is bypassed by signed HTTPFS private symbols
+and its mock proof is supplemental only. Curl is not admitted for bounded GCS
+execution: its pinned connect/low-speed timeout is not a hard transfer deadline.
+Keep a running qualification's native library immutable; rebuilding or changing
+guard revisions during an external lifecycle invalidates its evidence.
+
+Optional signed-stock loopback proof (no cloud credentials/network):
+  cmake -S crates/grv-adapter-duckdb/native -B /path/to/build/cmake \
+    -DGRV_DUCKDB_SOURCE=/path/to/build/duckdb-1.5.6 \
+    -DGRV_BUILD_CLOUD_QUALIFICATION=ON
+  cmake --build /path/to/build/cmake --target grv_gcs_stock_request_proof
+  python3 crates/grv-adapter-duckdb/native/test_gcs_stock_request.py \
+    --proof /path/to/build/cmake/grv_gcs_stock_request_proof \
+    --httpfs /protected/signed/httpfs.duckdb_extension
+
+The proof covers direct read, zero redirect-target requests, stalled HEAD and
+trickling GET and inactive authority. Its continuously trickling HEAD-header
+case currently FAILS the hard in-flight bound; stock timeout fields alone are
+not absolute. Keep capability gated until owner stop/join and complete
+cancellation/resource qualification pass. An upstream change requires a reviewed guard revision.
 Guard checks precede catalog callbacks, direct scalar/aggregate/table binding,
 replacement scans and registered custom casts. Initial/nested binding and
 prepared-statement automatic rebind visit the same sites. Live callback canaries

@@ -1199,7 +1199,7 @@ impl NativeEngine {
         let path = cstring(lock.engine_path().as_os_str().as_bytes())?;
         let mut error = [0; 4096];
         let version = unsafe { CStr::from_ptr(grv_native_version()) }.to_bytes();
-        if version != b"v1.5.6" || unsafe { grv_native_guard_revision() } != 3 {
+        if version != b"v1.5.6" || unsafe { grv_native_guard_revision() } != 4 {
             return Err(io::Error::other("native DuckDB version mismatch"));
         }
         let owner = unsafe {

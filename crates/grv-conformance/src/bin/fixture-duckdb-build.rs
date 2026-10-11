@@ -1,5 +1,5 @@
-//! Faults and opt-in after-publish hooks exist only in this harness.
-//! Ordinary registration follows the production DuckDbAdapter unchanged.
+// Faults and opt-in after-publish hooks exist only in this harness.
+// Ordinary registration follows the production DuckDbAdapter unchanged.
 use grv_adapter_api::{CommandCall, Name, Req, Resources};
 use grv_adapter_sdk::{Adapter, PreparedCommand, Registration, StopToken};
 use serde_json::Value;
@@ -114,6 +114,17 @@ impl Adapter for BuildFixture {
     fn registration(&self) -> Registration {
         let mut registration = self.adapter.registration();
         registration.capabilities.after_publish = self.hook_directory.is_some();
+        // Live GCS gates opt in only this conformance binary, never production.
+        if std::env::current_exe()
+            .ok()
+            .and_then(|path| path.file_name().map(|name| name.to_owned()))
+            .is_some_and(|name| name == "fixture-duckdb-gcs-build")
+        {
+            registration
+                .capabilities
+                .pull_materializations
+                .push(grv_adapter_api::Materialization::GcsView);
+        }
         registration
     }
     fn prepare_command(

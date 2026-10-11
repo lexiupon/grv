@@ -83,9 +83,12 @@ impl CloudRoot {
                 .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-' || b == b'.')
             || (scheme == Scheme::S3 && bucket.len() > 63)
             || (scheme == Scheme::Gcs
-                && bucket
-                    .split('.')
-                    .any(|part| part.is_empty() || part.len() > 63))
+                && bucket.split('.').any(|part| {
+                    part.is_empty()
+                        || part.len() > 63
+                        || part.starts_with('-')
+                        || part.ends_with('-')
+                }))
         {
             return Err(Error::new(
                 ErrorKind::InvalidKey,
@@ -1178,6 +1181,24 @@ mod tests {
             direct,
             Some(format!("s3://test-bucket/isolated/root/{}", key.as_str()))
         );
+    }
+    #[test]
+    fn gcs_shared_coordinate_corpus_is_pure_and_exact() {
+        let corpus: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../../spec/fixtures/gcs-coordinate-vectors.json"
+        ))
+        .unwrap();
+        let root = CloudRoot::parse("gs://test-bucket").unwrap();
+        for vector in corpus["valid"].as_array().unwrap() {
+            let key = ObjectKey::new(vector["key"].as_str().unwrap()).unwrap();
+            assert_eq!(
+                root.gcs_data_uri(&key).unwrap().unwrap(),
+                vector["gs"].as_str().unwrap()
+            );
+        }
+        for bucket in ["abc.-def", "abc-.def", "abc..def"] {
+            assert!(CloudRoot::parse(&format!("gs://{bucket}")).is_err());
+        }
     }
     #[test]
     fn gcs_exact_coordinates_encode_special_keys_without_provider_access() {

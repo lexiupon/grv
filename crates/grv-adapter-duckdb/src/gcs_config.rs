@@ -292,6 +292,23 @@ mod tests {
     }
 
     #[test]
+    fn shared_coordinate_corpus_maps_exact_object_bytes() {
+        let corpus: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../spec/fixtures/gcs-coordinate-vectors.json"
+        ))
+        .unwrap();
+        for vector in corpus["valid"].as_array().unwrap() {
+            assert_eq!(
+                sql_filename(vector["gs"].as_str().unwrap()).unwrap(),
+                vector["https"].as_str().unwrap()
+            );
+        }
+        for vector in corpus["invalid_exact"].as_array().unwrap() {
+            assert!(sql_filename(vector.as_str().unwrap()).is_err(), "{vector}");
+        }
+    }
+
+    #[test]
     fn filename_maps_special_bytes_once_to_exact_https_paths() {
         assert_eq!(
             sql_filename("gs://test-bucket").unwrap(),

@@ -40,6 +40,7 @@ pub struct FileSchema {
 pub enum FileAccess {
     Local,
     S3View,
+    GcsView,
 }
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -64,15 +65,20 @@ impl VerifiedFile {
             FileAccess::Local if !std::path::Path::new(&self.location).is_absolute() => {
                 return Err(invalid("local file location must be absolute"));
             }
-            FileAccess::S3View => {
+            FileAccess::S3View | FileAccess::GcsView => {
+                let gcs = self.access == FileAccess::GcsView;
                 let uri = self
                     .location
-                    .strip_prefix("s3://")
+                    .strip_prefix(if gcs { "gs://" } else { "s3://" })
                     .ok_or_else(|| invalid("S3 view requires an S3 URI"))?;
                 let (bucket, key) = uri
                     .split_once('/')
                     .ok_or_else(|| invalid("S3 view requires an exact data file"))?;
-                if !(3..=63).contains(&bucket.len())
+                if !(3..=if gcs { 222 } else { 63 }).contains(&bucket.len())
+                    || (gcs
+                        && bucket
+                            .split('.')
+                            .any(|part| part.is_empty() || part.len() > 63))
                     || bucket.starts_with(['-', '.'])
                     || bucket.ends_with(['-', '.'])
                     || !bucket.bytes().all(|b| {
@@ -142,7 +148,7 @@ impl VerifiedFile {
 mod file_tests {
     use super::*;
     #[test]
-    fn s3_verified_files_require_exact_credential_free_locations() {
+    fn s3_and_gcs_verified_files_require_exact_credential_free_locations() {
         let mut file = VerifiedFile {
             table: Name::new("rows").unwrap(),
             partition: serde_json::json!({}),
@@ -159,40 +165,86 @@ mod file_tests {
             sha256: Digest::new("a".repeat(64)).unwrap(),
             validator: "etag".into(),
         };
-        file.validate().unwrap();
-        for valid in [
-            "s3://bucket/prefix%20with%20space/data.parquet",
-            "s3://bucket/literal%252F/data.parquet",
-            "s3://bucket/owner@example/data.parquet",
-            "s3://bucket/emoji%F0%9F%8D%95/data.parquet",
-        ] {
-            file.location = valid.into();
+        for access in [FileAccess::S3View, FileAccess::GcsView] {
+            file.access = access;
+            file.location = match access {
+                FileAccess::GcsView => "gs://bucket/prefix/data.parquet",
+                _ => "s3://bucket/prefix/data.parquet",
+            }
+            .into();
             file.validate().unwrap();
+            for valid in [
+                "s3://bucket/prefix%20with%20space/data.parquet",
+                "s3://bucket/literal%252F/data.parquet",
+                "s3://bucket/owner@example/data.parquet",
+                "s3://bucket/emoji%F0%9F%8D%95/data.parquet",
+            ] {
+                file.location = if access == FileAccess::GcsView {
+                    valid.replacen("s3://", "gs://", 1)
+                } else {
+                    valid.into()
+                };
+                file.validate().unwrap();
+            }
+            for invalid in [
+                "s3://bucket/rows/*.parquet",
+                "s3://bucket/rows/part-[01].parquet",
+                "s3://bucket/rows/../data.parquet",
+                "s3://bucket//data.parquet",
+                "s3://bucket/rows/",
+                "s3://bucket/./data.parquet",
+                "s3://bucket/rows\\data.parquet",
+                "s3://user:credential@bucket/data.parquet",
+                "s3://bucket/data.parquet?X-Amz-Signature=credential",
+                "s3://bucket/data.parquet#fragment",
+                "s3://bucket/prefix/%2E%2E/data.parquet",
+                "s3://bucket/prefix%2Fforeign/data.parquet",
+                "s3://bucket/prefix%00/data.parquet",
+                "s3://bucket/prefix%5Cdata.parquet",
+                "s3://bucket/prefix%FF/data.parquet",
+                "s3://bucket/prefix%/data.parquet",
+                "s3://bucket/raw space/data.parquet",
+                "s3://bucket/raw\nnewline/data.parquet",
+                "s3://bucket/raw🍕/data.parquet",
+            ] {
+                file.location = if access == FileAccess::GcsView {
+                    invalid.replacen("s3://", "gs://", 1)
+                } else {
+                    invalid.into()
+                };
+                assert!(file.validate().is_err(), "{invalid}");
+            }
         }
-        for invalid in [
-            "s3://bucket/rows/*.parquet",
-            "s3://bucket/rows/part-[01].parquet",
-            "s3://bucket/rows/../data.parquet",
-            "s3://bucket//data.parquet",
-            "s3://bucket/rows/",
-            "s3://bucket/./data.parquet",
-            "s3://bucket/rows\\data.parquet",
-            "s3://user:credential@bucket/data.parquet",
-            "s3://bucket/data.parquet?X-Amz-Signature=credential",
-            "s3://bucket/data.parquet#fragment",
-            "s3://bucket/prefix/%2E%2E/data.parquet",
-            "s3://bucket/prefix%2Fforeign/data.parquet",
-            "s3://bucket/prefix%00/data.parquet",
-            "s3://bucket/prefix%5Cdata.parquet",
-            "s3://bucket/prefix%FF/data.parquet",
-            "s3://bucket/prefix%/data.parquet",
-            "s3://bucket/raw space/data.parquet",
-            "s3://bucket/raw\nnewline/data.parquet",
-            "s3://bucket/raw🍕/data.parquet",
+        file.access = FileAccess::GcsView;
+        for (bucket, valid) in [
+            (
+                format!(
+                    "{}.{}.{}.{}",
+                    "a".repeat(63),
+                    "b".repeat(63),
+                    "c".repeat(63),
+                    "d".repeat(30)
+                ),
+                true,
+            ),
+            (format!("{}.b", "a".repeat(64)), false),
+            ("abc..def".into(), false),
+            (
+                format!(
+                    "{}.{}.{}.{}",
+                    "a".repeat(63),
+                    "b".repeat(63),
+                    "c".repeat(63),
+                    "d".repeat(31)
+                ),
+                false,
+            ),
         ] {
-            file.location = invalid.into();
-            assert!(file.validate().is_err(), "{invalid}");
+            file.location = format!("gs://{bucket}/data.parquet");
+            assert_eq!(file.validate().is_ok(), valid, "{bucket}");
         }
+        file.location = "gs://bucket/literal%2A%5B01%5D%252F%3F%23/data.parquet".into();
+        file.validate().unwrap();
     }
 }
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

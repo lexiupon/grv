@@ -222,6 +222,37 @@ impl Runtime {
                 )
             })?;
         }
+        if request
+            .base_files
+            .iter()
+            .chain(request.input_files.iter().flat_map(|input| &input.files))
+            .any(|file| file.access == FileAccess::GcsView)
+        {
+            if bound.mode != Mode::ExternalBuild {
+                return Err(error(
+                    ErrorCode::ProtocolFailure,
+                    "managed build preparation requires verified local input files",
+                ));
+            }
+            let reader =
+                crate::gcs_config::load_reader(&bound.engine, &bound.root).map_err(|_| {
+                    error(
+                        ErrorCode::AdapterFailure,
+                        "independent DuckDB GCS reader configuration is unavailable or invalid",
+                    )
+                })?;
+            self.call(
+                &handle,
+                move |store| store.configure_gcs_reader(&reader),
+                stop,
+            )
+            .map_err(|_| {
+                error(
+                    ErrorCode::AdapterFailure,
+                    "independent DuckDB GCS reader authentication failed",
+                )
+            })?;
+        }
         let session = self.call(&handle, move |store| store.prepare(request), stop)?;
         self.connections
             .get_mut(&handle)

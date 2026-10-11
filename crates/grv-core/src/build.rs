@@ -491,16 +491,26 @@ pub fn verify_inputs<B: Backend>(
             return Err(integrity("build input hold is missing or released"));
         }
     }
-    // External S3 preparations retain exact remote views under these holds,
-    // independently of the mutable input's current materialization mode.
-    let access = if intent.request.execution == BuildExecution::External
-        && store
-            .backend
-            .s3_data_uri(&ObjectKey::new("grv.json").map_err(backend_error)?)
-            .map_err(backend_error)?
-            .is_some()
+    // Held external preparations reconstruct immutable revision files using
+    // the bound backend, independently of mutable materialization kind. Preserve
+    // the S3 remote fast path even when the discovered relation was local.
+    let probe = ObjectKey::new("grv.json").map_err(backend_error)?;
+    let access = if intent.request.execution != BuildExecution::External {
+        FileAccess::Local
+    } else if store
+        .backend
+        .s3_data_uri(&probe)
+        .map_err(backend_error)?
+        .is_some()
     {
         FileAccess::S3View
+    } else if store
+        .backend
+        .gcs_data_uri(&probe)
+        .map_err(backend_error)?
+        .is_some()
+    {
+        FileAccess::GcsView
     } else {
         FileAccess::Local
     };
@@ -560,6 +570,28 @@ pub fn verify_inputs<B: Backend>(
                 prior_source_contract: None,
             })
             .collect();
+        // Self/base inputs have no discovered materialization; select the exact
+        // remote coordinates of the bound backend only for external execution.
+        let probe = ObjectKey::new("grv.json").map_err(backend_error)?;
+        let access = if intent.request.execution != BuildExecution::External {
+            FileAccess::Local
+        } else if store
+            .backend
+            .gcs_data_uri(&probe)
+            .map_err(backend_error)?
+            .is_some()
+        {
+            FileAccess::GcsView
+        } else if store
+            .backend
+            .s3_data_uri(&probe)
+            .map_err(backend_error)?
+            .is_some()
+        {
+            FileAccess::S3View
+        } else {
+            FileAccess::Local
+        };
         let selected = source::verify_with_access(
             store,
             owner.dataset(),
@@ -1036,11 +1068,11 @@ mod tests {
         }
     }
     #[test]
-    fn external_s3_build_uses_verified_held_uris_even_for_locally_materialized_inputs() {
+    fn external_s3_build_uses_verified_held_uris_for_remote_materialized_inputs() {
         let f = Fixture::new();
         f.source();
-        let (mut request, discovery) = discovery(&f, &["input"], false);
-        assert_eq!(discovery.inputs[0].materialization, Materialization::Local);
+        let (mut request, mut discovery) = discovery(&f, &["input"], false);
+        discovery.inputs[0].materialization = Materialization::S3View;
         request.execution = BuildExecution::External;
         let intent =
             prepare_intent(&f.store, &f.clock, 60, request, discovery, f.root.path()).unwrap();
@@ -1071,7 +1103,7 @@ mod tests {
         );
         assert_eq!(
             external.preparation.discovery.inputs[0].materialization,
-            Materialization::Local
+            Materialization::S3View
         );
         // Managed execution deliberately reconstructs private local files using
         // the same confirmed holds rather than trusting mutable tracking tables.

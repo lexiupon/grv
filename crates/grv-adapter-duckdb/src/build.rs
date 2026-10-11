@@ -110,6 +110,22 @@ impl BuildStore {
         Ok(())
     }
 
+    pub fn configure_gcs_reader(&mut self, reader: &crate::gcs_config::GcsReader) -> Result<()> {
+        if !self.s3_resources_admitted {
+            return Err(invalid(
+                "negotiated resources cannot admit bounded GCS reader state",
+            ));
+        }
+        self.check()?;
+        let token = crate::gcs_token::acquire(
+            &reader.account,
+            &reader.project,
+            std::time::Duration::from_secs(300),
+        )?;
+        self.engine.configure_gcs_reader(reader, token)?;
+        Ok(())
+    }
+
     pub fn open(
         path: &Path,
         root: String,
@@ -190,6 +206,7 @@ impl BuildStore {
                     .into(),
             ));
         }
+        self.engine.check_reader_deadline()?;
         if self.stopping.load(Ordering::Acquire) {
             return Err(io::Error::new(io::ErrorKind::Interrupted, "build work stopped").into());
         }
@@ -468,9 +485,7 @@ impl BuildStore {
                         "materialization facts disagree with immutable receipt".into(),
                     ));
                 }
-                if physical_view
-                    != (receipt.materialization_mode == pull::MaterializationMode::S3View)
-                {
+                if physical_view != (receipt.materialization_mode.is_remote()) {
                     return Err(BuildError::Unknown(
                         "materialization kind differs from immutable receipt".into(),
                     ));
@@ -504,10 +519,10 @@ impl BuildStore {
                     revision: receipt.committed_revision,
                     generation_id: receipt.generation_id,
                     contract,
-                    materialization: if physical_view {
-                        Materialization::S3View
-                    } else {
-                        Materialization::Local
+                    materialization: match receipt.materialization_mode {
+                        pull::MaterializationMode::S3View => Materialization::S3View,
+                        pull::MaterializationMode::GcsView => Materialization::GcsView,
+                        _ => Materialization::Local,
                     },
                 });
             }
@@ -559,7 +574,7 @@ impl BuildStore {
         }
         result
     }
-    fn import_s3_view(
+    fn import_remote_view(
         &mut self,
         relation: &str,
         contract: &TableContract,
@@ -588,9 +603,11 @@ impl BuildStore {
         let mut unique = std::collections::BTreeSet::new();
         for file in files {
             self.check()?;
-            if file.access != FileAccess::S3View || !unique.insert(&file.location) {
+            if !matches!(file.access, FileAccess::S3View | FileAccess::GcsView)
+                || !unique.insert(&file.location)
+            {
                 return Err(invalid(
-                    "external S3 inputs require unique exact verified S3 metadata",
+                    "external remote inputs require unique exact verified metadata",
                 ));
             }
             let prefix = TableContract {
@@ -628,15 +645,18 @@ impl BuildStore {
                     "build source file is outside the fixed root or exact logical prefix",
                 ));
             }
-            let mut fixed = source.clone();
-            fixed.path = file.location.clone().into();
+            let filename = match file.access {
+                FileAccess::S3View => crate::s3_config::sql_filename(&file.location)?,
+                FileAccess::GcsView => crate::gcs_config::sql_filename(&file.location)?,
+                FileAccess::Local => unreachable!(),
+            };
             let parquet = format!(
                 "read_parquet({},hive_partitioning=false,union_by_name=false)",
-                ql(&crate::s3_config::sql_filename(&file.location)?)
+                ql(&filename)
             );
             let described = self
                 .engine
-                .verified_s3_metadata(file, &format!("DESCRIBE SELECT * FROM {parquet}"))?;
+                .remote_metadata(file, &format!("DESCRIBE SELECT * FROM {parquet}"))?;
             if described.len() != file.schema.columns.len()
                 || described
                     .iter()
@@ -655,18 +675,18 @@ impl BuildStore {
                     })
             {
                 return Err(invalid(
-                    "physical S3 build input differs from verified logical schema",
+                    "physical remote build input differs from verified logical schema",
                 ));
             }
             if let Some(check) = pull::exact_value_assertion(&source.contract, &parquet, true) {
-                self.engine.verified_s3_command(file, &check)?;
+                self.engine.remote_command(file, &check)?;
             }
-            if let Some(check) = pull::partition_assertion(&fixed)? {
-                self.engine.verified_s3_command(file,&format!("SELECT CASE WHEN ({check})=0 THEN 0 ELSE error('build file partition differs from verified metadata') END"))?;
+            if let Some(check) = pull::partition_assertion(&source)? {
+                self.engine.remote_command(file,&format!("SELECT CASE WHEN ({check})=0 THEN 0 ELSE error('build file partition differs from verified metadata') END"))?;
             }
-            projected.push(pull::file_projection(&fixed, contract)?);
+            projected.push(pull::file_projection(&source, contract)?);
         }
-        self.engine.verified_s3_files_command(
+        self.engine.remote_files_command(
             files,
             &format!(
                 "CREATE VIEW {relation} AS {}",
@@ -675,17 +695,17 @@ impl BuildStore {
         )?;
         Ok(())
     }
-    fn prepared_source_query(
-        &mut self,
-        files: &[VerifiedFile],
-        query: &str,
-    ) -> Result<Vec<Vec<Option<String>>>> {
+    fn prepared_source_query(&mut self, files: &[VerifiedFile], query: &str) -> Result<()> {
         self.check()?;
-        if files.iter().any(|file| file.access == FileAccess::S3View) {
-            Ok(self.engine.s3_query(files, query)?)
+        if files
+            .iter()
+            .any(|file| matches!(file.access, FileAccess::S3View | FileAccess::GcsView))
+        {
+            self.engine.remote_files_command(files, query)?;
         } else {
-            self.query(query)
+            self.query(query)?;
         }
+        Ok(())
     }
     fn import(
         &mut self,
@@ -695,7 +715,7 @@ impl BuildStore {
         remote_views: bool,
     ) -> Result<()> {
         if remote_views {
-            return self.import_s3_view(relation, contract, files);
+            return self.import_remote_view(relation, contract, files);
         }
         self.query(&format!(
             "CREATE TABLE {relation}({})",
@@ -891,12 +911,10 @@ impl BuildStore {
             qi(&Self::namespace(session)),
             qi(&format!("seed_{index}"))
         );
-        self.import(
-            &seed,
-            &output.contract,
-            files,
-            self.root.starts_with("s3://"),
-        )?;
+        let remote = files
+            .iter()
+            .any(|file| matches!(file.access, FileAccess::S3View | FileAccess::GcsView));
+        self.import(&seed, &output.contract, files, remote)?;
         self.authorize_private(&seed)?;
         let mappings = Self::mapped_columns(output)?;
         let mut projection = Vec::new();
@@ -929,11 +947,7 @@ impl BuildStore {
         )?;
         self.query(&format!(
             "DROP {} {seed}",
-            if self.root.starts_with("s3://") {
-                "VIEW"
-            } else {
-                "TABLE"
-            }
+            if remote { "VIEW" } else { "TABLE" }
         ))?;
         Ok(())
     }
@@ -992,7 +1006,11 @@ impl BuildStore {
                     &Self::private_input(&session, index),
                     &input.contract,
                     &group.files,
-                    session.execution == BuildExecution::External && self.root.starts_with("s3://"),
+                    session.execution == BuildExecution::External
+                        && matches!(
+                            input.materialization,
+                            Materialization::S3View | Materialization::GcsView
+                        ),
                 )?;
             }
             for (index, base) in session.base_contracts.iter().enumerate() {
@@ -1006,7 +1024,8 @@ impl BuildStore {
                     &Self::private_self(&session, index),
                     &base.contract,
                     &files,
-                    session.execution == BuildExecution::External && self.root.starts_with("s3://"),
+                    session.execution == BuildExecution::External
+                        && (self.root.starts_with("s3://") || self.root.starts_with("gs://")),
                 )?;
             }
             for (index, output) in session.outputs.iter().enumerate() {
@@ -1660,53 +1679,58 @@ mod tests {
         }
     }
     #[test]
-    fn empty_external_s3_self_inputs_are_private_views_and_cleanup_needs_no_reader() {
-        let directory = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).unwrap();
-        let path = directory.path().join("external.duckdb");
-        let mut fixed = fixed(&path);
-        fixed.identity.root = "s3://test-bucket/empty-build".into();
-        fixed.execution = BuildExecution::External;
-        fixed.self_input = true;
-        fixed.outputs[0].source = json!({"table":"rows"});
-        let mut store = BuildStore::open(
-            &path,
-            fixed.identity.root.clone(),
-            Some(fixed.identity.workspace_id.clone()),
-            &Resources::default(),
-        )
-        .unwrap();
-        let preparation = PrepareBuildRequest {
-            discovery: store.discover(fixed.clone()).unwrap(),
-            base_revision: U64::new(1).unwrap(),
-            self_input: true,
-            base_contracts: vec![NamedContract {
-                table: name("rows"),
-                contract: fixed.outputs[0].contract.clone(),
-            }],
-            base_files: vec![],
-            input_files: vec![],
-            holds_confirmed: true,
-        };
-        let session = store.prepare(preparation).unwrap();
-        let namespace = BuildStore::namespace(&session);
-        assert!(store.engine.is_view(&namespace, "self_0").unwrap());
-        assert!(store.engine.base_table(&namespace, "rows").unwrap());
-        store.abort(&session.identity).unwrap();
-        store
-            .record_outcome(
-                &session.identity,
-                BuildOutcome {
-                    kind: OutcomeKind::Aborted,
-                    revision: None,
-                    operation_id: None,
-                },
+    fn empty_external_cloud_self_inputs_are_private_views_and_cleanup_need_no_reader() {
+        for root in [
+            "s3://test-bucket/empty-build",
+            "gs://test-bucket/empty-build",
+        ] {
+            let directory = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).unwrap();
+            let path = directory.path().join("external.duckdb");
+            let mut fixed = fixed(&path);
+            fixed.identity.root = root.into();
+            fixed.execution = BuildExecution::External;
+            fixed.self_input = true;
+            fixed.outputs[0].source = json!({"table":"rows"});
+            let mut store = BuildStore::open(
+                &path,
+                fixed.identity.root.clone(),
+                Some(fixed.identity.workspace_id.clone()),
+                &Resources::default(),
             )
             .unwrap();
-        store.cleanup(&session.identity).unwrap();
-        assert!(!store.engine.schema_exists(&namespace).unwrap());
-        let recorded = store.open_session(&session.identity).unwrap();
-        assert_eq!(recorded.state, BuildState::Aborted);
-        assert!(recorded.outcome.is_some());
+            let preparation = PrepareBuildRequest {
+                discovery: store.discover(fixed.clone()).unwrap(),
+                base_revision: U64::new(1).unwrap(),
+                self_input: true,
+                base_contracts: vec![NamedContract {
+                    table: name("rows"),
+                    contract: fixed.outputs[0].contract.clone(),
+                }],
+                base_files: vec![],
+                input_files: vec![],
+                holds_confirmed: true,
+            };
+            let session = store.prepare(preparation).unwrap();
+            let namespace = BuildStore::namespace(&session);
+            assert!(store.engine.is_view(&namespace, "self_0").unwrap());
+            assert!(store.engine.base_table(&namespace, "rows").unwrap());
+            store.abort(&session.identity).unwrap();
+            store
+                .record_outcome(
+                    &session.identity,
+                    BuildOutcome {
+                        kind: OutcomeKind::Aborted,
+                        revision: None,
+                        operation_id: None,
+                    },
+                )
+                .unwrap();
+            store.cleanup(&session.identity).unwrap();
+            assert!(!store.engine.schema_exists(&namespace).unwrap());
+            let recorded = store.open_session(&session.identity).unwrap();
+            assert_eq!(recorded.state, BuildState::Aborted);
+            assert!(recorded.outcome.is_some());
+        }
     }
     #[test]
     fn build_history_witness_refuses_deleted_or_emptied_session_store() {

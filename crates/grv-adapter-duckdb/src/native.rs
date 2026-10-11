@@ -21,6 +21,27 @@ unsafe extern "C" {
         error: *mut c_char,
         capacity: usize,
     ) -> i32;
+    fn grv_native_gcs_configure(
+        owner: *mut c_void,
+        httpfs: *const c_char,
+        scope: *const c_char,
+        bearer: *const c_char,
+        project: *const c_char,
+        remaining_millis: u64,
+        error: *mut c_char,
+        capacity: usize,
+    ) -> i32;
+    fn grv_native_gcs_query(
+        owner: *mut c_void,
+        locations: *const *const c_char,
+        count: usize,
+        query: *const c_char,
+        output: *mut u8,
+        allowance: usize,
+        written: *mut usize,
+        error: *mut c_char,
+        capacity: usize,
+    ) -> i32;
     fn grv_native_s3_configure(
         owner: *mut c_void,
         httpfs: *const c_char,
@@ -251,6 +272,7 @@ impl Interrupt for NativeInterrupt {
 pub struct NativeEngine {
     owner: *mut c_void,
     extensions: Option<crate::native_extensions::Extensions>,
+    gcs_deadline: Option<std::time::Instant>,
     interrupt: NativeInterrupt,
     // Workspace ownership outlives the connection and all active interrupt calls.
     ownership: Arc<WorkspaceLock>,
@@ -420,6 +442,18 @@ impl NativeEngine {
     }
     pub(crate) fn metadata_query(&mut self, query: &str) -> io::Result<Vec<Vec<Option<String>>>> {
         self.internal_query(query, None)
+    }
+    pub(crate) fn check_reader_deadline(&self) -> io::Result<()> {
+        if self
+            .gcs_deadline
+            .is_some_and(|deadline| std::time::Instant::now() >= deadline)
+        {
+            return Err(io::Error::new(
+                io::ErrorKind::Interrupted,
+                "GCS execution deadline exceeded",
+            ));
+        }
+        Ok(())
     }
     pub(crate) fn managed_evidence_recorded(&self) -> io::Result<bool> {
         self.ownership.managed_evidence_recorded()
@@ -677,6 +711,146 @@ impl NativeEngine {
         }
         Ok(native == 1)
     }
+    pub(crate) fn configure_gcs_reader(
+        &mut self,
+        reader: &crate::gcs_config::GcsReader,
+        token: crate::gcs_token::AccessToken,
+    ) -> io::Result<()> {
+        self.ownership.recheck()?;
+        if self.extensions.is_some() {
+            return Err(io::Error::other("reader configuration is fixed per owner"));
+        }
+        let extensions = crate::native_extensions::Extensions::stage(self.ownership.engine_path())?;
+        let httpfs = cstring(extensions.paths[0].as_os_str().as_encoded_bytes())?;
+        let scope = cstring(crate::gcs_config::sql_filename(&reader.scope)?.as_bytes())?;
+        let project = cstring(reader.project.as_bytes())?;
+        let private = token.bearer()?;
+        let mut bearer = zeroize::Zeroizing::new(Vec::with_capacity(private.len() + 1));
+        bearer.extend_from_slice(private.as_bytes());
+        bearer.push(0);
+        let remaining = token
+            .deadline()
+            .saturating_duration_since(std::time::Instant::now())
+            .as_millis();
+        if remaining == 0 {
+            return Err(io::Error::other("GCS token execution deadline exceeded"));
+        }
+        let mut error = [0; 4096];
+        let status = unsafe {
+            grv_native_gcs_configure(
+                self.owner,
+                httpfs.as_ptr(),
+                scope.as_ptr(),
+                bearer.as_ptr().cast(),
+                project.as_ptr(),
+                remaining as u64,
+                error.as_mut_ptr(),
+                error.len(),
+            )
+        };
+        if status != 0 {
+            return Err(io::Error::other("trusted GCS reader setup failed"));
+        }
+        self.gcs_deadline = Some(token.deadline());
+        self.extensions = Some(extensions);
+        Ok(())
+    }
+    pub(crate) fn remote_metadata(
+        &mut self,
+        file: &grv_adapter_api::VerifiedFile,
+        query: &str,
+    ) -> io::Result<Vec<Vec<Option<String>>>> {
+        self.remote_query(std::slice::from_ref(file), query)
+    }
+    pub(crate) fn remote_command(
+        &mut self,
+        file: &grv_adapter_api::VerifiedFile,
+        query: &str,
+    ) -> io::Result<()> {
+        self.remote_metadata(file, query).map(|_| ())
+    }
+    pub(crate) fn remote_files_command(
+        &mut self,
+        files: &[grv_adapter_api::VerifiedFile],
+        query: &str,
+    ) -> io::Result<()> {
+        self.remote_query(files, query).map(|_| ())
+    }
+    pub(crate) fn remote_query(
+        &mut self,
+        files: &[grv_adapter_api::VerifiedFile],
+        query: &str,
+    ) -> io::Result<Vec<Vec<Option<String>>>> {
+        if files
+            .first()
+            .is_some_and(|f| f.access == grv_adapter_api::FileAccess::S3View)
+        {
+            return self.s3_query(files, query);
+        }
+        self.ownership.recheck()?;
+        let deadline = self
+            .gcs_deadline
+            .ok_or_else(|| io::Error::other("GCS reader is not configured"))?;
+        if std::time::Instant::now() >= deadline
+            || files.is_empty()
+            || files.len() > 4096
+            || files
+                .iter()
+                .any(|f| f.access != grv_adapter_api::FileAccess::GcsView || f.validate().is_err())
+        {
+            return Err(io::Error::other("invalid GCS scanner lease or file set"));
+        }
+        let urls = files
+            .iter()
+            .map(|f| {
+                crate::gcs_config::sql_filename(&f.location).and_then(|s| cstring(s.as_bytes()))
+            })
+            .collect::<io::Result<Vec<_>>>()?;
+        let locations = urls.iter().map(|s| s.as_ptr()).collect::<Vec<_>>();
+        let sql = cstring(query.as_bytes())?;
+        let mut output = vec![0; METADATA_BYTES];
+        let mut written = 0;
+        let mut error = [0; 4096];
+        // A watchdog wakes even when stock transport/bind waits without a file read.
+        let (cancel, wait) = std::sync::mpsc::channel::<()>();
+        let interrupt = self.interrupt.clone();
+        let watchdog = std::thread::Builder::new()
+            .name("grv-gcs-deadline".into())
+            .spawn(move || {
+                if matches!(
+                    wait.recv_timeout(
+                        deadline.saturating_duration_since(std::time::Instant::now())
+                    ),
+                    Err(std::sync::mpsc::RecvTimeoutError::Timeout)
+                ) {
+                    interrupt.interrupt();
+                }
+            })?;
+        let status = unsafe {
+            grv_native_gcs_query(
+                self.owner,
+                locations.as_ptr(),
+                locations.len(),
+                sql.as_ptr(),
+                output.as_mut_ptr(),
+                output.len(),
+                &mut written,
+                error.as_mut_ptr(),
+                error.len(),
+            )
+        };
+        let _ = cancel.send(());
+        let _ = watchdog.join();
+        if status != 0 || std::time::Instant::now() >= deadline {
+            return Err(io::Error::other(
+                "guarded GCS scan failed or execution deadline exceeded",
+            ));
+        }
+        if written > output.len() {
+            return Err(io::Error::other("GCS metadata exceeds allowance"));
+        }
+        decode_metadata(&output[..written])
+    }
     pub(crate) fn configure_s3_reader(
         &mut self,
         reader: &crate::s3_config::S3Reader,
@@ -706,27 +880,6 @@ impl NativeEngine {
         }
         self.extensions = Some(extensions);
         Ok(())
-    }
-    pub(crate) fn verified_s3_metadata(
-        &mut self,
-        file: &grv_adapter_api::VerifiedFile,
-        query: &str,
-    ) -> io::Result<Vec<Vec<Option<String>>>> {
-        self.s3_query(std::slice::from_ref(file), query)
-    }
-    pub(crate) fn verified_s3_command(
-        &mut self,
-        file: &grv_adapter_api::VerifiedFile,
-        query: &str,
-    ) -> io::Result<()> {
-        self.verified_s3_files_command(std::slice::from_ref(file), query)
-    }
-    pub(crate) fn verified_s3_files_command(
-        &mut self,
-        files: &[grv_adapter_api::VerifiedFile],
-        query: &str,
-    ) -> io::Result<()> {
-        self.s3_query(files, query).map(|_| ())
     }
     pub(crate) fn s3_query(
         &mut self,
@@ -1046,7 +1199,7 @@ impl NativeEngine {
         let path = cstring(lock.engine_path().as_os_str().as_bytes())?;
         let mut error = [0; 4096];
         let version = unsafe { CStr::from_ptr(grv_native_version()) }.to_bytes();
-        if version != b"v1.5.6" || unsafe { grv_native_guard_revision() } != 1 {
+        if version != b"v1.5.6" || unsafe { grv_native_guard_revision() } != 3 {
             return Err(io::Error::other("native DuckDB version mismatch"));
         }
         let owner = unsafe {
@@ -1071,6 +1224,7 @@ impl NativeEngine {
         Ok(Self {
             owner,
             extensions: None,
+            gcs_deadline: None,
             interrupt: NativeInterrupt(Arc::new(InterruptPointer(handle))),
             ownership: Arc::new(lock),
             _thread_owner: PhantomData,
@@ -1276,6 +1430,58 @@ impl Engine for NativeEngine {
 
 #[cfg(test)]
 mod descriptor_tests {
+    #[test]
+    #[ignore = "requires protected signed GRV_DUCKDB_EXTENSIONS_DIR; no cloud requests or credentials"]
+    fn gcs_deadline_watchdog_interrupts_without_network_or_commit() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut engine = super::NativeEngine::open(&dir.path().join("deadline.duckdb")).unwrap();
+        let reader = crate::gcs_config::GcsReader {
+            scope: "gs://test-bucket/data".into(),
+            provider: "gcloud".into(),
+            account: "synthetic".into(),
+            project: "named-project".into(),
+        };
+        let token =
+            crate::gcs_token::AccessToken::synthetic_for_test(std::time::Duration::from_secs(4));
+        engine.configure_gcs_reader(&reader, token).unwrap();
+        engine.metadata_query("BEGIN").unwrap();
+        engine
+            .metadata_query("CREATE TABLE _grv_deadline_work (id BIGINT)")
+            .unwrap();
+        let file = grv_adapter_api::VerifiedFile {
+            table: grv_types::Name::new("rows").unwrap(),
+            partition: serde_json::json!({}),
+            version: grv_types::U64::new(1).unwrap(),
+            schema: grv_adapter_api::FileSchema {
+                columns: vec![grv_types::Column {
+                    name: "id".into(),
+                    logical_type: serde_json::json!("int64"),
+                }],
+            },
+            access: grv_adapter_api::FileAccess::GcsView,
+            location: "gs://test-bucket/data/part.parquet".into(),
+            size: grv_types::U64::new(1).unwrap(),
+            sha256: grv_types::Digest::new("a".repeat(64)).unwrap(),
+            validator: "1".into(),
+        };
+        let begin = std::time::Instant::now();
+        assert!(
+            engine
+                .remote_metadata(
+                    &file,
+                    "SELECT SUM(i::DOUBLE) FROM range(1000000000000) t(i)"
+                )
+                .is_err()
+        );
+        assert!(begin.elapsed() < std::time::Duration::from_secs(8));
+        assert!(engine.check_reader_deadline().is_err());
+        engine.metadata_query("ROLLBACK").unwrap();
+        assert!(
+            engine
+                .metadata_query("SELECT * FROM _grv_deadline_work")
+                .is_err()
+        );
+    }
     #[test]
     fn standalone_c_api_static_parquet_initializer_is_idempotent() {
         #[repr(C)]

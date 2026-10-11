@@ -16,6 +16,8 @@ pub mod conversion;
 pub mod driver;
 #[cfg(feature = "native")]
 pub mod extraction;
+pub mod gcs_config;
+pub mod gcs_token;
 #[cfg(feature = "native")]
 pub mod inspection;
 #[cfg(feature = "native")]

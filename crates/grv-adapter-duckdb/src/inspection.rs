@@ -386,9 +386,7 @@ fn observe(
                         }
                         let schema = receipt.identity.target_schema.as_str();
                         let view = engine.is_view(schema, target).map_err(failure)?;
-                        if view
-                            != (receipt.materialization_mode
-                                == crate::pull::MaterializationMode::S3View)
+                        if view != (receipt.materialization_mode.is_remote())
                             || (!view && !engine.base_table(schema, target).map_err(failure)?)
                         {
                             return Err(unknown(

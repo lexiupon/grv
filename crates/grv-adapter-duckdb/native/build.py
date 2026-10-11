@@ -14,6 +14,10 @@ import json
 
 ARCHIVE_HASH = "1fadcbe9e69e1470f9093b6bcde08daf477d729c449e59a807f45c346622099b"
 SITES = {
+    "src/main/http/http_util.cpp": (
+        "084dbe84ac448e42f1494ae4267ff5cd5e1c7fd632ee141806c8bdad9d4cf5c6",
+        [("unique_ptr<HTTPResponse> HTTPUtil::Request(BaseRequest &request) {\n\tunique_ptr<HTTPClient> client;", "unique_ptr<HTTPResponse> HTTPUtil::Request(BaseRequest &request) {\n\tunique_ptr<HTTPClient> client;\n\tGRVHTTPRequestGuard::Before(*this, request, client);"),
+         ("unique_ptr<HTTPResponse> HTTPUtil::Request(BaseRequest &request, unique_ptr<HTTPClient> &client) {", "unique_ptr<HTTPResponse> HTTPUtil::Request(BaseRequest &request, unique_ptr<HTTPClient> &client) {\n\tGRVHTTPRequestGuard::Before(*this, request, client);")]),
     "src/function/cast/cast_function_set.cpp": (
         "fbf6a2c58ea9e5c19d081a3b68207c0be948089096f27eab0443fc4daeabea55",
         [("\tif (entry) {\n\t\tif (entry->bind_function) {", "\tif (entry) {\n\t\tGRVGuard::CustomCast(input.context);\n\t\tif (entry->bind_function) {")]),
@@ -71,7 +75,8 @@ def main():
             if patched.count(old) != 1:
                 raise SystemExit(f"native patch does not match exactly one binding site: {relative}")
             patched = patched.replace(old, new)
-        patched = '#include "duckdb/main/grv_guard.hpp"\n' + patched
+        guard_header = "grv_http_request_guard.hpp" if relative == "src/main/http/http_util.cpp" else "grv_guard.hpp"
+        patched = '#include "duckdb/main/' + guard_header + '"\n' + patched
         if path.read_bytes() not in (original, patched.encode()):
             raise SystemExit(f"unexpected modification in patched source: {relative}")
         if not backup.exists():
@@ -82,6 +87,10 @@ def main():
     wanted_header = (native / "grv_guard.hpp").read_bytes()
     if not header.exists() or header.read_bytes() != wanted_header:
         header.write_bytes(wanted_header)
+    request_guard = source / "src/include/duckdb/main/grv_http_request_guard.hpp"
+    request_guard_content = (native / "grv_http_request_guard.hpp").read_bytes()
+    if not request_guard.exists() or request_guard.read_bytes() != request_guard_content:
+        request_guard.write_bytes(request_guard_content)
     # Pin data-expression builtins from reviewed source modules, including their
     # documented aliases. Catalog/secret/sequence/logging/debug helpers are
     # outside the v1 user query boundary; this is not a per-field or SQL-parser ban.
@@ -113,7 +122,7 @@ def main():
             if path.exists() and path.read_bytes() == old_content:
                 os.utime(path, ns=(old_stat.st_atime_ns, old_stat.st_mtime_ns))
         configure_stamp.write_text(configuration_hash)
-    subprocess.run(["cmake", "--build", str(cmake_build), "--target", "grv_duckdb_guard", "grv_native_proof", "grv_native_fixture", "grv_s3_limits_proof", "-j", str(args.jobs)], check=True)
+    subprocess.run(["cmake", "--build", str(cmake_build), "--target", "grv_duckdb_guard", "grv_native_proof", "grv_native_fixture", "grv_s3_limits_proof", "grv_gcs_request_proof", "-j", str(args.jobs)], check=True)
     subprocess.run(["ctest", "--test-dir", str(cmake_build), "--output-on-failure"], check=True)
 
 

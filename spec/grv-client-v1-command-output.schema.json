@@ -657,7 +657,7 @@
         "dataset": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
         "target_schema": { "type": "string", "pattern": "^[a-z0-9_][a-z0-9_-]*$" },
         "revision_mode": { "enum": ["latest", "fixed"] },
-        "materialization_mode": { "enum": ["local", "s3-view"] },
+        "materialization_mode": { "enum": ["local", "s3-view", "gcs-view"] },
         "committed_revision": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
         "generation_id": { "type": "string", "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$" },
         "state": { "enum": ["current", "behind", "fixed"] },

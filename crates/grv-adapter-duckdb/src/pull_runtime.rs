@@ -1,4 +1,4 @@
-//! Typed transactional process pull lifecycle and independent S3 reader setup.
+//! Typed transactional process pull lifecycle and independent cloud reader setup.
 use crate::{
     binding,
     extraction::error,
@@ -45,6 +45,7 @@ fn failure(failure: PullError) -> grv_types::PublicError {
 struct Bound {
     engine: PathBuf,
     requires_s3: AtomicBool,
+    requires_gcs: AtomicBool,
     identity: String,
     binding: WorkspaceBinding,
     workspace_constraint: Option<Uuid>,
@@ -128,6 +129,7 @@ impl Runtime {
             Bound {
                 engine: path,
                 requires_s3: AtomicBool::new(false),
+                requires_gcs: AtomicBool::new(false),
                 identity: identity.clone(),
                 binding: binding.clone(),
                 workspace_constraint,
@@ -184,6 +186,34 @@ impl Runtime {
                 )
             })?;
         }
+        if bound
+            .requires_gcs
+            .load(std::sync::atomic::Ordering::Acquire)
+        {
+            let reader =
+                crate::gcs_config::load_reader(&bound.engine, &bound.binding.canonical_root)
+                    .map_err(|_| {
+                        error(
+                            ErrorCode::AdapterFailure,
+                            "independent DuckDB GCS reader configuration is unavailable or invalid",
+                        )
+                    })?;
+            let mut worker = bound
+                .worker
+                .lock()
+                .map_err(|_| error(ErrorCode::AdapterFailure, "pull owner poisoned"))?;
+            if let Some(stop) = &self.cancellation {
+                worker.configure_gcs_reader(reader, stop)
+            } else {
+                worker.configure_gcs_reader(reader, &AtomicBool::new(false))
+            }
+            .map_err(|_| {
+                error(
+                    ErrorCode::AdapterFailure,
+                    "independent DuckDB GCS reader authentication failed",
+                )
+            })?;
+        }
         Ok(bound.identity.clone())
     }
     fn fixed(&self, handle: &Handle, request: &RequestRecord) -> Result<pull::PullIdentity> {
@@ -237,6 +267,18 @@ impl Runtime {
                 "S3 views require complete identity replacement against an S3 root",
             ));
         }
+        if declaration["options"]["materialization"] == "gcs-view"
+            && (!request.root.starts_with("gs://")
+                || write != pull::WriteMode::Replace
+                || tables.iter().any(|table| {
+                    table.get("partitions").is_some() || table.get("select").is_some()
+                }))
+        {
+            return Err(error(
+                ErrorCode::InvalidDeclaration,
+                "GCS views require complete identity replacement against a GCS root",
+            ));
+        }
         Ok(pull::PullIdentity {
             binding: WorkspaceBinding {
                 canonical_root: bound.binding.canonical_root.clone(),
@@ -282,6 +324,10 @@ impl Runtime {
             self.fixed(&handle, fixed)?;
             bound.requires_s3.store(
                 fixed.effective_declaration["options"]["materialization"] == "s3-view",
+                std::sync::atomic::Ordering::Release,
+            );
+            bound.requires_gcs.store(
+                fixed.effective_declaration["options"]["materialization"] == "gcs-view",
                 std::sync::atomic::Ordering::Release,
             );
         }
@@ -339,10 +385,16 @@ impl Runtime {
     fn native_plan(&self, handle: &Handle, plan: &api::PullPlan) -> Result<pull::PullPlan> {
         let identity = self.fixed(handle, &plan.request)?;
         let materialization_mode =
-            if plan.request.effective_declaration["options"]["materialization"] == "s3-view" {
-                pull::MaterializationMode::S3View
-            } else {
-                pull::MaterializationMode::Local
+            match plan.request.effective_declaration["options"]["materialization"].as_str() {
+                Some("local") => pull::MaterializationMode::Local,
+                Some("s3-view") => pull::MaterializationMode::S3View,
+                Some("gcs-view") => pull::MaterializationMode::GcsView,
+                _ => {
+                    return Err(error(
+                        ErrorCode::InvalidDeclaration,
+                        "invalid materialization",
+                    ));
+                }
             };
         let declarations = plan.request.effective_declaration["tables"]
             .as_array()
@@ -400,12 +452,11 @@ impl Runtime {
                 .iter()
                 .filter(|file| file.table == table.name)
                 .map(|file| {
-                    let expected_access =
-                        if materialization_mode == pull::MaterializationMode::S3View {
-                            api::FileAccess::S3View
-                        } else {
-                            api::FileAccess::Local
-                        };
+                    let expected_access = match materialization_mode {
+                        pull::MaterializationMode::Local => api::FileAccess::Local,
+                        pull::MaterializationMode::S3View => api::FileAccess::S3View,
+                        pull::MaterializationMode::GcsView => api::FileAccess::GcsView,
+                    };
                     if file.access != expected_access {
                         return Err(error(
                             ErrorCode::UnsupportedCapability,
@@ -422,15 +473,15 @@ impl Runtime {
                             contract.columns.iter().any(|column| &column.name == name)
                         });
                     Ok(pull::SourceFile {
-                        path: if file.access == api::FileAccess::Local {
-                            file.location.clone().into()
-                        } else {
-                            PathBuf::new()
+                        path: match file.access {
+                            api::FileAccess::Local => file.location.clone().into(),
+                            api::FileAccess::S3View | api::FileAccess::GcsView => PathBuf::new(),
                         },
-                        remote: if file.access == api::FileAccess::S3View {
-                            Some(file.clone())
-                        } else {
-                            None
+                        remote: match file.access {
+                            api::FileAccess::Local => None,
+                            api::FileAccess::S3View | api::FileAccess::GcsView => {
+                                Some(file.clone())
+                            }
                         },
                         bytes: file.size,
                         sha256: file.sha256.clone(),

@@ -576,7 +576,7 @@ overrides it with `target: {table: credit_notes}`.
 
 Advanced adapter `options` are:
 
-- `materialization: local | s3-view` (default `local`);
+- `materialization: local | s3-view | gcs-view` (default `local`);
 - `refresh: auto | full` (default `auto`).
 
 Identity replacement may update changed partitions. SQL, append, and explicitly

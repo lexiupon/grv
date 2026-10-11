@@ -74,6 +74,12 @@ pub enum MaterializationMode {
     #[default]
     Local,
     S3View,
+    GcsView,
+}
+impl MaterializationMode {
+    pub(crate) fn is_remote(self) -> bool {
+        self != Self::Local
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -127,7 +133,15 @@ pub struct SourceFile {
 impl SourceFile {
     fn location(&self) -> io::Result<String> {
         if let Some(remote) = &self.remote {
-            crate::s3_config::sql_filename(&remote.location)
+            match remote.access {
+                grv_adapter_api::FileAccess::S3View => {
+                    crate::s3_config::sql_filename(&remote.location)
+                }
+                grv_adapter_api::FileAccess::GcsView => {
+                    crate::gcs_config::sql_filename(&remote.location)
+                }
+                grv_adapter_api::FileAccess::Local => Err(invalid("remote local source refused")),
+            }
         } else {
             self.path
                 .to_str()
@@ -144,9 +158,14 @@ impl SourceFile {
             {
                 Ok(())
             }
-            (Some(remote), MaterializationMode::S3View) => {
+            (Some(remote), MaterializationMode::S3View | MaterializationMode::GcsView) => {
                 remote.validate().map_err(io::Error::other)?;
-                if remote.access != grv_adapter_api::FileAccess::S3View
+                let expected = match mode {
+                    MaterializationMode::S3View => grv_adapter_api::FileAccess::S3View,
+                    MaterializationMode::GcsView => grv_adapter_api::FileAccess::GcsView,
+                    MaterializationMode::Local => unreachable!(),
+                };
+                if remote.access != expected
                     || !self.path.as_os_str().is_empty()
                     || remote.table != *table
                     || remote.size != self.bytes
@@ -284,6 +303,12 @@ pub fn empty_projection(contract: &TableContract) -> io::Result<String> {
     Ok(format!("SELECT {} WHERE false", columns.join(",")))
 }
 pub fn s3_view_projection(table: &PullTable) -> io::Result<String> {
+    remote_view_projection(table, MaterializationMode::S3View)
+}
+pub fn remote_view_projection(table: &PullTable, mode: MaterializationMode) -> io::Result<String> {
+    if !mode.is_remote() {
+        return Err(invalid("remote projection requires cloud view mode"));
+    }
     if table.files.is_empty() {
         return empty_projection(&table.source_contract);
     }
@@ -291,7 +316,7 @@ pub fn s3_view_projection(table: &PullTable) -> io::Result<String> {
         .files
         .iter()
         .map(|file| {
-            file.validate_access(&table.name, MaterializationMode::S3View)?;
+            file.validate_access(&table.name, mode)?;
             file_projection(file, &table.source_contract)
         })
         .collect::<io::Result<Vec<_>>>()
@@ -329,10 +354,15 @@ impl PullPlan {
     /// Pure preparation. In particular neither receipts nor source bytes are read.
     pub fn validate(&self) -> io::Result<()> {
         self.identity.validate()?;
-        if self.materialization_mode == MaterializationMode::S3View
-            && (!self.identity.is_identity_materialization()
-                || !self.identity.binding.canonical_root.starts_with("s3://"))
-        {
+        let remote_scheme = match self.materialization_mode {
+            MaterializationMode::Local => None,
+            MaterializationMode::S3View => Some("s3://"),
+            MaterializationMode::GcsView => Some("gs://"),
+        };
+        if remote_scheme.is_some_and(|scheme| {
+            !self.identity.is_identity_materialization()
+                || !self.identity.binding.canonical_root.starts_with(scheme)
+        }) {
             return Err(invalid(
                 "S3 views require complete identity replacement against an S3 root",
             ));
@@ -343,6 +373,7 @@ impl PullPlan {
                 match request.effective_declaration["options"]["materialization"].as_str() {
                     None | Some("local") => MaterializationMode::Local,
                     Some("s3-view") => MaterializationMode::S3View,
+                    Some("gcs-view") => MaterializationMode::GcsView,
                     _ => return Err(invalid("invalid fixed materialization mode")),
                 };
             if request.attempt_id != self.identity.attempt_id
@@ -596,7 +627,7 @@ mod destination {
         }
     }
     pub struct PullStore {
-        engine: NativeEngine,
+        pub(super) engine: NativeEngine,
         initialized_observed: bool,
         source_scratch_bytes: usize,
         offered_source_bytes: u64,
@@ -812,6 +843,19 @@ mod destination {
             self.engine.configure_s3_reader(reader)?;
             Ok(())
         }
+        pub fn configure_gcs_reader(
+            &mut self,
+            reader: &crate::gcs_config::GcsReader,
+        ) -> Result<(), PullError> {
+            self.admit_s3_resources()?;
+            let token = crate::gcs_token::acquire(
+                &reader.account,
+                &reader.project,
+                std::time::Duration::from_secs(300),
+            )?;
+            self.engine.configure_gcs_reader(reader, token)?;
+            Ok(())
+        }
         pub fn open(path: &Path) -> io::Result<Self> {
             let engine = NativeEngine::open(path)?;
             let initialized_observed = engine.managed_evidence_recorded()?;
@@ -883,6 +927,7 @@ mod destination {
             Ok(())
         }
         fn check_stopping(&self) -> io::Result<()> {
+            self.engine.check_reader_deadline()?;
             if self
                 .stopping
                 .as_ref()
@@ -923,7 +968,7 @@ mod destination {
                 PullResolution::Uninitialized => true,
                 PullResolution::NotCommitted => false,
             };
-            if plan.materialization_mode == MaterializationMode::S3View
+            if plan.materialization_mode.is_remote()
                 && plan.tables.iter().any(|table| !table.files.is_empty())
             {
                 self.admit_s3_resources()?;
@@ -1040,9 +1085,9 @@ mod destination {
                         if let Some(remote) = &file.remote {
                             let parquet = format!(
                                 "read_parquet({},hive_partitioning=false,union_by_name=false)",
-                                quote_literal(&crate::s3_config::sql_filename(&remote.location)?)
+                                quote_literal(&file.location()?)
                             );
-                            let described = self.engine.verified_s3_metadata(
+                            let described = self.engine.remote_metadata(
                                 remote,
                                 &format!("DESCRIBE SELECT * FROM {parquet}"),
                             )?;
@@ -1050,13 +1095,13 @@ mod destination {
                             if let Some(check) =
                                 exact_value_assertion(&file.contract, &parquet, true)
                             {
-                                self.engine.verified_s3_command(remote, &check)?;
+                                self.engine.remote_command(remote, &check)?;
                             }
                             if let Some(check) = partition_assertion(file)? {
-                                self.engine.verified_s3_command(remote, &format!("SELECT CASE WHEN ({check})=0 THEN 0 ELSE error('file partition columns differ from verified selection') END"))?;
+                                self.engine.remote_command(remote, &format!("SELECT CASE WHEN ({check})=0 THEN 0 ELSE error('file partition columns differ from verified selection') END"))?;
                             }
                             let projection = file_projection(file, &table.source_contract)?;
-                            let rows = self.engine.verified_s3_metadata(
+                            let rows = self.engine.remote_metadata(
                                 remote,
                                 &format!("SELECT count(*)::BIGINT FROM ({projection})"),
                             )?;
@@ -1106,7 +1151,7 @@ mod destination {
                         )?;
                         verified.recheck(file)?;
                     }
-                    if plan.materialization_mode == MaterializationMode::S3View {
+                    if plan.materialization_mode.is_remote() {
                         counts.insert(
                             table.name.as_str().into(),
                             Value::String(remote_rows.to_string()),
@@ -1138,7 +1183,7 @@ mod destination {
                 // evaluated against the same source/local/pre-write snapshot.
                 for (index, table) in plan.tables.iter().enumerate() {
                     self.check_stopping()?;
-                    if plan.materialization_mode == MaterializationMode::S3View {
+                    if plan.materialization_mode.is_remote() {
                         continue;
                     }
                     let selected = table.sql.clone().unwrap_or_else(|| {
@@ -1203,7 +1248,7 @@ mod destination {
                                 .any(|table| table.target_table.as_str() == name)
                             {
                                 self.engine.authorize_relation(namespace, name)?;
-                                if plan.materialization_mode == MaterializationMode::S3View
+                                if plan.materialization_mode.is_remote()
                                     || self.target_is_view(namespace, name)?
                                 {
                                     let prior = self.engine.metadata_query(&format!("SELECT contract FROM _grv.pull_meta WHERE owner_scope={} AND target_table={} LIMIT 2",quote_literal(scope.as_str()), quote_literal(name)))?;
@@ -1266,19 +1311,21 @@ mod destination {
                         quote_identifier(&format!("_grv_pull_output_{index}"))
                     );
                     if replacing {
-                        if plan.materialization_mode == MaterializationMode::S3View {
+                        if plan.materialization_mode.is_remote() {
                             self.drop_target(namespace, table.target_table.as_str())?;
                             let files = table
                                 .files
                                 .iter()
                                 .map(|file| file.remote.clone().expect("validated S3 source"))
                                 .collect::<Vec<_>>();
-                            let sql =
-                                format!("CREATE VIEW {target} AS {}", s3_view_projection(table)?);
+                            let sql = format!(
+                                "CREATE VIEW {target} AS {}",
+                                remote_view_projection(table, plan.materialization_mode)?
+                            );
                             if files.is_empty() {
                                 self.engine.metadata_query(&sql)?;
                             } else {
-                                self.engine.verified_s3_files_command(&files, &sql)?;
+                                self.engine.remote_files_command(&files, &sql)?;
                             }
                             for column in &table.not_null {
                                 let check = format!(
@@ -1288,7 +1335,7 @@ mod destination {
                                 if files.is_empty() {
                                     self.engine.metadata_query(&check)?;
                                 } else {
-                                    self.engine.verified_s3_files_command(&files, &check)?;
+                                    self.engine.remote_files_command(&files, &check)?;
                                 }
                             }
                         } else {
@@ -2052,6 +2099,119 @@ mod tests {
             "s3://test-bucket/grv-dev/data/version=1/part.parquet",
         ));
         plan
+    }
+    #[test]
+    fn gcs_exact_projection_and_wrong_access_are_pure() {
+        let mut plan = remote_plan();
+        plan.materialization_mode = MaterializationMode::GcsView;
+        plan.identity.binding.canonical_root = "gs://test-bucket/grv-dev".into();
+        let remote = plan.tables[0].files[0].remote.as_mut().unwrap();
+        remote.access = grv_adapter_api::FileAccess::GcsView;
+        remote.location = "gs://test-bucket/grv-dev/space%20quote'percent%25.parquet".into();
+        plan.validate().unwrap();
+        let sql = remote_view_projection(&plan.tables[0], plan.materialization_mode).unwrap();
+        assert!(sql.contains(
+            "https://storage.googleapis.com/test-bucket/grv-dev/space%20quote%27percent%25.parquet"
+        ));
+        assert!(sql.contains("hive_partitioning=false,union_by_name=false"));
+        let mut invalid = plan.clone();
+        invalid.materialization_mode = MaterializationMode::S3View;
+        assert!(invalid.validate().is_err());
+        let mut invalid = plan.clone();
+        invalid.tables[0].files[0].remote.as_mut().unwrap().access =
+            grv_adapter_api::FileAccess::S3View;
+        assert!(invalid.validate().is_err());
+    }
+    #[cfg(feature = "native")]
+    #[test]
+    fn native_empty_gcs_refresh_replays_without_authentication() {
+        let temp = tempfile::tempdir().unwrap();
+        let database = temp.path().join("gcs.duckdb");
+        let mut store = PullStore::open(&database).unwrap();
+        let mut empty = plan(identity());
+        empty.materialization_mode = MaterializationMode::GcsView;
+        empty.identity.binding.canonical_root = "gs://test-bucket/grv-dev".into();
+        let receipt = store.apply(&empty).unwrap();
+        assert_eq!(receipt.materialization_mode, MaterializationMode::GcsView);
+        assert!(store.target_is_view("app", "rows").unwrap());
+        assert_eq!(store.apply(&empty).unwrap(), receipt);
+    }
+    #[cfg(feature = "native")]
+    #[test]
+    #[ignore = "requires explicit GRV_GCS_ACCOUNT/PROJECT, owned GRV_TEST_GCS_URI, signed extensions and authorized live fixture"]
+    fn native_live_gcs_guarded_pull_refresh_and_source_free_replay() {
+        let account = std::env::var("GRV_GCS_ACCOUNT").unwrap();
+        let project = std::env::var("GRV_GCS_PROJECT").unwrap();
+        let uri = std::env::var("GRV_TEST_GCS_URI").unwrap();
+        let canonical_root = uri.rsplit_once('/').unwrap().0.to_owned();
+        let temp = tempfile::tempdir().unwrap();
+        let database = temp.path().join("gcs.duckdb");
+        let mut store = PullStore::open(&database).unwrap();
+        let mut plan = plan(identity());
+        plan.materialization_mode = MaterializationMode::GcsView;
+        plan.identity.binding.canonical_root = canonical_root.clone();
+        let mut file = remote_file(contract(), &uri);
+        file.remote.as_mut().unwrap().access = grv_adapter_api::FileAccess::GcsView;
+        file.remote.as_mut().unwrap().size =
+            U64::new(std::env::var("GRV_TEST_GCS_SIZE").unwrap().parse().unwrap()).unwrap();
+        file.bytes = file.remote.as_ref().unwrap().size;
+        file.remote.as_mut().unwrap().sha256 =
+            Digest::new(std::env::var("GRV_TEST_GCS_SHA256").unwrap()).unwrap();
+        file.sha256 = file.remote.as_ref().unwrap().sha256.clone();
+        plan.tables[0].files.push(file.clone());
+        store
+            .configure_gcs_reader(&crate::gcs_config::GcsReader {
+                scope: canonical_root,
+                provider: "gcloud".into(),
+                account,
+                project,
+            })
+            .unwrap();
+        let receipt = store.apply(&plan).unwrap();
+        assert!(store.target_is_view("app", "rows").unwrap());
+        let remote = file.remote.unwrap();
+        let values = store
+            .engine
+            .remote_metadata(&remote, "SELECT id::BIGINT FROM app.rows ORDER BY id")
+            .unwrap();
+        assert_eq!(values, vec![vec![Some("42".into())]]);
+        let filename = crate::gcs_config::sql_filename(&uri).unwrap();
+        assert!(
+            store
+                .engine
+                .metadata_query(&format!("SELECT * FROM read_parquet('{}')", filename))
+                .is_err()
+        );
+        assert!(
+            store
+                .engine
+                .remote_metadata(
+                    &remote,
+                    &format!("SELECT * FROM read_parquet('{}-other')", filename)
+                )
+                .is_err()
+        );
+        assert!(
+            store
+                .engine
+                .remote_metadata(
+                    &remote,
+                    &format!(
+                        "SELECT * FROM (SELECT * FROM read_parquet('{}*')) q",
+                        filename
+                    )
+                )
+                .is_err()
+        );
+        drop(store);
+        let mut reopened = PullStore::open(&database).unwrap();
+        assert_eq!(reopened.apply(&plan).unwrap(), receipt);
+        let mut refresh = plan.clone();
+        refresh.identity.attempt_id = Uuid::v4();
+        refresh.identity.request_sha256 = Digest::new("c".repeat(64)).unwrap();
+        refresh.tables[0].files.clear();
+        assert!(reopened.apply(&refresh).is_ok());
+        assert!(reopened.target_is_view("app", "rows").unwrap());
     }
     #[test]
     fn s3_pure_preparation_requires_exact_closed_evidence_without_opening_sources() {

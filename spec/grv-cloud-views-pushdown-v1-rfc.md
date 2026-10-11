@@ -109,7 +109,11 @@ Not initial scope:
 - GCS initially uses the named gcloud OAuth provider with mandatory account and
   project, invoked with both selectors. No service-account/HMAC key. Reject
   environment/config token-file, credential-file or impersonation overrides
-  changing the selected principal; never use active-account fallback.
+  changing the selected principal; never use active-account fallback. The local
+  gcloud credential-store directory remains the operator-managed trusted login
+  store, not a separately inferred identity. Active configuration may supply
+  nonidentity preferences, but cannot override mandatory account/project or
+  introduce auth overrides. This release does not add a named-config selector.
 - Impersonation, attached identity and federation are future explicit keyless
   providers, not assumed permissions or fallback in the initial release.
 
@@ -147,12 +151,27 @@ untrusted secret/catalog/config access. No tokens in views, receipts, errors,
 profiling SQL, command arguments or environment dumps. Scope is prefix routing,
 not exact authorization; every open requires trusted exact-path authority.
 
-The provider must return trusted expiry with the token, not assume a printed
-token is fresh or valid for one hour. Resolve how the existing gcloud provider
-obtains expiry without credential disclosure in PR1/2. Reject unknown or
-insufficient lifetime before scans. Establish an execution deadline before
-expiry with reviewed clock-skew/cleanup margin; cancel and roll back if exceeded,
-then reacquire before the next execution. Do not replace a secret during a query
+The adapter provider uses `gcloud config config-helper --force-auth-refresh`
+with explicit account/project and a projected private JSON response containing
+access_token, token_expiry and selected core/auth properties. Token and expiry
+come from the same response, not guessed from a printed token. Preflight and
+response checks refuse auth overrides/mismatched selectors. Unknown expiry and
+insufficient lifetime fail before native scans. Helper output is bounded to
+64 KiB, token to 16 KiB, helper process group to 30 seconds; stdout stays private,
+stderr is suppressed, token/buffers zeroize and Debug is redacted.
+
+Initial scan execution budget is at most **300 seconds**, anchored monotonically
+before token acquisition; require expiry beyond requested execution plus a
+**120-second skew/cleanup margin**. Setup/bind consumes that same budget. The
+worker/native integration must enforce cancellation/rollback at the deadline,
+then reacquire on a fresh owner for the next execution. Provider acquisition,
+computation watchdog and precommit checks are implemented. Native guard revision
+3 also checks every stock `HTTPUtil::Request` before signed HTTPFS transport,
+refuses late/non-admitted/non-read requests and discards cached clients before
+stock initialization with remaining-lease timeouts. An already-started request
+may remain in flight until its bounded stock timeout; cancellation/rollback
+races and backend timeout behavior still require qualification. This is a pinned
+engine policy hook, not a custom network transport. Do not replace a secret during a query
 and assume open handles refresh. No whole-operation automatic retry after
 results/effects, partial refresh commit or seamless mid-query renewal. Test
 bind/execute/rebind expiry and cancellation races. If reliable expiry/deadline
@@ -228,6 +247,15 @@ path-only authorization shim is needed, it may delegate reads to HTTPFS—it is
 not justification to reintroduce a custom signing/range/generation transport.
 If exact-path restrictions cannot be enforced, that is a blocking integration
 issue, not something made safe merely by running locally.
+
+The parameter-only `native/gcs_http_policy.hpp` wrapper delegates initialization
+and clients to signed stock HTTPFS while disabling redirects, clearing proxies,
+requiring TLS verification and capping retries/timeouts. Its two-origin offline
+probe verifies direct bearer reads, all initialization overloads, zero redirect
+target requests under policy, and redirect-following in the stock control. It
+is not a new transport or exact-path fence. Install after verified extension
+load and before any remote handle on GCS-only engines; production installation,
+curl/backend coverage and client-cache isolation are still qualification gates.
 
 Set clear engine/network/resource limits, cancellation and failure behavior.
 Use pinned HTTPFS's range/cache/retry behavior rather than promising the

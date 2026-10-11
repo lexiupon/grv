@@ -129,10 +129,16 @@ pub fn prepare<B: Backend>(
         ));
     }
     let (access, materialization) =
-        if authorization.request.effective_declaration["options"]["materialization"] == "s3-view" {
-            (FileAccess::S3View, Materialization::S3View)
-        } else {
-            (FileAccess::Local, Materialization::Local)
+        match authorization.request.effective_declaration["options"]["materialization"].as_str() {
+            Some("local") => (FileAccess::Local, Materialization::Local),
+            Some("s3-view") => (FileAccess::S3View, Materialization::S3View),
+            Some("gcs-view") => (FileAccess::GcsView, Materialization::GcsView),
+            _ => {
+                return Err(public_error(
+                    ErrorCode::InvalidDeclaration,
+                    "invalid pull materialization",
+                ));
+            }
         };
     if !session
         .capabilities

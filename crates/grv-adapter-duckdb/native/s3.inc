@@ -14,7 +14,7 @@ extern "C" int grv_native_s3_configure(void *owner,const char *httpfs,const char
     auto &engine=*static_cast<Owner *>(owner)->engine;auto &configuration=DBConfig::GetConfig(*engine.connection.context);auto policy=GRVGuard::Get(*engine.connection.context);
     auto paths=configuration.options.allowed_paths;int phase=0;
     try {
-        if(engine.snapshot_started||engine.result||engine.verified_s3->configured) {throw PermissionException("S3 reader configuration is fixed per engine lifetime");}
+        if(engine.snapshot_started||engine.result||engine.verified_s3->configured||engine.exact_gcs->configured||engine.exact_gcs->failed) {throw PermissionException("S3 reader configuration is fixed per engine lifetime");}
         string fixed_scope(scope),fixed_region(region),fixed_profile(profile);
         auto coordinate=S3Parse(fixed_scope+"/grv-scope-proof");string decoded_scope="s3://"+coordinate.bucket;auto prefix=coordinate.key=="grv-scope-proof"?string():coordinate.key.substr(0,coordinate.key.size()-std::strlen("/grv-scope-proof"));if(!prefix.empty()) {decoded_scope+="/"+prefix;}if(fixed_profile.empty()||fixed_profile.size()>1024||fixed_region.empty()||fixed_region.size()>128||fixed_profile.find_first_of("\r\n")!=string::npos||fixed_region.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789-")!=string::npos) {throw PermissionException("invalid S3 reader configuration");}
         // No untrusted query can enter this owner while its guard is temporarily

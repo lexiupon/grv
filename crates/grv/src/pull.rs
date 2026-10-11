@@ -435,10 +435,17 @@ fn run(options: Options, root: Root) -> std::result::Result<Success, Failure> {
             }
             Comparison::NotCommitted(authorization) => authorization,
         };
-    let materialization = if effective["options"]["materialization"] == "s3-view" {
-        grv_adapter_api::Materialization::S3View
-    } else {
-        grv_adapter_api::Materialization::Local
+    let materialization = match effective["options"]["materialization"].as_str() {
+        Some("local") => grv_adapter_api::Materialization::Local,
+        Some("s3-view") => grv_adapter_api::Materialization::S3View,
+        Some("gcs-view") => grv_adapter_api::Materialization::GcsView,
+        _ => {
+            return Err(public_error(
+                ErrorCode::InvalidDeclaration,
+                "invalid pull materialization",
+            )
+            .into());
+        }
     };
     if !session
         .capabilities

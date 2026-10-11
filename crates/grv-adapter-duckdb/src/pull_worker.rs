@@ -34,6 +34,7 @@ impl StopSignal for AtomicBool {
 }
 enum Command {
     ConfigureS3(crate::s3_config::S3Reader),
+    ConfigureGcs(crate::gcs_config::GcsReader),
     Binding(String),
     Lookup(grv_types::Uuid, String),
     Resolve(PullIdentity),
@@ -43,6 +44,7 @@ enum Command {
 }
 enum Reply {
     ConfiguredS3,
+    ConfiguredGcs,
     Binding(Option<WorkspaceBinding>),
     Preview(PullPreview),
     PriorContracts(Vec<grv_adapter_api::NamedContract>),
@@ -106,6 +108,9 @@ impl PullWorker {
                         Command::ConfigureS3(reader) => store
                             .configure_s3_reader(&reader)
                             .map(|()| Reply::ConfiguredS3),
+                        Command::ConfigureGcs(reader) => store
+                            .configure_gcs_reader(&reader)
+                            .map(|()| Reply::ConfiguredGcs),
                         Command::Binding(root) => store.binding(&root).map(Reply::Binding),
                         Command::Lookup(attempt, root) => {
                             store.lookup(&attempt, &root).map(Reply::Resolved)
@@ -157,6 +162,18 @@ impl PullWorker {
             Reply::ConfiguredS3 => Ok(()),
             _ => Err(PullError::OutcomeUnknown(
                 "unexpected S3 reader owner reply".into(),
+            )),
+        }
+    }
+    pub fn configure_gcs_reader(
+        &mut self,
+        reader: crate::gcs_config::GcsReader,
+        stop: &impl StopSignal,
+    ) -> Result<(), PullError> {
+        match self.call(Command::ConfigureGcs(reader), stop)? {
+            Reply::ConfiguredGcs => Ok(()),
+            _ => Err(PullError::OutcomeUnknown(
+                "unexpected GCS reader owner reply".into(),
             )),
         }
     }

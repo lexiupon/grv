@@ -174,6 +174,19 @@ pub trait Backend: Send + Sync {
     fn s3_data_uri(&self, _key: &ObjectKey) -> Result<Option<String>> {
         Ok(None)
     }
+    /// Pure, credential-free coordinates for one exact GCS object.
+    fn gcs_data_uri(&self, _key: &ObjectKey) -> Result<Option<String>> {
+        Ok(None)
+    }
+    /// Authenticate the selected preparation provider and reject requester-pays
+    /// buckets before any source evidence is read. Unsupported means refusal,
+    /// never permission to proceed or fall back to another materialization.
+    fn gcs_view_eligible(&self) -> Result<()> {
+        Err(Error::new(
+            ErrorKind::Unsupported,
+            "GCS view eligibility is unsupported",
+        ))
+    }
     fn get(&self, key: &ObjectKey, sink: &mut dyn Write) -> Result<ObjectMeta>;
     /// Read exactly one conditional byte range (1..=64 KiB). The returned
     /// metadata describes the complete object, not the range. Success proves
@@ -240,6 +253,12 @@ pub trait Backend: Send + Sync {
 impl<B: Backend + ?Sized> Backend for Box<B> {
     fn s3_data_uri(&self, key: &ObjectKey) -> Result<Option<String>> {
         (**self).s3_data_uri(key)
+    }
+    fn gcs_data_uri(&self, key: &ObjectKey) -> Result<Option<String>> {
+        (**self).gcs_data_uri(key)
+    }
+    fn gcs_view_eligible(&self) -> Result<()> {
+        (**self).gcs_view_eligible()
     }
     fn get(&self, key: &ObjectKey, sink: &mut dyn Write) -> Result<ObjectMeta> {
         (**self).get(key, sink)

@@ -17,6 +17,36 @@ access uses separately authorized private relations. The engine has a 512-MiB
 memory bound and a 16-GiB temporary staging quota, separate from the 32-MiB
 source and scratch bounds and four 8-MiB transfer credits.
 
+## Keyless GCS implementation foundation (not advertised)
+
+`gcs_config` loads the owner-only engine-adjacent `.grv-gcs-read.json` selector
+without auth/network, requires explicit gcloud account/project and canonical
+scope, and maps exact gs coordinates to fixed-host HTTPS filenames. `gcs_token`
+uses projected gcloud config-helper JSON for matching token/expiry, rejects auth
+overrides, zeroizes bounded private buffers and exposes at most a 300-second
+monotonic lease with a 120-second expiry margin. It does not guess lifetime from
+`print-access-token`. Local gcloud login storage is trusted operator state;
+impersonation/credential overrides are not automatic providers.
+
+The native `gcs_http_policy.hpp` parameter wrapper retains signed stock HTTPFS
+transport while disabling redirects/proxies and enforcing TLS/timeouts/retries.
+Its synthetic two-origin proof runs with
+`bash prototypes/cloud-views/httpfs/policy_probe.sh`. The redirect target must
+receive no request under policy; the unhardened stock control follows it.
+
+Guard revision 3 integrates exact read-only HTTPS admission, per-handle epochs,
+file-operation and stock-request deadline checks, a computation interrupt
+watchdog, transactional pull/replay and held external-build dispatch. The engine
+request hook changes no signed extension or transport; it removes cached clients
+before stock initialization with remaining-lease timeouts. A deterministic proof
+fences a second request after expiry. An owned live guarded pull passed before
+this request-hook revision; its revision-3 rerun is blocked by selected gcloud
+login/token acquisition. The shipping matrices, full fault/resource/cancellation
+qualification and packaging remain pending: `gcs-view` is **not advertised**.
+No token is persisted in the view; ordinary DuckDB users need independent
+short-lived HTTPS HTTP secrets and are not protected by the GRV guard. See the
+[implementation plan](../../spec/grv-cloud-views-pushdown-v1-plan.md).
+
 ## Read-only inspection
 
 Native builds advertise read-only connection inspection after the process and

@@ -2,7 +2,7 @@
 
 |                 |                                                                                                                                                                |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Status          | Planned; stock OAuth HTTPS live feasibility passed; production capability not implemented                                                                      |
+| Status          | Implementation in progress; native guarded pull live proof passed; capability remains unadvertised                                                             |
 | Authority       | [RFC](grv-cloud-views-pushdown-v1-rfc.md)                                                                                                                      |
 | Evidence        | [Stock HTTPFS OAuth live proof](../prototypes/cloud-views/httpfs/oauth-live-evidence/README.md); [historical experiments](../prototypes/cloud-views/README.md) |
 | Release process | [Release-validation catalog](release-validation/README.md), [development](../docs/development.md)                                                              |
@@ -34,9 +34,17 @@ approval; this request authorizes planning/committing, not publication.
   one default production-owner denial probe; query projection **96.96%** and
   selective-wide **93.59%** payload savings on fixed fixtures. Special names,
   empty/evolved/no-statistics correctness and exact test-resource cleanup.
-- Not complete: positive production guard integration, redirects, full URI
-  canonicalization, token expiry/long-query cancellation, refresh/holds/replay,
-  shipping S3/GCS matrix and supported-target package/install qualification.
+- Implemented, not release-qualified: coordinated GCS access/provenance records,
+  full-object preparation, authenticated Requester Pays refusal, pure URI mapping,
+  guarded stock HTTPFS pulls and held-build dispatch. An owned live one-row native
+  pull passed exact/nested/glob denials, source-free reopen replay and empty refresh.
+  Guard revision 3 adds a pinned engine pre-request hook retaining stock transport:
+  no late second request, wrong URL or write request in deterministic proof.
+  A synthetic-token native watchdog test interrupts computation and rolls back.
+- Not complete: revision-3 live rerun (selected gcloud login now refuses token
+  acquisition), complete cloud projection/predicate matrices, request cancellation
+  races and bounded in-flight transport behavior, held-build/fault/resource tests,
+  ordinary DuckDB consumption and supported-target package/install qualification.
 - Requester Pays: explicit header and no-header both succeeded for the selected
   principal. Billing attribution/mandatory enforcement is unproven. Initially
   **refuse Requester-Pays view inputs** unless a separate qualification gate
@@ -76,10 +84,12 @@ source-coordinate model and guard design.
 
 - Specify initial provider/account/project/scope schema and error ordering;
   reject ambient impersonation/credential/token overrides before network/effects.
-- Decide a reliable token-plus-expiry acquisition contract for gcloud. Do not
-  assume `print-access-token` returns a fresh one-hour token. Determine trusted
-  expiry and enforce bounded execution with clock-skew/cleanup margin, or block
-  release. Record concrete fallback choices for review, not automatic selection.
+- Use the implemented gcloud config-helper force-refresh projected JSON
+  token-plus-expiry contract: explicit account/project, preflight/response auth
+  override refusal, bounded private output, zeroizing buffers. Live token/expiry
+  acquisition passed. No guessed one-hour lifetime. Enforce at most 300 seconds
+  anchored before acquisition, expiry beyond budget plus 120-second margin.
+  Worker/native watchdog remains an integration release gate.
 - Set token refresh between executions only, deadline cancellation/rollback,
   unknown/insufficient lifetime rejection, and no mid-query secret replacement
   or automatic retry after results/effects. Define ordinary DuckDB expiry limits.

@@ -425,7 +425,7 @@ For example, this is a complete bootstrap request (no `req` field):
 after_publish` (booleans);
 - `source_consistency` (`"snapshot"`, `"capture_window"`, or `"none"`);
 - `pull_write_modes` (unique array of `"replace" | "append"`);
-- `pull_materializations` (unique array of `"local" | "s3-view"`);
+- `pull_materializations` (unique array of `"local" | "s3-view" | "gcs-view"`);
 - `pull_recovery` (`"transactional" | "journaled" | null`);
 - and `data_plane` (array of strings).
 
@@ -566,10 +566,15 @@ extensions: J, column_ext: J}`. Columns use **GRV v2 §4 logical types**, not
   Required extension properties are not silently discarded.
 - **File:** `{table: Name, partition: J, version: U64,
 schema: {columns: [{name: string, type: J}]},
-access: "local" | "s3-view", location: string, size: U64, sha256: Digest,
+access: "local" | "s3-view" | "gcs-view", location: string, size: U64, sha256: Digest,
 validator: string}`. Version is positive. Partition objects have exactly the
   table layout's keys and canonical values. Local locations are absolute verified
   staging paths; S3-view locations are exact credential-free S3 data-file URIs.
+  GCS-view locations are canonical credential-free `gs://` provenance, never
+  token-bearing URLs. Preparation verifies full object hashes, schema and row
+  counts; native fixed-host HTTPS filenames are trusted derivatives. Remote
+  query bytes remain best effort, not generation-pinned. Capability advertisement
+  is gated independently of these coordinated pre-1.0 record variants.
   File schema is that file's logical prefix schema, not a later table baseline.
 - **RequestRecord:** `{attempt_id: UUID, root: string, dataset: Name,
 workspace_id: UUID, adapter_identity: AdapterIdentity,
@@ -598,7 +603,7 @@ run_id: RunId, workspace_id: UUID, declaration_sha256: Digest,
 adapter_identity: AdapterIdentity, connection_identity: string}`.
 - **InputBinding:** `{alias: Name, relation: J, dataset: Name, table: Name, revision: Revision,
 generation_id: UUID, contract: TableContract,
-materialization: "local" | "s3-view"}`. Relation validates against
+materialization: "local" | "s3-view" | "gcs-view"}`. Relation validates against
   `build_input` for the selected mode. `table` is the recorded GRV source table,
   independent of the authored physical relation; the parent verifies that exact
   table in the fixed dataset and revision. Revision is positive. Metadata must

@@ -939,7 +939,7 @@ import_attempt_details (keyed by successful attempt):
 #### Modes and checkpoints
 
 - `write_mode` is `replace` or `append`. `transform_mode` is `identity` or
-  `sql`. `materialization_mode` is `local` or `s3-view`.
+  `sql`. `materialization_mode` is `local`, `s3-view`, or `gcs-view`.
 - `revision_mode` is `latest` or `fixed`. It describes the requested source
   selector for all writes. It is not an ownership key and never routes or
   renames targets.

@@ -151,6 +151,8 @@ pub enum Materialization {
     Local,
     #[serde(rename = "s3-view")]
     S3View,
+    #[serde(rename = "gcs-view")]
+    GcsView,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

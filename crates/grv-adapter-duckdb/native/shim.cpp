@@ -17,6 +17,7 @@
 using namespace duckdb;
 #include "verified_fd.inc"
 #include "verified_s3.inc"
+#include "gcs_filesystem.inc"
 namespace {
 struct AcquiredTable {
     vector<LogicalType> types;
@@ -31,6 +32,7 @@ struct Engine {
     vector<AcquiredTable> stages;
     bool staged = false;
     bool snapshot_started = false, acquisition_sealed = false, multi_acquisition = false;
+    std::shared_ptr<ExactGCSState> exact_gcs = std::make_shared<ExactGCSState>();
     std::shared_ptr<VerifiedS3State> verified_s3 = std::make_shared<VerifiedS3State>();
     std::shared_ptr<VerifiedDescriptorState> verified_descriptors = std::make_shared<VerifiedDescriptorState>();
     Engine(const char *path, DBConfig &configuration) : database(path, &configuration), connection(database) {
@@ -85,7 +87,7 @@ shared_ptr<GRVGuard> Policy(ClientContext &context) {
 extern "C" {
 // Each function catches C++ exceptions; none cross the FFI boundary.
 const char *grv_native_version() { return DuckDB::LibraryVersion(); }
-unsigned int grv_native_guard_revision() { return 1; }
+unsigned int grv_native_guard_revision() { return 3; }
 // A standalone C-API database uses the same compiled static Parquet extension as
 // Engine. This initializer changes no connection state, guard, or configuration
 // and deliberately offers no SQL execution seam.
@@ -189,3 +191,4 @@ int grv_native_fetch(void *owner, unsigned char *output, size_t allowance, size_
 #include "pull.inc"
 
 #include "s3.inc"
+#include "gcs.inc"

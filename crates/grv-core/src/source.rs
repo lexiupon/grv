@@ -499,7 +499,8 @@ fn logical_contract(columns: Vec<Column>, keys: Vec<Name>) -> Result<TableContra
     contract.validate().map_err(|e| integrity(&e.to_string()))?;
     Ok(contract)
 }
-/// No source write, lease, or authentication occurs here. Receipt resolution
+/// No source write or lease occurs here. GCS remote views explicitly check
+/// authenticated eligibility before source evidence. Receipt resolution
 /// must precede this call. Fixed build inputs additionally require holds.
 pub fn verify<B: Backend>(
     store: &Store<B>,
@@ -522,17 +523,37 @@ pub fn verify_with_access<B: Backend>(
     parent: &Path,
     access: FileAccess,
 ) -> Result<VerifiedSelection> {
-    if access == FileAccess::S3View
-        && store
-            .backend
-            .s3_data_uri(&ObjectKey::new("grv.json").map_err(backend_error)?)
-            .map_err(backend_error)?
-            .is_none()
-    {
-        return Err(failure(
-            ErrorCode::UnsupportedCapability,
-            "S3 views require an S3 source backend",
-        ));
+    let probe = ObjectKey::new("grv.json").map_err(backend_error)?;
+    match access {
+        FileAccess::Local => {}
+        FileAccess::S3View => {
+            if store
+                .backend
+                .s3_data_uri(&probe)
+                .map_err(backend_error)?
+                .is_none()
+            {
+                return Err(failure(
+                    ErrorCode::UnsupportedCapability,
+                    "S3 views require an S3 source backend",
+                ));
+            }
+        }
+        FileAccess::GcsView => {
+            // Pure wrong-backend refusal must precede token/provider access.
+            if store
+                .backend
+                .gcs_data_uri(&probe)
+                .map_err(backend_error)?
+                .is_none()
+            {
+                return Err(failure(
+                    ErrorCode::UnsupportedCapability,
+                    "GCS views require a GCS source backend",
+                ));
+            }
+            store.backend.gcs_view_eligible().map_err(backend_error)?;
+        }
     }
     let parent = std::fs::canonicalize(parent)
         .map_err(|_| failure(ErrorCode::InvalidArgument, "staging parent does not exist"))?;
@@ -770,6 +791,11 @@ pub fn verify_with_access<B: Backend>(
                             })?
                             .into()
                     }
+                    FileAccess::GcsView => store
+                        .backend
+                        .gcs_data_uri(&key)
+                        .map_err(backend_error)?
+                        .ok_or_else(|| integrity("GCS source lost its exact object coordinates"))?,
                     FileAccess::S3View => store
                         .backend
                         .s3_data_uri(&key)
@@ -901,6 +927,7 @@ mod tests {
         ranges: Vec<(u64, usize)>,
         full: usize,
         writes: usize,
+        eligibility: usize,
     }
     struct Remote {
         local: LocalBackend,
@@ -908,11 +935,29 @@ mod tests {
         data: Vec<u8>,
         meta: ObjectMeta,
         fault: Fault,
+        gcs: bool,
+        ineligible: bool,
         traffic: Mutex<Traffic>,
     }
     impl Backend for Remote {
         fn s3_data_uri(&self, key: &ObjectKey) -> grv_storage::Result<Option<String>> {
-            Ok(Some(format!("s3://test-bucket/root/{}", key.as_str())))
+            Ok((!self.gcs).then(|| format!("s3://test-bucket/root/{}", key.as_str())))
+        }
+        fn gcs_data_uri(&self, key: &ObjectKey) -> grv_storage::Result<Option<String>> {
+            Ok(self
+                .gcs
+                .then(|| format!("gs://test-bucket/root/{}", key.as_str())))
+        }
+        fn gcs_view_eligible(&self) -> grv_storage::Result<()> {
+            self.traffic.lock().unwrap().eligibility += 1;
+            if self.ineligible {
+                Err(grv_storage::Error::new(
+                    ErrorKind::Unsupported,
+                    "requester-pays bucket refused",
+                ))
+            } else {
+                Ok(())
+            }
         }
         fn head(&self, key: &ObjectKey) -> grv_storage::Result<ObjectMeta> {
             if key == &self.data_key
@@ -1143,6 +1188,8 @@ mod tests {
                         data,
                         meta,
                         fault: Fault::None,
+                        gcs: false,
+                        ineligible: false,
                         traffic: Mutex::new(Traffic::default()),
                     },
                 },
@@ -1165,6 +1212,88 @@ mod tests {
                 access,
             )
         }
+    }
+    #[test]
+    fn gcs_requires_full_hash_schema_and_row_verification_even_with_matching_validator() {
+        for failure in ["none", "body", "hash", "schema", "rows"] {
+            let mut f = Fixture::new();
+            f.store.backend.gcs = true;
+            if failure == "body" {
+                f.store.backend.data[10] ^= 1;
+            }
+            if matches!(failure, "hash" | "rows") {
+                let local = &f.store.backend.local;
+                let key = ObjectKey::new("datasets/upstream/rows/version=1/manifest.json").unwrap();
+                let mut manifest: VersionManifest = read(local, key.as_str()).unwrap();
+                if failure == "hash" {
+                    manifest.data_files[0].sha256 = grv_types::Digest::new("a".repeat(64)).unwrap();
+                } else {
+                    manifest.row_count = Counter::from(999);
+                }
+                local
+                    .put_bytes(
+                        &key,
+                        &local.head(&key).unwrap().validator,
+                        &encode_record(&manifest).unwrap(),
+                    )
+                    .unwrap();
+            }
+            if failure == "schema" {
+                let local = &f.store.backend.local;
+                let key = ObjectKey::new("datasets/upstream/rows/.schema.json").unwrap();
+                let mut schema: SchemaBaseline = read(local, key.as_str()).unwrap();
+                schema.columns[0].logical_type = serde_json::json!("string");
+                local
+                    .put_bytes(
+                        &key,
+                        &local.head(&key).unwrap().validator,
+                        &encode_record(&schema).unwrap(),
+                    )
+                    .unwrap();
+            }
+            let selected = f.verify(FileAccess::GcsView);
+            if failure == "none" {
+                let selected = selected.unwrap();
+                assert_eq!(selected.files[0].access, FileAccess::GcsView);
+                assert!(
+                    selected.files[0]
+                        .location
+                        .starts_with("gs://test-bucket/root/")
+                );
+                assert_eq!(
+                    std::fs::read_dir(selected._staging.path()).unwrap().count(),
+                    0
+                );
+            } else {
+                assert_eq!(
+                    selected.err().unwrap().code,
+                    ErrorCode::IntegrityFailure,
+                    "{failure}"
+                );
+            }
+            let traffic = f.store.backend.traffic.lock().unwrap();
+            assert_eq!(traffic.full, 1);
+            assert!(traffic.ranges.is_empty());
+            assert_eq!(traffic.writes, 0);
+            assert_eq!(traffic.eligibility, 1);
+        }
+    }
+    #[test]
+    fn gcs_wrong_backend_is_pure_and_ineligible_bucket_refuses_before_file_reads() {
+        let mut f = Fixture::new();
+        assert_eq!(
+            f.verify(FileAccess::GcsView).err().unwrap().code,
+            ErrorCode::UnsupportedCapability
+        );
+        assert_eq!(f.store.backend.traffic.lock().unwrap().eligibility, 0);
+        f.store.backend.gcs = true;
+        f.store.backend.ineligible = true;
+        assert!(f.verify(FileAccess::GcsView).is_err());
+        let traffic = f.store.backend.traffic.lock().unwrap();
+        assert_eq!(traffic.eligibility, 1);
+        assert_eq!(traffic.full, 0);
+        assert!(traffic.ranges.is_empty());
+        assert_eq!(traffic.writes, 0);
     }
     #[test]
     fn s3_matching_manifest_validator_reads_only_header_footer_and_never_stages_data_or_writes() {

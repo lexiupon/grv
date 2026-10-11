@@ -147,6 +147,17 @@ impl CredentialProvider for Gcloud {
             if let Some(project) = &project {
                 arguments.extend(["--project", project]);
             }
+            if std::env::vars_os().any(|(key,value)| key.to_string_lossy().to_ascii_uppercase().starts_with("CLOUDSDK_AUTH_") && !value.is_empty()) { return Err(failure()); }
+            let mut preflight=vec!["config","list","--all","--format=json(auth.impersonate_service_account,auth.credential_file_override,auth.access_token_file)","--account",&account,"--quiet"];
+            if let Some(project)=&project { preflight.extend(["--project",project]); }
+            let overrides=run_program("gcloud",&preflight,false)?;
+            let configuration:serde_json::Value=serde_json::from_slice(&overrides).map_err(|_|failure())?;
+            let configuration=configuration.as_object().ok_or_else(failure)?;
+            if configuration.keys().any(|key|key!="auth") {return Err(failure());}
+            if let Some(auth)=configuration.get("auth") {
+                let auth=auth.as_object().ok_or_else(failure)?;
+                if auth.values().any(|v| !v.is_null() && v.as_str()!=Some("")) {return Err(failure());}
+            }
             let bytes = run_program("gcloud", &arguments, false)?;
             let bearer = std::str::from_utf8(&bytes).map_err(|_| failure())?.trim();
             if bearer.is_empty()

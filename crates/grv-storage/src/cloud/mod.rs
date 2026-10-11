@@ -82,6 +82,10 @@ impl CloudRoot {
                 .bytes()
                 .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-' || b == b'.')
             || (scheme == Scheme::S3 && bucket.len() > 63)
+            || (scheme == Scheme::Gcs
+                && bucket
+                    .split('.')
+                    .any(|part| part.is_empty() || part.len() > 63))
         {
             return Err(Error::new(
                 ErrorKind::InvalidKey,
@@ -111,7 +115,7 @@ impl CloudRoot {
             }
         }
         let canonical = canonical_url.to_string().trim_end_matches('/').to_owned();
-        let canonical = if scheme == Scheme::S3 {
+        let canonical = if matches!(scheme, Scheme::S3 | Scheme::Gcs) {
             canonical
                 .replace('*', "%2A")
                 .replace('[', "%5B")
@@ -154,6 +158,30 @@ impl CloudRoot {
             .replace('[', "%5B")
             .replace(']', "%5D");
         Ok(Some(uri))
+    }
+    /// Pure exact GCS coordinates; no credentials, token or discovery access.
+    pub fn gcs_data_uri(&self, key: &ObjectKey) -> Result<Option<String>> {
+        if self.scheme != Scheme::Gcs {
+            return Ok(None);
+        }
+        let path = self.path(key.as_str())?;
+        let mut uri = Url::parse(&format!("gs://{}", self.bucket))
+            .map_err(|_| Error::new(ErrorKind::InvalidKey, "invalid GCS bucket"))?;
+        {
+            let mut segments = uri
+                .path_segments_mut()
+                .map_err(|_| Error::new(ErrorKind::InvalidKey, "invalid GCS object path"))?;
+            segments.clear();
+            for segment in path.as_ref().split('/') {
+                segments.push(segment);
+            }
+        }
+        Ok(Some(
+            uri.to_string()
+                .replace('*', "%2A")
+                .replace('[', "%5B")
+                .replace(']', "%5D"),
+        ))
     }
     fn path(&self, relative: &str) -> Result<RemotePath> {
         let path = if self.prefix.is_empty() {
@@ -248,6 +276,12 @@ fn cloud_read_timeout(value: Option<&str>) -> Result<Duration> {
 }
 
 trait ConditionalUpload: Send + Sync {
+    fn gcs_view_eligible(&self) -> Result<()> {
+        Err(Error::new(
+            ErrorKind::Unsupported,
+            "GCS view eligibility is unsupported",
+        ))
+    }
     fn upload(
         &self,
         key: &RemotePath,
@@ -542,7 +576,7 @@ impl CloudBackend {
                     .with_skip_signature(false)
                     .with_retry(retry)
                     .with_client_options(clients.clone().with_default_headers(headers.clone()));
-                if let Some(account) = options.gcs_account {
+                if let Some(account) = options.gcs_account.clone() {
                     if account.is_empty()
                         || account.len() > 320
                         || account.contains(['\0', '\r', '\n'])
@@ -573,6 +607,7 @@ impl CloudBackend {
                     runtime.clone(),
                     options.timeout,
                     options.gcs_project.as_deref(),
+                    options.gcs_account.as_deref(),
                 )?;
                 Ok(Self {
                     root,
@@ -659,6 +694,18 @@ pub(super) async fn response_bytes(mut response: reqwest::Response) -> Result<Ve
     Ok(output)
 }
 impl Backend for CloudBackend {
+    fn gcs_data_uri(&self, key: &ObjectKey) -> Result<Option<String>> {
+        self.root.gcs_data_uri(key)
+    }
+    fn gcs_view_eligible(&self) -> Result<()> {
+        if self.root.scheme != Scheme::Gcs {
+            return Err(Error::new(
+                ErrorKind::Unsupported,
+                "GCS views require a GCS source backend",
+            ));
+        }
+        self.writer.gcs_view_eligible()
+    }
     fn s3_data_uri(&self, key: &ObjectKey) -> Result<Option<String>> {
         self.root.s3_data_uri(key)
     }
@@ -1131,6 +1178,47 @@ mod tests {
             direct,
             Some(format!("s3://test-bucket/isolated/root/{}", key.as_str()))
         );
+    }
+    #[test]
+    fn gcs_exact_coordinates_encode_special_keys_without_provider_access() {
+        let key = ObjectKey::new("literal*[01]/percent%2F/owner@example/emoji🍕 ?#/data.parquet")
+            .unwrap();
+        let root = CloudRoot::parse("gs://test-bucket/prefix%20space/literal%2A").unwrap();
+        let uri = root.gcs_data_uri(&key).unwrap().unwrap();
+        assert_eq!(
+            uri,
+            "gs://test-bucket/prefix%20space/literal%2A/literal%2A%5B01%5D/percent%252F/owner@example/emoji%F0%9F%8D%95%20%3F%23/data.parquet"
+        );
+        assert_eq!(
+            CloudRoot::parse(&uri).unwrap().prefix,
+            root.path(key.as_str()).unwrap().as_ref()
+        );
+        assert_eq!(
+            CloudRoot::parse("s3://test-bucket")
+                .unwrap()
+                .gcs_data_uri(&key)
+                .unwrap(),
+            None
+        );
+        let mut backend = memory();
+        backend.root = root;
+        let backend: Box<dyn Backend> = Box::new(backend);
+        assert_eq!(backend.gcs_data_uri(&key).unwrap(), Some(uri));
+        assert_eq!(
+            backend.gcs_view_eligible().unwrap_err().kind,
+            ErrorKind::Unsupported
+        );
+        let bucket = format!(
+            "{}.{}.{}.{}",
+            "a".repeat(63),
+            "b".repeat(63),
+            "c".repeat(63),
+            "d".repeat(30)
+        );
+        assert_eq!(bucket.len(), 222);
+        CloudRoot::parse(&format!("gs://{bucket}")).unwrap();
+        assert!(CloudRoot::parse(&format!("gs://{bucket}d")).is_err());
+        assert!(CloudRoot::parse(&format!("gs://{}.b", "a".repeat(64))).is_err());
     }
     #[test]
     fn production_read_timeout_defaults_and_invalid_values_refuse_before_provider_access() {

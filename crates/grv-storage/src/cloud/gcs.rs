@@ -10,6 +10,10 @@ pub(super) struct GcsUpload {
     runtime: Arc<Runtime>,
     http: reqwest::Client,
     endpoint: Url,
+    // True only when both named preparation selectors were supplied. Ordinary
+    // GCS operations retain their existing credential behavior.
+    view_selected: bool,
+    timeout: Duration,
 }
 impl GcsUpload {
     pub fn new(
@@ -18,6 +22,7 @@ impl GcsUpload {
         runtime: Arc<Runtime>,
         timeout: Duration,
         project: Option<&str>,
+        account: Option<&str>,
     ) -> Result<Self> {
         let mut headers = reqwest::header::HeaderMap::new();
         if let Some(project) = project {
@@ -42,7 +47,70 @@ impl GcsUpload {
             runtime,
             http,
             endpoint: Url::parse("https://storage.googleapis.com").expect("constant URL"),
+            view_selected: account.is_some_and(|v| named_selector(v, 320))
+                && project.is_some_and(|v| named_selector(v, 128)),
+            timeout,
         })
+    }
+    fn view_eligible(&self) -> Result<()> {
+        // Refuse absent/invalid selectors before requesting any credential;
+        // never silently use ambient ADC or an active gcloud account/project.
+        if !self.view_selected {
+            return Err(Error::new(
+                ErrorKind::Unsupported,
+                "GCS views require explicit preparation account and project selectors",
+            ));
+        }
+        self.runtime.block_on(async {
+            tokio::time::timeout(self.timeout, self.bucket_admission())
+                .await
+                .map_err(|_| {
+                    Error::new(ErrorKind::Io, "GCS bucket eligibility deadline exceeded")
+                })?
+        })
+    }
+    async fn bucket_admission(&self) -> Result<()> {
+        let credentials = self
+            .credentials
+            .get_credential()
+            .await
+            .map_err(|e| remote_error(e, false))?;
+        let mut url = self.endpoint.clone();
+        url.path_segments_mut()
+            .expect("absolute endpoint")
+            .clear()
+            .extend(["storage", "v1", "b", &self.bucket]);
+        // A closed projection avoids interpreting unrelated bucket metadata.
+        url.query_pairs_mut()
+            .append_pair("fields", "name,billing(requesterPays)");
+        let mut response = self
+            .http
+            .get(url)
+            .bearer_auth(&credentials.bearer)
+            .send()
+            .await
+            .map_err(|_| Error::new(ErrorKind::Io, "GCS bucket eligibility request failed"))?;
+        if response.status().as_u16() != 200 {
+            return Err(Error::new(
+                ErrorKind::Io,
+                "GCS bucket eligibility request was rejected",
+            ));
+        }
+        let mut bytes = Vec::new();
+        while let Some(chunk) = response
+            .chunk()
+            .await
+            .map_err(|_| Error::new(ErrorKind::Io, "GCS bucket eligibility response failed"))?
+        {
+            if chunk.len() > RESPONSE_BYTES.saturating_sub(bytes.len()) {
+                return Err(Error::new(
+                    ErrorKind::Integrity,
+                    "GCS bucket eligibility metadata exceeds budget",
+                ));
+            }
+            bytes.extend_from_slice(&chunk);
+        }
+        bucket_metadata(&bytes, &self.bucket)
     }
     fn initiation(&self, key: &RemotePath, expected: Option<&Validator>) -> Result<Url> {
         let condition = expected.map_or("0", Validator::as_str);
@@ -220,6 +288,49 @@ impl GcsUpload {
         result
     }
 }
+fn named_selector(value: &str, limit: usize) -> bool {
+    !value.is_empty()
+        && value.len() <= limit
+        && !value.starts_with('-')
+        && value.bytes().all(|b| b.is_ascii_graphic())
+}
+fn bucket_metadata(bytes: &[u8], bucket: &str) -> Result<()> {
+    #[derive(Default, serde::Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct Billing {
+        // The authenticated JSON API omits default-false properties, including
+        // the entire billing object, for ordinary buckets. Null/wrong types
+        // remain errors; explicit true is never admitted.
+        #[serde(default, rename = "requesterPays")]
+        requester_pays: bool,
+    }
+    #[derive(serde::Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct Metadata {
+        name: String,
+        #[serde(default)]
+        billing: Billing,
+    }
+    let invalid = || {
+        Error::new(
+            ErrorKind::Integrity,
+            "GCS bucket eligibility metadata is invalid or unknown",
+        )
+    };
+    // Strict parser rejects duplicate/unknown keys and missing bucket identity.
+    let value = crate::json::parse(bytes).map_err(|_| invalid())?;
+    let metadata: Metadata = serde_json::from_value(value).map_err(|_| invalid())?;
+    if metadata.name != bucket {
+        return Err(invalid());
+    }
+    if metadata.billing.requester_pays {
+        return Err(Error::new(
+            ErrorKind::Unsupported,
+            "GCS requester-pays buckets cannot back views",
+        ));
+    }
+    Ok(())
+}
 fn precondition() -> Error {
     Error::new(
         ErrorKind::PreconditionFailed,
@@ -250,6 +361,9 @@ fn completion(bytes: &[u8], bucket: &str, key: &str, size: u64) -> Result<Valida
     Validator::new(validator).map_err(|_| ambiguous())
 }
 impl ConditionalUpload for GcsUpload {
+    fn gcs_view_eligible(&self) -> Result<()> {
+        self.view_eligible()
+    }
     fn upload(
         &self,
         key: &RemotePath,
@@ -281,13 +395,199 @@ mod tests {
                     .unwrap(),
             ),
             http: reqwest::Client::builder()
+                .default_headers({
+                    let mut headers = reqwest::header::HeaderMap::new();
+                    headers.insert("x-goog-user-project", "named-project".parse().unwrap());
+                    headers
+                })
                 .retry(reqwest::retry::never())
                 .redirect(reqwest::redirect::Policy::none())
                 .timeout(Duration::from_secs(2))
                 .build()
                 .unwrap(),
             endpoint: Url::parse(&peer.url).unwrap(),
+            view_selected: true,
+            timeout: Duration::from_secs(2),
         }
+    }
+    #[test]
+    fn gcs_view_eligibility_uses_one_authenticated_bounded_bucket_get() {
+        let peer = Peer::start(|_| {
+            vec![Some(Response::new(
+                200,
+                r#"{"name":"bucket","billing":{"requesterPays":false}}"#,
+            ))]
+        });
+        let upload = mock(&peer);
+        let runtime = upload.runtime.clone();
+        let backend: Box<dyn Backend> = Box::new(CloudBackend {
+            root: CloudRoot::parse("gs://bucket").unwrap(),
+            store: Arc::new(object_store::memory::InMemory::new()),
+            runtime,
+            writer: Arc::new(upload),
+            ranges: None,
+        });
+        backend.gcs_view_eligible().unwrap();
+        let requests = peer.finish();
+        assert_eq!(requests.len(), 1);
+        assert!(requests[0].line.starts_with("GET /storage/v1/b/bucket?"));
+        assert!(
+            requests[0]
+                .line
+                .contains("fields=name%2Cbilling%28requesterPays%29")
+        );
+        assert_eq!(
+            requests[0].headers["authorization"],
+            "Bearer synthetic-test-credential"
+        );
+        assert_eq!(requests[0].headers["x-goog-user-project"], "named-project");
+        assert!(requests[0].body.is_empty());
+    }
+    #[test]
+    fn gcs_json_api_omitted_default_billing_is_not_requester_pays() {
+        for metadata in [
+            r#"{"name":"bucket"}"#,
+            r#"{"name":"bucket","billing":{}}"#,
+            r#"{"name":"bucket","billing":{"requesterPays":false}}"#,
+        ] {
+            bucket_metadata(metadata.as_bytes(), "bucket").unwrap();
+        }
+    }
+    #[test]
+    fn gcs_view_eligibility_fails_closed_without_retries_or_private_diagnostics() {
+        for (response, kind) in [
+            (
+                Some(Response::new(
+                    200,
+                    r#"{"name":"bucket","billing":{"requesterPays":true}}"#,
+                )),
+                ErrorKind::Unsupported,
+            ),
+            (
+                Some(Response::new(
+                    200,
+                    r#"{"name":"other","billing":{"requesterPays":false}}"#,
+                )),
+                ErrorKind::Integrity,
+            ),
+            (
+                Some(Response::new(200, r#"{"billing":{}}"#)),
+                ErrorKind::Integrity,
+            ),
+            (
+                Some(Response::new(200, r#"{"name":"bucket","billing":null}"#)),
+                ErrorKind::Integrity,
+            ),
+            (
+                Some(Response::new(
+                    200,
+                    r#"{"name":"bucket","billing":{"requesterPays":"false"}}"#,
+                )),
+                ErrorKind::Integrity,
+            ),
+            (
+                Some(Response::new(
+                    200,
+                    r#"{"name":"bucket","billing":{"requesterPays":false,"unknown":1}}"#,
+                )),
+                ErrorKind::Integrity,
+            ),
+            (
+                Some(Response::new(
+                    200,
+                    r#"{"name":"bucket","billing":{"requesterPays":false},"name":"bucket"}"#,
+                )),
+                ErrorKind::Integrity,
+            ),
+            (
+                Some(Response::new(200, "private-provider-body")),
+                ErrorKind::Integrity,
+            ),
+            (
+                Some(Response::new(200, "x".repeat(RESPONSE_BYTES + 1))),
+                ErrorKind::Integrity,
+            ),
+            (
+                Some(Response::new(403, "private-provider-body")),
+                ErrorKind::Io,
+            ),
+            (
+                Some(
+                    Response::new(302, "private-provider-body")
+                        .header("location", "http://127.0.0.1:1/leak"),
+                ),
+                ErrorKind::Io,
+            ),
+            (None, ErrorKind::Io),
+        ] {
+            let peer = Peer::start(|_| vec![response]);
+            let error = mock(&peer).gcs_view_eligible().unwrap_err();
+            assert_eq!(error.kind, kind);
+            assert_eq!(error.effect, WriteEffect::NoEffect);
+            assert!(!format!("{error:?}").contains("private-provider-body"));
+            assert!(!format!("{error:?}").contains("synthetic-test-credential"));
+            assert_eq!(peer.finish().len(), 1);
+        }
+    }
+    #[test]
+    fn gcs_view_missing_selectors_refuse_before_authentication() {
+        #[derive(Debug)]
+        struct Never;
+        #[async_trait::async_trait]
+        impl object_store::client::CredentialProvider for Never {
+            type Credential = object_store::gcp::GcpCredential;
+            async fn get_credential(&self) -> object_store::Result<Arc<Self::Credential>> {
+                panic!("missing selectors must refuse before authentication")
+            }
+        }
+        let peer = Peer::start(|_| vec![]);
+        let mut upload = mock(&peer);
+        upload.credentials = Arc::new(Never);
+        for (account, project) in [
+            (None, None),
+            (Some("named@example.invalid"), None),
+            (None, Some("named-project")),
+            (Some(""), Some("named-project")),
+            (Some("named@example.invalid"), Some("")),
+        ] {
+            let unselected = GcsUpload::new(
+                "bucket",
+                upload.credentials.clone(),
+                upload.runtime.clone(),
+                Duration::from_secs(2),
+                project,
+                account,
+            )
+            .unwrap();
+            assert_eq!(
+                unselected.gcs_view_eligible().unwrap_err().kind,
+                ErrorKind::Unsupported
+            );
+        }
+        assert!(peer.finish().is_empty());
+        for selector in ["", "bad selector", "-flag", "bad\nvalue"] {
+            assert!(!named_selector(selector, 320));
+        }
+    }
+    #[test]
+    fn gcs_view_deadline_bounds_authentication_before_bucket_request() {
+        #[derive(Debug)]
+        struct Slow;
+        #[async_trait::async_trait]
+        impl object_store::client::CredentialProvider for Slow {
+            type Credential = object_store::gcp::GcpCredential;
+            async fn get_credential(&self) -> object_store::Result<Arc<Self::Credential>> {
+                std::future::pending().await
+            }
+        }
+        let peer = Peer::start(|_| vec![]);
+        let mut upload = mock(&peer);
+        upload.timeout = Duration::from_millis(10);
+        upload.credentials = Arc::new(Slow);
+        let error = upload.gcs_view_eligible().unwrap_err();
+        assert_eq!(error.kind, ErrorKind::Io);
+        assert_eq!(error.effect, WriteEffect::NoEffect);
+        assert!(peer.finish().is_empty());
     }
     #[test]
     fn gcs_commit_evidence_requires_exact_coordinates_count_and_generation() {

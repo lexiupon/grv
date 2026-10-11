@@ -361,16 +361,27 @@ pub fn validate_pull(mut declaration: Value) -> io::Result<Value> {
     }
     options.entry("materialization").or_insert(json!("local"));
     options.entry("refresh").or_insert(json!("auto"));
-    if ![json!("local"), json!("s3-view")].contains(&options["materialization"])
+    if ![json!("local"), json!("s3-view"), json!("gcs-view")].contains(&options["materialization"])
         || ![json!("auto"), json!("full")].contains(&options["refresh"])
     {
         return Err(invalid("invalid pull option"));
+    }
+    let gcs_view = options["materialization"] == "gcs-view";
+    if gcs_view
+        && declaration
+            .get("write")
+            .is_some_and(|write| write != "replace")
+    {
+        return Err(invalid("GCS views require complete identity replacement"));
     }
     let tables = declaration
         .get_mut("tables")
         .and_then(Value::as_array_mut)
         .ok_or_else(|| invalid("tables must be an array"))?;
     for table in tables {
+        if gcs_view && (table.get("partitions").is_some() || table.get("select").is_some()) {
+            return Err(invalid("GCS views require complete identity replacement"));
+        }
         let name = table["name"]
             .as_str()
             .ok_or_else(|| invalid("table.name is required"))?
@@ -537,6 +548,29 @@ mod tests {
             "native_label"
         );
         assert!(extraction_options(&json!({"threads":2})).is_err());
+    }
+    #[test]
+    fn gcs_view_requires_complete_identity_replacement() {
+        let declaration = json!({"connection":{"database":"./destination.duckdb"},"target":{"schema":"public"},"options":{"materialization":"gcs-view"},"tables":[{"name":"rows"}]});
+        let normalized = validate_pull(declaration.clone()).unwrap();
+        assert_eq!(normalized["options"]["materialization"], "gcs-view");
+        assert_eq!(normalized["options"]["refresh"], "auto");
+        for write in ["append", "unknown"] {
+            let mut invalid = declaration.clone();
+            invalid["write"] = json!(write);
+            assert!(validate_pull(invalid).is_err());
+        }
+        for (key, value) in [
+            ("partitions", json!([])),
+            ("select", json!({"sql":"select 1"})),
+        ] {
+            let mut invalid = declaration.clone();
+            invalid["tables"][0][key] = value;
+            assert!(validate_pull(invalid).is_err());
+        }
+        let mut invalid = declaration;
+        invalid["options"]["materialization"] = json!("unknown");
+        assert!(validate_pull(invalid).is_err());
     }
     #[test]
     fn malformed_column_returns_error_without_panicking() {

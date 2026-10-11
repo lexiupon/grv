@@ -63,7 +63,7 @@ class Probe:
     def check_auth(self):
         if any(v for k, v in os.environ.items() if k.upper().startswith('CLOUDSDK_AUTH_')):
             raise RuntimeError('Ambient gcloud authentication override is not permitted')
-        result = self.gcloud(['config', 'list', 'auth', '--format=json'])
+        result = self.gcloud(['config', 'list', '--all', '--format=json(auth.impersonate_service_account,auth.credential_file_override,auth.access_token_file)'])
         auth = json.loads(result.stdout).get('auth', {})
         if any(auth.get(k) for k in ('impersonate_service_account', 'credential_file_override', 'access_token_file')):
             raise RuntimeError('Configured gcloud authentication override is not permitted')

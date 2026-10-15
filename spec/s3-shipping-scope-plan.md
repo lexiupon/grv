@@ -172,3 +172,28 @@ highwater closure that serves both this task and the in-process transition task.
 native step is paid once, in that window, where the hash discipline already lives.
 
 What remains in this package after this closure is the security signoff.
+
+## Decision: application-layer estimate
+
+The traffic item closes on an **application-layer estimate**, computed at the report level. No
+production source is touched to obtain it, so the read path stays exactly as qualified.
+
+Definition, as agreed and as it must be written wherever the number appears:
+
+> **Application-layer estimate** = measured accepted body bytes + parsed-layer header sizes.
+> TLS handshake and record framing are **excluded and not measured**. This is an estimate, not
+> wire truth.
+
+Method, stated so the number is reproducible: measured requests multiplied by a stated nominal
+header allowance, plus the measured accepted body bytes. Both inputs come from counters already
+recorded by the qualification harness.
+
+What this does **not** license: no wire savings claim, and no bill-matching claim. The savings
+percentages already recorded remain body-byte figures within stated coverage. The primary objective
+— exact identity, exact authority, mandatory preparation, fail-closed refusal, protected ownership
+and cleanup — does not depend on any traffic number, and nothing here changes it.
+
+An estimate was chosen over instrumenting the reader because a real header count would require
+editing `verified_s3.inc` or `gcs_filesystem.inc`, and a change to the read path must be reviewed as
+production code. The value here does not justify that. The rebuild already approved for the
+shared-path work stands; it is not needed for this.

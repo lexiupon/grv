@@ -55,3 +55,11 @@ observation — they are marked as such. No claim here reaches beyond its eviden
 
 This does not make the package release-ready. The release register still requires a reviewed source
 change before refresh, and publication remains a separate approval.
+
+## Update
+
+The traffic gap now has a stated method: an **application-layer estimate** — measured accepted body
+bytes plus parsed-layer header sizes, with TLS handshake and framing excluded and not measured. It is
+computed at the report level from counters the harness already records, so no production source was
+touched to obtain it. It remains an estimate and is described as one. No wire savings claim and no
+bill-matching claim follow from it, and no security claim in this document depends on it.

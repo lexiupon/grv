@@ -35,6 +35,11 @@ path = "tests/salesforce_capture.rs"
 harness = false
 
 [[bin]]
+name = "fixture-stale-pull"
+path = "src/bin/fixture-stale-pull.rs"
+required-features = ["native-duckdb"]
+
+[[bin]]
 name = "fixture-duckdb"
 path = "src/bin/fixture-duckdb.rs"
 required-features = ["native-duckdb"]

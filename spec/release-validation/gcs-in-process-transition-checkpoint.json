@@ -1,0 +1,569 @@
+{
+  "gcs_aggregate_accounting_stage": {
+    "checkpoint": "spec/gcs-aggregate-metadata-checkpoint.md",
+    "status": "agreed GCS-specific logicalmetadata/transfer memoryscope complete; paused beforeunrelatedqualification notRSS/release",
+    "user_approved_gcs_specific": true,
+    "review": "52e0 supportsfinite logicalmodel no concreteunboundedpath; noRSS/test rerun",
+    "session_regression": "actualDuckDbAdapter SDK native automaticgsroot policy repeatedexactreopen/channelrestart/durablecandidate/accept/changedidentityrefusal verified; noauth/cloud",
+    "runtime_changes": [
+      "GCSdiscover refuseswhenretainedsession beforetransaction",
+      "GCSopen returnedUUIDmustmatchretainedidentity; nosecondidentifier insertion",
+      "GCSdurable raw lexical logical admission beforetypedBuild/Pull decode inclomittedcontracts/checkpointpreview; canonical writes admission"
+    ],
+    "tests": {
+      "native": 105,
+      "native_ignored": 12,
+      "build": 22,
+      "extraction": 9,
+      "wire_library": 5,
+      "wire_protocol": 20,
+      "sdk_library": 18,
+      "sdk_runtime": 3,
+      "stale_cli": 1,
+      "signed_mixed_local": 1,
+      "clippy_native_nonnative_fmt_diff": "pass",
+      "ctest": 12,
+      "signed_mixed_local_scope": "passedprecedingfinalomittedfix"
+    },
+    "memory_total_rss_claim": false,
+    "generic_local_s3_limits_changed": false,
+    "native_library_rebuilt": false,
+    "cloud_or_held_run": false,
+    "artifact_task": "51 complete; parentverifiedcurrentheld y_2_qyrt exit0 1pass1870.18s5saved/currentSHAequal ownedempty404",
+    "sha256": {
+      "spec/gcs-aggregate-metadata-checkpoint.md": "0d10769d14f98785b0ddcbd79a8d96a4c8d4a7b50e170013d38ba78bc29ca5a0",
+      "crates/grv-adapter-duckdb/src/build_runtime.rs": "746cc367d0993f8675cf0750d94d6302d619d6f94db2eb342bb8d4fd778007f6",
+      "crates/grv-adapter-duckdb/src/build.rs": "bfc43f1a078d89deb0807dc5abf332b9817d806e9faa82c68c7dfced03ca2476",
+      "crates/grv-adapter-duckdb/src/pull.rs": "e7a78f6886a55682d74dd4b66ce1fb9ee4e73d286282696dbba1430f1a1e62ff",
+      "crates/grv-adapter-duckdb/tests/build.rs": "d4fb77bb0ee0d6a5abde8c47aeb8424800e107056b21bc6597eac5197ab3764b",
+      "/tmp/grv-gcs-final-accounting-native.txt": "88b4e27a48bd8646d3d0df59e444e4aa39270ef97bce95dfbf4b2b5ff2f1c8d7",
+      "/tmp/grv-gcs-final-accounting-wire-sdk.txt": "7c562da8a1056b4a3b5343ff2931e3aee65fe73f0b3d483791dded2334be4754",
+      "/tmp/grv-gcs-final-accounting-stale-cli.txt": "ff63cde39068ea7049c3b24129076eca256dc763c05f1b9abe25d5c0c25441d4",
+      "/tmp/grv-gcs-final-accounting-ctest.txt": "d03584b121f8190971e2fefa3730b20c6572220912e8eeba3ae2070112b38389",
+      "/tmp/grv-gcs-omitted-contract-regression.txt": "95008429541258221edc53a7e04fc68a779bc4a4f9349a40a5310819792dcaaf",
+      "/tmp/grv-gcs-memory-held-build.txt": "f84d5bd10f76109ec48a2e7a98e158a085ba9f8b9b80f32bffa9c1fe216ebb03",
+      "/Users/jiacao/grv-gcs-metadata-stable-kiaj7dhn/summary.json": "f1691764eb940f0b6601101452f147ba228fb6a0a01cd027a5ff1ead5930a0ba",
+      "/Users/jiacao/grv-gcs-metadata-stable-kiaj7dhn/cleanup.json": "67293f9e16b7e84ee5342408bd27becb817679c0844dd4ed046715ed11ea2038",
+      "/Users/jiacao/grv-gcs-metadata-stable-kiaj7dhn/pre-artifact-hashes.json": "67921785842fcf975e0a3b6d0a10393b8dd566960a3d5afea76477c42c8cb4d2",
+      "/Users/jiacao/grv-gcs-metadata-stable-kiaj7dhn/post-artifact-hashes.json": "67921785842fcf975e0a3b6d0a10393b8dd566960a3d5afea76477c42c8cb4d2",
+      "/Users/jiacao/grv-gcs-memory-offline-rdvyuo0g/summary.json": "3a7bfe6e775ca6445dbb05f9b0ac1f0116229f9ce7eaf82aecc874d890780f5d",
+      "/Users/jiacao/grv-gcs-memory-offline-rdvyuo0g/pre-artifact-hashes.json": "671940d2eed47acf260c0999ebca248780308b491c17012f7b084aca1ba78282",
+      "/Users/jiacao/grv-gcs-memory-offline-rdvyuo0g/post-artifact-hashes.json": "671940d2eed47acf260c0999ebca248780308b491c17012f7b084aca1ba78282",
+      "spec/gcs-memory-qualification-completion.md": "e04cd41cc9ca52480baceb0d4f52c9bad1d7b3af9aee73180e3cc601e32f67dd",
+      "spec/gcs-metadata-policy.md": "528e75f6095ebc79bdfdb7631803044dd0fbcb3764c199dd434f9216da90e4f6",
+      "spec/gcs-source-lifetime-checkpoint.md": "c4b37d7500d943af59f82aeff45d039fb838cd147f9106aff4e18762accfc667",
+      "/Users/jiacao/grv-held-gcs-y_2_qyrt/summary.json": "311b9f1cb4a3a1543e9fc9130ec7349f4cb8434c0fcf7b678ff81010fc28c58d",
+      "/Users/jiacao/grv-held-gcs-y_2_qyrt/cleanup.json": "2ba67834f38036d204bcc30f1ea71e74d103588c77ac29d7e4f068b4da90edef",
+      "/Users/jiacao/grv-held-gcs-y_2_qyrt/result.txt": "49d46c01855718a09c896e8477fce1bdef3ab31bfb87d6e7c3d2607e15728cc7",
+      "/Users/jiacao/grv-held-gcs-y_2_qyrt/artifact-verification.json": "ad42d793f234b5ec1d9b727a482d0a3c3e07fe16882d3bf2685ae12124617631",
+      "/Users/jiacao/grv-held-gcs-y_2_qyrt/pre-artifact-hashes.json": "8229307a8c1f16756d35328c755aff9a56e8a5f7496c418bd3bce405d756c8b5",
+      "/Users/jiacao/grv-held-gcs-y_2_qyrt/post-artifact-hashes.json": "8229307a8c1f16756d35328c755aff9a56e8a5f7496c418bd3bce405d756c8b5"
+    },
+    "durable_review": "d58c8tools initialomittedcontractfinding;1d8a4tools finalguardverification no blocker scopedsource",
+    "durable_regressions": "3persistednodeamp gates Buildrecord/Pullreceipt/omittedcontract raw<2MiB40kemptystrings Unknown preserveoriginalhistory",
+    "stable_offline": {
+      "directory": "~/grv-gcs-memory-offline-rdvyuo0g",
+      "test_binaries": 7,
+      "all_passed": true,
+      "unchanged_artifacts": 11,
+      "failed_driver": "~/grv-gcs-memory-offline-lr3ctckw missingnativeenv9extractionfailbeforefixture; artifactunchanged retained",
+      "earlier104stage": "~/grv-gcs-memory-offline-gab585t_"
+    },
+    "stable_live": {
+      "directory": "~/grv-gcs-metadata-stable-kiaj7dhn",
+      "tests_passed": 2,
+      "unchanged_artifacts": 3,
+      "cleanup": {
+        "owned_generation_deletions": 1,
+        "all_versions_inventory_empty": true,
+        "bucket_absence_http_status": 404,
+        "iam_keys_orgpolicy_changes": false
+      },
+      "held_lifecycle_qualified": false
+    },
+    "final_held": {
+      "directory": "~/grv-held-gcs-y_2_qyrt",
+      "test_exit": 0,
+      "passed": 1,
+      "failed": 0,
+      "elapsed_seconds": 1870.18,
+      "unchanged_artifacts": 5,
+      "parent_verified_saved_and_current_sha256": true,
+      "cleanup": {
+        "all_versions_inventory_empty": true,
+        "bucket_absence_http_status": 404,
+        "final_generation_deletions": 0,
+        "final_count_is_not_total_deletions": true
+      },
+      "published_holds_retained": true,
+      "abort_prune_release_expiry_qualified": false
+    },
+    "completion_checkpoint": "spec/gcs-memory-qualification-completion.md",
+    "paused": true,
+    "agreed_memory_scope_complete": true
+  },
+  "gcs_source_lifetime_stage": {
+    "checkpoint": "spec/gcs-source-lifetime-checkpoint.md",
+    "status": "scoped sourceownership evidence and decoder correction; wholememoryopen",
+    "reviews": {
+      "initial": "adf5a93f-6948-4f1 nativequerychunks/result closure, HTTPFSowners unproved",
+      "ownership": "77d0e021-27c0-4dd reader/localhandles+preparededge; no signedbinarycorrespondence",
+      "actual_export_barrier": "435b1a3a-046f-4cb completed turnlimit10tools no concrete defect; Engine-ownedbarrier confirmed, finalcancelrefusalordering confirmed; nottests/correspondence/arbitraryescapedownerproof"
+    },
+    "actual_export_parent_inspection": "BuildStorestart_export close_invocation destroysoldEngine beforelocalacquire/fetch retainsworkspace; NOT outcome/rollback proof",
+    "change": "GCSrelation_schema decoded8MiB+nativewrittenlength; localS3unchanged",
+    "tests": {
+      "native_passed": 102,
+      "native_ignored": 12,
+      "build": 21,
+      "extraction": 9,
+      "wire_library": 5,
+      "wire_protocol": 20,
+      "sdk_library": 18,
+      "sdk_runtime": 3,
+      "strict_native_clippy_fmt_diff": "passed"
+    },
+    "native_library_rebuilt": false,
+    "cloud_or_held_run": false,
+    "open": [
+      "aggregatecopy/stateinventory",
+      "runtime sameidentitysession recoveryregression",
+      "internalpreparedcaller/correspondence qualifications beyondboundedreview",
+      "artifact-specific qualification"
+    ],
+    "sha256": {
+      "crates/grv-adapter-duckdb/src/native.rs": "3b02dfe0ffcd9976028659a4505313ce511f6217c75025fc72400325af3f6613",
+      "spec/gcs-source-lifetime-checkpoint.md": "db17d3ac0168e83ec37da94b4f2fa61cd7ebe8666307f880c3a8a829b52e1724",
+      "/tmp/grv-gcs-final-memory-native.txt": "1c94bd537515452fcf7853b59bbecac7741e71525c700099096fbc2b65da2f1c",
+      "/tmp/grv-gcs-final-memory-wire-sdk.txt": "a9c0cbab459ab3b47edd3d35e84559a75e9c056b833bbf84fc8f1d6b39904d9e",
+      "/tmp/grv-gcs-final-memory-regressions.txt": "79ad402b039cc7eaac52fbea206778192e48bc5e9febd6f36c325c1161e546be",
+      "spec/gcs-metadata-policy.md": "3c80cd70ba1d1caeeb0097f2fe495ad0c812264db6c1475641a9efc7fafe5540",
+      "spec/gcs-queue-source-memory-checkpoint.md": "5a74ebaab8c0b593af3620e480535e0ae421537ac967ae6c7acf8ec2734a3bde"
+    }
+  },
+  "gcs_metadata_policy_stage": {
+    "checkpoint": "spec/gcs-metadata-policy.md",
+    "status": "implemented offline policy; wholememory qualification open",
+    "user_approved": true,
+    "logical_bytes": 8388608,
+    "document_bytes": 8388608,
+    "depth": 64,
+    "document_ids": 1024,
+    "checkpoint_ids": 1024,
+    "generic_local_s3_defaults_unchanged": true,
+    "wire_version_changed": false,
+    "allocator_or_helper_installed": false,
+    "native_library_rebuilt": false,
+    "bootstrap_boundary": "Generic registration/prebinding/binding parse; following packets rawadmitted before parse; main policy activation onlyatdispatch",
+    "review": {
+      "initial": "327be8f3-095c-4ac found expansionamplification andsuccessful SDKstate beforeadmission; bothguarded+regression",
+      "fix_verification": "bbf792d4-7a24-4ea confirms expansion/normalresults; foundcancelterminalrefusal becomingStopped. Fixederror+joinedclose/recovery + regression; finalfix notindependentlyreviewed",
+      "source_lifetime": "adf5a93f-6948-4f1 nativechunks/result closed; HTTPFShandlefinalowner release beforeexportunproved"
+    },
+    "tests": {
+      "native_passed": 101,
+      "native_ignored": 12,
+      "wire_library": 5,
+      "wire_protocol": 20,
+      "sdk_library": 18,
+      "sdk_runtime": 3,
+      "build": 21,
+      "extraction": 9,
+      "stale_cli": 1,
+      "clippy": "native/non-nativeaffected passed",
+      "fmt_diff": "passed"
+    },
+    "development_failures": [
+      "CommandResult test used result ratherthandetails",
+      "Clippy tests-before-items",
+      "callerwrapper initialsharedcounter errorwordingchanged; preservedadaptercontext",
+      "Known terminal pendingcancel regression initiallynormalclose invalid beforecancelack; fixedpatherror thenclosure recovery notack"
+    ],
+    "open": [
+      "HTTPFSsource-libraryhandle reachability",
+      "final aggregate metadata/state/copy accounting",
+      "runtime sameidentitysession replay regression",
+      "independentfinalcancelrefusal review",
+      "artifact-specific finalqualification"
+    ],
+    "evidence_check": "catalog42 records94 digests matched; release readiness notassessed",
+    "traceability_check": "check-release-validation refuses changed spec/grv-v1-release-validation.md; register notsilentlyrefreshed",
+    "sha256": {
+      "crates/grv-adapter-wire/src/metadata.rs": "bcc858151b88eff5738591a37e5b2d8529bf60f086519980018877cbc91236a4",
+      "crates/grv-adapter-wire/src/state.rs": "57949413d61b43159beedef82eec7b30f5846c77c28a9477a15291a9a63fe26c",
+      "crates/grv-adapter-wire/src/lib.rs": "204bc650e4c1758c39d2258ba8d53a4f12be248d43823a29e79708ce876d5179",
+      "crates/grv-adapter-sdk/src/lib.rs": "3196d467bac61dd4a206f63377fee5b9fbedf0696ee1c35bb9883aac55f2bc6e",
+      "crates/grv-adapter-sdk/src/build_state.rs": "e04c5fcf2d64ba11da8632cab9376504acba72542c036eabd7dafd996b188d73",
+      "crates/grv-adapter-duckdb/src/gcs_metadata_budget.rs": "8ec0ad7aa4265e6d9974fb1852681e21800633735c34d8a87aa8bf4e271987de",
+      "crates/grv-adapter-duckdb/src/build_runtime.rs": "982e7e54c1b353ac2f956ff7e19aebcfca82acb365cd44c1f12e709b22469360",
+      "crates/grv-adapter-duckdb/src/pull_runtime.rs": "4971e308fa6e000cb5440b508a59f561e846f647dfece3118529014a04ec21b1",
+      "crates/grv-adapter-duckdb/src/process.rs": "1674a0ad5d7ec59417f697b0cb614fb6c95e761637282b1242d3c3a29e561543",
+      "crates/grv-adapter-duckdb/tests/build.rs": "58448589c287a870748cb923578cc959c75e473d2feba9219c1e6d83d7109afb",
+      "/tmp/grv-gcs-policy-final-native.txt": "bee856ac55674ac7308afd075cb688a1c9ddde625e5d49d744a7eb20a114e110",
+      "/tmp/grv-gcs-policy-wire-sdk.txt": "f346258e52199b2adbace7f11357148c2e16425db4d03a8e51debb4e7eb82c21",
+      "/tmp/grv-gcs-policy-stale-cli.txt": "3d10f112af40fb5ebdac0cdc1cc57ef4bfad45262304237fe78f81185a8dd1b4"
+    }
+  },
+  "caller_metadata_admission_stage": {
+    "checkpoint": "spec/gcs-caller-metadata-admission-checkpoint.md",
+    "clippy_native_conformance": "passed",
+    "depth": 64,
+    "earlier_live": "ham6gzfh(before additional repeatedbuildfile accounting)",
+    "fix_verification": "follow-upreview confirmsbasefiles/partitions; residualfifthdiscovery found fixedinclude_copies4 beyondoriginal, parentlifetimechecked",
+    "fixes_implemented": true,
+    "held_previousstage_not_autoqualified": true,
+    "initial_regression_fixture_failure": "RequestMismatch because macOS /tmp vs /private/tmp identity; tempdir moved tocrate local before successful test",
+    "latest_live_pair": {
+      "cleanup": {
+        "all_versions_inventory_empty": true,
+        "bucket": "grv-httpfs-oauth-b6b109a9fac34650b8215ad1",
+        "bucket_absence_http_status": 404,
+        "deleted_object_generations": 1,
+        "iam_changes": false,
+        "key_creation": false,
+        "organization_policy_changes": false
+      },
+      "directory": "~/grv-shipping-gcs-heaabrj6",
+      "sha256": {
+        "cleanup.json": "53deceb5d8896d7fc0c219bf771004b4cf4f0b1b5a801db6f1c8b31d675bc042",
+        "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup.txt": "e3918ad70ec337c282a13ac301bec4a942add016f7bb6e27641a173f2a250959",
+        "native_live_gcs_guarded_pull_refresh_and_source_free_replay.txt": "6f0e3c0c0644a7df6923c6b56959276e61f97e9aeb8f78a5825b07675aaef9f8"
+      },
+      "tests_passed": 2
+    },
+    "logical_reserve_bytes": 8388608,
+    "native_ignored": 12,
+    "native_library_rebuilt": false,
+    "native_passed": 99,
+    "no_serialization_vec_or_value_in_admission": true,
+    "nonnativeClippy": "passed",
+    "open": ["SDK/wire decoded documents/output", "runtimequeue/cardinality", "source/librarybufferaccounting", "remainingclonesassertions"],
+    "post_fifth_discovery_live_pair": {
+      "cleanup": {
+        "all_versions_inventory_empty": true,
+        "bucket": "grv-httpfs-oauth-d5d9aa11805a44c8ac555daa",
+        "bucket_absence_http_status": 404,
+        "deleted_object_generations": 1,
+        "iam_changes": false,
+        "key_creation": false,
+        "organization_policy_changes": false
+      },
+      "directory": "~/grv-shipping-gcs-ywo05jpl",
+      "sha256": {
+        "cleanup.json": "791ab6dc959e74cb1b2a900cc68b63f20d7abc2172a9a88828e68a4baf78a34c",
+        "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup.txt": "d87930e445ace9a430a4924ce869a3e1366915f1c01160200bce97afdab0998e",
+        "native_live_gcs_guarded_pull_refresh_and_source_free_replay.txt": "14d419efe965bf53f675eacf4bbc9f9e668783915893204bb3e00d5ee9ebfe1a"
+      },
+      "tests_passed": 2
+    },
+    "post_multiplier_live_pair": {
+      "cleanup": {
+        "all_versions_inventory_empty": true,
+        "bucket": "grv-httpfs-oauth-76362e5dbd904c7788a3fe9e",
+        "bucket_absence_http_status": 404,
+        "deleted_object_generations": 1,
+        "iam_changes": false,
+        "key_creation": false,
+        "organization_policy_changes": false
+      },
+      "directory": "~/grv-shipping-gcs-9qy1vzpv",
+      "sha256": {
+        "cleanup.json": "030879c615fa650f9684b1cd3c01e88b5bb3b6276fd4dada83187e959f01de4f",
+        "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup.txt": "a471f3b624fca4002d9a88b6d838b009532c7339d019a44f0be6b1180b236c61",
+        "native_live_gcs_guarded_pull_refresh_and_source_free_replay.txt": "d927be47eb6a8e4923308dc28891c0ccac46d06161f8afdab7edbef47ad36b91"
+      },
+      "tests_passed": 2
+    },
+    "review_agent": "c776d1c0-2b7e-4df",
+    "review_findings": [
+      "base-file temporaryVec/remoteclone/partition multiplier",
+      "session storedbasecontract outside discovery multiplier",
+      "selectedpartition repeatedtable JSON multiplier"
+    ],
+    "serializer_inspection": {
+      "scope": "to_writer/serialize_str/borrowed escapedfragment writing no fullencodedVec/String; notall customSerialize/dependency paths",
+      "source_sha256": "f2b8cc0b97e30c49dbc58698fa22c14a7d56ea616cdb57b067835a59af49a75f",
+      "version": "serde_json1.0.151"
+    },
+    "sources": {
+      "crates/grv-adapter-duckdb/src/build.rs": "4b6f95667684ee97e1f9cc3186879cb82ef04dda131f13d10deb54a729f2785e",
+      "crates/grv-adapter-duckdb/src/build_runtime.rs": "8320d8db7d1e71e96bf9df686b70fdfff36fb9278d0ccce9c8761dc31583b9b1",
+      "crates/grv-adapter-duckdb/src/gcs_metadata_budget.rs": "3bc1e6a66434af40c724d04208516f7aaa0ffafccdd66e30624dbb8d14d5c3fe",
+      "crates/grv-adapter-duckdb/src/pull.rs": "b2827dffc788230683be57ccf9d377113b92ee93875e29edffad5a6b036c2be2",
+      "crates/grv-adapter-duckdb/src/pull_runtime.rs": "eb9529eee810534e4272410feff04288c8d969a56b249efb24985c42ab64faba"
+    },
+    "staleCLI": "passed",
+    "status": "narrowlogicaladmission and reportedmultiplier fixes complete; wholememoryopen",
+    "structural_byte_weight": 256,
+    "test_log_sha256": "1698336bd8d38ac2b08430a7f638af7d37e47226b7063f8874172ea2e379fd7e",
+    "total_heap_rss_claim": false
+  },
+  "capability_advertised": false,
+  "generated_sql_admission_stage": {
+    "compatibility_slices": ["5MiB defaultbudget extraction pass", "staleCLIrefusal pass"],
+    "held_previousstage_not_autoqualified": true,
+    "latest_live_pair": {
+      "after_final_external_mixedlocal_gate": true,
+      "cleanup": {
+        "all_versions_inventory_empty": true,
+        "bucket": "grv-httpfs-oauth-1ae02130d06d4db186d71544",
+        "bucket_absence_http_status": 404,
+        "deleted_object_generations": 1,
+        "iam_changes": false,
+        "key_creation": false,
+        "organization_policy_changes": false
+      },
+      "directory": "~/grv-shipping-gcs-2mfmdbmq",
+      "sha256": {
+        "cleanup.json": "5c02b8ea0b3d9fee78995457c8a4ba3e618fdea41a3a5f0ce01b2de435ad22ad",
+        "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup.txt": "cd7409d3551655092553d00ed39a6215755068a98b65c3fa0fa0e154295efa58",
+        "native_live_gcs_guarded_pull_refresh_and_source_free_replay.txt": "cf1dfe0d0503680ec54a95e5ef403cbcc36f8f99161b7d8c85e8373f05eafefc"
+      },
+      "tests_passed": 2
+    },
+    "live_pair": {
+      "before_final_external_mixedlocal_gate_cleanup": true,
+      "cleanup": {
+        "all_versions_inventory_empty": true,
+        "bucket": "grv-httpfs-oauth-276d0dd79c6f4a129dd3f947",
+        "bucket_absence_http_status": 404,
+        "deleted_object_generations": 1,
+        "iam_changes": false,
+        "key_creation": false,
+        "organization_policy_changes": false
+      },
+      "directory": "~/grv-shipping-gcs-_6in5234",
+      "sha256": {
+        "cleanup.json": "5e424e1836a5e8d56011193dc52087fb0e13baf96f7debdff4da0cb1f57bddfc",
+        "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup.txt": "29c50e6fd2d4c931b7d0abd891bca58c2e605306dc50630e58c75228de502271",
+        "native_live_gcs_guarded_pull_refresh_and_source_free_replay.txt": "5d93bfdb7ca8432d476e2b68c51f6b1b83ba8593d1d82484ac46d5b1d5a10993"
+      },
+      "tests_passed": 2
+    },
+    "mixedlocalselfbase_signed_synthetic": "passed",
+    "native_ignored": 12,
+    "native_library_rebuilt": false,
+    "native_passed": 94,
+    "review": {
+      "agent": "df12880b-0365-433",
+      "no_concrete_defect_found": true,
+      "scope": "sixcalls narrowgeneratedviewhelper/calls, notwholememory"
+    },
+    "sources": {
+      "crates/grv-adapter-duckdb/src/build.rs": "bcb667d2e02f5f84b10d0fe20c7619f1cb8d4d6337d7f4f141e2049133521161",
+      "crates/grv-adapter-duckdb/src/pull.rs": "dcc888fdaed2c5ea86530a39e550e402c329da791e1c1a109ed667d132ab0b41",
+      "crates/grv-adapter-duckdb/src/pull_runtime.rs": "c28257e0a134fdfe48c10d291972e38ed2ed354da794df33704bde3c5a1912d2"
+    },
+    "status": "implemented; boundedviewconstructiononly, othermemoryscopeopen",
+    "strictClippy": "passed",
+    "test_log_sha256": "6ccf94faca6566ee648036653bc9db89b39a2e1a93e328bdf65183f75f198916"
+  },
+  "held_in_process_run": {
+    "artifact_verification": {
+      "direct_prebuilt_test": true,
+      "native_revision": 6,
+      "post": {
+        "/Users/jiacao/.grv-httpfs-prototype-extensions/osx_arm64/httpfs.duckdb_extension": "0cde1f5acd1970bfd414b11f5e945a1eddd8425e96e273f6411538d8fe3d951d",
+        "/Users/jiacao/.grv-native-work/cmake/libgrv_duckdb_guard.dylib": "2709cc619eb125d1ecdc48377303019ea20bfe32f20c4e964c298b2b66abdd5f",
+        "/Users/jiacao/.grv-native-work/owner-validation-target/debug/deps/gcs_build_cli-ad34c00b930cd918": "1f06a087e2a59a910c0b225ca17f9ff0a9ec9ae30945974dc84da44f3a464fb7",
+        "/Users/jiacao/.grv-native-work/owner-validation-target/debug/fixture-duckdb-gcs-build": "d8d1d9ebd937a707ba253ddc3dabf985f1d12e333e8d1d4b24250e03d1cb5b38",
+        "/Users/jiacao/.grv-native-work/owner-validation-target/debug/grv-conformance-cli": "6b86e542da02b4972ef8158aa607a38370152f8dd375b1a8e33cddbfa1d04447"
+      },
+      "pre": {
+        "/Users/jiacao/.grv-httpfs-prototype-extensions/osx_arm64/httpfs.duckdb_extension": "0cde1f5acd1970bfd414b11f5e945a1eddd8425e96e273f6411538d8fe3d951d",
+        "/Users/jiacao/.grv-native-work/cmake/libgrv_duckdb_guard.dylib": "2709cc619eb125d1ecdc48377303019ea20bfe32f20c4e964c298b2b66abdd5f",
+        "/Users/jiacao/.grv-native-work/owner-validation-target/debug/deps/gcs_build_cli-ad34c00b930cd918": "1f06a087e2a59a910c0b225ca17f9ff0a9ec9ae30945974dc84da44f3a464fb7",
+        "/Users/jiacao/.grv-native-work/owner-validation-target/debug/fixture-duckdb-gcs-build": "d8d1d9ebd937a707ba253ddc3dabf985f1d12e333e8d1d4b24250e03d1cb5b38",
+        "/Users/jiacao/.grv-native-work/owner-validation-target/debug/grv-conformance-cli": "6b86e542da02b4972ef8158aa607a38370152f8dd375b1a8e33cddbfa1d04447"
+      },
+      "unchanged": true
+    },
+    "cleanup": {
+      "all_versions_inventory_empty": true,
+      "bucket": "grv-httpfs-oauth-8156ca90a0f74056ad49e824",
+      "bucket_absence_http_status": 404,
+      "deleted_object_generations": 0,
+      "iam_changes": false,
+      "key_creation": false,
+      "organization_policy_changes": false
+    },
+    "directory": "~/grv-held-gcs-dw_ypv61",
+    "limits": [
+      "published dependencies retain holds; not abort/prune/release proof",
+      "zero finalcleanup deletions after testprefix cleanup is not total deletion count",
+      "artifact-specific not qualification of later memory edits"
+    ],
+    "sha256": {
+      "artifact-verification.json": "364f85e27385af4f674592ff283cd0d765cd3d3aad2aca3a8c00dfaef6e76a6a",
+      "cleanup.json": "1720aaf121aa86d77294e7a85f33d22b11cdc864e307c4d53f50cac89f257c16",
+      "post-artifact-hashes.json": "3c35ef02d60763e1298662292a91bf7f1713d78c7f5da0e4be2bb73e7ceb0902",
+      "pre-artifact-hashes.json": "3c35ef02d60763e1298662292a91bf7f1713d78c7f5da0e4be2bb73e7ceb0902",
+      "result.txt": "5d53bc40cc3aec60376e3602e191a1286f0d3219f6838c0cec60aacadc9831b2",
+      "summary.json": "311b9f1cb4a3a1543e9fc9130ec7349f4cb8434c0fcf7b678ff81010fc28c58d"
+    },
+    "status": "passed",
+    "test_elapsed_seconds": 1962.69,
+    "test_exit": 0,
+    "tests_failed": 0,
+    "tests_passed": 1
+  },
+  "historical_helper_archive_sha256": {
+    "prototypes/cloud-views/isolated-owner-archive/grv-duckdb-gcs-owner.rs": "f22da48716f76cc659126cd09f410e6cd943e1cd7c21a97286d3a61b6252ed24",
+    "prototypes/cloud-views/isolated-owner-archive/native_owner.rs": "ece1b1ce57c735a8baaf33413985df155a52a4628b230ae7300630fe473fb3cf",
+    "prototypes/cloud-views/isolated-owner-archive/native_owner_recovery_tests.rs": "26799040898730846eac8c1ce580726eb673f55fb3cb6bfdd853fab89541a6cf",
+    "prototypes/cloud-views/isolated-owner-archive/native_owner_tests.rs": "b4af2b9d2925f4a3b37e7294a9461664bd0d21e3ac5935d95131270f5e045268"
+  },
+  "limitations": ["cooperative nohardstopjoinrollbackdeadline", "partialengine_memory_limit noRSS/totalheapcap", "no productionallocatorquota"],
+  "live_attempt": {
+    "absence_http404_proved": false,
+    "account": "jiacao@on.sinch.com",
+    "creation_attempted": false,
+    "directory": "~/grv-shipping-gcs-f3r0h_88",
+    "project": "entit-finance-prod",
+    "result": "selected OAuth refresh failed beforebucketcreation/creationintent; operator reauthentication indicated",
+    "state_sha256": "2a2f323746275ccd7066e6f72edfd2c71e5c51d0171180b9b1706bf68dbe64d5"
+  },
+  "live_in_process_pair": {
+    "account": "jiacao@on.sinch.com",
+    "artifact_stage": "revision6 same-process",
+    "cleanup": {
+      "all_versions_inventory_empty": true,
+      "bucket": "grv-httpfs-oauth-2644690513df4baa83733675",
+      "bucket_absence_http_status": 404,
+      "deleted_object_generations": 1,
+      "iam_changes": false,
+      "key_creation": false,
+      "organization_policy_changes": false
+    },
+    "directory": "~/grv-shipping-gcs-296qgt4m",
+    "operator_reauthenticated": true,
+    "project": "entit-finance-prod",
+    "sha256": {
+      "cleanup.json": "190451a3de696d794868073c974f2c1cb871ad8bceff4289c2c9b593d1eaf29a",
+      "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup.txt": "8d0c0cb901b110d71bd085175b2b6496143bc0e1324b0521253d904e8fbd25f3",
+      "native_live_gcs_guarded_pull_refresh_and_source_free_replay.txt": "4c00ceb146539ad65bf461aac5f06732b5c450416c7619f1f01c57c99af0aa23",
+      "state.json": "08b4c7444319e69404af1f8d927b3ba829740ecaa0b6a80e8d9cbf40e494f9c9"
+    },
+    "tests": {
+      "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup": "passed",
+      "native_live_gcs_guarded_pull_refresh_and_source_free_replay": "passed"
+    }
+  },
+  "logs": {
+    "/tmp/grv-inprocess-ctest.txt": "085f2c3ffb31af76624ad2238bee5467d788f9b5b13fbf35d613722ac6cf71d1",
+    "/tmp/grv-inprocess-explicit.txt": "3d42396b4a94dabf912a94ffabfde65f22e18957f5b252342458aa28a2e92f5c",
+    "/tmp/grv-inprocess-scripts.txt": "09cafcd77f1f25e0efbfad235472be277a5a303ef8252001b558f202db99424b",
+    "/tmp/grv-inprocess-tests.txt": "b918d6f196e82e1ba30e5a590dbb4ee01333d3ecdec0df4b239cb1d175b79947"
+  },
+  "memory_proof_rerun": {
+    "logs": {
+      "/tmp/grv-inprocess-allocation-proof.txt": "ad6be17c218020fc209d14018a3a1bd89f09f9f81d0a76774318e3487a2a37b7",
+      "/tmp/grv-inprocess-stream-proof.txt": "74586078537f28e9e153f0cd18c7c3f6d28696aa4751af30ea93adc9ee513319",
+      "/tmp/grv-inprocess-transaction-proof.txt": "95449a5269e0a289bd955034e95f4889836b607df8a377a113bd55cb2ba0b06e"
+    },
+    "rebuilt_during_held": false,
+    "scope": "existing standalone source-including binaries; counterexample notuniversal memoryacceptance; quota researchonly"
+  },
+  "memory_review": {
+    "agent": "12f8db92-b74d-4ef",
+    "checkpoint": "spec/gcs-in-process-memory-lifetimes-checkpoint.md",
+    "closed": false,
+    "open_findings": [
+      "precopy generated SQL amplification",
+      "caller/queued document and decoded structure admission",
+      "lifetime maps/document_ids cardinalities",
+      "source/library retained-buffer accounting"
+    ],
+    "read_only": true
+  },
+  "native_guard_revision": 6,
+  "native_library": {
+    "path": "/Users/jiacao/.grv-native-work/cmake/libgrv_duckdb_guard.dylib",
+    "pre_post_full_held_hash_equality_proved": true,
+    "sha256": "2709cc619eb125d1ecdc48377303019ea20bfe32f20c4e964c298b2b66abdd5f"
+  },
+  "open_acceptance": ["installedpackage", "remaining transfer/caller-document memoryaccounting", "broadercleanup/network/outcome tests"],
+  "pause_after_memory_scope": true,
+  "queue_source_stage": {
+    "checkpoint": "spec/gcs-queue-source-memory-checkpoint.md",
+    "cloud_runs": 0,
+    "genericwirelimitschanged": false,
+    "logs": {
+      "/tmp/grv-task49-extraction-tests.txt": "00bcec056f690cd9c30f75ca8080a88635fd3406dfcd05105c016c6e0b540117",
+      "/tmp/grv-task49-native-tests.txt": "48c2c604d340dd85f5bd638077c67a19759f3d822647bf0ddc814596bc35a8d0",
+      "/tmp/grv-task49-stale-cli.txt": "e97230ad66830f08cd1a155e98fd65afa64994400a087ee095f2bba88bad9890",
+      "/tmp/grv-task49-wire-sdk-tests.txt": "321d92075a933974f8356f0d703a9e8ea1bd6b07f11b31310aaf484d10011bd3"
+    },
+    "native_library_rebuilt": false,
+    "newDecoded_or_lifetimepolicy_adopted": false,
+    "open_policy": [
+      "perchanneldocumentID cardinality preservesuniqueness",
+      "decoded/node budget opts beforeparsing",
+      "embeddedruntimeconnection/sessioncardinality",
+      "SDKcanonical outputcopies"
+    ],
+    "slice_review": {
+      "agent": "8bc02d61-152c-426",
+      "blocking_defect_found": false,
+      "inspection_calls": 6,
+      "remaining_memory_acceptance": true,
+      "scope": "frameprobe andGCSstagedexport partition only",
+      "tests_independently_rerun": false
+    },
+    "source_review_agent": "f3ea07f8-4efe-41a",
+    "sources": {
+      "crates/grv-adapter-duckdb/src/build.rs": "f244326b208edfa013ae7de53af210769651968078966b8845cb7289569feb33",
+      "crates/grv-adapter-duckdb/src/ipc.rs": "9f1e3284dd42781615af8036c1af86b1419631779107a5af8736e3894ba8ebc2",
+      "crates/grv-adapter-duckdb/tests/build.rs": "a7277889b269f12490366152dce591ec9df8db50466b522018d14548799eea91",
+      "crates/grv-adapter-sdk/src/lib.rs": "89710e26e066b4f60c74bfaea10a9f8ae42c71ac9c096c0e9cea7585f3560179",
+      "crates/grv-adapter-wire/src/lib.rs": "93925744e9a2d40c4cfe390dae07f80bb41fd3ce934a12fb3e224c51131e821c",
+      "crates/grv-adapter-wire/tests/protocol.rs": "00e22679ab42b5e67ba6e21035ef2a1e5d40881aeee68e32a306e794fbe0eaba"
+    },
+    "status": "narrowoffline slices implemented; wholememoryopen policydecisionrequired",
+    "validation": {
+      "extraction": 9,
+      "native_ignored": 12,
+      "native_passed": 101,
+      "sdk_lib": 14,
+      "sdk_runtime": 3,
+      "sourcefreeGCSreducedexport": 1,
+      "staleCLI": 1,
+      "strictClippy": "passed",
+      "wire_lib": 2,
+      "wire_protocol": 18
+    }
+  },
+  "review": {
+    "agent": "c0639db2-6c03-4a4",
+    "findings": ["cancelbefore remotedispatch", "readonlymodepreservation"],
+    "fixed_and_regression_assertions_passed": true,
+    "universal_signoff": false
+  },
+  "source_sha256": {
+    "crates/grv-adapter-duckdb/Cargo.toml": "855694c53df486dbd846ad7efc2e659336febf1ae3c6818a84c74a7694c5e701",
+    "crates/grv-adapter-duckdb/native/gcs.inc": "de91007025b8f803653100b2b718a2b97d2d0e8ee983ebb9815b40598171780d",
+    "crates/grv-adapter-duckdb/native/pull.inc": "ebc80c579cd60921d69cdafe2cf517c2a330508f70f82c97b9698627de3ba94c",
+    "crates/grv-adapter-duckdb/native/shim.cpp": "4a6415afc8f9e2261314302a45ff598dae4c60aad54314ead2301c3700fdd2f1",
+    "crates/grv-adapter-duckdb/src/build.rs": "b4e38a096bfd04132901e7ac1e7a2a7a62b4b46fb906679ab4c8ec43b05d6e66",
+    "crates/grv-adapter-duckdb/src/native.rs": "c0dd412b4028dfbcfe3667520e7ffbb32fac2090bf4a07d1fa5c2d5a611be421",
+    "crates/grv-adapter-duckdb/src/pull.rs": "f1e407dbf513799af20cc9c140e4c796e3070ec3f64975283fb01213244edde9",
+    "crates/grv-adapter-host/src/process.rs": "8263ad73bc76f26c6b855bbe56595a64b6c2e3f4e581a975269868791526e07e",
+    "scripts/package.py": "18868a416a75ee77dcd5b27bc88113fcbe51af069612dcfa36b7c3a4f4f46afb"
+  },
+  "status": "revision6 offline/livepair/actualheld slices passed; memory and remaining transition safeguards open",
+  "validation": {
+    "ctest_passed": 12,
+    "explicit_signed_synthetic_slices_passed": 6,
+    "native_ignored": 13,
+    "native_passed": 90,
+    "script_tests": {
+      "package_removals_parent_verified": true,
+      "parent_rerun_passed": 49,
+      "passed": 49,
+      "reported_by_packaging_agent": "fb75c7ba-3e5f-4f3"
+    },
+    "signed_postsecret_setup_proof": "passed",
+    "stale_registry_cli": "passed",
+    "strict_native_conformance_clippy": "passed"
+  }
+}

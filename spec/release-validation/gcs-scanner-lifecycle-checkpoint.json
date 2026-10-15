@@ -1,0 +1,113 @@
+{
+  "gcs_scanner_lifecycle_reviewed_parent_stage": {
+    "status": "package32 complete within finite reviewed scope",
+    "checkpoint": "spec/gcs-scanner-lifecycle-checkpoint.md",
+    "publication_approved": false,
+    "gcs_view_advertised": false,
+    "production_execution_changes": false,
+    "requested_model": "remote-qwen3.8-27b",
+    "thinking": "xhigh",
+    "max_concurrent_subagents": 1,
+    "subagent_reports_not_acceptance": true,
+    "offline": {
+      "ctest": 15,
+      "standalone_setup": "pass separately, not CTest registered",
+      "native_library": 117,
+      "ignored": 16,
+      "native_integration": 48,
+      "host": 22,
+      "peer_cli": 12,
+      "exact_shipping_synthetic_identical_token": 1,
+      "driver_offline": 10,
+      "strict_checks": "pass"
+    },
+    "live": {
+      "directory": "/Users/jiacao/grv-task32-real-route-p44w44j_",
+      "shipping_route_seconds": 4.73,
+      "full_preparation_seconds": 10.8,
+      "exact_one_test_each": true,
+      "credential_acquisition": "real selected independent force-refresh; no token output",
+      "authority": "unchanged shipping FFI and signed HTTPFS actual fixed-host HTTPS",
+      "artifact_count": 10,
+      "pre_post_current_equal": true,
+      "artifact_hashes": {
+        "/Users/jiacao/.grv-native-work/owner-validation-target/debug/deps/grv_adapter_duckdb-273b55543ed855e5": "448257f151e6309e42868ed1e9ac7385db4b77215c2fe6e887447442e764340c",
+        "/Users/jiacao/.grv-native-work/cmake/libgrv_duckdb_guard.dylib": "2709cc619eb125d1ecdc48377303019ea20bfe32f20c4e964c298b2b66abdd5f",
+        "/Users/jiacao/.grv-httpfs-prototype-extensions/osx_arm64/httpfs.duckdb_extension": "0cde1f5acd1970bfd414b11f5e945a1eddd8425e96e273f6411538d8fe3d951d",
+        "/Users/jiacao/.grv-httpfs-prototype-extensions/osx_arm64/aws.duckdb_extension": "911b68461fdd989e0c9e74926b197c8a05727bfafc05df38baa47ece42174f1c",
+        "/private/tmp/grv-task32-real-route.py": "c76b443fded64be2cc59ec00e6f56737e1e6dd8eca5926c994abf35d7c679539",
+        "/Users/jiacao/projects/grv/crates/grv-adapter-duckdb/src/native.rs": "d94b806096ea7e2f5337cdeeee832cdb564478725abaef324cb79c3a8ce0930c",
+        "/Users/jiacao/projects/grv/crates/grv-adapter-duckdb/src/build.rs": "bfc43f1a078d89deb0807dc5abf332b9817d806e9faa82c68c7dfced03ca2476",
+        "/Users/jiacao/projects/grv/crates/grv-adapter-duckdb/src/gcs_token.rs": "3f3538371ede8c2a3079293a823204a1e1db6d321797561f9c6c5eb10f2b2e31",
+        "/Users/jiacao/projects/grv/notices/native-extensions.json": "644e3a1e665bf1ee87771d3b14a5d963924ef94d38b315fa31bd88b70fc25b8a",
+        "/Users/jiacao/projects/grv/spec/gcs-scanner-lifecycle-live-plan.md": "3d924983ef98c8c4e459e5f86c32dd8b019db13547da154e5b17fc7f8e047245"
+      },
+      "cleanup": {
+        "bucket": "grv-httpfs-oauth-ba877aeb0a2c4505b5a2a9ed",
+        "deleted_object_generations": 3,
+        "all_versions_inventory_empty": true,
+        "inventory_observed": true,
+        "bucket_absence_http_status": 404,
+        "keys_created": false,
+        "existing_iam_acl_policy_versioning_changes": false
+      }
+    },
+    "layers": [
+      "source-including actual scanner/epoch/wrapper with modeled parameter factory and mock transport",
+      "signed parameter resolution outside queries; all3 wrapper modeled factory overloads",
+      "shipping FFI synthetic identical values no provider",
+      "shipping FFI real OAuth signed HTTPFS HTTPS A/B/A",
+      "separate actual full preparation existing local refusal/reopen/abort-cleanup branches"
+    ],
+    "limitations": [
+      "no public rejected-request counts or cache/rebind claims from real-route test",
+      "cooperative deadlines not hard stop/join/finite HTTP overrun or immutable rollback proof",
+      "no universal heap erasure/aggregateRSS/arbitrary escaped owner proof",
+      "no new per-range generation pinning/privileged replacement protection",
+      "package45/later faults-held-S3/install/release remain open"
+    ],
+    "development_failures": [
+      "original partial300s proof timeout and argument error retained transcript; no invented hash",
+      "parent-proof-run-1/2 ActiveTransaction test opener outside transaction",
+      "parent-proof-run-3 duplicate opener test misuse",
+      "parent-ctest.txt incorrect scanner directory argument",
+      "parent-identical-synthetic.txt zero-test wrong module selector not acceptance",
+      "parent-ctest-owner-records.txt incorrect fractional timeout assertion; combined30s bound corrected"
+    ],
+    "baseline_preservation": {
+      "baseline_entries_unchanged": 68,
+      "changed_paths": [
+        "crates/grv-adapter-duckdb/native/CMakeLists.txt",
+        "crates/grv-adapter-duckdb/native/gcs.inc",
+        "crates/grv-adapter-duckdb/src/native.rs",
+        "crates/grv-adapter-duckdb/native/gcs_setup_proof.cpp"
+      ]
+    },
+    "evidence_sha256": {
+      "/Users/jiacao/projects/grv/spec/gcs-scanner-lifecycle-checkpoint.md": "ee754db67ab0bf9a1494463a85922f6b68ad77b1a8936abbdac9b1391f627887",
+      "/Users/jiacao/projects/grv/crates/grv-adapter-duckdb/native/gcs_scanner_lifecycle_proof.cpp": "0dd6032a10377ef2394aa8c6364148c9ec2e304147a4ed104fc1613337b9c707",
+      "/Users/jiacao/projects/grv/crates/grv-adapter-duckdb/native/CMakeLists.txt": "d3da7a75cbf45452db57d644e61ef45868132d0c1db534a02b54c150313c2fb5",
+      "/Users/jiacao/projects/grv/crates/grv-adapter-duckdb/native/gcs.inc": "d7061b3d63746847f3a80fcf799fc981f4b766772c9172955ee1e57f20655572",
+      "/Users/jiacao/projects/grv/crates/grv-adapter-duckdb/native/gcs_setup_proof.cpp": "3206db379081409741e4c0bdc3889a39b4c000773d941bba04255a35d4c21c33",
+      "/tmp/grv-task32/parent-ctest-owner-records-final.txt": "a75ad6fadda19ce47784778d74cd0d0ccd3652f42932f245db868679f671b8b8",
+      "/tmp/grv-task32/parent-setup-final.txt": "fe1c3b83d0ae8d560fd65e48c6933439f8bd7b44de6b8c547282dc7f79f1992b",
+      "/tmp/grv-task32/parent-identical-synthetic-exact.txt": "c40450f65d8e0c688d56e58b5391d9271307cfa596fc6425c7d99f96a71c7569",
+      "/tmp/grv-task32/parent-conformance.txt": "4f1c65c069e44b859ab8aa520aeb4b68057aae84c29367f4c0f8f9ec7f5ce707",
+      "/tmp/grv-task32/parent-live-offline-native.txt": "6037cf89f24f60432b8563afd1ba19f32b1c2d1125c2e0564517f942f9838af9",
+      "/tmp/grv-task32/parent-live-clippy-native.txt": "2f66ac8fc3d94635feb614eac6ecbc91c2492ca68ab277bb747ba0d25e2125ca",
+      "/tmp/grv-task32/parent-live-clippy-nonnative.txt": "e4df5b089285c88b913f3c37f585995292e65af9a87431683df510da0e22188e",
+      "/tmp/grv-task32/parent-live-fmt-check.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/tmp/grv-task32/parent-live-diff-check.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/tmp/grv-task32/parent-driver-offline-test.txt": "d0183253bc774238983f94ef1f6da4081270c2fe21ad8a2fcaa288a97593b86b",
+      "/tmp/grv-task32/parent-baseline-preservation.json": "744aef36fe984617e4741388400e7a7c7e33465d3c9890991de2c8bdb6aceefb",
+      "/tmp/grv-task32/parent-live-launch.txt": "a26cc1cf3e26d9d6624f2988a08b42d9edb52656b956ca9d2ce2ce0449739351",
+      "/Users/jiacao/grv-task32-real-route-p44w44j_/summary.json": "8d2e6b12c56984dc82e8633f759a9176ff51858b7bb890150ab0d269ad5dc14f",
+      "/Users/jiacao/grv-task32-real-route-p44w44j_/cleanup.json": "60dccd6170199ac616d05bc09724220cecff0ca5f8536a5a750bd6776bf9e21e",
+      "/Users/jiacao/grv-task32-real-route-p44w44j_/shipping-route.txt": "048b0857b4c66303e06f31eca9d6d2a68035be58f033b363fb348166d6be5090",
+      "/Users/jiacao/grv-task32-real-route-p44w44j_/full-preparation.txt": "e2df97750ae48f2ab2d94d57de4d74af55e567713aebd3847a0f0256ca796c15",
+      "/Users/jiacao/grv-task32-real-route-p44w44j_/pre-artifact-hashes.json": "ff16a7da2ba29b661ece09b57f4da42021c6c41d43e8474d678365ee3afb23f3",
+      "/Users/jiacao/grv-task32-real-route-p44w44j_/post-artifact-hashes.json": "ff16a7da2ba29b661ece09b57f4da42021c6c41d43e8474d678365ee3afb23f3",
+      "/Users/jiacao/grv-task32-real-route-p44w44j_/state.json": "3a67cce2bbcc1916729976a2856445c2e6874056ab7907fedb5a3858598481bf"
+    }
+  }
+}

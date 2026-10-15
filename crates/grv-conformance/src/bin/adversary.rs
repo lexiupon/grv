@@ -22,7 +22,14 @@ impl Adapter for Adversary {
         Registration {
             name: Name::new("adversary").unwrap(),
             package_version: "0.1.0".into(),
-            interface_versions: vec![Req::new(1).unwrap()],
+            interface_versions: vec![
+                Req::new(if self.scenario == "unsupported-interface" {
+                    2
+                } else {
+                    1
+                })
+                .unwrap(),
+            ],
             binding_schema_version: Req::new(1).unwrap(),
             capabilities: Capabilities::default(),
             registry: Registry {

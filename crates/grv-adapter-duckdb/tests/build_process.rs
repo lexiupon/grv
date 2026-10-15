@@ -10,11 +10,71 @@ use std::{
     },
     path::Path,
     process::{Child, Command, Stdio},
-    time::Duration,
+    time::{Duration, Instant},
 };
+// Test-only RAII guard. It owns the child, joins it on a bounded deadline and
+// only escalates to kill+wait for a PID it still owns; a PID already reaped by
+// try_wait is marked and never signalled again.
+struct OwnedChild {
+    child: Option<Child>,
+    reaped: bool,
+}
+impl OwnedChild {
+    fn spawn(command: &mut Command) -> io::Result<Self> {
+        Ok(Self {
+            child: Some(command.spawn()?),
+            reaped: false,
+        })
+    }
+    fn join(&mut self) -> io::Result<()> {
+        let deadline = Instant::now() + Duration::from_secs(10);
+        loop {
+            let owned = self.child.as_mut().ok_or_else(|| {
+                io::Error::new(io::ErrorKind::NotConnected, "child already taken")
+            })?;
+            // Already reaped here: never signal this PID again.
+            if owned.try_wait()?.is_some() {
+                self.reaped = true;
+                return Ok(());
+            }
+            if Instant::now() >= deadline {
+                // Re-check before escalating so a just-reaped PID is never killed.
+                if owned.try_wait()?.is_some() {
+                    self.reaped = true;
+                    return Ok(());
+                }
+                owned.kill()?;
+                owned.wait()?;
+                self.reaped = true;
+                // A forced kill is not a qualified closure of the child.
+                return Err(io::Error::from(io::ErrorKind::TimedOut));
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        }
+    }
+}
+impl Drop for OwnedChild {
+    fn drop(&mut self) {
+        if self.reaped {
+            return;
+        }
+        if let Some(child) = self.child.as_mut() {
+            // Only a live owned child is signalled; an unclassified try_wait error
+            // leaves it alone (this guard may leak rather than signal blindly).
+            match child.try_wait() {
+                Ok(None) => {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                }
+                Ok(Some(_)) => self.reaped = true,
+                Err(_) => {}
+            }
+        }
+    }
+}
 struct Peer {
     channel: Channel<UnixStream>,
-    child: Child,
+    child: OwnedChild,
     handle: Handle,
     next: u64,
 }
@@ -35,7 +95,9 @@ impl Peer {
                 Ok(())
             });
         }
-        let child = command.spawn().unwrap();
+        // Null stdio: nothing is drained and no child output is secreted.
+        command.stdout(Stdio::null()).stderr(Stdio::null());
+        let child = OwnedChild::spawn(&mut command).unwrap();
         drop(socket);
         let resources = Resources::default();
         let mut channel = Channel::new(
@@ -81,7 +143,7 @@ impl Peer {
                 &Frame::LocateConnection {
                     req: Req::new(1).unwrap(),
                     connection: Doc::inline(json!({"database":path})),
-                    mode: Mode::ManagedBuild,
+                    mode: request.execution.mode(),
                     run_id: Some(request.identity.run_id.clone()),
                 },
                 &[],
@@ -102,7 +164,7 @@ impl Peer {
                     root: Some(request.identity.root.clone()),
                     expected_identity: Some(request.identity.connection_identity.clone()),
                     expected_workspace_id: Some(request.identity.workspace_id.clone()),
-                    mode: Mode::ManagedBuild,
+                    mode: request.execution.mode(),
                 },
                 &[],
             )
@@ -124,6 +186,22 @@ impl Peer {
         req
     }
     fn prepare(&mut self, request: DiscoverBuildRequest) -> BuildSession {
+        // Derived before the request moves into the discovery frame. Managed
+        // defaults are unchanged: no base contracts, revision zero.
+        let self_input = request.self_input;
+        let base_contracts = if self_input {
+            request
+                .outputs
+                .iter()
+                .map(|output| NamedContract {
+                    table: output.table.clone(),
+                    contract: output.contract.clone(),
+                })
+                .collect()
+        } else {
+            vec![]
+        };
+        let base_revision = U64::new(if self_input { 1 } else { 0 }).unwrap();
         let req = self.req();
         self.channel
             .send(
@@ -151,9 +229,9 @@ impl Peer {
                     handle: self.handle.clone(),
                     payload: Doc::inline(PrepareBuildRequest {
                         discovery: discovery.inline,
-                        base_revision: U64::new(0).unwrap(),
-                        self_input: false,
-                        base_contracts: vec![],
+                        base_revision,
+                        self_input,
+                        base_contracts,
                         base_files: vec![],
                         input_files: vec![],
                         holds_confirmed: true,
@@ -271,8 +349,7 @@ fn cancellation_and_eof_interrupt_native_invocation_join_owner_and_refuse_reexec
             assert!(grv_adapter_duckdb::lock::WorkspaceLock::acquire(&path).is_ok());
         }
         drop(peer.channel);
-        let output = peer.child.wait_with_output().unwrap();
-        assert!(output.stdout.is_empty());
+        peer.child.join().unwrap();
         let mut store = grv_adapter_duckdb::build::BuildStore::open(
             &path,
             request.identity.root.clone(),
@@ -319,7 +396,7 @@ fn eof_closes_retained_discovery_transaction_before_any_session_exists() {
         Frame::BuildDiscovered { .. }
     ));
     drop(peer.channel);
-    let _ = peer.child.wait_with_output().unwrap();
+    peer.child.join().unwrap();
     let mut store = grv_adapter_duckdb::build::BuildStore::open(
         &path,
         request.identity.root.clone(),
@@ -329,4 +406,59 @@ fn eof_closes_retained_discovery_transaction_before_any_session_exists() {
     .unwrap();
     assert!(store.workspace_id().is_none());
     assert!(store.discover(request).is_err());
+}
+// EOF is the only fence here: the external protocol invents no invocation, so the
+// retained preparation owner simply closes. holds_confirmed is only the request
+// flag: no real core hold, no source preparation and no cloud read.
+#[test]
+fn external_empty_gcs_sdk_eof_joins_prepared_owner_without_receipt() {
+    let dir = directory();
+    let path = dir.path().join("external-eof.duckdb");
+    let mut request = request(&path, "SELECT 1::BIGINT AS id");
+    request.identity.root = "gs://test-bucket/empty-cancel".into();
+    request.execution = BuildExecution::External;
+    request.self_input = true;
+    // The self-input output stays a table reference; no query is ever admitted.
+    request.outputs[0].source = json!({"table": "rows"});
+    let mut peer = Peer::start(&path, &request);
+    let session = peer.prepare(request.clone());
+    assert_eq!(session.execution, BuildExecution::External);
+    assert!(session.self_input);
+    assert_eq!(session.base_contracts.len(), 1);
+    assert_eq!(session.base_contracts[0].table, name("rows"));
+    // Empty private view: no verified cloud file was carried, so no GcsView
+    // relation, reader or authenticated read was reached.
+    assert!(session.inputs.is_empty());
+    // The serving child still owns the real workspace lock before EOF.
+    assert!(grv_adapter_duckdb::lock::WorkspaceLock::acquire(&path).is_err());
+    drop(peer.channel);
+    peer.child.join().unwrap();
+    assert!(grv_adapter_duckdb::lock::WorkspaceLock::acquire(&path).is_ok());
+    let mut store = grv_adapter_duckdb::build::BuildStore::open(
+        &path,
+        request.identity.root.clone(),
+        Some(request.identity.workspace_id.clone()),
+        &Resources::default(),
+    )
+    .unwrap();
+    let record = store.open_session(&request.identity).unwrap();
+    assert_eq!(record.state, BuildState::Prepared);
+    assert_eq!(record.session, session);
+    assert!(record.candidate.is_none());
+    assert!(record.completion.is_none());
+    assert!(record.outcome.is_none());
+    drop(store);
+    let mut store = grv_adapter_duckdb::build::BuildStore::open(
+        &path,
+        request.identity.root.clone(),
+        Some(request.identity.workspace_id.clone()),
+        &Resources::default(),
+    )
+    .unwrap();
+    let again = store.open_session(&request.identity).unwrap();
+    assert_eq!(again.state, record.state);
+    assert_eq!(again.session, record.session);
+    assert!(again.candidate.is_none());
+    assert!(again.completion.is_none());
+    assert!(again.outcome.is_none());
 }

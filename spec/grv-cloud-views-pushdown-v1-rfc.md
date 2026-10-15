@@ -39,6 +39,10 @@ User decisions:
   keys or introducing a custom GCS transport. Retain external gs:// identities
   and translate trusted exact files to canonical HTTPS scan URLs.
 - Require explicitly selected **account and project**; no active-config fallback.
+- Return GCS to **in-process DuckDB within the adapter**, matching local/S3,
+  accepting cooperative rather than hard in-flight deadlines and partial engine
+  memory-limit coverage. Implementation transition is pending; see
+  [execution decision](gcs-in-process-execution-decision.md).
 - Revise draft contracts together before 1.0; no legacy installation,
   multi-version negotiation or durable migration layer is required.
 
@@ -163,8 +167,10 @@ stderr is suppressed, token/buffers zeroize and Debug is redacted.
 Initial scan execution budget is at most **300 seconds**, anchored monotonically
 before token acquisition; require expiry beyond requested execution plus a
 **120-second skew/cleanup margin**. Setup/bind consumes that same budget. The
-worker/native integration must enforce cancellation/rollback at the deadline,
-then reacquire on a fresh owner for the next execution. Provider acquisition,
+worker/native integration requests cooperative cancellation at the deadline,
+refuses late success and reacquires on a fresh connection for the next execution
+only after appropriate cleanup/ownership evidence. It does **not** guarantee
+in-flight stop/join or rollback at that deadline. Provider acquisition,
 computation watchdog and precommit checks are implemented. Revision-3 engine
 `HTTPUtil::Request` hooks were bypassed by the signed extension's privately
 linked methods; mock proofs are not evidence of that shipping boundary.
@@ -174,18 +180,43 @@ late/non-admitted/non-read requests, checks GET content delivery and discards
 cached clients before stock initialization with remaining-lease timeouts.
 Initial GCS execution selects signed stock **httplib**: pinned stock curl has
 only connect/low-speed timeouts, not a hard transfer deadline, and is not admitted
-for this bounded mode. Synthetic signed-extension redirect/stalled-HEAD/trickling-GET proofs
-pass, but **continuously trickling HEAD headers exceed the lease**: httplib's
-per-read timeouts are not an absolute transfer bound either. Hard in-flight
-stop/join is a release blocker; GET callbacks and pre-request checks do not solve
-DNS/TLS/status/header/trailer stalls. Cancellation/rollback and supported-target
-behavior remain qualification gates. This is a pinned policy delegate, not a custom transport.
+for the initial selected GCS path. Synthetic signed-extension redirect/stalled-
+HEAD/trickling-GET proofs pass, but **continuously trickling HEAD headers exceed
+the lease**: httplib's per-read timeouts are not an absolute transfer bound either.
+A250ms synthetic lease returned after3792ms; retain that failed hard-bound test.
+
+The user has superseded the earlier dedicated-native-owner approval with an
+[in-process execution decision](gcs-in-process-execution-decision.md). GCS will
+run in the DuckDB adapter process like local/S3; current native revision6
+code has removed the helper. Offline slices pass; live/held/installed transition
+qualification remains pending in the
+[transition checkpoint](gcs-in-process-transition-checkpoint.md). Do not expand the helper
+allocation policy or claim old helper proofs qualify this new architecture.
+
+The admitted lease only shortens; no activity renews it. Keep exact request/
+content/handle authority checks, cooperative interrupt and late-result refusal.
+Synchronous stock transport can delay stop/join, cleanup and rollback beyond the
+lease; an already-dispatched request and native credential copies may outlive it.
+The120second expiry margin is not proof of physical stop. Do not claim stopped
+acknowledgement or connection reuse while native work remains active. Retain
+ownership; uncertain outcomes stay unresolved, with no unsafe thread cancellation,
+concurrent connection destruction or detached native work. Process termination
+is not rollback evidence; reopen/resolve immutable receipts only after appropriate
+stopped-writer/lock evidence, never blindly retry effects. Existing adapter-process
+termination is not newly qualified as an operation-wide hard deadline.
+
+The512MiB DuckDB setting is a partial engine limit, not a universal allocation/
+RSS cap. Transfer/result/decoded buffers remain independently bounded; no automatic
+budget increase is authorized. S3 shares the engine limitation. Cleanup, resource
+behavior and supported-target qualification remain gates, but lack of a hard
+in-flight deadline/total-engine-memory guarantee is now an explicit accepted
+limitation. This is a pinned policy delegate, not a custom transport.
 Do not replace a secret during a query
 and assume open handles refresh. No whole-operation automatic retry after
 results/effects, partial refresh commit or seamless mid-query renewal. Test
-bind/execute/rebind expiry and cancellation races. If reliable expiry/deadline
-enforcement cannot be provided, release is blocked; do not substitute custom
-transport silently.
+bind/execute/rebind expiry and cancellation races under the stated cooperative
+limitation. Refusal/cleanup/recovery must be honest and fail-closed; no hard
+stop/rollback guarantee or custom transport substitution may be implied.
 
 Ordinary DuckDB consumers obtain their own token/temporary secret; GRV does not
 configure or renew indefinitely held external connections. Document expiry and

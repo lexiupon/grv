@@ -1,0 +1,113 @@
+{
+  "scope": "task34 targeted in-process GCS cooperative cancellation and uncertain-outcome recovery",
+  "status": "complete within accepted contract; pause before unrelated qualification",
+  "checkpoint": "spec/gcs-in-process-cancellation-recovery-checkpoint.md",
+  "subagent": {
+    "id": "85d6ca6c-1017-435",
+    "requested_model": "remote-qwen3.8-27b",
+    "thinking": "xhigh",
+    "resumed_for_missing_regressions": true,
+    "parent_reviewed_changes": true
+  },
+  "validation": {
+    "native_library": {
+      "passed": 109,
+      "ignored": 12
+    },
+    "native_integration": {
+      "passed": 48
+    },
+    "sdk_library": {
+      "passed": 18
+    },
+    "sdk_runtime": {
+      "passed": 3
+    },
+    "ctest": {
+      "passed": 13
+    },
+    "exact_signed_synthetic_no_cloud_tests": {
+      "passed": 2,
+      "watchdog_seconds": 4.03,
+      "fresh_owner_seconds": 1.54
+    },
+    "native_clippy": "pass -D warnings",
+    "fmt_diff": "pass",
+    "evidence_checker": {
+      "catalog": 42,
+      "records": 94,
+      "digests": "matched",
+      "release_readiness": "not assessed"
+    }
+  },
+  "case_evidence": [
+    "pre-dispatch worker joins/lock release/no dispatch/no false NotCommitted",
+    "original lease shortening and fresh invocation",
+    "bounded FileSync gate/manual flock combined with actual SDK cancel/EOF real WorkspaceLock/receipt resolution",
+    "actual COMMIT refused at Rust publication boundary via cfg(test) expiry injection, immutable once-only read after synchronous return/reopen",
+    "setup uncertainty quarantines operational reuse",
+    "source-free Local/S3View/GcsView pre/post-COMMIT crash child immutable same-request receipt recovery"
+  ],
+  "limitations": [
+    "no hard stop or finite stock HTTP overrun guarantee",
+    "native gate manual flock is not SDK stopped-ack proof",
+    "expiry boundary placement synthetic, COMMIT/reopen actual",
+    "SDK cancel/EOF test local-root shared worker path; GcsView crash uses metadata mode and empty views no HTTP",
+    "no universal abrupt-crash/WAL/rollback/credential-erasure proof",
+    "prior held artifact pass not promoted to new library-test stage",
+    "broader setup/security/scanner/cloud/package/release gates remain open"
+  ],
+  "production_rust_behavior_changed": false,
+  "shipping_native_library_rebuilt": false,
+  "shipping_native_sha256": "2709cc619eb125d1ecdc48377303019ea20bfe32f20c4e964c298b2b66abdd5f",
+  "development_failures_preserved": [
+    "initial native gate weak return/cardinality/timeout assertions corrected before acceptance",
+    "/tmp/grv-task34-parent-fmt-development.txt formatting-only failure corrected"
+  ],
+  "cloud_operations": false,
+  "live_held_runs": false,
+  "commit_push_publication": false,
+  "capability_advertised": false,
+  "sha256": {
+    "crates/grv-adapter-duckdb/native/in_process_gate_proof.cpp": "b9c8437af9c594fa07fa2325c2e5299660a7cb3540142fee6a4040582dd91569",
+    "crates/grv-adapter-duckdb/native/CMakeLists.txt": "bf24579739614c4aa15d96c5c79cea8b5c1638a7d5f46cd22b7906c56e0544d4",
+    "crates/grv-adapter-duckdb/src/native.rs": "c459e67ec70f4eed34d18ae4e1aaa827f123dc7954548b66c565470e4d5496c3",
+    "crates/grv-adapter-duckdb/src/build_worker.rs": "67cd0edbb3809d184dbabfab830553fcb58790202499a2a80d87efe945ca31b7",
+    "crates/grv-adapter-duckdb/src/pull_worker.rs": "f39c2740bd705852c926b97be8629c39d00be93324d30e58540d2260afc7d5d0",
+    "crates/grv-adapter-duckdb/src/pull.rs": "045627a41024519573437cf43a6874cbc5614ed5e12b8189dffeda76bdec123d",
+    "crates/grv-adapter-duckdb/src/commit_boundary_tests.rs": "db24315843618f7e22f2d39045ef69e4c6a429b55561d51674e3205453e376dd",
+    "spec/gcs-in-process-cancellation-recovery-checkpoint.md": "255f49ce368ab76a6a88b70080fddaab52f09d5d24b2025d4b71dfba545f4c48",
+    "/Users/jiacao/.grv-native-work/cmake/grv_in_process_gate_proof": "e65772377a0c2c246389b05925466e7bd217796e010c6624406cf79196c50418",
+    "/Users/jiacao/.grv-native-work/cmake/libgrv_duckdb_guard.dylib": "2709cc619eb125d1ecdc48377303019ea20bfe32f20c4e964c298b2b66abdd5f",
+    "/Users/jiacao/.grv-native-work/owner-validation-target/debug/deps/grv_adapter_duckdb-273b55543ed855e5": "a7ac6ac908cf193964ea222a09d1527ff0c7e88554cd23d7c6dfbec9f7103841",
+    "/tmp/grv-task34-parent-fmt.txt": "db7d73669786636652cc7d1f6450f437ff03909a1092aec0b6b5cf7ed29c7d39",
+    "/tmp/grv-task34-sdk-after.txt": "7a1062a160daa2df304ea04cd8e3a4be1dbbfa014f31488b75d3c003ade210d2",
+    "/tmp/grv-task34-cmake-reconf.txt": "9b2af766bb999149e308fbbb392b516d49c3ac7715a0a154f560620aaece76c8",
+    "/tmp/grv-task34-tests-after.txt": "51c99166b29423bca2a1445106f63a6d0196e80f87629199bc48c47b2c4ee516",
+    "/tmp/grv-task34-tests-final.txt": "ff347d0387481b7007397a213dc2220b21eff17b49fbc1abf38d2df3c8a77689",
+    "/tmp/grv-task34-parent-fresh-owner.txt": "8ca65a6a489bc7e4911e3650bf43b35295f7264cd8998bd5492efe91b5b572f9",
+    "/tmp/grv-task34-parent-watchdog.txt": "9c1928f49c73c574618c3da894bf13453bcd915ab825c2f8b654862476d0d9d7",
+    "/tmp/grv-task34-parent-gcs-crash.txt": "b7fa29c4f562eb95edbc841276e4ae7912438f9e043f0149051c63a2abde4af7",
+    "/tmp/grv-task34-clippy.txt": "9bebf7abfcd5cfc757711dd56690d46d93fc88af6c20d76678b8899fc327047e",
+    "/tmp/grv-task34-sdk-final.txt": "e85076ada273510490d546ff586c28bf292235fa95420c97c756eed9db5092f9",
+    "/tmp/grv-task34-ctest-final.txt": "d2ad7d1cd47c1ad95cd7569a82fdabded2a6952a73c457d68db0f9797346f400",
+    "/tmp/grv-task34-parent-clippy.txt": "7e3f37b8c4b745fe69d7044647af24f77390ff8bbd070d3ace8a3ffa2dff87db",
+    "/tmp/grv-task34-baseline-tests.txt": "70ce6aefdd9eb01dcab244049baa258b39db613bc4d8f8e0314ea611ecb5cc23",
+    "/tmp/grv-task34-parent-lib.txt": "a62f912c907219fd14099afbc14eada665b8f0a22f3a1d22e6701084a4ac5bc1",
+    "/tmp/grv-task34-parent-fmt-development.txt": "db7d73669786636652cc7d1f6450f437ff03909a1092aec0b6b5cf7ed29c7d39",
+    "/tmp/grv-task34-fmt.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/grv-task34-parent-final-tests.txt": "844a116328b36706dca1f45129e5d1d9dfdf61fd0a3c1d8f0cd6e2243b73170c",
+    "/tmp/grv-task34-baseline-lib.txt": "73178a99bfafa29c389e61a9518b3dbf738f014dfe584b8ad8184afba6142ab8",
+    "/tmp/grv-task34-gate-build.txt": "777a17fe15d8bbf868a2552d975a00df92e8fc02faf4b511c28492628a3abc6b",
+    "/tmp/grv-task34-ctest-after.txt": "e4c7f466bd6f6a15cc73ca30d247098d084a82438445fef3c04f01ca01b66394",
+    "/tmp/grv-task34-untracked.txt": "9943d940a8a9649464d7d91b16e0fc11cdf4706e16423ec0e7a8b3261b96692d",
+    "/tmp/grv-task34-lib-final.txt": "3bb672e0cef8115264996f6438fce62b04f2992b40abeee163495f724c142d63",
+    "/tmp/grv-task34-clippy-sdk.txt": "f9c04f9bab74921163fb1b8462e2a67d6c2f3a66376bc16294ff3dd3e15d39a2",
+    "/tmp/grv-task34-parent-sdk.txt": "3d4bfcd1b8dc3cbb981176b091e0f826d5d9828e05571a426783097ad27b8fe8",
+    "/tmp/grv-task34-lib-after.txt": "04a5cd5bf863ddbf47479757c9aeed26c7a70bdad6f43894f63bcac6b260149b",
+    "/tmp/grv-task34-parent-fmt-final.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/grv-task34-baseline-sdk.txt": "c1f67159ca6f9aa15a045dc68546419c6f8e4ffaaea5f23be17f99a6aa466517",
+    "/tmp/grv-task34-parent-ctest.txt": "ce47e8616b610a74791a6639193cf78cad818562ad18abaa00ae6b048ed2e76b",
+    "/tmp/grv-task34-parent-gate-build.txt": "552d2460555e9ca87462d41cb014fe4c8bb01fdbeb994fb2c36d47cf4fd09d6c"
+  }
+}

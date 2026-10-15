@@ -31,6 +31,7 @@ struct Engine {
     unique_ptr<QueryResult> result;
     vector<AcquiredTable> stages;
     bool staged = false;
+    bool gcs_metadata_bounded = false;
     bool snapshot_started = false, acquisition_sealed = false, multi_acquisition = false;
     std::shared_ptr<ExactGCSState> exact_gcs = std::make_shared<ExactGCSState>();
     std::shared_ptr<VerifiedS3State> verified_s3 = std::make_shared<VerifiedS3State>();
@@ -42,7 +43,7 @@ struct Engine {
     }
 };
 struct GRVInterruptControl { std::mutex mutex; Engine *engine = nullptr; };
-struct Owner { std::unique_ptr<Engine> engine; std::shared_ptr<GRVInterruptControl> interrupt; };
+struct Owner { std::unique_ptr<Engine> engine; std::shared_ptr<GRVInterruptControl> interrupt; bool read_only=false; };
 struct InterruptOwner { std::shared_ptr<GRVInterruptControl> state; };
 void Error(char *buffer, size_t capacity, const std::exception &error) {
     if (capacity) { std::strncpy(buffer, error.what(), capacity-1); buffer[capacity-1] = '\0'; }
@@ -87,7 +88,7 @@ shared_ptr<GRVGuard> Policy(ClientContext &context) {
 extern "C" {
 // Each function catches C++ exceptions; none cross the FFI boundary.
 const char *grv_native_version() { return DuckDB::LibraryVersion(); }
-unsigned int grv_native_guard_revision() { return 4; }
+unsigned int grv_native_guard_revision() { return 6; }
 // A standalone C-API database uses the same compiled static Parquet extension as
 // Engine. This initializer changes no connection state, guard, or configuration
 // and deliberately offers no SQL execution seam.
@@ -117,7 +118,7 @@ void *grv_native_open_mode(const char *path, bool read_only, char *error, size_t
         engine->connection.context->RunFunctionInTransaction([&]() { policy = Policy(*engine->connection.context); });
         engine->connection.context->registered_state->Insert("grv.native.guard.v1", policy);
         auto interrupt = std::make_shared<GRVInterruptControl>(); interrupt->engine = engine.get();
-        return new Owner{std::move(engine), std::move(interrupt)};
+        return new Owner{std::move(engine), std::move(interrupt),read_only};
     } catch (const std::exception &failure) { Error(error, capacity, failure); return nullptr; }
 }
 void *grv_native_open(const char *path,char *error,size_t capacity) { return grv_native_open_mode(path,false,error,capacity); }

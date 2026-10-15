@@ -80,6 +80,18 @@ fn completion(session: &BuildSession) -> BuildCompletion {
     }
 }
 #[test]
+fn incompatible_materialization_has_no_local_or_remote_fallback() {
+    let mut value = serde_json::to_value(session()).unwrap();
+    for supported in ["local", "s3-view", "gcs-view"] {
+        value["inputs"][0]["materialization"] = json!(supported);
+        assert!(serde_json::from_value::<BuildSession>(value.clone()).is_ok());
+    }
+    for incompatible in ["gcs-hmac-view", "remote", "gs", "GcsView"] {
+        value["inputs"][0]["materialization"] = json!(incompatible);
+        assert!(serde_json::from_value::<BuildSession>(value.clone()).is_err());
+    }
+}
+#[test]
 fn completion_exact_schema_identity_selected_coverage_stopped_writers_and_digest() {
     let session = session();
     let c = completion(&session);

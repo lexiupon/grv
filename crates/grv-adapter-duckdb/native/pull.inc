@@ -39,6 +39,131 @@ string QualifyCatalogCollision(Engine &engine,const string &query) {
     return result;
 }
 }
+namespace {
+// GCS helper metadata does not retain a complete SELECT result outside engine
+// storage. QueryResult's destructor alone does NOT close an active stream.
+struct GCSMetadataEndState : ClientContextState {
+    bool ended=false,cleanup_error=false,expected_interrupt=false;
+    void QueryBegin(ClientContext &) override {ended=false;cleanup_error=false;}
+    void QueryEnd(ClientContext &,optional_ptr<ErrorData> error) override {
+        ended=true;
+        if(error && error->HasError() && !(expected_interrupt && error->Type()==ExceptionType::INTERRUPT))cleanup_error=true;
+    }
+};
+struct GCSMetadataEnd {
+    ClientContext &context;shared_ptr<GCSMetadataEndState> state;ExactGCSState &authority;
+    explicit GCSMetadataEnd(ClientContext &context,ExactGCSState &authority) : context(context),state(make_shared_ptr<GCSMetadataEndState>()),authority(authority) {
+        if(context.registered_state->Get<GCSMetadataEndState>("grv.gcs.metadata.end")){authority.failed=true;throw BinderException("GCS metadata queries cannot overlap");}
+        context.registered_state->Insert("grv.gcs.metadata.end",state);
+    }
+    ~GCSMetadataEnd(){
+        if(!state->ended || state->cleanup_error)authority.failed=true;
+        context.registered_state->Remove("grv.gcs.metadata.end");
+    }
+};
+struct GCSMetadataResult {
+    unique_ptr<QueryResult> result;
+    shared_ptr<GCSMetadataEndState> end;
+    ExactGCSState &authority;
+    explicit GCSMetadataResult(unique_ptr<QueryResult> value,shared_ptr<GCSMetadataEndState> end,ExactGCSState &authority) : result(std::move(value)),end(std::move(end)),authority(authority) {}
+    ~GCSMetadataResult() {
+        if(!result || result->type!=QueryResultType::STREAM_RESULT)return;
+        auto &stream=result->Cast<StreamQueryResult>();
+        // Close() alone clears buffered_data/context but does not EndQuery.
+        // On a refused partial stream, interrupt and fetch once to execute
+        // pinned FetchNextInternal's cleanup while scanner admission is live.
+        // Never consume the remainder or retry the statement. Explicit caller
+        // transactions may be invalidated and must still use ROLLBACK.
+        try {
+            if(stream.IsOpen()){
+                end->expected_interrupt=true;stream.context->Interrupt();stream.FetchRaw();
+                // A later QueryEnd listener can fail after our witness ran.
+                // Fetch may capture that exception in the result rather than
+                // throw it: only the requested interrupt is expected here.
+                if(stream.HasError() && stream.GetErrorObject().Type()!=ExceptionType::INTERRUPT)end->cleanup_error=true;
+            }
+        }catch(...) {end->cleanup_error=true;}
+        try {stream.Close();}catch(...) {end->cleanup_error=true;}
+        // Positive QueryEnd evidence, not Close/destructor alone. Any
+        // unexpected cleanup path revokes later cloud authority fail closed.
+        if(!end->ended)authority.failed=true;
+    }
+};
+struct GCSMetadataBufferLimit {
+    ClientConfig &config;idx_t previous;
+    explicit GCSMetadataBufferLimit(ClientContext &context) : config(context.config),previous(config.streaming_buffer_size) {config.streaming_buffer_size=65536;}
+    ~GCSMetadataBufferLimit(){config.streaming_buffer_size=previous;}
+};
+size_t GCSMetadata(Engine &engine,unique_ptr<SQLStatement> statement,unsigned char *output,size_t allowance) {
+    if(allowance<16)throw BinderException("metadata result exceeds bounded record allowance");
+    GCSMetadataBufferLimit buffer(*engine.connection.context);
+    GCSMetadataEnd ended(*engine.connection.context,*engine.exact_gcs);
+    GCSMetadataResult owned(engine.connection.SendQuery(std::move(statement)),ended.state,*engine.exact_gcs);
+    auto &result=*owned.result;
+    if(result.HasError())throw IOException("GCS metadata query failed");
+    auto columns=result.ColumnCount();
+    if(columns>16)throw BinderException("metadata result exceeds bounded record allowance");
+    size_t offset=16;uint64_t rows=0;
+    while(auto chunk=result.FetchRaw()) {
+        if(result.HasError())throw IOException("GCS metadata query failed");
+        // The stock collector's streaming threshold is soft (one chunk can
+        // exceed it). Refuse retained oversize chunks before adapter decoding;
+        // this does not prevent engine expression/source allocation upstream.
+        if(chunk->GetAllocationSize()>4*1024*1024)throw BinderException("GCS metadata chunk exceeds retained result budget");
+        // FetchRaw normalizes dictionary/constant string access without making
+        // a Value/string copy before inspecting the source field length.
+        vector<UnifiedVectorFormat> strings(columns);
+        for(idx_t column=0;column<columns;++column) {
+            if(chunk->data[column].GetType().id()==LogicalTypeId::VARCHAR)chunk->data[column].ToUnifiedFormat(chunk->size(),strings[column]);
+        }
+        for(idx_t row=0;row<chunk->size();++row) {
+            if(rows>=(allowance-16)/9/std::max<idx_t>(columns,1))throw BinderException("metadata result exceeds bounded record allowance");
+            for(idx_t column=0;column<columns;++column) {
+                bool null;const char *data=nullptr;idx_t length=0;string text;
+                auto id=chunk->data[column].GetType().id();
+                if(id==LogicalTypeId::VARCHAR) {
+                    auto &format=strings[column];auto index=format.sel->get_index(row);
+                    null=!format.validity.RowIsValid(index);
+                    if(!null){auto &value=format.GetData<string_t>()[index];length=value.GetSize();data=value.GetDataUnsafe();}
+                } else {
+                    // Closed metadata uses bounded scalar renderings only;
+                    // nested values/BLOB can amplify during ToString itself.
+                    switch(id) {
+                        case LogicalTypeId::BOOLEAN:case LogicalTypeId::TINYINT:case LogicalTypeId::SMALLINT:
+                        case LogicalTypeId::INTEGER:case LogicalTypeId::BIGINT:case LogicalTypeId::UTINYINT:
+                        case LogicalTypeId::USMALLINT:case LogicalTypeId::UINTEGER:case LogicalTypeId::UBIGINT:
+                        case LogicalTypeId::HUGEINT:case LogicalTypeId::UHUGEINT:case LogicalTypeId::FLOAT:
+                        case LogicalTypeId::DOUBLE:case LogicalTypeId::DECIMAL:case LogicalTypeId::DATE:
+                        case LogicalTypeId::TIME:case LogicalTypeId::TIMESTAMP:case LogicalTypeId::TIMESTAMP_TZ:
+                        case LogicalTypeId::TIMESTAMP_SEC:case LogicalTypeId::TIMESTAMP_MS:case LogicalTypeId::TIMESTAMP_NS:
+                        case LogicalTypeId::SQLNULL:break;
+                        default:throw BinderException("unsupported GCS metadata scalar");
+                    }
+                    auto value=chunk->GetValue(column,row);null=value.IsNull();
+                    if(!null){text=value.ToString();data=text.data();length=text.size();}
+                }
+                if(allowance-offset<9 || length>allowance-offset-9)throw BinderException("metadata field exceeds bounded record allowance");
+                output[offset++]=null?0:1;Put(output,offset,length,8);
+                if(length){std::memcpy(output+offset,data,length);offset+=length;}
+            }
+            ++rows;
+        }
+    }
+    if(result.HasError())throw IOException("GCS metadata query failed");
+    if(!ended.state->ended || ended.state->cleanup_error)throw IOException("GCS metadata result cleanup unproved");
+    size_t header=0;Put(output,header,rows,8);Put(output,header,columns,8);
+    return offset;
+}
+}
+// Activate bounded GCS metadata before discovery/authentication without moving
+// its connection, changing transaction state or authorizing cloud scanners.
+extern "C" int grv_native_gcs_metadata_mode(void *owner,char *error,size_t capacity) {
+    try {
+        auto &engine=*static_cast<Owner *>(owner)->engine;
+        if(engine.snapshot_started||engine.result||engine.verified_s3->configured)throw BinderException("invalid GCS metadata lifecycle");
+        engine.gcs_metadata_bounded=true;return 0;
+    }catch(const std::exception &failure){Error(error,capacity,failure);return -1;}
+}
 extern "C" int grv_native_metadata_query(void *owner,const char *query,unsigned char *output,size_t allowance,size_t *written,char *error,size_t capacity) {
     try {
         auto &engine=*static_cast<Owner *>(owner)->engine;
@@ -46,6 +171,7 @@ extern "C" int grv_native_metadata_query(void *owner,const char *query,unsigned 
         MetadataScan inspection(engine,DatabaseManager::GetDefaultDatabase(*engine.connection.context));
         auto statements=engine.connection.ExtractStatements(QualifyCatalogCollision(engine,query));
         if (statements.size()!=1) {throw BinderException("internal metadata requires one statement");}
+        if(engine.gcs_metadata_bounded||engine.exact_gcs->configured) {*written=GCSMetadata(engine,std::move(statements[0]),output,allowance);return 0;}
         auto result=engine.connection.Query(std::move(statements[0]));
         if (result->HasError()) {throw std::runtime_error(result->GetError());}
         if (result->ColumnCount()>16 || allowance<16 ||
@@ -279,10 +405,14 @@ extern "C" int grv_native_stage_build_query(void *owner,const char *query,const 
 // Closing invocation connections is an explicit lifetime barrier. The same
 // independent interrupt control and Rust workspace ownership survive it.
 extern "C" int grv_native_close_invocation(void *owner,const char *path,char *error,size_t capacity) {
-    auto *value=static_cast<Owner *>(owner);
-    auto state=value->interrupt;std::lock_guard<std::mutex> guard(state->mutex);
-    state->engine=nullptr;value->engine.reset();
-    auto reopened=static_cast<Owner *>(grv_native_open_mode(path,false,error,capacity));
-    if(!reopened){return -1;}
-    value->engine=std::move(reopened->engine);state->engine=value->engine.get();delete reopened;return 0;
+    try {
+        auto *value=static_cast<Owner *>(owner);
+        if(!value)throw IOException("native owner unavailable");
+        auto state=value->interrupt;std::lock_guard<std::mutex> guard(state->mutex);
+        state->engine=nullptr;value->engine.reset();
+        auto reopened=static_cast<Owner *>(grv_native_open_mode(path,value->read_only,error,capacity));
+        if(!reopened){return -1;}
+        value->engine=std::move(reopened->engine);state->engine=value->engine.get();delete reopened;return 0;
+    }catch(const std::exception &failure){Error(error,capacity,failure);return -1;}
+    catch(...){if(capacity){std::strncpy(error,"native owner close/reopen failed",capacity-1);error[capacity-1]=0;}return -1;}
 }

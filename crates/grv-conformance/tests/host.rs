@@ -175,6 +175,111 @@ fn manifest_and_handshake_identity_must_agree() {
         ErrorCode::AdapterFailure
     );
 }
+// Include directories as well as file bytes: a rejected bootstrap must not
+// create authentication markers or other package-local state.
+fn package_snapshot(directory: &Path) -> Vec<(PathBuf, Option<Vec<u8>>)> {
+    fn visit(base: &Path, directory: &Path, entries: &mut Vec<(PathBuf, Option<Vec<u8>>)>) {
+        for entry in std::fs::read_dir(directory).unwrap() {
+            let path = entry.unwrap().path();
+            let relative = path.strip_prefix(base).unwrap().to_path_buf();
+            if path.is_dir() {
+                entries.push((relative, None));
+                visit(base, &path, entries);
+            } else {
+                entries.push((relative, Some(std::fs::read(path).unwrap())));
+            }
+        }
+    }
+    let mut entries = Vec::new();
+    visit(directory, directory, &mut entries);
+    entries.sort_by(|a, b| a.0.cmp(&b.0));
+    entries
+}
+fn assert_fixture_manifest_rejected(interface_versions: Vec<Req>, binding_schema_version: Req) {
+    let temp = protected();
+    let wrapper = temp.path().join("fixture-wrapper");
+    // The real fixture's existing hook records every authentication call.
+    // No credentials or new fixture handshake options are introduced here.
+    std::fs::write(
+        &wrapper,
+        format!(
+            "#!/bin/sh\nexec {:?} --after-publish-dir \"$PWD/hooks\"\n",
+            fixture()
+        ),
+    )
+    .unwrap();
+    std::fs::set_permissions(&wrapper, std::fs::Permissions::from_mode(0o700)).unwrap();
+    package(temp.path(), "fixture", &wrapper, "0.1.0");
+    let directory = temp.path().join("fixture");
+    std::fs::create_dir(directory.join("hooks")).unwrap();
+    let manifest_path = directory.join("adapter.toml");
+    let manifest = std::fs::read_to_string(&manifest_path).unwrap();
+    let interfaces = interface_versions
+        .iter()
+        .map(|version| version.get().to_string())
+        .collect::<Vec<_>>()
+        .join(", ");
+    std::fs::write(
+        &manifest_path,
+        manifest
+            .replace(
+                "interface_versions = [1]",
+                &format!("interface_versions = [{interfaces}]"),
+            )
+            .replace(
+                "binding_schema_version = 1",
+                &format!("binding_schema_version = {}", binding_schema_version.get()),
+            ),
+    )
+    .unwrap();
+    let i = discovery::discover(&[root(temp.path())]).unwrap().remove(0);
+    assert_eq!(i.manifest.interface_versions, interface_versions);
+    assert_eq!(i.manifest.binding_schema_version, binding_schema_version);
+    let before = package_snapshot(temp.path());
+    // Spawn must fail before yielding a session that could Connect/authenticate.
+    assert_eq!(
+        Session::spawn(&i, short()).err().unwrap().code,
+        ErrorCode::AdapterFailure
+    );
+    assert!(!directory.join("hooks/authentications").exists());
+    assert_eq!(package_snapshot(temp.path()), before);
+}
+#[test]
+fn manifest_and_handshake_interface_arrays_must_agree() {
+    // A common supported interface does not excuse an extra manifest offer.
+    assert_fixture_manifest_rejected(
+        vec![Req::new(1).unwrap(), Req::new(2).unwrap()],
+        Req::new(1).unwrap(),
+    );
+}
+#[test]
+fn manifest_and_handshake_binding_schema_versions_must_agree() {
+    assert_fixture_manifest_rejected(vec![Req::new(1).unwrap()], Req::new(2).unwrap());
+}
+#[test]
+fn manifest_without_common_interface_fails_identity_check_first() {
+    // The fixture still advertises [1]. Thus a manifest offering only [2]
+    // fails identity validation, not the later UnsupportedCapability branch.
+    assert_fixture_manifest_rejected(vec![Req::new(2).unwrap()], Req::new(1).unwrap());
+}
+#[test]
+fn matching_unsupported_interface_offers_refuse_before_ready_or_dispatch() {
+    let (temp, _) = adversary("unsupported-interface");
+    let manifest = temp.path().join("adversary/adapter.toml");
+    let text = std::fs::read_to_string(&manifest).unwrap();
+    std::fs::write(
+        &manifest,
+        text.replace("interface_versions = [1]", "interface_versions = [2]"),
+    )
+    .unwrap();
+    let installed = discovery::discover(&[root(temp.path())]).unwrap().remove(0);
+    let before = package_snapshot(temp.path());
+    assert_eq!(
+        Session::spawn(&installed, short()).err().unwrap().code,
+        ErrorCode::UnsupportedCapability
+    );
+    assert_eq!(package_snapshot(temp.path()), before);
+}
 #[test]
 fn untrusted_manifest_executable_and_ancestors_are_rejected() {
     let temp = protected();

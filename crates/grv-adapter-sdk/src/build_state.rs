@@ -14,6 +14,25 @@ pub(crate) struct BuildLifecycle {
     outcome: Option<BuildOutcome>,
 }
 impl BuildLifecycle {
+    pub(crate) fn admit_gcs_transition(&self, frame: &Frame) -> Result<()> {
+        let mut reserve = grv_adapter_wire::metadata::Admission::default();
+        reserve
+            .include(&(
+                &self.discovery_request,
+                &self.discovery,
+                &self.session,
+                &self.candidate,
+                &self.accepted,
+                &self.outcome,
+            ))
+            .and_then(|()| reserve.include(frame))
+            .map_err(|_| {
+                error(
+                    ErrorCode::AdapterFailure,
+                    "GCS retained build lifecycle metadata exceeds allowance",
+                )
+            })
+    }
     fn session(&self, id: &Uuid) -> Result<&BuildSession> {
         self.session
             .as_ref()

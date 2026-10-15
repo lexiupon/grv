@@ -1,6 +1,7 @@
 //! Bounded, fragment-independent framing. A single Channel owns its writer.
 pub mod ipc;
 pub mod json;
+pub mod metadata;
 pub mod state;
 use grv_adapter_api::Frame;
 use serde_json::Value;
@@ -9,6 +10,28 @@ use std::io::{self, Read, Write};
 pub const FRAME_LIMIT: usize = 1024 * 1024;
 pub const IDENTIFIED_LIMIT: usize = 16 * 1024 * 1024;
 pub const DOCUMENT_LIMIT: usize = 64 * 1024 * 1024;
+
+/// Measure existing JSON wire-size limits without allocating a serialized Vec.
+/// This does not bound decoded objects, arbitrary Serialize implementations or
+/// engine memory, and introduces no new public wire limit.
+pub fn serialized_len(value: &impl serde::Serialize) -> Result<usize> {
+    struct Counter(usize);
+    impl Write for Counter {
+        fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+            self.0 = self
+                .0
+                .checked_add(bytes.len())
+                .ok_or_else(|| io::Error::other("serialized size overflow"))?;
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut count = Counter(0);
+    serde_json::to_writer(&mut count, value)?;
+    Ok(count.0)
+}
 
 #[derive(Debug)]
 pub enum ProtocolError {
@@ -53,6 +76,7 @@ pub struct Codec<T> {
     io: T,
     max_batch: usize,
     bootstrap: bool,
+    metadata_policy: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
 }
 impl<T: Read + Write> Codec<T> {
     pub fn new(io: T, max_batch: usize) -> Self {
@@ -60,7 +84,17 @@ impl<T: Read + Write> Codec<T> {
             io,
             max_batch,
             bootstrap: true,
+            metadata_policy: None,
         }
+    }
+    /// Internal optional adapter policy, no wire negotiation field.
+    pub fn metadata_policy(&mut self, enabled: std::sync::Arc<std::sync::atomic::AtomicBool>) {
+        self.metadata_policy = Some(enabled);
+    }
+    fn bounded_metadata(&self) -> bool {
+        self.metadata_policy
+            .as_ref()
+            .is_some_and(|flag| flag.load(std::sync::atomic::Ordering::Acquire))
     }
     pub fn into_inner(self) -> T {
         self.io
@@ -99,6 +133,9 @@ impl<T: Read + Write> Codec<T> {
                 return fail("frame size exceeded");
             }
         }
+        if self.bounded_metadata() {
+            metadata::Admission::raw(&bytes[..bytes.len() - 1])?;
+        }
         let v = json::parse(&bytes[..bytes.len() - 1])?;
         let msg = v
             .get("msg")
@@ -135,11 +172,15 @@ impl<T: Read + Write> Codec<T> {
         Ok(Packet { frame, payload })
     }
     pub fn write(&mut self, frame: &Frame, payload: &[u8]) -> Result<()> {
-        let v = value(frame);
-        let msg = v["msg"].as_str().unwrap();
-        let bytes = serde_json::to_vec(frame)?;
-        if bytes.len() + 1
-            > if msg == "identified" && self.bootstrap {
+        if self.bounded_metadata() {
+            metadata::admit(frame)?;
+        }
+        let identified = matches!(frame, Frame::Identified { .. });
+        let size = serialized_len(frame)?
+            .checked_add(1)
+            .ok_or_else(|| ProtocolError::Invalid("frame size overflow".into()))?;
+        if size
+            > if identified && self.bootstrap {
                 IDENTIFIED_LIMIT
             } else {
                 FRAME_LIMIT
@@ -147,6 +188,8 @@ impl<T: Read + Write> Codec<T> {
         {
             return fail("frame size exceeded");
         }
+        let v = value(frame);
+        let msg = v["msg"].as_str().unwrap();
         if msg == "batch" {
             let size = number_string(&v, "size")? as usize;
             if size == 0
@@ -159,6 +202,8 @@ impl<T: Read + Write> Codec<T> {
         } else if !payload.is_empty() {
             return fail("unexpected binary payload");
         }
+        // Only an admitted frame can allocate its bounded serialization copy.
+        let bytes = serde_json::to_vec(frame)?;
         self.io.write_all(&bytes)?;
         self.io.write_all(b"\n")?;
         self.io.write_all(payload)?;

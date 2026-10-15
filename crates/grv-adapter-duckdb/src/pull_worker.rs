@@ -304,3 +304,87 @@ impl Drop for PullWorker {
         let _ = self.stop();
     }
 }
+
+#[cfg(test)]
+mod predispatch_tests {
+    use super::*;
+    use crate::lock::WorkspaceLock;
+    use crate::pull::{ScopeMode, TransformMode, WriteMode};
+    use grv_types::{Digest, Name, RequestedRevision, Uuid};
+    use serde_json::json;
+
+    fn identity() -> PullIdentity {
+        PullIdentity {
+            binding: WorkspaceBinding {
+                canonical_root: "file:///private/grv".into(),
+                workspace_id: Uuid::v4(),
+            },
+            attempt_id: Uuid::v4(),
+            request_sha256: Digest::new("a".repeat(64)).unwrap(),
+            adapter_identity: serde_json::from_value(json!({
+                "name": "duckdb",
+                "package_version": "0.1.0",
+                "interface_version": 1,
+                "binding_schema_version": 1
+            }))
+            .unwrap(),
+            dataset: Name::new("data").unwrap(),
+            target_schema: RelationName::new("app").unwrap(),
+            write_mode: WriteMode::Replace,
+            scope_mode: ScopeMode::Complete,
+            transform_mode: TransformMode::Identity,
+            requested_revision: RequestedRevision::Latest(grv_types::LatestRevision::Latest),
+        }
+    }
+
+    /// Cancellation set BEFORE any command is dispatched: the owner is joined
+    /// and the command never runs. The workspace is left exactly as found, so a
+    /// fresh source-free resolution reports the true absence (Uninitialized),
+    /// never a false NotCommitted, and no effect is retried.
+    #[test]
+    fn cancel_before_dispatch_joins_owner_and_refuses_without_effects() {
+        let directory = tempfile::tempdir().unwrap();
+        let database = directory.path().join("predispatch.duckdb");
+        let identity = identity();
+        let mut owner = PullWorker::open(&database, false).unwrap();
+        assert!(WorkspaceLock::acquire(&database).is_err());
+        // The stop signal is already cancelled before the first dispatch.
+        let stop = Arc::new(AtomicBool::new(true));
+        let error = owner
+            .lookup(
+                identity.attempt_id.clone(),
+                identity.binding.canonical_root.clone(),
+                stop.as_ref(),
+            )
+            .unwrap_err();
+        assert!(
+            matches!(
+                error,
+                PullError::OutcomeUnknown(ref message) if message.contains("stopped before dispatch")
+            ),
+            "{error:?}"
+        );
+        // The owner thread has joined: the command channel and owner handle are
+        // empty, and the workspace lock is released under the real WorkspaceLock.
+        assert!(owner.sender.is_none());
+        assert!(owner.owner.is_none());
+        assert!(WorkspaceLock::acquire(&database).is_ok());
+        // A stopped owner is not reused: a second dispatch is refused the same way.
+        let again = owner
+            .lookup(
+                identity.attempt_id.clone(),
+                identity.binding.canonical_root.clone(),
+                stop.as_ref(),
+            )
+            .unwrap_err();
+        assert!(matches!(again, PullError::OutcomeUnknown(_)), "{again:?}");
+        drop(owner);
+        // The lookup closure never ran: a fresh source-free resolution reports the
+        // true absence, not a false NotCommitted, and no effect is re-attempted.
+        let mut store = PullStore::open(&database).unwrap();
+        assert_eq!(
+            store.resolve(&identity).unwrap(),
+            PullResolution::Uninitialized
+        );
+    }
+}

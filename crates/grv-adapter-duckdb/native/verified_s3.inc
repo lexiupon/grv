@@ -2,6 +2,7 @@
 // This filesystem never delegates an S3 pathname to HTTPFS's glob/fallback path.
 #include "duckdb/common/http_util.hpp"
 #include "duckdb/main/secret/secret_manager.hpp"
+#include "httpfs_client_pinned.hpp"
 #include "mbedtls_wrapper.hpp"
 #include "s3_limits.hpp"
 #include <ctime>
@@ -75,7 +76,13 @@ struct VerifiedS3State {
         string host="s3."+region+".amazonaws.com"+(region.compare(0,3,"cn-")==0?".cn":"");
         string base="https://"+host,path="/"+file.bucket+"/"+S3Encode(file.key,true),query=file.version.empty()?"":"versionId="+S3Encode(file.version);
         string url=base+path+(query.empty()?"":"?"+query);
-        auto params=util.InitializeParameters(*context,url);
+        // Credentials are fixed at configure time and SigV4 is generated above.
+        // Do not ask signed HTTPFS to rediscover secrets during pre-query HEAD
+        // or parallel scanner reads: that requires a catalog transaction/context
+        // lock. Keep the pinned exact parameter subtype its clients require,
+        // initialized without an opener/settings/secret lookup.
+        auto params=make_uniq<HTTPFSParams>(util);
+        params->pre_merged_headers=true;
         params->follow_location=false;params->override_verify_ssl=true;params->verify_ssl=true;params->timeout=10;params->timeout_usec=0;params->retries=0;params->keep_alive=false;params->extra_headers.clear();params->http_proxy.clear();params->http_proxy_username.clear();params->http_proxy_password.clear();params->logger.reset();
         auto client=util.InitializeClient(*params,base);stage=head?21:31;auto headers=Headers(head?"HEAD":"GET",file,path,query);
         unique_ptr<HTTPResponse> response;

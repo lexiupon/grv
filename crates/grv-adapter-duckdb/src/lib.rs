@@ -17,6 +17,7 @@ pub mod driver;
 #[cfg(feature = "native")]
 pub mod extraction;
 pub mod gcs_config;
+mod gcs_metadata_budget;
 pub mod gcs_token;
 #[cfg(feature = "native")]
 pub mod inspection;

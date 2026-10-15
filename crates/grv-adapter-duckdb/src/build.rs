@@ -91,6 +91,7 @@ pub struct BuildStore {
     reservation: Option<Reservation>,
     scratch: usize,
     s3_resources_admitted: bool,
+    gcs_resources_admitted: bool,
     stopping: Arc<AtomicBool>,
     broken: bool,
     export: Option<(Vec<crate::native::AcquiredSchema>, Vec<OutputBinding>)>,
@@ -111,7 +112,7 @@ impl BuildStore {
     }
 
     pub fn configure_gcs_reader(&mut self, reader: &crate::gcs_config::GcsReader) -> Result<()> {
-        if !self.s3_resources_admitted {
+        if !self.gcs_resources_admitted {
             return Err(invalid(
                 "negotiated resources cannot admit bounded GCS reader state",
             ));
@@ -165,6 +166,8 @@ impl BuildStore {
             reservation: None,
             s3_resources_admitted: resources.max_source_unit_bytes.get() >= 2 * 1024 * 1024
                 && resources.max_scratch_bytes.get() >= 16 * 1024 * 1024,
+            gcs_resources_admitted: resources.max_source_unit_bytes.get() >= 2 * 1024 * 1024
+                && resources.max_scratch_bytes.get() >= crate::native::GCS_MIN_SCRATCH_BYTES,
             scratch: resources
                 .max_source_unit_bytes
                 .get()
@@ -282,10 +285,14 @@ impl BuildStore {
             ));
         }
         let rows = self
-            .query(&format!(
-                "SELECT record,session_id FROM _grv.build_sessions WHERE attempt_id={} LIMIT 2",
-                ql(identity.attempt_id.as_str())
-            ))
+            .engine
+            .durable_metadata_query(
+                &format!(
+                    "SELECT record,session_id FROM _grv.build_sessions WHERE attempt_id={} LIMIT 2",
+                    ql(identity.attempt_id.as_str())
+                ),
+                &["record", "session_id"],
+            )
             .map_err(|e| {
                 BuildError::Unknown(format!("build session history unavailable: {e:?}"))
             })?;
@@ -293,6 +300,14 @@ impl BuildStore {
             return Err(BuildError::Unknown(
                 "original build session is absent or ambiguous".into(),
             ));
+        }
+        if self.root.starts_with("gs://") {
+            grv_adapter_wire::metadata::Admission::raw(Self::text(&rows[0], 0)?.as_bytes())
+                .map_err(|_| {
+                    BuildError::Unknown(
+                        "stored GCS build metadata exceeds decoded allowance".into(),
+                    )
+                })?;
         }
         let stored: Stored = serde_json::from_str(Self::text(&rows[0], 0)?)
             .map_err(|e| BuildError::Unknown(format!("invalid build record: {e}")))?;
@@ -317,6 +332,9 @@ impl BuildStore {
     }
     fn write_stored(&mut self, stored: &Stored, insert: bool) -> Result<()> {
         stored.record.validate().map_err(io::Error::other)?;
+        if self.root.starts_with("gs://") {
+            crate::gcs_metadata_budget::admit(stored)?;
+        }
         let data = canonical(stored)?;
         if data.len() > crate::native::METADATA_BYTES - 4096 {
             return Err(invalid(
@@ -389,6 +407,11 @@ impl BuildStore {
     }
     pub fn discover(&mut self, request: DiscoverBuildRequest) -> Result<BuildDiscovery> {
         self.check()?;
+        if self.root.starts_with("gs://") {
+            let mut budget = crate::gcs_metadata_budget::Admission::new();
+            budget.include(&request)?;
+            budget.include(&request)?;
+        }
         request.validate().map_err(io::Error::other)?;
         self.fixed(&request.identity)?;
         if request.options != serde_json::json!({}) {
@@ -401,6 +424,17 @@ impl BuildStore {
                 "discovery already recorded; never select fresh inputs under an existing attempt"
                     .into(),
             ));
+        }
+        if request.execution == BuildExecution::External && self.root.starts_with("gs://") {
+            if !self.gcs_resources_admitted {
+                return Err(invalid(
+                    "GCS discovery requires at least 32 MiB scratch and 2 MiB source resources",
+                ));
+            }
+            // Admit the original lease before BEGIN without moving the
+            // connection. Credentials arrive later on this same snapshot
+            // after parent verification/holds during preparation.
+            self.engine.begin_gcs_execution()?;
         }
         self.query("BEGIN TRANSACTION")?;
         let result = (|| {
@@ -433,21 +467,38 @@ impl BuildStore {
                 }
                 let scope = Self::text(&owner[0], 1)?;
                 let facts=self.query(&format!("SELECT table_name,grv_revision,generation_id,contract FROM _grv.pull_meta WHERE owner_scope={} AND target_table={} LIMIT 2",ql(scope),ql(table)))?;
-                let checkpoint = self.query(&format!(
-                    "SELECT receipt FROM _grv.pull_checkpoint WHERE owner_scope={} LIMIT 2",
-                    ql(scope)
-                ))?;
+                let checkpoint = self.engine.durable_metadata_query(
+                    &format!(
+                        "SELECT receipt FROM _grv.pull_checkpoint WHERE owner_scope={} LIMIT 2",
+                        ql(scope)
+                    ),
+                    &["receipt"],
+                )?;
                 if facts.len() != 1 || checkpoint.len() != 1 {
                     return Err(BuildError::Unknown(
                         "build input lost materialization facts".into(),
                     ));
                 }
+                if self.root.starts_with("gs://") {
+                    for raw in [Self::text(&checkpoint[0], 0)?, Self::text(&facts[0], 3)?] {
+                        grv_adapter_wire::metadata::Admission::raw(raw.as_bytes()).map_err(
+                            |_| {
+                                BuildError::Unknown(
+                                    "stored GCS input metadata exceeds decoded allowance".into(),
+                                )
+                            },
+                        )?;
+                    }
+                }
                 let receipt: PullReceipt = serde_json::from_str(Self::text(&checkpoint[0], 0)?)
                     .map_err(io::Error::other)?;
-                let committed = self.query(&format!(
-                    "SELECT receipt FROM _grv.pull_attempts WHERE attempt_id={} LIMIT 2",
-                    ql(receipt.identity.attempt_id.as_str())
-                ))?;
+                let committed = self.engine.durable_metadata_query(
+                    &format!(
+                        "SELECT receipt FROM _grv.pull_attempts WHERE attempt_id={} LIMIT 2",
+                        ql(receipt.identity.attempt_id.as_str())
+                    ),
+                    &["receipt"],
+                )?;
                 if committed != checkpoint
                     || !receipt.identity.is_identity_materialization()
                     || receipt.identity.binding.canonical_root != self.root
@@ -580,6 +631,16 @@ impl BuildStore {
         contract: &TableContract,
         files: &[VerifiedFile],
     ) -> Result<()> {
+        if self.root.starts_with("gs://") {
+            pull::admit_gcs_view_sql(
+                contract,
+                files.iter().map(|file| file.location.as_str()),
+                relation
+                    .len()
+                    .checked_add(64)
+                    .ok_or_else(|| invalid("GCS view wrapper size overflow"))?,
+            )?;
+        }
         self.authorize_private(relation)?;
         if files.is_empty() {
             let projection = contract
@@ -714,7 +775,12 @@ impl BuildStore {
         files: &[VerifiedFile],
         remote_views: bool,
     ) -> Result<()> {
-        if remote_views {
+        if remote_views
+            && (files.is_empty()
+                || files
+                    .iter()
+                    .all(|file| matches!(file.access, FileAccess::GcsView | FileAccess::S3View)))
+        {
             return self.import_remote_view(relation, contract, files);
         }
         self.query(&format!(
@@ -953,6 +1019,121 @@ impl BuildStore {
     }
     pub fn prepare(&mut self, preparation: PrepareBuildRequest) -> Result<BuildSession> {
         self.check()?;
+        if self.root.starts_with("gs://") {
+            let mut budget = crate::gcs_metadata_budget::Admission::new();
+            budget.include(&preparation)?;
+            // Five discovery-derived instances coexist: original preparation,
+            // existing reservation, local reservation clone, returned session,
+            // stored session. The preparation above already charges the first.
+            // Base contracts are outside discovery; charge both session copies.
+            budget.include_copies(&preparation.discovery, 4)?;
+            budget.include(&preparation.base_contracts)?;
+            budget.include(&preparation.base_contracts)?;
+            if let Some(reservation) = &self.reservation {
+                budget.include(&reservation.request)?;
+                budget.include(&reservation.request)?;
+            }
+            // Prefix contracts/verified files are copied during remote import;
+            // account repeated copies, not just the original discovery record.
+            for input in &preparation.discovery.inputs {
+                if let Some(group) = preparation
+                    .input_files
+                    .iter()
+                    .find(|group| group.alias == input.alias)
+                {
+                    for file in &group.files {
+                        budget.include(&input.contract)?;
+                        budget.include(file)?;
+                        budget.include(&file.partition)?;
+                        budget.include(&file.schema)?;
+                    }
+                }
+            }
+            for base in &preparation.base_contracts {
+                for file in preparation
+                    .base_files
+                    .iter()
+                    .filter(|file| file.table == base.table)
+                {
+                    budget.include(&base.contract)?;
+                    // Temporary matching-file Vec and SourceFile.remote clone
+                    // overlap the original preparation. SourceFile additionally
+                    // owns partition/schema-derived logical content.
+                    budget.include(file)?;
+                    budget.include(file)?;
+                    budget.include(&file.partition)?;
+                    budget.include(&file.schema)?;
+                }
+            }
+            // Self-input output seeding makes another matching-file Vec and
+            // remote SourceFile while the preparation/session remain retained.
+            if preparation.self_input {
+                for output in &preparation.discovery.outputs {
+                    for file in preparation
+                        .base_files
+                        .iter()
+                        .filter(|file| file.table == output.table)
+                    {
+                        budget.include(&output.contract)?;
+                        budget.include(file)?;
+                        budget.include(file)?;
+                        budget.include(&file.partition)?;
+                        budget.include(&file.schema)?;
+                    }
+                }
+            }
+        }
+        if self.root.starts_with("gs://")
+            && preparation.discovery.identity.root.starts_with("gs://")
+            && self.reservation.as_ref().is_some_and(|reservation| {
+                reservation.request.execution == BuildExecution::External
+            })
+        {
+            // Before reservation/session/file clones or any import effects.
+            for input in &preparation.discovery.inputs {
+                if let Some(group) = preparation
+                    .input_files
+                    .iter()
+                    .find(|group| group.alias == input.alias)
+                    && (group.files.is_empty()
+                        || group
+                            .files
+                            .iter()
+                            .any(|file| file.access == FileAccess::GcsView))
+                {
+                    pull::admit_gcs_view_sql(
+                        &input.contract,
+                        group.files.iter().map(|file| file.location.as_str()),
+                        512,
+                    )?;
+                }
+            }
+            for base in &preparation.base_contracts {
+                // Local mixed self-base imports keep the original local path.
+                if preparation
+                    .base_files
+                    .iter()
+                    .any(|file| file.table == base.table)
+                    && !preparation
+                        .base_files
+                        .iter()
+                        .any(|file| file.table == base.table && file.access == FileAccess::GcsView)
+                {
+                    continue;
+                }
+                pull::admit_gcs_view_sql(
+                    &base.contract,
+                    preparation
+                        .base_files
+                        .iter()
+                        .filter(|file| {
+                            file.table == base.table && file.access == FileAccess::GcsView
+                        })
+                        .map(|file| file.location.as_str()),
+                    512,
+                )?;
+            }
+        }
         preparation.validate().map_err(io::Error::other)?;
         let reservation = self
             .reservation
@@ -1156,6 +1337,9 @@ impl BuildStore {
     }
     pub fn execute(&mut self, request: ExecuteBuildRequest) -> Result<BuildExecutionResult> {
         self.check()?;
+        if self.root.starts_with("gs://") {
+            crate::gcs_metadata_budget::admit(&request)?;
+        }
         request.validate().map_err(io::Error::other)?;
         let mut stored = self.read_stored(&request.session.identity)?;
         if stored.record.session != request.session {
@@ -1508,6 +1692,11 @@ impl BuildStore {
             (resources.max_source_unit_bytes.get() as usize).min(crate::SOURCE_BUDGET_BYTES);
         let allowance = crate::ipc::native_allowance(&schema, &member.types, batch, scratch)
             .map_err(BuildError::Engine)?;
+        let (allowance, source) = if self.root.starts_with("gs://") {
+            crate::ipc::gcs_transfer_allowances(allowance, source).map_err(BuildError::Engine)?
+        } else {
+            (allowance, source)
+        };
         self.engine
             .fetch_acquired(member, allowance, source)?
             .map(|window| {
@@ -1680,10 +1869,14 @@ mod tests {
     }
     #[test]
     fn empty_external_cloud_self_inputs_are_private_views_and_cleanup_need_no_reader() {
-        for root in [
-            "s3://test-bucket/empty-build",
-            "gs://test-bucket/empty-build",
-        ] {
+        empty_external_cloud_case("s3://test-bucket/empty-build");
+    }
+    #[test]
+    fn empty_external_gcs_self_inputs_are_private_views_and_cleanup_need_no_reader() {
+        empty_external_cloud_case("gs://test-bucket/empty-build");
+    }
+    fn empty_external_cloud_case(root: &str) {
+        {
             let directory = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).unwrap();
             let path = directory.path().join("external.duckdb");
             let mut fixed = fixed(&path);
@@ -1731,6 +1924,412 @@ mod tests {
             assert_eq!(recorded.state, BuildState::Aborted);
             assert!(recorded.outcome.is_some());
         }
+    }
+    #[test]
+    fn incompatible_gcs_durable_build_state_refuses_without_repair_or_auth() {
+        for fault in ["state", "unknown-field", "package", "binding-schema"] {
+            let directory = tempfile::tempdir().unwrap();
+            let path = directory.path().join("durable.duckdb");
+            let mut request = fixed(&path);
+            request.identity.root = "gs://test-bucket/durable".into();
+            request.identity.adapter_identity.package_version = env!("CARGO_PKG_VERSION").into();
+            request.identity.connection_identity = format!(
+                "duckdb:{}",
+                crate::lock::canonical_engine_path(&path).unwrap().display()
+            );
+            // Empty managed preparation needs neither cloud nor GCS helper.
+            let mut store = BuildStore::open(
+                &path,
+                request.identity.root.clone(),
+                Some(request.identity.workspace_id.clone()),
+                &Resources::default(),
+            )
+            .unwrap();
+            let prep = preparation(&mut store, request.clone());
+            store.prepare(prep).unwrap();
+            let rows = store
+                .query(&format!(
+                    "SELECT record FROM _grv.build_sessions WHERE attempt_id={}",
+                    ql(request.identity.attempt_id.as_str())
+                ))
+                .unwrap();
+            let mut record: serde_json::Value =
+                serde_json::from_str(BuildStore::text(&rows[0], 0).unwrap()).unwrap();
+            match fault {
+                "state" => record["record"]["state"] = json!("legacy-ready"),
+                "unknown-field" => record["legacy_reader"] = json!({}),
+                "package" => {
+                    request.identity.adapter_identity.package_version =
+                        "unsupported-recorded-package".into()
+                }
+                "binding-schema" => {
+                    request.identity.adapter_identity.binding_schema_version = Req::new(2).unwrap()
+                }
+                _ => unreachable!(),
+            }
+            if matches!(fault, "state" | "unknown-field") {
+                store
+                    .query(&format!(
+                        "UPDATE _grv.build_sessions SET record={} WHERE attempt_id={}",
+                        ql(&serde_json::to_string(&record).unwrap()),
+                        ql(request.identity.attempt_id.as_str())
+                    ))
+                    .unwrap();
+            }
+            drop(store);
+            let before_database = std::fs::read(&path).unwrap();
+            let lock_path = path.with_extension("duckdb.grv-lock");
+            let before_lock = std::fs::read(&lock_path).unwrap();
+            let mut reopened = BuildStore::open(
+                &path,
+                request.identity.root.clone(),
+                Some(request.identity.workspace_id.clone()),
+                &Resources::default(),
+            )
+            .unwrap();
+            assert!(matches!(
+                reopened.open_session(&request.identity),
+                Err(BuildError::Unknown(_) | BuildError::RequestMismatch)
+            ));
+            drop(reopened);
+            assert_eq!(
+                std::fs::read(&path).unwrap(),
+                before_database,
+                "database mutated for {fault}"
+            );
+            assert_eq!(std::fs::read(&lock_path).unwrap(), before_lock);
+        }
+    }
+    #[test]
+    fn stored_gcs_build_node_amplification_refuses_before_typed_decode_preserving_history() {
+        let directory = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).unwrap();
+        let path = directory.path().join("stored-nodes.duckdb");
+        let mut request = fixed(&path);
+        request.identity.root = "gs://test-bucket/stored-nodes".into();
+        let mut store = BuildStore::open(
+            &path,
+            request.identity.root.clone(),
+            Some(request.identity.workspace_id.clone()),
+            &Resources::default(),
+        )
+        .unwrap();
+        let prep = preparation(&mut store, request.clone());
+        store.prepare(prep).unwrap();
+        let rows = store
+            .query("SELECT record FROM _grv.build_sessions LIMIT 1")
+            .unwrap();
+        let mut value: serde_json::Value =
+            serde_json::from_str(BuildStore::text(&rows[0], 0).unwrap()).unwrap();
+        value["record"]["session"]["options"] = json!({"synthetic_nodes":vec!["";40000]});
+        let raw = serde_json::to_string(&value).unwrap();
+        assert!(raw.len() < crate::native::METADATA_BYTES);
+        store
+            .query(&format!(
+                "UPDATE _grv.build_sessions SET record={}",
+                ql(&raw)
+            ))
+            .unwrap();
+        drop(store);
+        let before = std::fs::read(&path).unwrap();
+        let witness = std::fs::read(path.with_extension("duckdb.grv-lock")).unwrap();
+        let mut reopened = BuildStore::open(
+            &path,
+            request.identity.root.clone(),
+            Some(request.identity.workspace_id.clone()),
+            &Resources::default(),
+        )
+        .unwrap();
+        let error = reopened.open_session(&request.identity).unwrap_err();
+        assert!(
+            matches!(error,BuildError::Unknown(ref text) if text.contains("decoded allowance")),
+            "{error:?}"
+        );
+        drop(reopened);
+        assert_eq!(std::fs::read(&path).unwrap(), before);
+        assert_eq!(
+            std::fs::read(path.with_extension("duckdb.grv-lock")).unwrap(),
+            witness
+        );
+    }
+    #[test]
+    fn gcs_base_contract_session_copies_refuse_before_preparation_effects() {
+        let directory = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).unwrap();
+        let path = directory.path().join("session-copies.duckdb");
+        let mut request = fixed(&path);
+        request.identity.root = "gs://test-bucket/session-copies".into();
+        request.execution = BuildExecution::External;
+        request.self_input = true;
+        request.outputs[0].source = json!({"table":"rows"});
+        let mut store = BuildStore::open(
+            &path,
+            request.identity.root.clone(),
+            Some(request.identity.workspace_id.clone()),
+            &Resources::default(),
+        )
+        .unwrap();
+        let discovery = store.discover(request.clone()).unwrap();
+        let mut contract = request.outputs[0].contract.clone();
+        contract.extensions = json!({"synthetic":"x".repeat(3*1024*1024)});
+        let preparation = PrepareBuildRequest {
+            discovery,
+            base_revision: U64::new(1).unwrap(),
+            self_input: true,
+            base_contracts: vec![NamedContract {
+                table: name("rows"),
+                contract,
+            }],
+            base_files: vec![],
+            input_files: vec![],
+            holds_confirmed: true,
+        };
+        // Original document alone fits; session + stored-session copies do not.
+        crate::gcs_metadata_budget::admit(&preparation).unwrap();
+        let error = store.prepare(preparation).unwrap_err();
+        assert!(format!("{error:?}").contains("metadata exceeds logical reserve"));
+        assert!(!store.engine.base_table("_grv", "build_sessions").unwrap());
+        store.engine.metadata_query("ROLLBACK").unwrap();
+        assert_eq!(
+            store.query("SELECT 42").unwrap(),
+            vec![vec![Some("42".into())]]
+        );
+    }
+    #[test]
+    fn gcs_caller_metadata_admission_precedes_discovery_clones_and_effects() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("caller-budget.duckdb");
+        let mut request = fixed(&path);
+        request.identity.root = "gs://test-bucket/caller-budget".into();
+        let mut store = BuildStore::open(
+            &path,
+            request.identity.root.clone(),
+            Some(request.identity.workspace_id.clone()),
+            &Resources::default(),
+        )
+        .unwrap();
+        request.outputs[0].contract.extensions = json!({"synthetic":vec!["";40000]});
+        assert!(store.discover(request).is_err());
+        assert!(store.reservation.is_none());
+        assert!(!store.engine.base_table("_grv", "build_sessions").unwrap());
+        assert_eq!(
+            store.query("SELECT 42").unwrap(),
+            vec![vec![Some("42".into())]]
+        );
+    }
+    #[test]
+    fn gcs_generated_sql_admission_precedes_authorization_and_import_effects() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("gcs-sql-budget.duckdb");
+        let mut request = fixed(&path);
+        request.identity.root = "gs://test-bucket/budget".into();
+        let mut store = BuildStore::open(
+            &path,
+            request.identity.root.clone(),
+            Some(request.identity.workspace_id.clone()),
+            &Resources::default(),
+        )
+        .unwrap();
+        let mut contract = request.outputs[0].contract.clone();
+        contract.columns[0].name = "x".repeat(600000);
+        assert!(
+            store
+                .import_remote_view("main._grv_should_not_exist", &contract, &[])
+                .is_err()
+        );
+        assert!(
+            !store
+                .engine
+                .relation_exists("main", "_grv_should_not_exist")
+                .unwrap()
+        );
+        assert_eq!(
+            store.query("SELECT 42").unwrap(),
+            vec![vec![Some("42".into())]]
+        );
+    }
+    #[test]
+    fn gcs_scratch_admission_precedes_discovery_and_authentication() {
+        let directory = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).unwrap();
+        let path = directory.path().join("resources.duckdb");
+        let mut request = fixed(&path);
+        request.identity.root = "gs://test-bucket/resources".into();
+        request.execution = BuildExecution::External;
+        request.outputs[0].source = json!({"table":"rows"});
+        let resources = Resources {
+            max_scratch_bytes: U64::new(crate::native::GCS_MIN_SCRATCH_BYTES - 1).unwrap(),
+            ..Resources::default()
+        };
+        let mut store = BuildStore::open(
+            &path,
+            request.identity.root.clone(),
+            Some(request.identity.workspace_id.clone()),
+            &resources,
+        )
+        .unwrap();
+        assert!(store.discover(request).is_err());
+        assert!(store.reservation.is_none());
+        assert!(!store.engine.base_table("_grv", "build_sessions").unwrap());
+        let reader = crate::gcs_config::GcsReader {
+            scope: "gs://test-bucket/resources".into(),
+            provider: "gcloud".into(),
+            account: "synthetic".into(),
+            project: "named-project".into(),
+        };
+        let error = store.configure_gcs_reader(&reader).unwrap_err();
+        assert!(format!("{error:?}").contains("negotiated resources"));
+    }
+    #[test]
+    #[ignore = "requires signed extensions; synthetic token/local fixture, no cloud"]
+    fn in_process_external_gcs_imports_verified_local_self_base_transactionally() {
+        use arrow_array::{Int64Array, RecordBatch};
+        use arrow_schema::{DataType, Field, Schema};
+        use parquet::arrow::ArrowWriter;
+        let directory = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).unwrap();
+        let path = directory.path().join("mixed.duckdb");
+        let source = directory.path().join("base.parquet");
+        let schema = Arc::new(Schema::new(vec![Field::new("id", DataType::Int64, true)]));
+        let batch =
+            RecordBatch::try_new(schema.clone(), vec![Arc::new(Int64Array::from(vec![42]))])
+                .unwrap();
+        let mut writer =
+            ArrowWriter::try_new(std::fs::File::create(&source).unwrap(), schema, None).unwrap();
+        writer.write(&batch).unwrap();
+        writer.close().unwrap();
+        let bytes = std::fs::read(&source).unwrap();
+        let mut request = fixed(&path);
+        request.identity.root = "gs://test-bucket/mixed".into();
+        request.execution = BuildExecution::External;
+        request.self_input = true;
+        request.outputs[0].source = json!({"table":"rows"});
+        let mut store = BuildStore::open(
+            &path,
+            request.identity.root.clone(),
+            Some(request.identity.workspace_id.clone()),
+            &Resources::default(),
+        )
+        .unwrap();
+        let discovery = store.discover(request.clone()).unwrap();
+        store
+            .engine
+            .configure_gcs_reader(
+                &crate::gcs_config::GcsReader {
+                    scope: request.identity.root.clone(),
+                    provider: "gcloud".into(),
+                    account: "synthetic".into(),
+                    project: "named-project".into(),
+                },
+                crate::gcs_token::AccessToken::synthetic_for_test(std::time::Duration::from_secs(
+                    20,
+                )),
+            )
+            .unwrap();
+        let session = store
+            .prepare(PrepareBuildRequest {
+                discovery,
+                base_revision: U64::new(1).unwrap(),
+                self_input: true,
+                base_contracts: vec![NamedContract {
+                    table: name("rows"),
+                    contract: request.outputs[0].contract.clone(),
+                }],
+                base_files: vec![VerifiedFile {
+                    table: name("rows"),
+                    partition: json!({}),
+                    version: U64::new(1).unwrap(),
+                    schema: grv_adapter_api::FileSchema {
+                        columns: request.outputs[0].contract.columns.clone(),
+                    },
+                    access: FileAccess::Local,
+                    location: source.to_str().unwrap().into(),
+                    size: U64::new(bytes.len() as u64).unwrap(),
+                    sha256: grv_types::sha256(&bytes),
+                    validator: "verified-local".into(),
+                }],
+                input_files: vec![],
+                holds_confirmed: true,
+            })
+            .unwrap();
+        let relation = BuildStore::namespace(&session);
+        assert_eq!(
+            store
+                .query(&format!("SELECT id FROM {}.rows", qi(&relation)))
+                .unwrap(),
+            vec![vec![Some("42".into())]]
+        );
+        drop(store);
+        let mut reopened = BuildStore::open(
+            &path,
+            request.identity.root.clone(),
+            Some(request.identity.workspace_id.clone()),
+            &Resources::default(),
+        )
+        .unwrap();
+        assert_eq!(
+            reopened.open_session(&request.identity).unwrap().state,
+            BuildState::Prepared
+        );
+        reopened.abort(&request.identity).unwrap();
+        reopened
+            .record_outcome(
+                &request.identity,
+                BuildOutcome {
+                    kind: OutcomeKind::Aborted,
+                    revision: None,
+                    operation_id: None,
+                },
+            )
+            .unwrap();
+        reopened.cleanup(&request.identity).unwrap();
+    }
+    #[test]
+    #[ignore = "requires explicit protected GCS helper; source-free, no cloud/auth"]
+    fn isolated_gcs_discovery_keeps_preparation_atomic_without_credentials() {
+        let directory = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).unwrap();
+        let path = directory.path().join("snapshot.duckdb");
+        let mut request = fixed(&path);
+        request.identity.root = "gs://test-bucket/discovery".into();
+        request.execution = BuildExecution::External;
+        request.self_input = true;
+        request.outputs[0].source = json!({"table":"rows"});
+        let mut store = BuildStore::open(
+            &path,
+            request.identity.root.clone(),
+            Some(request.identity.workspace_id.clone()),
+            &Resources::default(),
+        )
+        .unwrap();
+        let discovery = store.discover(request.clone()).unwrap();
+        store.preparation_fault = Some(false);
+        let result = store.prepare(PrepareBuildRequest {
+            discovery,
+            base_revision: U64::new(1).unwrap(),
+            self_input: true,
+            base_contracts: vec![NamedContract {
+                table: name("rows"),
+                contract: request.outputs[0].contract.clone(),
+            }],
+            base_files: vec![],
+            input_files: vec![],
+            holds_confirmed: true,
+        });
+        assert!(result.is_err());
+        // If handoff destroyed BEGIN, these DDL writes would autocommit. The
+        // injected rollback must leave both metadata and private namespace absent.
+        assert!(!store.engine.base_table("_grv", "build_sessions").unwrap());
+        drop(store);
+        let mut reopened = BuildStore::open(
+            &path,
+            request.identity.root.clone(),
+            Some(request.identity.workspace_id.clone()),
+            &Resources::default(),
+        )
+        .unwrap();
+        assert!(
+            !reopened
+                .engine
+                .base_table("_grv", "build_sessions")
+                .unwrap()
+        );
+        assert!(reopened.open_session(&request.identity).is_err());
     }
     #[test]
     #[ignore = "requires explicitly authorized GRV_TEST_GCS_URI/size/hash and selected account/project with signed extensions"]

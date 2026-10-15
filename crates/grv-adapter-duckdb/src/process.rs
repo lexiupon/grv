@@ -35,6 +35,9 @@ fn unsupported<T>() -> grv_adapter_sdk::Result<T> {
 }
 
 impl Adapter for DuckDbAdapter {
+    fn bounded_gcs_metadata(&self) -> bool {
+        true
+    }
     fn configure_cancellation(&mut self, token: &StopToken) -> grv_adapter_sdk::Result<()> {
         #[cfg(feature = "native")]
         self.pulls.configure_cancellation(token);

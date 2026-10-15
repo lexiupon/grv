@@ -302,12 +302,82 @@ pub fn empty_projection(contract: &TableContract) -> io::Result<String> {
         .collect::<io::Result<Vec<_>>>()?;
     Ok(format!("SELECT {} WHERE false", columns.join(",")))
 }
+/// Conservative GCS command sizing on borrowed contracts/coordinates, before
+/// projection strings, UNION joins or verified-file clones. Includes derived
+/// HTTPS coordinates both in SQL literals and the scanner argument list.
+/// This bounds newly generated SQL, not caller documents or engine allocation.
+pub(crate) fn admit_gcs_view_sql<'a>(
+    contract: &TableContract,
+    locations: impl IntoIterator<Item = &'a str>,
+    wrapper_bytes: usize,
+) -> io::Result<()> {
+    const LIMIT: usize = 2 * 1024 * 1024;
+    fn add(total: &mut usize, bytes: usize) -> io::Result<()> {
+        *total = total
+            .checked_add(bytes)
+            .filter(|n| *n <= LIMIT)
+            .ok_or_else(|| invalid("GCS generated view command exceeds bounded allowance"))?;
+        Ok(())
+    }
+    // Quoted names may double every byte. Two appearances plus CAST/type/null
+    // punctuation fit this bound (all closed native type names are <64 bytes).
+    let mut projection = 32usize;
+    for column in &contract.columns {
+        add(
+            &mut projection,
+            column
+                .name
+                .len()
+                .checked_mul(4)
+                .and_then(|n| n.checked_add(128))
+                .ok_or_else(|| invalid("GCS projection size overflow"))?,
+        )?;
+    }
+    let mut total = wrapper_bytes;
+    add(&mut total, 0)?;
+    let mut count = 0usize;
+    for location in locations {
+        count += 1;
+        if count > 4096 || location.len() > 8192 {
+            return Err(invalid(
+                "GCS view coordinate count or size exceeds allowance",
+            ));
+        }
+        // gs -> HTTPS adds fewer than32 bytes. Literal punctuation can become
+        // percent-encoded (three bytes), SQL quoting at most doubles that, and
+        // the scanner receives another derived coordinate. Nine is conservative
+        // even for a borrowed spelling not yet checked for canonical validity.
+        let coordinate = location
+            .len()
+            .checked_add(32)
+            .and_then(|n| n.checked_mul(9))
+            .ok_or_else(|| invalid("GCS coordinate size overflow"))?;
+        add(&mut total, projection)?;
+        add(&mut total, coordinate)?;
+        add(&mut total, 128)?;
+    }
+    if count == 0 {
+        add(&mut total, projection)?;
+    }
+    Ok(())
+}
 pub fn s3_view_projection(table: &PullTable) -> io::Result<String> {
     remote_view_projection(table, MaterializationMode::S3View)
 }
 pub fn remote_view_projection(table: &PullTable, mode: MaterializationMode) -> io::Result<String> {
     if !mode.is_remote() {
         return Err(invalid("remote projection requires cloud view mode"));
+    }
+    if mode == MaterializationMode::GcsView {
+        admit_gcs_view_sql(
+            &table.source_contract,
+            table.files.iter().map(|file| {
+                file.remote
+                    .as_ref()
+                    .map_or("", |remote| remote.location.as_str())
+            }),
+            0,
+        )?;
     }
     if table.files.is_empty() {
         return empty_projection(&table.source_contract);
@@ -353,6 +423,29 @@ pub(crate) fn exact_value_assertion(
 impl PullPlan {
     /// Pure preparation. In particular neither receipts nor source bytes are read.
     pub fn validate(&self) -> io::Result<()> {
+        if self.materialization_mode == MaterializationMode::GcsView {
+            crate::gcs_metadata_budget::admit(self)?;
+            for table in &self.tables {
+                let wrapper = self
+                    .identity
+                    .target_schema
+                    .as_str()
+                    .len()
+                    .checked_add(table.target_table.as_str().len())
+                    .and_then(|n| n.checked_mul(2))
+                    .and_then(|n| n.checked_add(64))
+                    .ok_or_else(|| invalid("GCS view wrapper size overflow"))?;
+                admit_gcs_view_sql(
+                    &table.source_contract,
+                    table.files.iter().map(|file| {
+                        file.remote
+                            .as_ref()
+                            .map_or("", |remote| remote.location.as_str())
+                    }),
+                    wrapper,
+                )?;
+            }
+        }
         self.identity.validate()?;
         let remote_scheme = match self.materialization_mode {
             MaterializationMode::Local => None,
@@ -505,6 +598,11 @@ impl PullPlan {
 /// Explicit file projection for one verified file. A file's shorter historical
 /// schema is null padded; its path never supplies inferred Hive columns.
 pub fn file_projection(file: &SourceFile, contract: &TableContract) -> io::Result<String> {
+    if let Some(remote) = &file.remote
+        && remote.access == grv_adapter_api::FileAccess::GcsView
+    {
+        admit_gcs_view_sql(contract, std::iter::once(remote.location.as_str()), 0)?;
+    }
     let expressions = contract
         .columns
         .iter()
@@ -847,7 +945,15 @@ mod destination {
             &mut self,
             reader: &crate::gcs_config::GcsReader,
         ) -> Result<(), PullError> {
-            self.admit_s3_resources()?;
+            if self.offered_source_bytes < 2 * 1024 * 1024
+                || self.offered_scratch_bytes < crate::native::GCS_MIN_SCRATCH_BYTES
+            {
+                return Err(invalid(
+                    "GCS reader requires at least 2 MiB source and 32 MiB scratch resources",
+                )
+                .into());
+            }
+            self.engine.begin_gcs_execution()?;
             let token = crate::gcs_token::acquire(
                 &reader.account,
                 &reader.project,
@@ -1251,7 +1357,15 @@ mod destination {
                                 if plan.materialization_mode.is_remote()
                                     || self.target_is_view(namespace, name)?
                                 {
-                                    let prior = self.engine.metadata_query(&format!("SELECT contract FROM _grv.pull_meta WHERE owner_scope={} AND target_table={} LIMIT 2",quote_literal(scope.as_str()), quote_literal(name)))?;
+                                    let prior = self.engine.durable_metadata_query(&format!("SELECT contract FROM _grv.pull_meta WHERE owner_scope={} AND target_table={} LIMIT 2",quote_literal(scope.as_str()), quote_literal(name)),&["contract"])?;
+                                    Self::admit_stored_gcs(
+                                        &plan.identity.binding.canonical_root,
+                                        prior
+                                            .first()
+                                            .and_then(|row| row.first())
+                                            .and_then(Option::as_deref)
+                                            .unwrap_or(""),
+                                    )?;
                                     let contract: TableContract = serde_json::from_str(
                                         prior
                                             .first()
@@ -1419,6 +1533,13 @@ mod destination {
                     )
                     .unwrap(),
                 };
+                if plan.identity.binding.canonical_root.starts_with("gs://") {
+                    crate::gcs_metadata_budget::admit(&receipt).map_err(|_| {
+                        PullError::StateConflict(
+                            "GCS receipt exceeds logical metadata allowance".into(),
+                        )
+                    })?;
+                }
                 let serialized = canonical(&receipt)?;
                 // No accepted outcome may outgrow its source-free evidence
                 // reader. Leave framing and the other immutable row fields room.
@@ -1505,7 +1626,20 @@ mod destination {
             result
         }
         /// Read-only binding observation; no initial ownership metadata is written.
+        fn admit_stored_gcs(root: &str, raw: &str) -> Result<(), PullError> {
+            if root.starts_with("gs://") {
+                grv_adapter_wire::metadata::Admission::raw(raw.as_bytes()).map_err(|_| {
+                    PullError::OutcomeUnknown(
+                        "stored GCS metadata exceeds decoded allowance".into(),
+                    )
+                })?;
+            }
+            Ok(())
+        }
         pub fn binding(&mut self, root: &str) -> Result<Option<WorkspaceBinding>, PullError> {
+            if root.starts_with("gs://") {
+                self.engine.admit_gcs_metadata()?;
+            }
             if !self.engine.managed_initialized()? {
                 if self.initialized_observed {
                     return Err(PullError::OutcomeUnknown(
@@ -1546,13 +1680,17 @@ mod destination {
             }
             let rows = self
                 .engine
-                .metadata_query("SELECT identity FROM _grv.workspace_binding LIMIT 2")
+                .durable_metadata_query(
+                    "SELECT identity FROM _grv.workspace_binding LIMIT 2",
+                    &["identity"],
+                )
                 .map_err(metadata)?;
             if rows.len() != 1 || rows[0].len() != 1 {
                 return Err(PullError::OutcomeUnknown(
                     "incomplete workspace binding".into(),
                 ));
             }
+            Self::admit_stored_gcs(root, rows[0][0].as_deref().unwrap_or(""))?;
             let binding: WorkspaceBinding = serde_json::from_str(
                 rows[0][0]
                     .as_deref()
@@ -1584,10 +1722,13 @@ mod destination {
             }
             let rows = self
                 .engine
-                .metadata_query(&format!(
-                    "SELECT receipt FROM _grv.pull_attempts WHERE attempt_id={} LIMIT 2",
-                    quote_literal(attempt.as_str())
-                ))
+                .durable_metadata_query(
+                    &format!(
+                        "SELECT receipt FROM _grv.pull_attempts WHERE attempt_id={} LIMIT 2",
+                        quote_literal(attempt.as_str())
+                    ),
+                    &["receipt"],
+                )
                 .map_err(|error| {
                     PullError::OutcomeUnknown(format!("untrustworthy attempt history: {error}"))
                 })?;
@@ -1600,6 +1741,7 @@ mod destination {
                     "duplicate/malformed receipt".into(),
                 ));
             }
+            Self::admit_stored_gcs(root, rows[0][0].as_deref().unwrap_or(""))?;
             let receipt: PullReceipt = serde_json::from_str(
                 rows[0][0]
                     .as_deref()
@@ -1683,10 +1825,19 @@ mod destination {
             if identity.is_identity_materialization()
                 && self.engine.relation_exists("_grv", "pull_checkpoint")?
             {
-                let rows = self.engine.metadata_query(&format!(
-                    "SELECT receipt FROM _grv.pull_checkpoint WHERE owner_scope={} LIMIT 2",
-                    quote_literal(scope.as_str())
-                ))?;
+                let rows = self.engine.durable_metadata_query(
+                    &format!(
+                        "SELECT receipt FROM _grv.pull_checkpoint WHERE owner_scope={} LIMIT 2",
+                        quote_literal(scope.as_str())
+                    ),
+                    &["receipt"],
+                )?;
+                if rows.len() == 1 {
+                    Self::admit_stored_gcs(
+                        &identity.binding.canonical_root,
+                        rows[0][0].as_deref().unwrap_or(""),
+                    )?;
+                }
                 if rows.len() == 1
                     && let Some(receipt) = rows[0][0]
                         .as_deref()
@@ -1755,15 +1906,18 @@ mod destination {
                 ));
             }
             let scope=grv_types::sha256(&grv_types::canonical_json(&serde_json::json!({"binding":identity.binding,"dataset":identity.dataset,"adapter":"duckdb","target_schema":identity.target_schema})).map_err(io::Error::other)?);
-            let rows = self.engine.metadata_query(&format!(
-                "SELECT receipt FROM _grv.{metadata} WHERE owner_scope={}{} LIMIT 2",
-                quote_literal(scope.as_str()),
-                if metadata == "import_attempt_details" {
-                    " AND is_current=true"
-                } else {
-                    ""
-                }
-            ))?;
+            let rows = self.engine.durable_metadata_query(
+                &format!(
+                    "SELECT receipt FROM _grv.{metadata} WHERE owner_scope={}{} LIMIT 2",
+                    quote_literal(scope.as_str()),
+                    if metadata == "import_attempt_details" {
+                        " AND is_current=true"
+                    } else {
+                        ""
+                    }
+                ),
+                &["receipt"],
+            )?;
             if rows.is_empty() {
                 return Ok(vec![]);
             }
@@ -1772,6 +1926,10 @@ mod destination {
                     "ambiguous prior contract receipt".into(),
                 ));
             }
+            Self::admit_stored_gcs(
+                &identity.binding.canonical_root,
+                rows[0][0].as_deref().unwrap_or(""),
+            )?;
             let receipt: PullReceipt =
                 serde_json::from_str(rows[0][0].as_deref().ok_or_else(|| {
                     PullError::OutcomeUnknown("null prior contract receipt".into())
@@ -1877,13 +2035,20 @@ mod destination {
             }
             let rows = self
                 .engine
-                .metadata_query("SELECT identity FROM _grv.workspace_binding LIMIT 2")
+                .durable_metadata_query(
+                    "SELECT identity FROM _grv.workspace_binding LIMIT 2",
+                    &["identity"],
+                )
                 .map_err(metadata)?;
             if rows.len() != 1 || rows[0].len() != 1 {
                 return Err(PullError::OutcomeUnknown(
                     "incomplete workspace binding".into(),
                 ));
             }
+            Self::admit_stored_gcs(
+                &identity.binding.canonical_root,
+                rows[0][0].as_deref().unwrap_or(""),
+            )?;
             let binding: WorkspaceBinding = serde_json::from_str(
                 rows[0][0]
                     .as_deref()
@@ -1900,7 +2065,10 @@ mod destination {
                 "SELECT request_sha256,adapter_identity,receipt FROM _grv.pull_attempts WHERE attempt_id={} LIMIT 2",
                 quote_literal(identity.attempt_id.as_str())
             );
-            let rows = self.engine.metadata_query(&sql).map_err(metadata)?;
+            let rows = self
+                .engine
+                .durable_metadata_query(&sql, &["request_sha256", "adapter_identity", "receipt"])
+                .map_err(metadata)?;
             if rows.is_empty() {
                 // Ownership is required to trust absence and any future refresh.
                 // A committed receipt can still replay independently of mutable
@@ -1923,6 +2091,10 @@ mod destination {
             {
                 return Err(PullError::RequestMismatch);
             }
+            Self::admit_stored_gcs(
+                &identity.binding.canonical_root,
+                row[2].as_deref().unwrap_or(""),
+            )?;
             let receipt: PullReceipt = serde_json::from_str(
                 row[2]
                     .as_deref()
@@ -2033,6 +2205,7 @@ impl VerifiedSource {
 mod tests {
     use super::*;
     use serde_json::json;
+    use std::path::Path;
     fn identity() -> PullIdentity {
         PullIdentity{binding:WorkspaceBinding{canonical_root:"file:///private/grv".into(),workspace_id:Uuid::v4()},attempt_id:Uuid::v4(),request_sha256:Digest::new("a".repeat(64)).unwrap(),adapter_identity:serde_json::from_value(json!({"name":"duckdb","package_version":"0.1.0","interface_version":1,"binding_schema_version":1})).unwrap(),dataset:Name::new("data").unwrap(),target_schema:RelationName::new("app").unwrap(),write_mode:WriteMode::Replace,scope_mode:ScopeMode::Complete,transform_mode:TransformMode::Identity,requested_revision:RequestedRevision::Latest(grv_types::LatestRevision::Latest)}
     }
@@ -2099,6 +2272,148 @@ mod tests {
             "s3://test-bucket/grv-dev/data/version=1/part.parquet",
         ));
         plan
+    }
+    #[test]
+    fn gcs_generated_sql_refuses_amplification_before_projection_construction() {
+        let mut wide = contract();
+        wide.columns = (0..512)
+            .map(|i| grv_types::Column {
+                name: format!("c_{i}"),
+                logical_type: json!("string"),
+            })
+            .collect();
+        let location = "gs://test-bucket/data/part.parquet";
+        // A small caller contract and repeated coordinates can exceed the SQL
+        // budget; refuse while still borrowing, not after a Vec<projection> join.
+        assert!(admit_gcs_view_sql(&wide, std::iter::repeat_n(location, 64), 64).is_err());
+        assert!(admit_gcs_view_sql(&contract(), std::iter::repeat_n(location, 4097), 64).is_err());
+        assert!(
+            admit_gcs_view_sql(&contract(), std::iter::once(location), 2 * 1024 * 1024).is_err()
+        );
+        assert!(admit_gcs_view_sql(&wide, std::iter::empty(), 64).is_ok());
+        let mut oversized = contract();
+        oversized.columns[0].name = "x".repeat(600000);
+        assert!(admit_gcs_view_sql(&oversized, std::iter::empty(), 64).is_err());
+    }
+    #[test]
+    fn gcs_generated_sql_bound_preserves_evolution_and_special_coordinate_projection() {
+        let mut table = remote_plan().tables.remove(0);
+        table.source_contract.columns.push(grv_types::Column {
+            name: "extra".into(),
+            logical_type: json!("string"),
+        });
+        for i in 0..2 {
+            let mut file = table.files[0].clone();
+            let remote = file.remote.as_mut().unwrap();
+            remote.access = grv_adapter_api::FileAccess::GcsView;
+            remote.location = format!("gs://test-bucket/data/part%20{i}%25%C3%BC'quote.parquet");
+            if i == 0 {
+                table.files[0] = file;
+            } else {
+                table.files.push(file);
+            }
+        }
+        let projection = remote_view_projection(&table, MaterializationMode::GcsView).unwrap();
+        assert!(projection.contains("CAST(NULL AS VARCHAR) AS \"extra\""));
+        assert!(projection.contains(" UNION ALL "));
+        assert!(projection.contains("%C3%BC%27quote"));
+        assert!(projection.len() < 2 * 1024 * 1024);
+    }
+    #[test]
+    fn gcs_view_sql_and_receipt_contain_exact_urls_not_credentials() {
+        let mut plan = remote_plan();
+        plan.materialization_mode = MaterializationMode::GcsView;
+        plan.identity.binding.canonical_root = "gs://test-bucket/owner-material".into();
+        let remote = plan.tables[0].files[0].remote.as_mut().unwrap();
+        remote.access = grv_adapter_api::FileAccess::GcsView;
+        remote.location =
+            "gs://test-bucket/owner-material/space%20key/owner@example/data.parquet".into();
+        plan.validate().unwrap();
+        // The generated view SQL carries the exact canonical HTTPS coordinate
+        // with its escaping intact...
+        let projection =
+            remote_view_projection(&plan.tables[0], MaterializationMode::GcsView).unwrap();
+        assert!(projection.contains(
+            "https://storage.googleapis.com/test-bucket/owner-material/space%20key/owner%40example/data.parquet"
+        ));
+        // ...and no credential spelling of any kind: no bearer value, no
+        // authorization header spelling, no x-goog header, no canary.
+        for spelling in ["bearer", "authorization", "x-goog", "synthetic-canary"] {
+            assert!(
+                !projection.to_ascii_lowercase().contains(spelling),
+                "view SQL carried {spelling}"
+            );
+        }
+        // This is a plan/projection shape test, NOT a durable receipt test.
+        // The configured-owner test below supplies actual persisted evidence.
+        let serialized = serde_json::to_vec(&plan).unwrap();
+        let text = String::from_utf8(serialized).unwrap();
+        assert!(text.contains("gs://test-bucket/owner-material"));
+        for spelling in ["bearer", "authorization", "x-goog", "synthetic-canary"] {
+            assert!(
+                !text.to_ascii_lowercase().contains(spelling),
+                "plan carried {spelling}"
+            );
+        }
+    }
+    #[cfg(feature = "native")]
+    #[test]
+    #[ignore = "requires signed GRV_DUCKDB_EXTENSIONS_DIR; synthetic canary, no cloud or auth"]
+    fn configured_gcs_empty_view_receipt_and_closed_artifacts_are_canary_free() {
+        const CANARY: &str = "synthetic-configured-receipt-canary-not-a-credential";
+        let directory = tempfile::tempdir().unwrap();
+        let database = directory.path().join("configured-receipt.duckdb");
+        let reader = crate::gcs_config::GcsReader {
+            scope: "gs://test-bucket/owner-material".into(),
+            provider: "gcloud".into(),
+            account: "synthetic".into(),
+            project: "named-project".into(),
+        };
+        let mut fixed = plan(identity());
+        fixed.materialization_mode = MaterializationMode::GcsView;
+        fixed.identity.binding.canonical_root = reader.scope.clone();
+        let mut store = PullStore::open(&database).unwrap();
+        store
+            .engine
+            .configure_gcs_reader(
+                &reader,
+                crate::gcs_token::AccessToken::synthetic_with_canary_for_test(
+                    std::time::Duration::from_secs(90),
+                    CANARY,
+                ),
+            )
+            .unwrap();
+        let receipt = store.apply(&fixed).unwrap();
+        assert_eq!(receipt.materialization_mode, MaterializationMode::GcsView);
+        assert!(store.target_is_view("app", "rows").unwrap());
+        assert!(
+            !serde_json::to_vec(&receipt)
+                .unwrap()
+                .windows(CANARY.len())
+                .any(|bytes| bytes == CANARY.as_bytes())
+        );
+        drop(store); // actual close/flush before durable inspection and recovery
+        let mut reopened = PullStore::open_bound(&database).unwrap();
+        assert_eq!(
+            reopened.resolve(&fixed.identity).unwrap(),
+            PullResolution::Committed(receipt)
+        );
+        drop(reopened);
+        fn scan(path: &std::path::Path, canary: &[u8]) {
+            for entry in std::fs::read_dir(path).unwrap() {
+                let entry = entry.unwrap();
+                let kind = entry.file_type().unwrap();
+                assert!(!kind.is_symlink(), "unexpected owned-artifact symlink");
+                if kind.is_dir() {
+                    scan(&entry.path(), canary);
+                } else {
+                    assert!(kind.is_file(), "unexpected non-regular owned artifact");
+                    let bytes = std::fs::read(entry.path()).unwrap();
+                    assert!(!bytes.windows(canary.len()).any(|part| part == canary));
+                }
+            }
+        }
+        scan(directory.path(), CANARY.as_bytes());
     }
     #[test]
     fn gcs_exact_projection_and_wrong_access_are_pure() {
@@ -2236,6 +2551,994 @@ mod tests {
         refresh.tables[0].files.clear();
         assert!(reopened.apply(&refresh).is_ok());
         assert!(reopened.target_is_view("app", "rows").unwrap());
+    }
+    /// Test-only strictly parsed refresh fixture: a closed 0600 private JSON
+    /// record naming the exact live selectors, the uniquely owned canonical gs
+    /// root and every file's role, canonical URI, size, SHA-256, generation and
+    /// version. No ambient fallback and no placeholder metadata.
+    #[derive(serde::Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct GcsRefreshFixture {
+        account: String,
+        project: String,
+        root: String,
+        files: Vec<GcsRefreshFixtureFile>,
+    }
+    #[derive(serde::Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct GcsRefreshFixtureFile {
+        role: String,
+        uri: String,
+        size: u64,
+        sha256: String,
+        generation: u64,
+        version: u64,
+    }
+    impl GcsRefreshFixture {
+        fn file(&self, role: &str) -> io::Result<&GcsRefreshFixtureFile> {
+            self.files
+                .iter()
+                .find(|file| file.role == role)
+                .ok_or_else(|| {
+                    io::Error::new(
+                        io::ErrorKind::InvalidInput,
+                        "refresh fixture lacks a required role",
+                    )
+                })
+        }
+    }
+    fn load_gcs_refresh_fixture(path: &str) -> io::Result<GcsRefreshFixture> {
+        use std::io::Read;
+        use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
+        let path = std::path::Path::new(path);
+        let parent = std::fs::symlink_metadata(
+            path.parent()
+                .ok_or_else(|| io::Error::other("fixture parent missing"))?,
+        )?;
+        if !parent.is_dir()
+            || parent.uid() != unsafe { libc::geteuid() }
+            || parent.mode() & 0o077 != 0
+        {
+            return Err(io::Error::other("refresh fixture parent is not private"));
+        }
+        let mut file = std::fs::OpenOptions::new()
+            .read(true)
+            .custom_flags(libc::O_NOFOLLOW | libc::O_CLOEXEC | libc::O_NONBLOCK)
+            .open(path)?;
+        let before = file.metadata()?;
+        let uid = unsafe { libc::geteuid() };
+        if !before.is_file()
+            || before.nlink() != 1
+            || before.uid() != uid
+            || before.mode() & 0o077 != 0
+            || before.len() > 64 * 1024
+        {
+            return Err(io::Error::new(
+                io::ErrorKind::PermissionDenied,
+                "refresh fixture must be a closed 0600 regular private file",
+            ));
+        }
+        let mut bytes = Vec::with_capacity(before.len() as usize);
+        (&mut file).take(64 * 1024 + 1).read_to_end(&mut bytes)?;
+        let after = file.metadata()?;
+        let named = std::fs::symlink_metadata(path)?;
+        let identity = |m: &std::fs::Metadata| {
+            (
+                m.dev(),
+                m.ino(),
+                m.len(),
+                m.mtime(),
+                m.mtime_nsec(),
+                m.ctime(),
+                m.ctime_nsec(),
+                m.mode(),
+                m.uid(),
+                m.gid(),
+                m.nlink(),
+            )
+        };
+        if bytes.len() as u64 != before.len()
+            || identity(&before) != identity(&after)
+            || identity(&after) != identity(&named)
+            || !named.is_file()
+        {
+            return Err(io::Error::other("refresh fixture changed while reading"));
+        }
+        let fixture: GcsRefreshFixture = serde_json::from_slice(&bytes).map_err(|_| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "invalid refresh fixture fields",
+            )
+        })?;
+        // Closed selectors: the exact live account/project, no ambient fallback.
+        if fixture.account != "jiacao@on.sinch.com" || fixture.project != "entit-finance-prod" {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "refresh fixture selectors differ from the required live selectors",
+            ));
+        }
+        let bucket = fixture
+            .root
+            .strip_prefix("gs://grv-gcs-pull-")
+            .and_then(|s| s.strip_suffix("/fixtures"))
+            .filter(|s| {
+                s.len() == 24
+                    && s.bytes()
+                        .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+            })
+            .ok_or_else(|| io::Error::other("refresh fixture root is not uniquely owned"))?;
+        let _ = bucket;
+        if fixture.files.len() != 3 {
+            return Err(io::Error::other(
+                "refresh fixture must contain exactly three roles",
+            ));
+        }
+        // Every URI is admitted by the existing single-decode coordinate gate.
+        crate::gcs_config::sql_filename(&fixture.root).map_err(|_| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "refresh fixture root is not a canonical gs coordinate",
+            )
+        })?;
+        let mut roles = std::collections::BTreeSet::new();
+        let mut uris = std::collections::BTreeSet::new();
+        for file in &fixture.files {
+            if !matches!(file.role.as_str(), "first" | "second" | "evolved") {
+                return Err(io::Error::other("unknown refresh fixture role"));
+            }
+            if !roles.insert(file.role.as_str()) || !uris.insert(file.uri.as_str()) {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "refresh fixture role or URI is not unique",
+                ));
+            }
+            if file.size == 0 || file.generation == 0 || file.version == 0 {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "refresh fixture file metadata is not positive",
+                ));
+            }
+            Digest::new(file.sha256.clone()).map_err(|_| {
+                io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "refresh fixture file hash is not a closed digest",
+                )
+            })?;
+            crate::gcs_config::sql_filename(&file.uri).map_err(|_| {
+                io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "refresh fixture URI is not a canonical gs coordinate",
+                )
+            })?;
+            if !file
+                .uri
+                .strip_prefix(&fixture.root)
+                .is_some_and(|suffix| suffix.starts_with('/'))
+            {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "refresh fixture file is outside the uniquely owned root",
+                ));
+            }
+        }
+        for (role, version) in [("first", 1u64), ("second", 1), ("evolved", 2)] {
+            let file = fixture.file(role)?;
+            if file.version != version {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "refresh fixture role version differs from the required evolution",
+                ));
+            }
+        }
+        Ok(fixture)
+    }
+    fn refresh_source_file(fixture: &GcsRefreshFixtureFile, contract: TableContract) -> SourceFile {
+        let mut file = remote_file(contract, &fixture.uri);
+        let remote = file.remote.as_mut().unwrap();
+        remote.access = grv_adapter_api::FileAccess::GcsView;
+        remote.version = U64::new(fixture.version).unwrap();
+        remote.size = U64::new(fixture.size).unwrap();
+        remote.sha256 = Digest::new(fixture.sha256.clone()).unwrap();
+        remote.validator = fixture.generation.to_string();
+        file.bytes = remote.size;
+        file.sha256 = remote.sha256.clone();
+        file
+    }
+    /// Decode a canonical gs object key exactly once (test inspection only;
+    /// production decoding stays in the existing single-decode coordinate).
+    fn decoded_object_key(canonical: &str) -> io::Result<String> {
+        let authority = canonical
+            .strip_prefix("gs://")
+            .ok_or_else(|| io::Error::other("fixture URI is not a canonical gs coordinate"))?;
+        let (_, key) = authority.split_once('/').unwrap_or((authority, ""));
+        let mut decoded = Vec::with_capacity(key.len());
+        let bytes = key.as_bytes();
+        let mut index = 0;
+        while index < bytes.len() {
+            if bytes[index] == b'%' {
+                let rest = std::str::from_utf8(bytes.get(index + 1..index + 3).unwrap_or(&[]))
+                    .map_err(|_| io::Error::other("invalid fixture percent escape"))?;
+                let value = u8::from_str_radix(rest, 16)
+                    .map_err(|_| io::Error::other("invalid fixture percent escape"))?;
+                decoded.push(value);
+                index += 3;
+            } else {
+                decoded.push(bytes[index]);
+                index += 1;
+            }
+        }
+        String::from_utf8(decoded).map_err(|_| io::Error::other("fixture key is not UTF-8"))
+    }
+    #[test]
+    fn gcs_refresh_fixture_loader_is_closed_private_and_generation_exact() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+        let path = dir.path().join("fixture.json");
+        let root = format!("gs://grv-gcs-pull-{}/fixtures", "a".repeat(24));
+        let valid = json!({"account":"jiacao@on.sinch.com","project":"entit-finance-prod","root":root,
+            "files":[{"role":"first","uri":format!("{root}/one.parquet"),"size":12,"sha256":"b".repeat(64),"generation":11,"version":1},
+                     {"role":"second","uri":format!("{root}/two.parquet"),"size":13,"sha256":"c".repeat(64),"generation":12,"version":1},
+                     {"role":"evolved","uri":format!("{root}/space%20+%25%C3%BC'quote.parquet"),"size":14,"sha256":"d".repeat(64),"generation":13,"version":2}]});
+        let write = |value: &serde_json::Value| {
+            std::fs::write(&path, serde_json::to_vec(value).unwrap()).unwrap();
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        };
+        write(&valid);
+        let fixture = load_gcs_refresh_fixture(path.to_str().unwrap()).unwrap();
+        let file = refresh_source_file(fixture.file("evolved").unwrap(), contract());
+        assert_eq!(file.remote.as_ref().unwrap().validator, "13");
+        assert_eq!(file.remote.as_ref().unwrap().version.get(), 2);
+        assert_eq!(
+            decoded_object_key(&fixture.file("evolved").unwrap().uri).unwrap(),
+            "fixtures/space +%ü'quote.parquet"
+        );
+        for fault in 0..9 {
+            let mut bad = valid.clone();
+            match fault {
+                0 => bad["extra"] = json!(true),
+                1 => bad["files"][0]["extra"] = json!(true),
+                2 => bad["files"][0]["role"] = json!("unexpected"),
+                3 => bad["files"][1]["uri"] = bad["files"][0]["uri"].clone(),
+                4 => bad["files"][2]["version"] = json!(1),
+                5 => bad["files"][0]["generation"] = json!(0),
+                6 => bad["root"] = json!("gs://unknown-bucket/fixtures"),
+                7 => bad["account"] = json!("other@example.com"),
+                _ => bad["files"]
+                    .as_array_mut()
+                    .unwrap()
+                    .pop()
+                    .map(|_| ())
+                    .unwrap(),
+            }
+            write(&bad);
+            assert!(
+                load_gcs_refresh_fixture(path.to_str().unwrap()).is_err(),
+                "fault {fault}"
+            );
+        }
+        write(&valid);
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).unwrap();
+        assert!(load_gcs_refresh_fixture(path.to_str().unwrap()).is_err());
+        write(&valid);
+        std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o755)).unwrap();
+        assert!(load_gcs_refresh_fixture(path.to_str().unwrap()).is_err());
+        std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+        let saved = dir.path().join("saved.json");
+        std::fs::rename(&path, &saved).unwrap();
+        std::os::unix::fs::symlink(&saved, &path).unwrap();
+        assert!(load_gcs_refresh_fixture(path.to_str().unwrap()).is_err());
+        std::fs::remove_file(&path).unwrap();
+        assert!(load_gcs_refresh_fixture(path.to_str().unwrap()).is_err());
+        // Metadata-admitted physical type mismatch is rejected without native
+        // bind or auth; the same source-version schema refusal is distinct.
+        let mut selected = remote_plan();
+        selected.materialization_mode = MaterializationMode::GcsView;
+        selected.identity.binding.canonical_root = root;
+        let first = refresh_source_file(fixture.file("first").unwrap(), contract());
+        let mut changed_contract = contract();
+        changed_contract.columns[0].logical_type = json!("string");
+        let second = refresh_source_file(fixture.file("second").unwrap(), changed_contract);
+        selected.tables[0].files = vec![first, second];
+        assert!(selected.validate().is_err());
+    }
+    #[cfg(feature = "native")]
+    #[test]
+    fn native_gcs_multifile_predispatch_cancel_and_metadata_publication_expiry() {
+        use crate::{lock::WorkspaceLock, pull_worker::PullWorker};
+        use std::sync::{Arc, atomic::AtomicBool};
+        let directory = tempfile::tempdir().unwrap();
+        let pending_identity = identity();
+        let mut pending = plan(pending_identity.clone());
+        pending.materialization_mode = MaterializationMode::GcsView;
+        pending.identity.binding.canonical_root = "gs://test-bucket/grv-dev".into();
+        let mut first = remote_file(contract(), "gs://test-bucket/grv-dev/one.parquet");
+        first.remote.as_mut().unwrap().access = grv_adapter_api::FileAccess::GcsView;
+        let mut second = remote_file(contract(), "gs://test-bucket/grv-dev/two.parquet");
+        second.remote.as_mut().unwrap().access = grv_adapter_api::FileAccess::GcsView;
+        pending.tables[0].files = vec![first, second];
+        pending.validate().unwrap();
+        // (a) stop=true before dispatch: the two-file GcsView plan never runs.
+        let database = directory.path().join("predispatch.duckdb");
+        let mut owner = PullWorker::open(&database, false).unwrap();
+        assert!(WorkspaceLock::acquire(&database).is_err());
+        let stop = Arc::new(AtomicBool::new(true));
+        let error = owner.apply(pending.clone(), stop.as_ref()).unwrap_err();
+        assert!(
+            matches!(
+                error,
+                PullError::OutcomeUnknown(ref message) if message.contains("stopped before dispatch")
+            ),
+            "{error:?}"
+        );
+        // The owner thread has joined and released the workspace lock.
+        assert!(WorkspaceLock::acquire(&database).is_ok());
+        // A stopped owner is not reused: a second dispatch is refused the same way.
+        let again = owner.apply(pending.clone(), stop.as_ref()).unwrap_err();
+        assert!(matches!(again, PullError::OutcomeUnknown(_)), "{again:?}");
+        drop(owner);
+        // The apply closure never ran: a fresh source-free resolution reports the
+        // true absence (Uninitialized), never a false NotCommitted or commit.
+        let mut store = PullStore::open(&database).unwrap();
+        assert_eq!(
+            store.resolve(&pending.identity).unwrap(),
+            PullResolution::Uninitialized
+        );
+        drop(store);
+        // (b) expiry: a committed empty GcsView baseline, then a fresh owner
+        // with the publication-boundary probe armed before any nonempty attempt.
+        let database = directory.path().join("expiry.duckdb");
+        let mut baseline = plan(identity());
+        baseline.materialization_mode = MaterializationMode::GcsView;
+        baseline.identity.binding.canonical_root = "gs://test-bucket/grv-dev".into();
+        let mut store = PullStore::open(&database).unwrap();
+        // Source-free committed baseline: no token, no HTTP, no cloud.
+        store.engine.begin_gcs_execution().unwrap();
+        let baseline_receipt = store.apply(&baseline).unwrap();
+        assert_eq!(
+            baseline_receipt.materialization_mode,
+            MaterializationMode::GcsView
+        );
+        assert!(store.target_is_view("app", "rows").unwrap());
+        drop(store); // close before the fresh owner reopens the same workspace
+        let mut store = PullStore::open(&database).unwrap();
+        store.engine.begin_gcs_execution().unwrap();
+        store.engine.arm_lease_expiry_probe_for_test();
+        let mut attempt = baseline.clone();
+        attempt.identity.attempt_id = Uuid::v4();
+        attempt.identity.request_sha256 = Digest::new("d".repeat(64)).unwrap();
+        let mut first = remote_file(contract(), "gs://test-bucket/grv-dev/one.parquet");
+        first.remote.as_mut().unwrap().access = grv_adapter_api::FileAccess::GcsView;
+        let mut second = remote_file(contract(), "gs://test-bucket/grv-dev/two.parquet");
+        second.remote.as_mut().unwrap().access = grv_adapter_api::FileAccess::GcsView;
+        attempt.tables[0].files = vec![first, second];
+        // The first successful metadata FFI return inside resolve is refused at
+        // the Rust publication boundary: before BEGIN, before the first file's
+        // remote query and before the view create, not after source one.
+        let error = store.apply(&attempt).unwrap_err();
+        assert!(
+            matches!(
+                error,
+                PullError::OutcomeUnknown(ref message)
+                    if message.contains("incomplete or untrustworthy consumer metadata")
+                        && message.contains("deadline")
+            ),
+            "{error:?}"
+        );
+        // A fresh invocation resets the lease and the interrupt latch; no
+        // authentication was ever involved in this subcase.
+        store.engine.close_invocation().unwrap();
+        store.engine.begin_gcs_execution().unwrap();
+        // The prior receipt is immutable and the target is still the actual
+        // empty view: the refused attempt left no effect and is not retried.
+        assert_eq!(
+            store.resolve(&baseline.identity).unwrap(),
+            PullResolution::Committed(baseline_receipt.clone())
+        );
+        assert!(store.target_is_view("app", "rows").unwrap());
+        assert!(destination::inspect_target_for_test(&mut store, "rows").is_empty());
+        // The attempted identity is a legitimate NotCommitted (initialized
+        // baseline), in contrast with the true Uninitialized of (a).
+        assert_eq!(
+            store.resolve(&attempt.identity).unwrap(),
+            PullResolution::NotCommitted
+        );
+        drop(store);
+        let mut store = PullStore::open(&database).unwrap();
+        assert_eq!(
+            store.resolve(&baseline.identity).unwrap(),
+            PullResolution::Committed(baseline_receipt)
+        );
+        assert!(store.target_is_view("app", "rows").unwrap());
+        assert!(destination::inspect_target_for_test(&mut store, "rows").is_empty());
+        assert_eq!(
+            store.resolve(&attempt.identity).unwrap(),
+            PullResolution::NotCommitted
+        );
+    }
+    #[cfg(feature = "native")]
+    #[test]
+    #[ignore = "requires jiacao@on.sinch.com/entit-finance-prod selectors, a 0600 private GRV_TEST_GCS_REFRESH_FIXTURES record, signed extensions and an authorized live fixture"]
+    fn native_live_gcs_multifile_evolution_special_coordinate_refresh_and_replay() {
+        let fixtures = std::env::var("GRV_TEST_GCS_REFRESH_FIXTURES").unwrap();
+        let fixture = load_gcs_refresh_fixture(&fixtures).unwrap();
+        let first = fixture.file("first").unwrap();
+        let second = fixture.file("second").unwrap();
+        let evolved = fixture.file("evolved").unwrap();
+        // The evolved object is a special key: space, '+', '%', Unicode and an
+        // apostrophe, supplied as a canonical gs coordinate.
+        let evolved_key = decoded_object_key(&evolved.uri).unwrap();
+        assert!(evolved_key.contains(' '));
+        assert!(evolved_key.contains('+'));
+        assert!(evolved_key.contains('%'));
+        assert!(evolved_key.contains('\''));
+        assert!(!evolved_key.is_ascii());
+        let temp = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).unwrap();
+        let database = temp.path().join("gcs-refresh.duckdb");
+        let mut store = PullStore::open(&database).unwrap();
+        let mut plan = plan(identity());
+        plan.materialization_mode = MaterializationMode::GcsView;
+        plan.identity.binding.canonical_root = fixture.root.clone();
+        let first_file = refresh_source_file(first, contract());
+        let second_file = refresh_source_file(second, contract());
+        plan.tables[0].files = vec![first_file.clone(), second_file.clone()];
+        plan.validate().unwrap();
+        // Configure the existing reader once; the original lease is preserved.
+        store
+            .configure_gcs_reader(&crate::gcs_config::GcsReader {
+                scope: fixture.root.clone(),
+                provider: "gcloud".into(),
+                account: fixture.account.clone(),
+                project: fixture.project.clone(),
+            })
+            .unwrap();
+        let receipt = store.apply(&plan).unwrap();
+        assert!(store.target_is_view("app", "rows").unwrap());
+        let files = vec![
+            first_file.remote.clone().unwrap(),
+            second_file.remote.clone().unwrap(),
+        ];
+        let values = store
+            .engine
+            .remote_query(&files, "SELECT id::BIGINT FROM app.rows ORDER BY id")
+            .unwrap();
+        assert_eq!(
+            values,
+            vec![vec![Some("111".into())], vec![Some("222".into())]]
+        );
+        // New attempt/revision/generation with a changed request digest: the
+        // nonempty refresh re-reads both files; the receipt is distinct.
+        let mut refresh = plan.clone();
+        refresh.identity.attempt_id = Uuid::v4();
+        refresh.identity.request_sha256 = Digest::new("c".repeat(64)).unwrap();
+        refresh.committed_revision = U64::new(2).unwrap();
+        refresh.generation_id = Uuid::v4();
+        let refresh_receipt = store.apply(&refresh).unwrap();
+        assert_ne!(refresh_receipt, receipt);
+        assert_eq!(refresh_receipt.table_counts, json!({"rows":"2"}));
+        let values = store
+            .engine
+            .remote_query(&files, "SELECT id::BIGINT FROM app.rows ORDER BY id")
+            .unwrap();
+        assert_eq!(
+            values,
+            vec![vec![Some("111".into())], vec![Some("222".into())]]
+        );
+        // The prior receipt is immutable and replay does not rewind.
+        assert_eq!(
+            store.resolve(&plan.identity).unwrap(),
+            PullResolution::Committed(receipt.clone())
+        );
+        assert_eq!(store.apply(&plan).unwrap(), receipt);
+        assert_eq!(
+            store
+                .engine
+                .remote_query(&files, "SELECT id::BIGINT FROM app.rows ORDER BY id")
+                .unwrap(),
+            vec![vec![Some("111".into())], vec![Some("222".into())]]
+        );
+        // Evolved source/output contract adds extra:string; the first file stays
+        // at version one while the evolved file is version two.
+        let mut evolved_contract = contract();
+        evolved_contract.columns.push(grv_types::Column {
+            name: "extra".into(),
+            logical_type: json!("string"),
+        });
+        let mut evolve = plan.clone();
+        evolve.identity.attempt_id = Uuid::v4();
+        evolve.identity.request_sha256 = Digest::new("e".repeat(64)).unwrap();
+        evolve.committed_revision = U64::new(3).unwrap();
+        evolve.generation_id = Uuid::v4();
+        evolve.tables[0].source_contract = evolved_contract.clone();
+        evolve.tables[0].output_contract = evolved_contract.clone();
+        let first_file = refresh_source_file(first, contract());
+        let evolved_file = refresh_source_file(evolved, evolved_contract);
+        evolve.tables[0].files = vec![first_file.clone(), evolved_file.clone()];
+        evolve.validate().unwrap();
+        let evolve_receipt = store.apply(&evolve).unwrap();
+        assert_ne!(evolve_receipt, refresh_receipt);
+        // Exact [(111, NULL), (333, 'new')] through all admitted descriptors;
+        // the CAST NULL projection is exercised against actual GCS.
+        let files = vec![
+            first_file.remote.clone().unwrap(),
+            evolved_file.remote.clone().unwrap(),
+        ];
+        let values = store
+            .engine
+            .remote_query(&files, "SELECT id::BIGINT, extra FROM app.rows ORDER BY id")
+            .unwrap();
+        assert_eq!(
+            values,
+            vec![
+                vec![Some("111".into()), None],
+                vec![Some("333".into()), Some("new".into())],
+            ]
+        );
+        // A physical type change within one version is refused purely in
+        // plan.validate before apply; this is not an ordinary UNION bind denial.
+        let mut mismatch = evolve.clone();
+        mismatch.identity.attempt_id = Uuid::v4();
+        mismatch.identity.request_sha256 = Digest::new("f".repeat(64)).unwrap();
+        let mut stale = evolved_file.clone();
+        stale.remote.as_mut().unwrap().version = U64::new(1).unwrap();
+        mismatch.tables[0].files = vec![first_file.clone(), stale];
+        assert!(mismatch.validate().is_err());
+        // Drop/reopen without reader or configure: stored receipts and replay
+        // for each historical attempt are source-free, and the latest view
+        // metadata persists. No remote query runs on the fresh owner.
+        drop(store);
+        let mut reopened = PullStore::open(&database).unwrap();
+        assert_eq!(
+            reopened.resolve(&plan.identity).unwrap(),
+            PullResolution::Committed(receipt.clone())
+        );
+        assert_eq!(
+            reopened.resolve(&refresh.identity).unwrap(),
+            PullResolution::Committed(refresh_receipt.clone())
+        );
+        assert_eq!(
+            reopened.resolve(&evolve.identity).unwrap(),
+            PullResolution::Committed(evolve_receipt.clone())
+        );
+        assert_eq!(reopened.apply(&plan).unwrap(), receipt);
+        assert_eq!(reopened.apply(&evolve).unwrap(), evolve_receipt);
+        assert!(reopened.target_is_view("app", "rows").unwrap());
+        // No reader is configured or source opened on this historical lookup owner.
+    }
+    #[derive(serde::Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct GcsFaultFixture {
+        account: String,
+        project: String,
+        root: String,
+        original: GcsFaultObject,
+        replacement: GcsReplacementObject,
+        audit_dir: PathBuf,
+    }
+    #[derive(serde::Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct GcsFaultObject {
+        uri: String,
+        size: u64,
+        sha256: String,
+        generation: u64,
+    }
+    #[derive(serde::Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct GcsReplacementObject {
+        uri: String,
+        size: u64,
+        sha256: String,
+    }
+    // This is qualification-only protected fixture/audit IO. Checked absence
+    // is ENOENT only, never a dangling link or unreadable/nonregular entry.
+    fn private_test_directory(path: &Path) -> io::Result<()> {
+        use std::os::unix::fs::MetadataExt;
+        let m = std::fs::symlink_metadata(path)?;
+        if !m.is_dir() || m.uid() != unsafe { libc::geteuid() } || m.mode() & 0o077 != 0 {
+            return Err(io::Error::other(
+                "test fixture/audit directory is not private",
+            ));
+        }
+        Ok(())
+    }
+    fn read_private_test_json<T: serde::de::DeserializeOwned>(path: &Path) -> io::Result<T> {
+        use std::io::Read;
+        use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
+        private_test_directory(
+            path.parent()
+                .ok_or_else(|| io::Error::other("missing fixture parent"))?,
+        )?;
+        let mut file = std::fs::OpenOptions::new()
+            .read(true)
+            .custom_flags(libc::O_NOFOLLOW | libc::O_CLOEXEC | libc::O_NONBLOCK)
+            .open(path)?;
+        let before = file.metadata()?;
+        if !before.is_file()
+            || before.nlink() != 1
+            || before.uid() != unsafe { libc::geteuid() }
+            || before.mode() & 0o077 != 0
+            || before.len() > 64 * 1024
+        {
+            return Err(io::Error::other(
+                "test fixture/audit record is not protected regular JSON",
+            ));
+        }
+        let mut bytes = Vec::with_capacity(before.len() as usize);
+        (&mut file).take(64 * 1024 + 1).read_to_end(&mut bytes)?;
+        let after = file.metadata()?;
+        let named = std::fs::symlink_metadata(path)?;
+        let identity = |m: &std::fs::Metadata| {
+            (
+                m.dev(),
+                m.ino(),
+                m.len(),
+                m.mode(),
+                m.uid(),
+                m.nlink(),
+                m.mtime(),
+                m.mtime_nsec(),
+                m.ctime(),
+                m.ctime_nsec(),
+            )
+        };
+        if bytes.len() as u64 != before.len()
+            || identity(&before) != identity(&after)
+            || identity(&after) != identity(&named)
+            || !named.is_file()
+        {
+            return Err(io::Error::other(
+                "test fixture/audit record changed during read",
+            ));
+        }
+        serde_json::from_slice(&bytes)
+            .map_err(|_| io::Error::other("invalid closed test fixture/audit JSON"))
+    }
+    fn load_gcs_fault_fixture(path: &Path) -> io::Result<GcsFaultFixture> {
+        let f: GcsFaultFixture = read_private_test_json(path)?;
+        if f.account != "jiacao@on.sinch.com" || f.project != "entit-finance-prod" {
+            return Err(io::Error::other("fault fixture selectors differ"));
+        }
+        let suffix = f
+            .root
+            .strip_prefix("gs://grv-gcs-pull-")
+            .and_then(|s| s.strip_suffix("/fixtures"));
+        if !suffix.is_some_and(|s| {
+            s.len() == 24
+                && s.bytes()
+                    .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+        }) || f.original.uri != format!("{}/primary.parquet", f.root)
+            || f.original.uri != f.replacement.uri
+            || f.original.size == 0
+            || f.replacement.size == 0
+            || f.original.generation == 0
+            || f.original.sha256 == f.replacement.sha256
+        {
+            return Err(io::Error::other("fault fixture ownership/metadata differs"));
+        }
+        crate::gcs_config::sql_filename(&f.root)?;
+        crate::gcs_config::sql_filename(&f.original.uri)?;
+        Digest::new(f.original.sha256.clone()).map_err(io::Error::other)?;
+        Digest::new(f.replacement.sha256.clone()).map_err(io::Error::other)?;
+        let parent = path
+            .parent()
+            .ok_or_else(|| io::Error::other("fault parent missing"))?;
+        if f.audit_dir != parent.join("audit") {
+            return Err(io::Error::other(
+                "audit must be a dedicated fixture sibling",
+            ));
+        }
+        private_test_directory(&f.audit_dir)?;
+        Ok(f)
+    }
+    #[derive(serde::Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct GcsFaultAck {
+        stage: String,
+        generation: Option<u64>,
+        deleted: Option<bool>,
+        replaced: Option<bool>,
+        inventory_empty: Option<bool>,
+    }
+    #[cfg(feature = "native")]
+    fn fault_stage(f: &GcsFaultFixture, stage: &str) -> io::Result<GcsFaultAck> {
+        use std::{io::Write, os::unix::fs::OpenOptionsExt};
+        if !matches!(stage, "delete-primary" | "replace-primary" | "delete-all") {
+            return Err(io::Error::other("unknown test audit stage"));
+        }
+        private_test_directory(&f.audit_dir)?;
+        let ready = f.audit_dir.join(format!("{stage}.ready"));
+        match std::fs::symlink_metadata(&ready) {
+            Err(e) if e.kind() == io::ErrorKind::NotFound => {}
+            _ => {
+                return Err(io::Error::other(
+                    "test ready record already present/untrusted",
+                ));
+            }
+        }
+        let pending = f.audit_dir.join(format!("{stage}.pending"));
+        let mut out = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .mode(0o600)
+            .custom_flags(libc::O_NOFOLLOW | libc::O_CLOEXEC)
+            .open(&pending)?;
+        out.write_all(
+            &serde_json::to_vec(
+                &json!({"stage":stage,"uri":f.original.uri,"generation":f.original.generation}),
+            )
+            .map_err(io::Error::other)?,
+        )?;
+        out.sync_all()?;
+        drop(out);
+        // Publish complete JSON atomically in this exclusively owned audit
+        // directory, rather than exposing a partially written ready marker.
+        std::fs::rename(&pending, &ready)?;
+        std::fs::File::open(&f.audit_dir)?.sync_all()?;
+        let ack = f.audit_dir.join(format!("{stage}.ack"));
+        let end = std::time::Instant::now() + std::time::Duration::from_secs(30);
+        loop {
+            match std::fs::symlink_metadata(&ack) {
+                Ok(_) => {
+                    let ack: GcsFaultAck = read_private_test_json(&ack)?;
+                    validate_fault_ack(f, stage, &ack)?;
+                    return Ok(ack);
+                }
+                Err(e) if e.kind() == io::ErrorKind::NotFound => {}
+                Err(e) => return Err(e),
+            }
+            if std::time::Instant::now() >= end {
+                return Err(io::Error::other("test driver acknowledgement timeout"));
+            }
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+    }
+    fn validate_fault_ack(f: &GcsFaultFixture, stage: &str, ack: &GcsFaultAck) -> io::Result<()> {
+        let ok = ack.stage == stage
+            && match stage {
+                "delete-primary" => {
+                    ack.generation == Some(f.original.generation)
+                        && ack.deleted == Some(true)
+                        && ack.replaced.is_none()
+                        && ack.inventory_empty.is_none()
+                }
+                "replace-primary" => {
+                    ack.generation
+                        .is_some_and(|g| g > 0 && g != f.original.generation)
+                        && ack.replaced == Some(true)
+                        && ack.deleted.is_none()
+                        && ack.inventory_empty.is_none()
+                }
+                "delete-all" => {
+                    ack.inventory_empty == Some(true)
+                        && ack.generation.is_none()
+                        && ack.deleted.is_none()
+                        && ack.replaced.is_none()
+                }
+                _ => false,
+            };
+        if !ok {
+            return Err(io::Error::other(
+                "test driver acknowledgement contradicts stage",
+            ));
+        }
+        Ok(())
+    }
+    #[cfg(feature = "native")]
+    fn fault_source(f: &GcsFaultFixture, replacement: Option<u64>) -> SourceFile {
+        let (size, hash, generation) = match replacement {
+            Some(g) => (f.replacement.size, &f.replacement.sha256, g),
+            None => (f.original.size, &f.original.sha256, f.original.generation),
+        };
+        let mut source = remote_file(contract(), &f.original.uri);
+        let remote = source.remote.as_mut().unwrap();
+        remote.access = grv_adapter_api::FileAccess::GcsView;
+        remote.size = U64::new(size).unwrap();
+        remote.sha256 = Digest::new(hash.clone()).unwrap();
+        remote.validator = generation.to_string();
+        source.bytes = remote.size;
+        source.sha256 = remote.sha256.clone();
+        source
+    }
+    #[cfg(feature = "native")]
+    fn fault_reader(f: &GcsFaultFixture) -> crate::gcs_config::GcsReader {
+        crate::gcs_config::GcsReader {
+            scope: f.root.clone(),
+            provider: "gcloud".into(),
+            account: f.account.clone(),
+            project: f.project.clone(),
+        }
+    }
+    #[cfg(feature = "native")]
+    fn fault_next(plan: &PullPlan, revision: u64) -> PullPlan {
+        let mut next = plan.clone();
+        next.identity.attempt_id = Uuid::v4();
+        next.identity.request_sha256 = Digest::new(format!("{revision:064x}")).unwrap();
+        next.committed_revision = U64::new(revision).unwrap();
+        next.generation_id = Uuid::v4();
+        next
+    }
+    #[cfg(feature = "native")]
+    #[test]
+    #[ignore = "requires reviewed frozen owned GCS fault fixture and dedicated stage driver; real selected OAuth and destructive known-generation operations"]
+    fn native_live_gcs_missing_replaced_source_loss_preserves_immutable_receipts() {
+        use crate::lock::WorkspaceLock;
+        let path = PathBuf::from(std::env::var("GRV_TEST_GCS_FAULT_FIXTURE").unwrap());
+        let f = load_gcs_fault_fixture(&path).unwrap();
+        let dir = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).unwrap();
+        let database = dir.path().join("faults.duckdb");
+        let mut baseline = plan(identity());
+        baseline.materialization_mode = MaterializationMode::GcsView;
+        baseline.identity.binding.canonical_root = f.root.clone();
+        baseline.tables[0].files = vec![fault_source(&f, None)];
+        baseline.validate().unwrap();
+        let original = baseline.tables[0].files[0].remote.as_ref().unwrap().clone();
+        let mut store = PullStore::open(&database).unwrap();
+        store.configure_gcs_reader(&fault_reader(&f)).unwrap();
+        let receipt = store.apply(&baseline).unwrap();
+        assert_eq!(
+            store
+                .engine
+                .remote_metadata(&original, "SELECT id::BIGINT FROM app.rows")
+                .unwrap(),
+            vec![vec![Some("42".into())]]
+        );
+        drop(store);
+        assert!(WorkspaceLock::acquire(&database).is_ok());
+        // The driver mutates only after this owner has synchronously closed.
+        fault_stage(&f, "delete-primary").unwrap();
+        let missing = fault_next(&baseline, 2);
+        let mut store = PullStore::open(&database).unwrap();
+        store.configure_gcs_reader(&fault_reader(&f)).unwrap();
+        assert!(matches!(store.apply(&missing), Err(PullError::Engine(_))));
+        drop(store);
+        let mut store = PullStore::open(&database).unwrap();
+        assert_eq!(
+            store.resolve(&baseline.identity).unwrap(),
+            PullResolution::Committed(receipt.clone())
+        );
+        assert_eq!(
+            store.resolve(&missing.identity).unwrap(),
+            PullResolution::NotCommitted
+        );
+        assert_eq!(store.apply(&baseline).unwrap(), receipt);
+        assert!(store.target_is_view("app", "rows").unwrap());
+        drop(store);
+        assert!(WorkspaceLock::acquire(&database).is_ok());
+        let ack = fault_stage(&f, "replace-primary").unwrap();
+        let generation = ack.generation.unwrap();
+        let stale = fault_next(&baseline, 2);
+        let mut store = PullStore::open(&database).unwrap();
+        store.configure_gcs_reader(&fault_reader(&f)).unwrap();
+        // Deliberately stale SHA/size/generation: pull's previously prepared
+        // descriptors are NOT per-range generation pinning. Same-schema
+        // privileged replacement is observed, not falsely declared prevented.
+        let stale_receipt = store.apply(&stale).unwrap();
+        assert_eq!(
+            store
+                .engine
+                .remote_metadata(&original, "SELECT id::BIGINT FROM app.rows")
+                .unwrap(),
+            vec![vec![Some("84".into())]]
+        );
+        let mut current = fault_next(&baseline, 3);
+        current.tables[0].files = vec![fault_source(&f, Some(generation))];
+        current.validate().unwrap();
+        let current_file = current.tables[0].files[0].remote.as_ref().unwrap().clone();
+        let current_receipt = store.apply(&current).unwrap();
+        assert_ne!(stale_receipt, current_receipt);
+        assert_eq!(store.apply(&baseline).unwrap(), receipt);
+        assert_eq!(
+            store
+                .engine
+                .remote_metadata(&current_file, "SELECT id::BIGINT FROM app.rows")
+                .unwrap(),
+            vec![vec![Some("84".into())]]
+        );
+        drop(store);
+        assert!(WorkspaceLock::acquire(&database).is_ok());
+        fault_stage(&f, "delete-all").unwrap();
+        let mut store = PullStore::open(&database).unwrap();
+        store.configure_gcs_reader(&fault_reader(&f)).unwrap();
+        store.engine.authorize_relation("app", "rows").unwrap();
+        assert!(
+            store
+                .engine
+                .remote_metadata(&current_file, "SELECT id::BIGINT FROM app.rows")
+                .is_err()
+        );
+        drop(store);
+        let historical = [
+            (&baseline, &receipt),
+            (&stale, &stale_receipt),
+            (&current, &current_receipt),
+        ];
+        let mut store = PullStore::open(&database).unwrap();
+        for (plan, receipt) in historical {
+            assert_eq!(
+                store.resolve(&plan.identity).unwrap(),
+                PullResolution::Committed(receipt.clone())
+            );
+            assert_eq!(&store.apply(plan).unwrap(), receipt);
+        }
+        assert!(store.target_is_view("app", "rows").unwrap());
+        drop(store);
+        // A NEW attempt cannot treat a failed source scan as empty success.
+        let next = fault_next(&current, 4);
+        let mut store = PullStore::open(&database).unwrap();
+        store.configure_gcs_reader(&fault_reader(&f)).unwrap();
+        assert!(matches!(store.apply(&next), Err(PullError::Engine(_))));
+        drop(store);
+        let mut store = PullStore::open(&database).unwrap();
+        assert_eq!(
+            store.resolve(&next.identity).unwrap(),
+            PullResolution::NotCommitted
+        );
+        assert_eq!(
+            store.resolve(&current.identity).unwrap(),
+            PullResolution::Committed(current_receipt)
+        );
+        assert!(store.target_is_view("app", "rows").unwrap());
+    }
+    #[test]
+    fn gcs_fault_fixture_and_ack_refuse_unknown_or_unprotected_history() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+        let audit = dir.path().join("audit");
+        std::fs::create_dir(&audit).unwrap();
+        std::fs::set_permissions(&audit, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let path = dir.path().join("fixture.json");
+        let root = format!("gs://grv-gcs-pull-{}/fixtures", "a".repeat(24));
+        let value = json!({"account":"jiacao@on.sinch.com","project":"entit-finance-prod","root":root,
+            "original":{"uri":format!("{root}/primary.parquet"),"size":1,"sha256":"a".repeat(64),"generation":12},
+            "replacement":{"uri":format!("{root}/primary.parquet"),"size":2,"sha256":"b".repeat(64)},"audit_dir":audit});
+        let write = |value: &Value| {
+            std::fs::write(&path, serde_json::to_vec(value).unwrap()).unwrap();
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        };
+        write(&value);
+        let f = load_gcs_fault_fixture(&path).unwrap();
+        let ack: GcsFaultAck = serde_json::from_value(
+            json!({"stage":"replace-primary","generation":13,"replaced":true}),
+        )
+        .unwrap();
+        validate_fault_ack(&f, "replace-primary", &ack).unwrap();
+        for fault in 0..6 {
+            let mut bad = value.clone();
+            match fault {
+                0 => bad["extra"] = json!(true),
+                1 => bad["original"]["generation"] = json!(0),
+                2 => bad["replacement"]["uri"] = json!("gs://other/file"),
+                3 => bad["replacement"]["sha256"] = bad["original"]["sha256"].clone(),
+                4 => bad["account"] = json!("other@example.com"),
+                _ => bad["audit_dir"] = json!(dir.path()),
+            };
+            write(&bad);
+            assert!(load_gcs_fault_fixture(&path).is_err(), "fault {fault}");
+        }
+        write(&value);
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).unwrap();
+        assert!(load_gcs_fault_fixture(&path).is_err());
+        write(&value);
+        let saved = dir.path().join("saved.json");
+        std::fs::rename(&path, &saved).unwrap();
+        std::os::unix::fs::symlink(&saved, &path).unwrap();
+        assert!(load_gcs_fault_fixture(&path).is_err());
+        for bad in [
+            json!({"stage":"replace-primary","generation":12,"replaced":true}),
+            json!({"stage":"delete-primary","generation":12,"deleted":false}),
+            json!({"stage":"delete-all","inventory_empty":false}),
+        ] {
+            let ack: GcsFaultAck = serde_json::from_value(bad).unwrap();
+            assert!(validate_fault_ack(&f, &ack.stage, &ack).is_err());
+        }
+        assert!(
+            serde_json::from_value::<GcsFaultAck>(
+                json!({"stage":"delete-all","inventory_empty":true,"unknown":1})
+            )
+            .is_err()
+        );
     }
     #[test]
     fn s3_pure_preparation_requires_exact_closed_evidence_without_opening_sources() {
@@ -2425,6 +3728,34 @@ mod tests {
             );
         }
     }
+    #[cfg(feature = "native")]
+    #[test]
+    fn native_gcs_isolated_resource_admission_precedes_authentication() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut store = PullStore::open(&dir.path().join("resource-gcs.duckdb")).unwrap();
+        let reader = crate::gcs_config::GcsReader {
+            scope: "gs://test-bucket/resources".into(),
+            provider: "gcloud".into(),
+            account: "must-never-authenticate".into(),
+            project: "named-project".into(),
+        };
+        for (source, scratch) in [
+            (2 * 1024 * 1024 - 1, 32 * 1024 * 1024),
+            (2 * 1024 * 1024, crate::native::GCS_MIN_SCRATCH_BYTES - 1),
+        ] {
+            store
+                .configure_resources(&grv_adapter_api::Resources {
+                    max_source_unit_bytes: U64::new(source).unwrap(),
+                    max_scratch_bytes: U64::new(scratch).unwrap(),
+                    ..grv_adapter_api::Resources::default()
+                })
+                .unwrap();
+            let error = store.configure_gcs_reader(&reader).unwrap_err();
+            assert!(
+                format!("{error:?}").contains("requires at least 2 MiB source and 32 MiB scratch")
+            );
+        }
+    }
     #[test]
     fn pure_file_projection_preserves_prefix_and_never_infers_hive_values() {
         let mut selected = contract();
@@ -2496,6 +3827,308 @@ mod tests {
             contract: contract(),
             partition: json!({}),
             remote: None,
+        }
+    }
+    #[cfg(feature = "native")]
+    #[test]
+    fn gcs_omitted_target_contract_nodes_refuse_without_mutating_original_receipt_or_view() {
+        let directory = tempfile::tempdir().unwrap();
+        let database = directory.path().join("omitted-nodes.duckdb");
+        let mut original = identity();
+        original.binding.canonical_root = "gs://test-bucket/omitted-nodes".into();
+        let mut initial = plan(original.clone());
+        initial.materialization_mode = MaterializationMode::GcsView;
+        let mut omitted = initial.tables[0].clone();
+        omitted.name = Name::new("omitted").unwrap();
+        omitted.target_table = RelationName::new("omitted").unwrap();
+        initial.tables.push(omitted);
+        let mut store = PullStore::open(&database).unwrap();
+        let receipt = store.apply_identity(&initial).unwrap();
+        let mut malformed = contract();
+        malformed.extensions = json!({"synthetic_nodes":vec!["";40000]});
+        let raw = serde_json::to_string(&malformed).unwrap();
+        assert!(raw.len() < crate::native::METADATA_BYTES);
+        store
+            .engine
+            .metadata_query(&format!(
+                "UPDATE _grv.pull_meta SET contract={} WHERE target_table='omitted'",
+                quote_literal(&raw)
+            ))
+            .unwrap();
+        drop(store);
+        let before = std::fs::read(&database).unwrap();
+        let mut refreshed = plan(original.clone());
+        refreshed.materialization_mode = MaterializationMode::GcsView;
+        refreshed.identity.attempt_id = Uuid::v4();
+        refreshed.identity.request_sha256 = Digest::new("c".repeat(64)).unwrap();
+        refreshed.committed_revision = U64::new(2).unwrap();
+        let mut reopened = PullStore::open_bound(&database).unwrap();
+        let error = reopened.apply_identity(&refreshed).unwrap_err();
+        assert!(
+            matches!(error,PullError::OutcomeUnknown(ref text) if text.contains("decoded allowance")),
+            "{error:?}"
+        );
+        assert!(reopened.target_is_view("app", "omitted").unwrap());
+        assert!(
+            matches!(reopened.resolve(&original).unwrap(),PullResolution::Committed(current) if current==receipt)
+        );
+        drop(reopened);
+        assert_eq!(std::fs::read(&database).unwrap(), before);
+    }
+    #[cfg(feature = "native")]
+    #[test]
+    fn node_amplified_gcs_durable_receipt_refuses_before_typed_decode_without_repair() {
+        let directory = tempfile::tempdir().unwrap();
+        let database = directory.path().join("nodes.duckdb");
+        let mut original = identity();
+        original.binding.canonical_root = "gs://test-bucket/nodes".into();
+        let mut fixed = plan(original.clone());
+        fixed.materialization_mode = MaterializationMode::GcsView;
+        let mut store = PullStore::open(&database).unwrap();
+        let receipt = store.apply_identity(&fixed).unwrap();
+        let mut value = serde_json::to_value(&receipt).unwrap();
+        value["request"] = json!({"synthetic_nodes":vec!["";40000]});
+        let raw = serde_json::to_string(&value).unwrap();
+        assert!(raw.len() < crate::native::METADATA_BYTES);
+        store
+            .engine
+            .metadata_query(&format!(
+                "UPDATE _grv.pull_attempts SET receipt={}",
+                quote_literal(&raw)
+            ))
+            .unwrap();
+        drop(store);
+        let before = std::fs::read(&database).unwrap();
+        let witness = std::fs::read(database.with_extension("duckdb.grv-lock")).unwrap();
+        let mut reopened = PullStore::open_bound(&database).unwrap();
+        let error = reopened.resolve(&original).unwrap_err();
+        assert!(
+            matches!(error,PullError::OutcomeUnknown(ref text) if text.contains("decoded allowance")),
+            "{error:?}"
+        );
+        drop(reopened);
+        assert_eq!(std::fs::read(&database).unwrap(), before);
+        assert_eq!(
+            std::fs::read(database.with_extension("duckdb.grv-lock")).unwrap(),
+            witness
+        );
+    }
+    #[cfg(feature = "native")]
+    #[test]
+    fn oversized_gcs_durable_receipt_is_unknown_not_absent_and_never_repaired() {
+        let directory = tempfile::tempdir().unwrap();
+        let database = directory.path().join("oversized.duckdb");
+        let mut original = identity();
+        original.binding.canonical_root = "gs://test-bucket/oversized".into();
+        let mut fixed = plan(original.clone());
+        fixed.materialization_mode = MaterializationMode::GcsView;
+        let mut store = PullStore::open(&database).unwrap();
+        store.apply_identity(&fixed).unwrap();
+        store
+            .engine
+            .metadata_query("UPDATE _grv.pull_attempts SET receipt=repeat('x',3000000)")
+            .unwrap();
+        drop(store);
+        let before = std::fs::read(&database).unwrap();
+        let witness = std::fs::read(database.with_extension("duckdb.grv-lock")).unwrap();
+        let mut reopened = PullStore::open_bound(&database).unwrap();
+        reopened.engine.begin_gcs_execution().unwrap();
+        let error = reopened.resolve(&original).unwrap_err();
+        assert!(matches!(error, PullError::OutcomeUnknown(_)), "{error:?}");
+        reopened.engine.close_invocation().unwrap();
+        drop(reopened);
+        assert_eq!(std::fs::read(&database).unwrap(), before);
+        assert_eq!(
+            std::fs::read(database.with_extension("duckdb.grv-lock")).unwrap(),
+            witness
+        );
+    }
+    #[cfg(feature = "native")]
+    #[test]
+    fn incompatible_gcs_durable_receipt_and_header_refuse_without_repair_or_auth() {
+        for fault in [
+            "receipt-mode",
+            "receipt-field",
+            "header-version",
+            "ownership-version",
+            "package-identity",
+            "binding-identity",
+        ] {
+            let directory = tempfile::tempdir().unwrap();
+            let database = directory.path().join("incompatible.duckdb");
+            let mut original = identity();
+            original.binding.canonical_root = "gs://test-bucket/incompatible".into();
+            let mut fixed = plan(original.clone());
+            fixed.materialization_mode = MaterializationMode::GcsView;
+            // Empty exact view persists a genuine remote receipt without auth.
+            let mut store = PullStore::open(&database).unwrap();
+            let receipt = store.apply_identity(&fixed).unwrap();
+            let mut encoded = serde_json::to_value(&receipt).unwrap();
+            match fault {
+                "receipt-mode" => encoded["materialization_mode"] = json!("gcs-hmac-view"),
+                "receipt-field" => {
+                    encoded["legacy_credentials"] = json!({"provider":"unsupported"})
+                }
+                "header-version" => {
+                    store
+                        .engine
+                        .metadata_query("UPDATE _grv.metadata_header SET version=0")
+                        .unwrap();
+                }
+                "ownership-version" => {
+                    store
+                        .engine
+                        .metadata_query("UPDATE _grv.metadata_header SET ownership_version=0")
+                        .unwrap();
+                }
+                "package-identity" => {
+                    original.adapter_identity.package_version =
+                        "unsupported-recorded-package".into()
+                }
+                "binding-identity" => {
+                    original.adapter_identity.binding_schema_version =
+                        grv_types::Req::new(2).unwrap()
+                }
+                _ => unreachable!(),
+            }
+            if fault.starts_with("receipt-") {
+                store
+                    .engine
+                    .metadata_query(&format!(
+                        "UPDATE _grv.pull_attempts SET receipt={} WHERE attempt_id={}",
+                        quote_literal(&serde_json::to_string(&encoded).unwrap()),
+                        quote_literal(original.attempt_id.as_str())
+                    ))
+                    .unwrap();
+            }
+            drop(store);
+            let before_database = std::fs::read(&database).unwrap();
+            let before_lock = std::fs::read(database.with_extension("duckdb.grv-lock")).unwrap();
+            let mut reopened = PullStore::open_bound(&database).unwrap();
+            let error = reopened.resolve(&original).unwrap_err();
+            assert!(
+                matches!(
+                    error,
+                    PullError::OutcomeUnknown(_) | PullError::RequestMismatch
+                ),
+                "{fault}: {error:?}"
+            );
+            // No GCS configure/auth is called; source-free resolver must reject
+            // unsupported state rather than repair it or authorize new effects.
+            assert_eq!(
+                reopened
+                    .engine
+                    .metadata_query("SELECT count(*) FROM _grv.pull_attempts")
+                    .unwrap(),
+                vec![vec![Some("1".into())]]
+            );
+            drop(reopened);
+            assert_eq!(
+                std::fs::read(&database).unwrap(),
+                before_database,
+                "database changed for {fault}"
+            );
+            assert_eq!(
+                std::fs::read(database.with_extension("duckdb.grv-lock")).unwrap(),
+                before_lock,
+                "ownership witness changed for {fault}"
+            );
+            assert!(!database.with_extension("duckdb.grv-gcs-read.json").exists());
+        }
+    }
+    // Actual-native pair for the modeled-fixture Unknown history cases: a
+    // genuine GCS stored session/receipt under an offline (local file)
+    // database with a gs:// root, inspected through the real PullStore with
+    // no token and no source access. Erased or mismatched stored history
+    // refuses; the closed typed record is never repaired or reinterpreted.
+    #[cfg(feature = "native")]
+    #[test]
+    fn gcs_stored_history_loss_or_mismatch_refuses_without_repair_or_auth() {
+        for fault in ["receipt-erased", "binding-root", "binding-workspace"] {
+            let directory = tempfile::tempdir().unwrap();
+            let database = directory.path().join("stored.duckdb");
+            let mut original = identity();
+            original.binding.canonical_root = "gs://test-bucket/stored".into();
+            let mut fixed = plan(original.clone());
+            fixed.materialization_mode = MaterializationMode::GcsView;
+            let mut store = PullStore::open(&database).unwrap();
+            let receipt = store.apply_identity(&fixed).unwrap();
+            assert!(receipt.matches(&original), "genuine GCS receipt stored");
+            assert!(
+                matches!(
+                    store.resolve(&original).unwrap(),
+                    PullResolution::Committed(_)
+                ),
+                "genuine GCS receipt resolves before the fault"
+            );
+            match fault {
+                "receipt-erased" => {
+                    // The real schema forbids NULL; an emptied receipt slot is
+                    // the faithful stored-loss shape and must still refuse.
+                    store
+                        .engine
+                        .metadata_query("UPDATE _grv.pull_attempts SET receipt=''")
+                        .unwrap();
+                }
+                "binding-root" => {
+                    let binding = WorkspaceBinding {
+                        canonical_root: "gs://other-bucket/stored".into(),
+                        workspace_id: original.binding.workspace_id.clone(),
+                    };
+                    store
+                        .engine
+                        .metadata_query(&format!(
+                            "UPDATE _grv.workspace_binding SET identity={}",
+                            quote_literal(&serde_json::to_string(&binding).unwrap())
+                        ))
+                        .unwrap();
+                }
+                "binding-workspace" => {
+                    let binding = WorkspaceBinding {
+                        canonical_root: original.binding.canonical_root.clone(),
+                        workspace_id: Uuid::v4(),
+                    };
+                    store
+                        .engine
+                        .metadata_query(&format!(
+                            "UPDATE _grv.workspace_binding SET identity={}",
+                            quote_literal(&serde_json::to_string(&binding).unwrap())
+                        ))
+                        .unwrap();
+                }
+                _ => unreachable!(),
+            }
+            drop(store);
+            let before_database = std::fs::read(&database).unwrap();
+            let before_lock = std::fs::read(database.with_extension("duckdb.grv-lock")).unwrap();
+            let mut reopened = PullStore::open_bound(&database).unwrap();
+            let error = reopened.resolve(&original).unwrap_err();
+            match fault {
+                "receipt-erased" => assert!(
+                    matches!(error, PullError::OutcomeUnknown(_)),
+                    "{fault}: {error:?}"
+                ),
+                "binding-root" | "binding-workspace" => assert!(
+                    matches!(error, PullError::StateConflict(_)),
+                    "{fault}: {error:?}"
+                ),
+                _ => unreachable!(),
+            }
+            drop(reopened);
+            assert_eq!(
+                std::fs::read(&database).unwrap(),
+                before_database,
+                "database changed for {fault}"
+            );
+            assert_eq!(
+                std::fs::read(database.with_extension("duckdb.grv-lock")).unwrap(),
+                before_lock,
+                "ownership witness changed for {fault}"
+            );
+            assert!(
+                !database.with_extension("duckdb.grv-gcs-read.json").exists(),
+                "no GCS auth configuration for {fault}"
+            );
         }
     }
     #[cfg(feature = "native")]
@@ -2800,6 +4433,10 @@ mod tests {
         let database = std::env::var("GRV_TEST_COMMIT_DATABASE").unwrap();
         let after = std::env::var("GRV_TEST_COMMIT_AFTER").unwrap() == "true";
         let mut store = PullStore::open(std::path::Path::new(&database)).unwrap();
+        if plan.materialization_mode == MaterializationMode::GcsView {
+            // Source-free GCS metadata/deadline activation; no token or HTTP.
+            store.engine.begin_gcs_execution().unwrap();
+        }
         destination::crash_at_commit_for_test(&mut store, after);
         store.apply(&plan).unwrap();
         panic!("commit crash hook did not execute");
@@ -2807,13 +4444,25 @@ mod tests {
     #[cfg(feature = "native")]
     #[test]
     fn native_precommit_and_postcommit_process_exit_resolve_without_reapplying() {
-        for materialization_mode in [MaterializationMode::Local, MaterializationMode::S3View] {
+        for materialization_mode in [
+            MaterializationMode::Local,
+            MaterializationMode::S3View,
+            MaterializationMode::GcsView,
+        ] {
             for after in [false, true] {
                 let directory = tempfile::tempdir().unwrap();
                 let database = directory.path().join("crash.duckdb");
                 let mut baseline = plan(identity());
-                if materialization_mode == MaterializationMode::S3View {
-                    baseline.identity.binding.canonical_root = "s3://test-bucket/grv-dev".into();
+                match materialization_mode {
+                    MaterializationMode::Local => {}
+                    MaterializationMode::S3View => {
+                        baseline.identity.binding.canonical_root =
+                            "s3://test-bucket/grv-dev".into();
+                    }
+                    MaterializationMode::GcsView => {
+                        baseline.identity.binding.canonical_root =
+                            "gs://test-bucket/grv-dev".into();
+                    }
                 }
                 baseline.tables[0].files =
                     vec![source(directory.path(), "old.parquet", vec![Some(1)])];
@@ -2831,7 +4480,9 @@ mod tests {
                     vec![Some(7), Some(8)],
                 )];
                 next.materialization_mode = materialization_mode;
-                if materialization_mode == MaterializationMode::S3View {
+                if materialization_mode.is_remote() {
+                    // Empty fixed views exercise durable effects/recovery without
+                    // source access, credentials or cloud calls.
                     next.tables[0].files.clear();
                 }
                 let path = directory.path().join("plan.json");
@@ -2857,6 +4508,9 @@ mod tests {
                     std::fs::remove_file(&next.tables[0].files[0].path).unwrap();
                 }
                 let mut store = PullStore::open(&database).unwrap();
+                if materialization_mode == MaterializationMode::GcsView {
+                    store.engine.begin_gcs_execution().unwrap();
+                }
                 match store.resolve(&next.identity).unwrap() {
                     PullResolution::Committed(receipt) if after => {
                         assert_eq!(receipt.committed_revision.get(), 2);
@@ -2901,6 +4555,299 @@ mod tests {
                     }
                     unexpected => panic!("unexpected crash outcome: {unexpected:?}"),
                 }
+            }
+        }
+    }
+    // Test-only bounded child-process guard: the child's stdout/stderr are
+    // discarded rather than captured (no --nocapture, no ambient output), the
+    // guard polls try_wait on a bounded deadline, and every failure path —
+    // including a panicking test — kills and waits the child in Drop.
+    #[cfg(feature = "native")]
+    struct ChildGuard {
+        child: Option<std::process::Child>,
+    }
+    #[cfg(feature = "native")]
+    impl ChildGuard {
+        fn spawn(command: &mut std::process::Command) -> io::Result<Self> {
+            command.stdout(std::process::Stdio::null());
+            command.stderr(std::process::Stdio::null());
+            Ok(Self {
+                child: Some(command.spawn()?),
+            })
+        }
+        fn wait_bounded(
+            &mut self,
+            limit: std::time::Duration,
+        ) -> io::Result<std::process::ExitStatus> {
+            let end = std::time::Instant::now() + limit;
+            loop {
+                let child = self
+                    .child
+                    .as_mut()
+                    .ok_or_else(|| io::Error::other("test child already reaped"))?;
+                if let Some(status) = child.try_wait()? {
+                    self.child = None;
+                    return Ok(status);
+                }
+                if std::time::Instant::now() >= end {
+                    // Test-harness timeout only. Drop kills and reaps before
+                    // any database recovery; timeout never counts as exit86.
+                    return Err(io::Error::new(
+                        io::ErrorKind::TimedOut,
+                        "crash test child exceeded watchdog",
+                    ));
+                }
+                std::thread::sleep(std::time::Duration::from_millis(10));
+            }
+        }
+    }
+    #[cfg(feature = "native")]
+    impl Drop for ChildGuard {
+        fn drop(&mut self) {
+            if let Some(child) = self.child.as_mut() {
+                let _ = child.kill();
+                let _ = child.wait();
+            }
+        }
+    }
+    #[cfg(feature = "native")]
+    #[test]
+    fn gcs_crash_test_child_guard_propagates_exit_and_reaps_timeout() {
+        let mut command = std::process::Command::new("/bin/sh");
+        command.args(["-c", "exit 86"]);
+        let mut guard = ChildGuard::spawn(&mut command).unwrap();
+        assert_eq!(
+            guard
+                .wait_bounded(std::time::Duration::from_secs(5))
+                .unwrap()
+                .code(),
+            Some(86)
+        );
+        assert!(guard.child.is_none());
+        let mut command = std::process::Command::new("/bin/sh");
+        command.args(["-c", "exec sleep 10"]);
+        let mut guard = ChildGuard::spawn(&mut command).unwrap();
+        let pid = guard.child.as_ref().unwrap().id();
+        assert_eq!(
+            guard
+                .wait_bounded(std::time::Duration::from_millis(30))
+                .unwrap_err()
+                .kind(),
+            io::ErrorKind::TimedOut
+        );
+        drop(guard);
+        // Only an owned test child is killed/reaped; no shipping native-stop
+        // claim and no PID reuse-sensitive kill after the child was reaped.
+        let result = unsafe { libc::waitpid(pid as i32, std::ptr::null_mut(), libc::WNOHANG) };
+        assert_eq!(result, -1);
+        assert_eq!(
+            io::Error::last_os_error().raw_os_error(),
+            Some(libc::ECHILD)
+        );
+    }
+    #[cfg(feature = "native")]
+    #[test]
+    #[ignore = "isolated crash child: requires the protected refresh fixture, the parent-written 0600 crash plan, the parent-owned database and selected OAuth acquired only inside this child; exits 86 at the commit boundary"]
+    fn native_live_gcs_nonempty_commit_crash_probe() {
+        // The parent driver sets this selector; the child never runs silently.
+        assert_eq!(
+            std::env::var("GRV_TEST_GCS_CRASH_CHILD").as_deref(),
+            Ok("1")
+        );
+        let fixtures = std::env::var("GRV_TEST_GCS_REFRESH_FIXTURES").unwrap();
+        let fixture = load_gcs_refresh_fixture(&fixtures).unwrap();
+        let plan_path = std::env::var("GRV_TEST_GCS_CRASH_PLAN").unwrap();
+        let plan: PullPlan = read_private_test_json(Path::new(&plan_path)).unwrap();
+        let database = std::env::var("GRV_TEST_GCS_CRASH_DATABASE").unwrap();
+        let after = match std::env::var("GRV_TEST_GCS_CRASH_AFTER").unwrap().as_str() {
+            "true" => true,
+            "false" => false,
+            _ => panic!("invalid crash side selector"),
+        };
+        // The closed plan must be exactly the parent's nonempty GcsView
+        // attempt: one table and the fixture's first+second descriptors,
+        // matched field for field (uri, size, SHA, validator, schema,
+        // version) by SourceFile equality, then admitted by plan.validate.
+        assert_eq!(plan.materialization_mode, MaterializationMode::GcsView);
+        assert_eq!(plan.identity.binding.canonical_root, fixture.root);
+        assert_eq!(plan.tables.len(), 1);
+        assert_eq!(plan.tables[0].files.len(), 2);
+        assert_eq!(
+            plan.tables[0].files[0],
+            refresh_source_file(fixture.file("first").unwrap(), contract())
+        );
+        assert_eq!(
+            plan.tables[0].files[1],
+            refresh_source_file(fixture.file("second").unwrap(), contract())
+        );
+        plan.validate().unwrap();
+        private_test_directory(Path::new(&database).parent().unwrap()).unwrap();
+        let mut store = PullStore::open(Path::new(&database)).unwrap();
+        // A fresh provider invocation for this owner: the selected credential
+        // is acquired here, in the child only, never passed through the
+        // environment, and no token appears in argv or raw output.
+        store
+            .configure_gcs_reader(&crate::gcs_config::GcsReader {
+                scope: fixture.root.clone(),
+                provider: "gcloud".into(),
+                account: fixture.account.clone(),
+                project: fixture.project.clone(),
+            })
+            .unwrap();
+        destination::crash_at_commit_for_test(&mut store, after);
+        store.apply(&plan).unwrap();
+        panic!("commit crash hook did not execute");
+    }
+    #[cfg(feature = "native")]
+    #[test]
+    #[ignore = "requires the reviewed frozen owned GCS refresh fixture and the protected crash plan/database paths; selected OAuth is acquired independently by child and postcommit verification owner; run by the dedicated parent driver"]
+    fn native_live_gcs_nonempty_precommit_and_postcommit_exit_recover_immutable_receipts() {
+        use std::io::Write;
+        use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+        let fixtures = std::env::var("GRV_TEST_GCS_REFRESH_FIXTURES").unwrap();
+        let fixture = load_gcs_refresh_fixture(&fixtures).unwrap();
+        let first = fixture.file("first").unwrap();
+        let second = fixture.file("second").unwrap();
+        for after in [false, true] {
+            // Independent repo-local 0700 workspace per crash side.
+            let directory = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).unwrap();
+            std::fs::set_permissions(directory.path(), std::fs::Permissions::from_mode(0o700))
+                .unwrap();
+            let database = directory.path().join("crash.duckdb");
+            let mut baseline = plan(identity());
+            baseline.materialization_mode = MaterializationMode::GcsView;
+            baseline.identity.binding.canonical_root = fixture.root.clone();
+            let baseline_receipt = {
+                let mut store = PullStore::open(&database).unwrap();
+                // Source-free GCS metadata activation: no credential, no HTTP.
+                store.engine.begin_gcs_execution().unwrap();
+                let receipt = store.apply(&baseline).unwrap();
+                assert!(store.target_is_view("app", "rows").unwrap());
+                drop(store);
+                receipt
+            };
+            let mut next = baseline.clone();
+            next.identity.attempt_id = Uuid::v4();
+            next.identity.request_sha256 = Digest::new(format!("{:064x}", 2u64)).unwrap();
+            next.committed_revision = U64::new(2).unwrap();
+            next.generation_id = Uuid::v4();
+            next.tables[0].files = vec![
+                refresh_source_file(first, contract()),
+                refresh_source_file(second, contract()),
+            ];
+            next.validate().unwrap();
+            // The child re-reads this closed record; it is the only plan
+            // channel between the two processes.
+            let private = directory.path().join("crash-plan");
+            std::fs::create_dir(&private).unwrap();
+            std::fs::set_permissions(&private, std::fs::Permissions::from_mode(0o700)).unwrap();
+            let plan_path = private.join("plan.json");
+            {
+                let mut file = std::fs::OpenOptions::new()
+                    .write(true)
+                    .create_new(true)
+                    .mode(0o600)
+                    .open(&plan_path)
+                    .unwrap();
+                file.write_all(&serde_json::to_vec(&next).unwrap()).unwrap();
+                file.sync_all().unwrap();
+            }
+            let mut command = std::process::Command::new(std::env::current_exe().unwrap());
+            command.args([
+                "--ignored",
+                "--exact",
+                "pull::tests::native_live_gcs_nonempty_commit_crash_probe",
+                "--test-threads=1",
+            ]);
+            command.env("GRV_TEST_GCS_REFRESH_FIXTURES", &fixtures);
+            command.env("GRV_TEST_GCS_CRASH_PLAN", &plan_path);
+            command.env("GRV_TEST_GCS_CRASH_DATABASE", &database);
+            command.env("GRV_TEST_GCS_CRASH_AFTER", after.to_string());
+            command.env("GRV_TEST_GCS_CRASH_CHILD", "1");
+            let mut guard = ChildGuard::spawn(&mut command).unwrap();
+            let status = guard
+                .wait_bounded(std::time::Duration::from_secs(90))
+                .unwrap_or_else(|_| {
+                    panic!("crash child failed its bounded test wait (after={after})")
+                });
+            assert_eq!(
+                status.code(),
+                Some(86),
+                "crash child must exit 86 at the commit boundary (after={after})"
+            );
+            drop(guard);
+            let mut store = PullStore::open(&database).unwrap();
+            if after {
+                // The post-COMMIT exit left a committed receipt: source-free
+                // resolution and replay need no reader, token or HTTP.
+                let receipt = match store.resolve(&next.identity).unwrap() {
+                    PullResolution::Committed(receipt) => receipt,
+                    unexpected => panic!("unexpected crash outcome: {unexpected:?}"),
+                };
+                assert_eq!(receipt.committed_revision.get(), 2);
+                assert_eq!(receipt.table_counts, json!({"rows": "2"}));
+                assert_eq!(store.apply(&next).unwrap(), receipt);
+                // The committed view is nonempty, so a source-free owner
+                // cannot read its rows. Only a fresh provider invocation (a
+                // new lease token on this owner, no renewal of the child's)
+                // may run the admitted read after the source-free proofs; the
+                // child's actual DESCRIBE/count already fixed the receipt at
+                // two rows.
+                store
+                    .configure_gcs_reader(&crate::gcs_config::GcsReader {
+                        scope: fixture.root.clone(),
+                        provider: "gcloud".into(),
+                        account: fixture.account.clone(),
+                        project: fixture.project.clone(),
+                    })
+                    .unwrap();
+                // Fresh connection's guard requires explicit relation
+                // admission even though durable ownership/receipt is valid.
+                store.engine.authorize_relation("app", "rows").unwrap();
+                let files = vec![
+                    next.tables[0].files[0].remote.as_ref().unwrap().clone(),
+                    next.tables[0].files[1].remote.as_ref().unwrap().clone(),
+                ];
+                assert_eq!(
+                    store
+                        .engine
+                        .remote_query(&files, "SELECT id::BIGINT FROM app.rows ORDER BY id")
+                        .unwrap(),
+                    vec![vec![Some("111".into())], vec![Some("222".into())]]
+                );
+                drop(store);
+                // A later EMPTY GcsView attempt advances the mutable
+                // checkpoint source-free: a fresh owner with metadata-only
+                // activation, no reader, no credential, no cloud call.
+                let mut later = next.clone();
+                later.identity.attempt_id = Uuid::v4();
+                later.identity.request_sha256 = Digest::new(format!("{:064x}", 3u64)).unwrap();
+                later.committed_revision = U64::new(3).unwrap();
+                later.generation_id = Uuid::v4();
+                later.tables[0].files.clear();
+                let mut store = PullStore::open(&database).unwrap();
+                store.engine.begin_gcs_execution().unwrap();
+                let later_receipt = store.apply(&later).unwrap();
+                assert_eq!(later_receipt.table_counts, json!({"rows": "0"}));
+                assert!(destination::inspect_target_for_test(&mut store, "rows").is_empty());
+                // The historical nonempty receipt is immutable: replay returns
+                // it without reapplying, and the latest view stays the empty
+                // one, not rewound.
+                assert_eq!(store.apply(&next).unwrap(), receipt);
+                assert!(destination::inspect_target_for_test(&mut store, "rows").is_empty());
+            } else {
+                // The pre-COMMIT exit left the baseline committed and the new
+                // attempt uncommitted; the target is still the empty view and
+                // the failed attempt is never retried.
+                assert_eq!(
+                    store.resolve(&next.identity).unwrap(),
+                    PullResolution::NotCommitted
+                );
+                assert_eq!(
+                    store.resolve(&baseline.identity).unwrap(),
+                    PullResolution::Committed(baseline_receipt.clone())
+                );
+                assert!(destination::inspect_target_for_test(&mut store, "rows").is_empty());
             }
         }
     }
@@ -3191,6 +5138,39 @@ mod tests {
         let mut store = PullStore::open(&database).unwrap();
         assert_eq!(
             store.resolve(&plan.identity).unwrap(),
+            PullResolution::Uninitialized
+        );
+    }
+    #[cfg(feature = "native")]
+    #[test]
+    fn native_pull_apply_cancel_before_dispatch_leaves_no_effects_and_no_false_not_committed() {
+        use crate::{lock::WorkspaceLock, pull_worker::PullWorker};
+        use std::sync::{Arc, atomic::AtomicBool};
+        let directory = tempfile::tempdir().unwrap();
+        let database = directory.path().join("predispatch-apply.duckdb");
+        let identity = identity();
+        let plan = plan(identity.clone());
+        let mut owner = PullWorker::open(&database, false).unwrap();
+        assert!(WorkspaceLock::acquire(&database).is_err());
+        // Cancellation is set before the apply command is dispatched to the owner.
+        let stop = Arc::new(AtomicBool::new(true));
+        let error = owner.apply(plan, stop.as_ref()).unwrap_err();
+        assert!(
+            matches!(
+                error,
+                PullError::OutcomeUnknown(ref message) if message.contains("stopped before dispatch")
+            ),
+            "{error:?}"
+        );
+        // The owner thread has joined and released the workspace lock.
+        assert!(WorkspaceLock::acquire(&database).is_ok());
+        drop(owner);
+        // The apply closure never ran: the workspace is still uninitialized, so a
+        // fresh source-free resolution reports the true absence, never a false
+        // NotCommitted, and no effect is re-attempted.
+        let mut store = PullStore::open(&database).unwrap();
+        assert_eq!(
+            store.resolve(&identity).unwrap(),
             PullResolution::Uninitialized
         );
     }

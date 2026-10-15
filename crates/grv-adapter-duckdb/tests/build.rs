@@ -91,6 +91,304 @@ fn directory() -> tempfile::TempDir {
     dir
 }
 #[test]
+fn direct_gcs_runtimes_refuse_second_connection_before_new_database_and_keep_first() {
+    let dir = directory();
+    let first = dir.path().join("first.duckdb");
+    let second = dir.path().join("second.duckdb");
+    let locator = |path: &Path| {
+        grv_adapter_duckdb::binding::locate_pull(json!({"database":path.to_str().unwrap()}))
+            .unwrap()
+    };
+    let mut build = grv_adapter_duckdb::build_runtime::Runtime::default();
+    let bound = build
+        .bind(
+            locator(&first),
+            Some("gs://test-bucket/build".into()),
+            None,
+            None,
+            Mode::ManagedBuild,
+            &Resources::default(),
+        )
+        .unwrap();
+    let error = build
+        .bind(
+            locator(&second),
+            Some("file:///private/grv-build-test".into()),
+            None,
+            None,
+            Mode::ManagedBuild,
+            &Resources::default(),
+        )
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::InvalidDeclaration);
+    assert!(!second.exists());
+    assert!(build.contains(&bound.handle));
+    build.stop().unwrap();
+    let mut pull = grv_adapter_duckdb::pull_runtime::Runtime::default();
+    let bound = pull
+        .bind(
+            locator(&first),
+            Some("gs://test-bucket/build".into()),
+            None,
+            None,
+            &Resources::default(),
+        )
+        .unwrap();
+    let error = pull
+        .bind(
+            locator(&second),
+            Some("gs://test-bucket/build".into()),
+            None,
+            None,
+            &Resources::default(),
+        )
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::InvalidDeclaration);
+    assert!(!second.exists());
+    assert!(pull.contains(&bound.handle));
+    pull.stop().unwrap();
+    let mut local = grv_adapter_duckdb::build_runtime::Runtime::default();
+    let third = dir.path().join("third.duckdb");
+    let fourth = dir.path().join("fourth.duckdb");
+    local
+        .bind(
+            locator(&third),
+            Some("file:///private/grv-build-test".into()),
+            None,
+            None,
+            Mode::ManagedBuild,
+            &Resources::default(),
+        )
+        .unwrap();
+    local
+        .bind(
+            locator(&fourth),
+            Some("file:///private/grv-build-test".into()),
+            None,
+            None,
+            Mode::ManagedBuild,
+            &Resources::default(),
+        )
+        .unwrap();
+    assert!(third.exists() && fourth.exists());
+    local.stop().unwrap();
+}
+#[test]
+fn gcs_selected_sdk_session_reopen_preserves_exact_identity_and_durable_candidate() {
+    use grv_adapter_wire::{Channel, state::Role};
+    use std::os::unix::net::UnixStream;
+    fn connect(
+        path: &Path,
+        root: &str,
+        workspace: Uuid,
+    ) -> (
+        Channel<UnixStream>,
+        std::thread::JoinHandle<Result<(), grv_adapter_sdk::SdkError>>,
+        Handle,
+    ) {
+        let (parent, child) = UnixStream::pair().unwrap();
+        parent
+            .set_read_timeout(Some(std::time::Duration::from_secs(10)))
+            .unwrap();
+        let server = std::thread::spawn(move || {
+            grv_adapter_sdk::serve(grv_adapter_duckdb::process::DuckDbAdapter::default(), child)
+        });
+        let resources = Resources::default();
+        let mut channel = Channel::new(
+            parent,
+            Role::Parent,
+            resources.max_batch_bytes.get() as usize,
+        );
+        channel
+            .send(
+                &Frame::Hello {
+                    interface_versions: vec![Req::new(1).unwrap()],
+                    core: CoreIdentity {
+                        name: "grv".into(),
+                        version: "0.2.0".into(),
+                    },
+                    attempt: Uuid::v4(),
+                    resources: resources.clone(),
+                },
+                &[],
+            )
+            .unwrap();
+        assert!(matches!(
+            channel.receive().unwrap().frame,
+            Frame::Identified { .. }
+        ));
+        channel
+            .send(
+                &Frame::Ready {
+                    interface_version: Req::new(1).unwrap(),
+                    binding_schema_version: Req::new(1).unwrap(),
+                    resources,
+                },
+                &[],
+            )
+            .unwrap();
+        let locator = grv_adapter_duckdb::binding::locate_pull(json!({"database":path})).unwrap();
+        channel
+            .send(
+                &Frame::BindConnection {
+                    req: Req::new(1).unwrap(),
+                    expected_identity: locator.identity.clone(),
+                    locator: Doc::inline(locator),
+                    root: Some(root.into()),
+                    expected_workspace_id: Some(workspace),
+                    mode: Mode::ManagedBuild,
+                },
+                &[],
+            )
+            .unwrap();
+        let Frame::BindResult { handle, .. } = channel.receive().unwrap().frame else {
+            panic!("GCS bound");
+        };
+        (channel, server, handle)
+    }
+    fn exchange(channel: &mut Channel<UnixStream>, frame: Frame) -> Frame {
+        channel.send(&frame, &[]).unwrap();
+        channel.receive().unwrap().frame
+    }
+    fn close(
+        mut channel: Channel<UnixStream>,
+        server: std::thread::JoinHandle<Result<(), grv_adapter_sdk::SdkError>>,
+        id: u64,
+    ) {
+        assert!(matches!(
+            exchange(
+                &mut channel,
+                Frame::Close {
+                    req: Req::new(id).unwrap()
+                }
+            ),
+            Frame::CloseResult { .. }
+        ));
+        server.join().unwrap().unwrap();
+    }
+    let dir = directory();
+    let path = dir.path().join("gcs-sdk-recovery.duckdb");
+    let mut fixed = request(&path);
+    fixed.identity.root = "gs://test-bucket/session-recovery".into();
+    let (mut channel, server, handle) = connect(
+        &path,
+        &fixed.identity.root,
+        fixed.identity.workspace_id.clone(),
+    );
+    let Frame::BuildDiscovered {
+        discovery: Doc::Inline(discovery),
+        ..
+    } = exchange(
+        &mut channel,
+        Frame::DiscoverBuild {
+            req: Req::new(2).unwrap(),
+            handle: handle.clone(),
+            payload: Doc::inline(fixed.clone()),
+        },
+    )
+    else {
+        panic!("discovery");
+    };
+    let Frame::BuildPrepared {
+        session: Doc::Inline(session),
+        ..
+    } = exchange(
+        &mut channel,
+        Frame::PrepareBuild {
+            req: Req::new(3).unwrap(),
+            handle: handle.clone(),
+            payload: Doc::inline(preparation(discovery.inline)),
+        },
+    )
+    else {
+        panic!("prepared");
+    };
+    for id in [4, 5] {
+        let Frame::BuildOpened {
+            record: Doc::Inline(record),
+            ..
+        } = exchange(
+            &mut channel,
+            Frame::OpenBuild {
+                req: Req::new(id).unwrap(),
+                handle: handle.clone(),
+                payload: Doc::inline(fixed.identity.clone()),
+            },
+        )
+        else {
+            panic!("same identity reopen");
+        };
+        assert_eq!(record.inline.session, session.inline);
+        assert_eq!(record.inline.state, BuildState::Prepared);
+    }
+    let Frame::BuildFinished {
+        result: Doc::Inline(result),
+        ..
+    } = exchange(
+        &mut channel,
+        Frame::ExecuteBuild {
+            req: Req::new(6).unwrap(),
+            handle: handle.clone(),
+            payload: Doc::inline(execute(&session.inline)),
+        },
+    )
+    else {
+        panic!("finished");
+    };
+    let completion = result.inline.completion.unwrap();
+    close(channel, server, 7);
+    let (mut channel, server, handle) = connect(
+        &path,
+        &fixed.identity.root,
+        fixed.identity.workspace_id.clone(),
+    );
+    let Frame::BuildOpened {
+        record: Doc::Inline(record),
+        ..
+    } = exchange(
+        &mut channel,
+        Frame::OpenBuild {
+            req: Req::new(2).unwrap(),
+            handle: handle.clone(),
+            payload: Doc::inline(fixed.identity.clone()),
+        },
+    )
+    else {
+        panic!("restart reopen");
+    };
+    assert_eq!(record.inline.session, session.inline);
+    assert_eq!(record.inline.candidate, Some(completion.clone()));
+    let digest = completion.digest().unwrap();
+    assert!(
+        matches!(exchange(&mut channel,Frame::AcceptBuildCompletion{req:Req::new(3).unwrap(),handle:handle.clone(),session_id:session.inline.session_id.clone(),completion:Doc::inline(completion.clone())}),Frame::CompletionAccepted{completion_sha256,..} if completion_sha256==digest)
+    );
+    let mut changed = fixed.identity.clone();
+    changed.attempt_id = Uuid::v4();
+    assert!(matches!(
+        exchange(
+            &mut channel,
+            Frame::OpenBuild {
+                req: Req::new(4).unwrap(),
+                handle,
+                payload: Doc::inline(changed)
+            }
+        ),
+        Frame::Error { .. }
+    ));
+    close(channel, server, 5);
+    let mut store = BuildStore::open(
+        &path,
+        fixed.identity.root.clone(),
+        Some(fixed.identity.workspace_id.clone()),
+        &Resources::default(),
+    )
+    .unwrap();
+    let record = store.open_session(&fixed.identity).unwrap();
+    assert_eq!(record.session, session.inline);
+    assert_eq!(record.completion, Some(completion));
+    assert_eq!(record.completion_sha256, Some(digest));
+}
+#[test]
 fn managed_zero_rows_completion_acceptance_reopen_export_and_cleanup_preserve_evidence() {
     let dir = directory();
     let path = dir.path().join("build.duckdb");
@@ -203,6 +501,39 @@ fn managed_zero_rows_completion_acceptance_reopen_export_and_cleanup_preserve_ev
     assert_eq!(record.outcome, Some(outcome));
     assert_eq!(record.completion, Some(completion));
     assert_eq!(record.completion_sha256, Some(digest));
+}
+#[test]
+fn source_free_gcs_build_export_reserves_encoded_and_decoded_source_together() {
+    let dir = directory();
+    let path = dir.path().join("gcs-source-export.duckdb");
+    let mut request = request(&path);
+    request.identity.root = "gs://test-bucket/source-export".into();
+    let resources = Resources::default();
+    let mut store = BuildStore::open(
+        &path,
+        request.identity.root.clone(),
+        Some(request.identity.workspace_id.clone()),
+        &resources,
+    )
+    .unwrap();
+    let discovery = store.discover(request.clone()).unwrap();
+    let session = store.prepare(preparation(discovery)).unwrap();
+    let result = store.execute(execute(&session)).unwrap();
+    let completion = result.completion.unwrap();
+    let digest = store.accept(&request.identity, completion).unwrap();
+    store.start_export(&request.identity, &digest).unwrap();
+    let reduced = Resources {
+        max_source_unit_bytes: U64::new(2 * 1024 * 1024).unwrap(),
+        ..resources
+    };
+    let mut count = 0;
+    while let Some((bytes, rows)) = store.fetch_export(0, &reduced).unwrap() {
+        grv_adapter_wire::ipc::decode(&bytes, rows.get()).unwrap();
+        count += rows.get();
+    }
+    assert_eq!(count, 2);
+    assert!(store.fetch_export(1, &reduced).unwrap().is_none());
+    store.finish_export().unwrap();
 }
 #[test]
 fn second_query_failure_is_incomplete_without_candidate_or_reexecution() {

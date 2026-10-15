@@ -1,0 +1,283 @@
+{
+  "actual_transaction_cases": [
+    "WAL write IOException during explicit COMMIT; revoked and orderly reopened onlyrow42",
+    "WAL sync IOException during explicit COMMIT; revoked and orderly reopened onlyrow42",
+    "attached database invalidated while active autocommit stream; actual MetaTransaction rollback error witness/revocation/reopen"
+  ],
+  "allocation_coverage": "default+DBConfig allocator request bytes; excludesSTLotherallocatorsheadersRSS",
+  "allocation_log": {
+    "path": "/tmp/grv-task37-admission.txt",
+    "sha256": "ad6be17c218020fc209d14018a3a1bd89f09f9f81d0a76774318e3487a2a37b7"
+  },
+  "allocation_observations": [
+    {
+      "baseline": 40294400,
+      "largest_request": 262144,
+      "refused": true,
+      "tracked_peak": 40560640,
+      "trial": 0
+    },
+    {
+      "baseline": 40294400,
+      "largest_request": 8388608,
+      "refused": true,
+      "tracked_peak": 57149456,
+      "trial": 1
+    },
+    {
+      "baseline": 40294400,
+      "largest_request": 67108864,
+      "refused": true,
+      "tracked_peak": 174589968,
+      "trial": 2
+    },
+    {
+      "baseline": 40294400,
+      "largest_request": 67108864,
+      "refused": true,
+      "tracked_peak": 107522048,
+      "trial": 3
+    },
+    {
+      "admission_trial": 0,
+      "baseline": 40294400,
+      "largest_request": 262144,
+      "result_bytes": 33,
+      "tracked_peak": 40560640
+    },
+    {
+      "admission_trial": 1,
+      "baseline": 40294400,
+      "largest_request": 262144,
+      "result_bytes": 34,
+      "tracked_peak": 40560640
+    },
+    {
+      "admission_trial": 2,
+      "baseline": 40294400,
+      "largest_request": 262144,
+      "result_bytes": 16,
+      "tracked_peak": 40560640
+    },
+    {
+      "admission_trial": 3,
+      "baseline": 40294400,
+      "largest_request": 262144,
+      "result_bytes": 0,
+      "tracked_peak": 40560640
+    },
+    {
+      "baseline": 520192,
+      "largest_request": 40001536,
+      "reopened_admission_trial": 0,
+      "result_bytes": 33,
+      "tracked_peak": 81027080
+    },
+    {
+      "baseline": 520192,
+      "largest_request": 40001536,
+      "reopened_admission_trial": 1,
+      "result_bytes": 34,
+      "tracked_peak": 81094688
+    },
+    {
+      "baseline": 520192,
+      "largest_request": 40001536,
+      "reopened_admission_trial": 2,
+      "result_bytes": 16,
+      "tracked_peak": 81010708
+    },
+    {
+      "baseline": 520192,
+      "largest_request": 40001536,
+      "reopened_admission_trial": 3,
+      "result_bytes": 0,
+      "tracked_peak": 81135640
+    },
+    {
+      "baseline": 520192,
+      "engine_limit_trial": 0,
+      "largest_request": 262144,
+      "memory_limit_bytes": 16777216,
+      "refused": true,
+      "tracked_peak": 1163264
+    },
+    {
+      "baseline": 520192,
+      "engine_limit_trial": 1,
+      "largest_request": 67108864,
+      "memory_limit_bytes": 16777216,
+      "refused": true,
+      "tracked_peak": 134815760
+    },
+    {
+      "baseline": 520192,
+      "largest_admitted_request": 262144,
+      "largest_rejected_request": 40001536,
+      "quota_bytes": 16777216,
+      "refused": true,
+      "request_quota_trial": 0,
+      "tracked_peak": 1163264
+    },
+    {
+      "baseline": 520192,
+      "largest_admitted_request": 262144,
+      "largest_rejected_request": 67108864,
+      "quota_bytes": 16777216,
+      "refused": true,
+      "request_quota_trial": 1,
+      "tracked_peak": 786432
+    }
+  ],
+  "approved_direction": {
+    "decision": "spec/gcs-in-process-execution-decision.md",
+    "execution": "in-process DuckDB within adapter; implementation transition pending",
+    "hard_native_deadline": "not promised; cooperative cancellation and late refusal, no finite overrun guarantee",
+    "helper_request_quota_production_adoption": "declined",
+    "pause_after_memory_scope": true,
+    "resource_tasks_complete": false,
+    "retained_requirements": [
+      "boundedtransfer/decodedmetadata",
+      "exactauthority",
+      "auth/tokenprotections",
+      "mandatoryfullpreparation",
+      "honestblockedowner/unknownoutcomes",
+      "no blind effectretry"
+    ],
+    "total_engine_memory": "DuckDB setting partial; no hard universalengineheap/RSSguarantee",
+    "transition_task": "45"
+  },
+  "artifacts": {
+    "grv_metadata_allocation_proof": {
+      "path": "/Users/jiacao/.grv-native-work/cmake/grv_metadata_allocation_proof",
+      "sha256": "51acff7860fc559947a1eed6492f27a4186165bb6e048cbd6cdb729cddd314de"
+    },
+    "grv_transaction_fault_proof": {
+      "path": "/Users/jiacao/.grv-native-work/cmake/grv_transaction_fault_proof",
+      "sha256": "99526c9ed111071cbed75768573d750418dde6cc74d7be4958486c150dc786e6"
+    }
+  },
+  "commit_outcome_before_orderly_close": "independent connection with faults still armed observes only42",
+  "ctest": {
+    "failed": 0,
+    "log": "/tmp/grv-task43-ctest.txt",
+    "passed": 12,
+    "sha256": "eb9f43c2eeb060ff3c1689eb77a029a71613f4ff0bffae7e6b8f10f84790dc23"
+  },
+  "durable_admission": {
+    "pause_requested_after_memory_completion": true,
+    "scope": "selected GCSisolated receiptbinding/session VARCHAR reads; localS3unchanged",
+    "total_memory_bound_proved": false
+  },
+  "failed_live_validator": {
+    "cleanup": {
+      "all_versions_inventory_empty": true,
+      "bucket": "grv-httpfs-oauth-2368a09f46d04e5489a9706e",
+      "bucket_absence_http_status": 404,
+      "deleted_object_generations": 1,
+      "iam_changes": false,
+      "key_creation": false,
+      "organization_policy_changes": false
+    },
+    "directory": "~/grv-shipping-gcs-s2gqhiii",
+    "sha256": {
+      "cleanup.json": "dec9ed75a3465f9e12ad1a3e2e016f3a71c30d2f2a14bad2f5d90d3adeaabe16",
+      "native_live_gcs_guarded_pull_refresh_and_source_free_replay.txt": "59ad1dd4a0c43a83e19e0d713b944a04869110100767697f8ed606baa938838e",
+      "state.json": "0f9c6d3bed848057258cb8f298cc42422e2642d1cdf0708d3fea1974b64f5552"
+    }
+  },
+  "limitations": [
+    "native rowhistory not GRVimmutable receipts",
+    "orderly owner teardown not crash-at-WALboundary recovery",
+    "invalidateddatabase rollback not full undo I/O faultmatrix",
+    "allocator forwarded request bytes not wholeheap RSS",
+    "trusted metadata test SQL not directshipping userdeclaration reachability",
+    "32MiB admission still candidate; upstreamgeneratedsourceexpr allocations separate unproved"
+  ],
+  "live_after_validator_fix": {
+    "cleanup": {
+      "all_versions_inventory_empty": true,
+      "bucket": "grv-httpfs-oauth-e26f8c04dcaf4cf9b19a81d9",
+      "bucket_absence_http_status": 404,
+      "deleted_object_generations": 1,
+      "iam_changes": false,
+      "key_creation": false,
+      "organization_policy_changes": false
+    },
+    "directory": "~/grv-shipping-gcs-73ki_c3w",
+    "sha256": {
+      "cleanup.json": "6441f3584c1bbdb86fa4a0b6bf21aec6bf8a462cbfe1dffd8ee9de9cf300bfd9",
+      "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup.txt": "2357df5644cd9bf99d5c1d202ab81e8aa66d15ce77033586c606cd7bc36057a6",
+      "native_live_gcs_guarded_pull_refresh_and_source_free_replay.txt": "f59349577b4d4b338eeb08f2a7d0a2e05fa87596bf8c14292553b737801a03a7",
+      "state.json": "1d3548701671ea584693a5f5c693fedba2de7ebe008022382bf2c1488efb631b"
+    }
+  },
+  "malformed_durable_row_case": "40millionbyte malformedexisting _grv.pull_attempts receipt LIMIT2 allocates67MiB beforefieldrefusal; native shape only notfulldiscoveryroute",
+  "native_guard_revision": 5,
+  "previous_allocation_log": {
+    "path": "/tmp/grv-task37-allocation.txt",
+    "sha256": "52e3cdf43214e2ffc69754e2b9cde2d40c01f189dedae60ae0a83fa5c494733b"
+  },
+  "previous_default_only_allocation_observations": [
+    {
+      "baseline": 253952,
+      "largest_request": 262144,
+      "refused": true,
+      "tracked_peak": 516096,
+      "trial": 0
+    },
+    {
+      "baseline": 253952,
+      "largest_request": 8388608,
+      "refused": true,
+      "tracked_peak": 17063952,
+      "trial": 1
+    },
+    {
+      "baseline": 253952,
+      "largest_request": 67108864,
+      "refused": true,
+      "tracked_peak": 134504464,
+      "trial": 2
+    },
+    {
+      "baseline": 253952,
+      "largest_request": 67108864,
+      "refused": true,
+      "tracked_peak": 67411968,
+      "trial": 3
+    }
+  ],
+  "research_only_request_quota": {
+    "decision_required": "production dedicated-helper allocation policy/budget and supportedtargets",
+    "exclusions": ["STL", "runtime", "independentextensionallocator", "mallocheaders", "RSS", "callerretaineddocuments"],
+    "measured_paths": ["defaultAllocator", "DBConfigAllocator"],
+    "reallocation": "conservativeold+new reservation",
+    "shipping_adoption": false,
+    "test_budget_bytes": 16777216
+  },
+  "review": {
+    "fault_seam_research": "cd5cba91-2629-446 error/no result; not evidence",
+    "rollback_error_provenance": "nonthrowing observer confirms exact invalidation reason delivered by QueryEnd",
+    "transaction_proof": "aa41ff49-e32a-473 scoped support, orderly-close/provenance limits retained and addressed by additional assertions"
+  },
+  "shipping_artifacts_modified_for_this_slice": false,
+  "source_sha256": {
+    "crates/grv-adapter-duckdb/native/CMakeLists.txt": "9b30e38f58efc3554126cddfc61cd6b572468a5227b5a40a374bf2aee5df7abe",
+    "crates/grv-adapter-duckdb/native/metadata_allocation_proof.cpp": "78105a0efdd7a2c0adee4955512852ccdd209549f082b0655b7355902b2896b7",
+    "crates/grv-adapter-duckdb/native/pull.inc": "8460387ca4932c79f189bf99fc7d8247819a14ee828c00a481ff1c1b633db24f",
+    "crates/grv-adapter-duckdb/native/transaction_fault_proof.cpp": "30dcef1a2d409644c4efc889ce7df6d8dcbaa665b63f8902ef33fca041173459",
+    "crates/grv-adapter-duckdb/src/build.rs": "163a5252e58732accb3a2cedb8f2c19f892a31cc252eacd389a92822d3759729",
+    "crates/grv-adapter-duckdb/src/native.rs": "39d8ac87547fcbf53a84a2fc2780bbc988aa193311326b8c8ad94efef772131e",
+    "crates/grv-adapter-duckdb/src/pull.rs": "e60ad4ba6860e3655afc16d985a1346178eafecb66369aa222f762b44ed65292"
+  },
+  "status": "partial native resource/fault checkpoint; not release acceptance",
+  "validation": {
+    "default_only_results_superseded_for_currentcoverage_noterased": true,
+    "explicit_durable_slices_passed": 2,
+    "explicit_recovery_passed": 7,
+    "native_ignored": 24,
+    "native_passed": 114,
+    "strict_clippy": "passed"
+  }
+}

@@ -390,6 +390,47 @@ mod tests {
         }
     }
     #[test]
+    fn stale_materialization_schema_refuses_gcs_without_mode_reinterpretation() {
+        let registry = Registry {
+            schema_bundle: json!({"$schema":"https://json-schema.org/draft/2020-12/schema","$defs":{"options":{"type":"object","properties":{"materialization":{"enum":["local","s3-view"]}},"required":["materialization"],"additionalProperties":false}}}),
+            points: vec![grv_adapter_api::PointDescriptor {
+                point: "options".into(),
+                mode: Mode::Pull,
+                schema_pointer: "/$defs/options".into(),
+                has_default: false,
+                default_value: Value::Null,
+            }],
+        };
+        let checked = CheckedRegistry::recorded(registry).unwrap();
+        for supported in ["local", "s3-view"] {
+            checked
+                .validate_point(
+                    Mode::Pull,
+                    "options",
+                    &json!({"materialization":supported}),
+                    ErrorCode::InvalidArgument,
+                )
+                .unwrap();
+        }
+        assert_eq!(
+            checked
+                .validate_point(
+                    Mode::Pull,
+                    "options",
+                    &json!({"materialization":"gcs-view"}),
+                    ErrorCode::InvalidArgument
+                )
+                .unwrap_err()
+                .code,
+            ErrorCode::InvalidArgument
+        );
+        // Recorded schema stays exactly stale: no automatic extension/migration.
+        assert_eq!(
+            checked.registry.schema_bundle["$defs"]["options"]["properties"]["materialization"]["enum"],
+            json!(["local", "s3-view"])
+        );
+    }
+    #[test]
     fn business_property_names_and_default_annotations_are_not_schema_references() {
         let registry = Registry {
             schema_bundle: json!({"$schema":"https://json-schema.org/draft/2020-12/schema","$defs":{

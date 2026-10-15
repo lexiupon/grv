@@ -13,11 +13,22 @@ GRV_DUCKDB_NATIVE_LIB_DIR=/tmp/grv-duckdb-native/cmake cargo clippy -p grv-adapt
 The native library owns guarded initial/nested binding and automatic rebind,
 including bind-time custom casts and template callbacks. User SQL only resolves
 declared logical input bindings and trusted built-in callbacks. Internal table
-access uses separately authorized private relations. The engine has a 512-MiB
-memory bound and a 16-GiB temporary staging quota, separate from the 32-MiB
-source and scratch bounds and four 8-MiB transfer credits.
+access uses separately authorized private relations. The engine has a configured 512-MiB
+DuckDB memory_limit and a 16-GiB temporary staging quota, separate from source/
+scratch budgets and four 8-MiB transfer credits. DuckDB's setting does **not**
+cap every engine/extension allocation or total RSS; transfer buffering has its
+own bounds.
 
 ## Keyless GCS implementation foundation (not advertised)
+
+GCS now executes in-process within this adapter, matching local/S3. The
+additional GCS native-owner executable and IPC/package/override requirements
+have been removed; historical source is archived under prototypes. Requalification
+of the new path is still in progress. No hard native stop/join/rollback
+at lease expiry or total engine/RSS cap is promised. See the
+[decision and explicit limitations](../../spec/gcs-in-process-execution-decision.md).
+Helper-only allocation-policy experiments will not be adopted as production
+requirements. Transfer-buffer bounds and fail-closed recovery remain required.
 
 `gcs_config` loads the owner-only engine-adjacent `.grv-gcs-read.json` selector
 without auth/network, requires explicit gcloud account/project and canonical
@@ -34,9 +45,25 @@ Its synthetic two-origin proof runs with
 `bash prototypes/cloud-views/httpfs/policy_probe.sh`. The redirect target must
 receive no request under policy; the unhardened stock control follows it.
 
-Guard revision 4 integrates exact read-only HTTPS admission, per-handle epochs,
-file-operation and request-delegate deadline checks, a computation interrupt
-watchdog, transactional pull/replay and held external-build dispatch. Revision 3's
+Native guard revision6 retains exact read-only HTTPS admission, per-handle
+epochs, request/content checks and bounded metadata streaming. Discovery BEGIN
+and later GCS setup remain on the same connection; no snapshot handoff, helper
+IPC or descriptor remapping. Verified local inputs use the existing retained
+read-only descriptor scanner directly, without reopening source paths.
+GCS still admits **32 MiB scratch** and **2 MiB source unit** before execution/
+authentication; this conservative reserve bounds transfer/metadata handling,
+not total engine allocation or RSS. Decoded metadata has an8MiB logical storage
+cap, command strings an aggregate2MiB cap, encoded results at most2MiB. Local/S3
+admission is unchanged. The in-process reserve/high-water qualification remains
+open; no helper allocator policy is installed.
+
+A joined per-call watcher requests supported DuckDB interruption at the original
+monotonic lease; it cannot forcibly stop stock synchronous HTTP. Expired/cancelled
+calls refuse late success. ROLLBACK remains available after the native call
+returns. Unproved setup cleanup quarantines the connection (no process _exit),
+with synchronous owner-thread teardown/reopen under retained workspace ownership
+before recovery. Close/reopen alone is not an immutable-outcome resolution.
+Revision 3's
 engine request hook was bypassed by signed HTTPFS's private methods; its mock
 proof does not qualify that shipping boundary. Revision 4 binds pinned
 HTTPFSParams to a virtual policy delegate forwarding to signed stock **httplib**.
@@ -44,8 +71,10 @@ Stock curl has no hard transfer deadline and is not admitted for bounded GCS mod
 The delegate removes cached clients, bounds remaining timeout and checks GET
 content delivery. Signed-extension direct/redirect/stalled-HEAD/trickling-GET
 proofs pass, but continuously trickling HEAD headers exceed the lease: stock
-httplib timeouts are not absolute either. Hard in-flight owner stop/join,
-request-parameter isolation and failed-setup cleanup remain release blockers.
+httplib timeouts are not absolute either. Hard in-flight owner stop/join is now
+an explicitly accepted limitation, not a passing proof. New in-process path,
+request isolation, failed-setup cleanup and honest cancellation/recovery remain
+release qualification work.
 A ten-trial shipping-scanner GCS slice passed with local oracles and query body
 projection/selective-wide savings of **99.43% / 96.69%** on its fixed fixture;
 preparation was not measured and still downloads/verifies complete objects.

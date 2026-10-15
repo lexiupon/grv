@@ -1,4 +1,14 @@
 namespace {
+#ifdef GRV_GCS_SETUP_PROOF
+// Source-including proof only; never compiled into shipping helper/library.
+int gcs_setup_failure_stage=0;
+bool gcs_setup_drop_failure=false;
+bool gcs_setup_inspection_failure=false;
+bool gcs_setup_preamble_failure=false;
+void GCSSetupCheckpoint(int stage){if(gcs_setup_failure_stage==stage)throw IOException("synthetic private setup failure");}
+#else
+void GCSSetupCheckpoint(int) {}
+#endif
 struct GCSPrivateString {
     string value;
     explicit GCSPrivateString(const char *input):value(input){}
@@ -31,6 +41,10 @@ struct GCSScanScope {
 };
 }
 extern "C" int grv_native_gcs_configure(void *owner,const char *httpfs,const char *scope,const char *bearer,const char *project,uint64_t remaining_millis,char *error,size_t capacity) {
+    try {
+#ifdef GRV_GCS_SETUP_PROOF
+        if(gcs_setup_preamble_failure)throw IOException("synthetic setup preamble failure");
+#endif
     auto &engine=*static_cast<Owner *>(owner)->engine;auto &config=DBConfig::GetConfig(*engine.connection.context);auto policy=GRVGuard::Get(*engine.connection.context);auto paths=config.options.allowed_paths;
     try {
         auto &state=*engine.exact_gcs;
@@ -51,12 +65,15 @@ extern "C" int grv_native_gcs_configure(void *owner,const char *httpfs,const cha
         GCSTrusted(engine,"SET force_download=false");GCSTrusted(engine,"SET auto_fallback_to_full_download=false");
         GCSTrusted(engine,"CREATE TEMPORARY SECRET _grv_exact_gcs_reader (TYPE http,BEARER_TOKEN "+S3Literal(token)+",SCOPE "+S3Literal(fixed_scope)+",VERIFY_SSL true)");
         std::fill(token.begin(),token.end(),'\0');
+        GCSSetupCheckpoint(1);
         auto &stock=config.GetHTTPUtil();
         std::weak_ptr<ExactGCSState> weak=engine.exact_gcs;
         config.SetHTTPUtil(make_shared_ptr<grv::GCSHTTPPolicy>(stock,fixed_project,[weak](BaseRequest &request,unique_ptr<HTTPClient> &client){auto state=weak.lock();if(!state)throw PermissionException("GCS owner no longer exists");state->BeforeRequest(request,client);}));
+        GCSSetupCheckpoint(2);
         auto &fs=FileSystem::GetFileSystem(*engine.connection.context);auto original=fs.ExtractSubSystem("HTTPFileSystem");
         if(!original)throw IOException("signed stock HTTPFS filesystem unavailable");
         fs.RegisterSubSystem(make_uniq<ExactGCSFileSystem>(engine.exact_gcs,std::move(original)));
+        GCSSetupCheckpoint(3);
         engine.connection.context->RunFunctionInTransaction([&](){policy=Policy(*engine.connection.context);});
         state.scope=fixed_scope;state.configured=true;
         config.SetOptionByName("enable_external_access",Value(false));config.options.allowed_paths=std::move(paths);
@@ -65,11 +82,48 @@ extern "C" int grv_native_gcs_configure(void *owner,const char *httpfs,const cha
         engine.exact_gcs->failed=true;
         // Setup can fail after installing the private temporary secret. Revoke
         // it before restoring the user guard; never retain failed credentials.
-        engine.connection.context->registered_state->Remove("grv.native.guard.v1");
-        try {GCSTrusted(engine,"DROP SECRET IF EXISTS _grv_exact_gcs_reader");}catch(...) {}
-        config.SetOptionByName("enable_external_access",Value(false));config.options.allowed_paths=std::move(paths);
-        engine.connection.context->registered_state->Remove("grv.native.guard.v1");engine.connection.context->registered_state->Insert("grv.native.guard.v1",policy);
-        if(capacity){std::strncpy(error,"trusted GCS reader initialization failed",capacity-1);error[capacity-1]=0;}return -1;
+        bool guard_removal_proved=false;
+        try {engine.connection.context->registered_state->Remove("grv.native.guard.v1");guard_removal_proved=true;}catch(...) {}
+        bool cleanup_proved=false;
+        try {
+#ifdef GRV_GCS_SETUP_PROOF
+            if(gcs_setup_drop_failure)throw IOException("synthetic secret drop failure");
+#endif
+            GCSTrusted(engine,"DROP SECRET IF EXISTS _grv_exact_gcs_reader");
+        }catch(...) {}
+        try {
+            // LOAD can fail before HTTP secret support is registered. A DROP
+            // error is not proof of retention: positively inspect memory
+            // storage separately, and accept only observed absence.
+            engine.connection.context->RunFunctionInTransaction([&](){
+                auto transaction=CatalogTransaction::GetSystemCatalogTransaction(*engine.connection.context);
+                cleanup_proved=!SecretManager::Get(*engine.connection.context).GetSecretByName(transaction,"_grv_exact_gcs_reader","memory");
+#ifdef GRV_GCS_SETUP_PROOF
+                if(gcs_setup_inspection_failure)throw IOException("synthetic inspection completion failure");
+#endif
+            });
+        }catch(...) {cleanup_proved=false;}
+        try {
+            config.SetOptionByName("enable_external_access",Value(false));config.options.allowed_paths=std::move(paths);
+            engine.connection.context->registered_state->Remove("grv.native.guard.v1");engine.connection.context->registered_state->Insert("grv.native.guard.v1",policy);
+        }catch(...) {cleanup_proved=false;}
+        if(capacity){std::strncpy(error,"trusted GCS reader initialization failed",capacity-1);error[capacity-1]=0;}
+        // -1 means an authoritative setup failure with proved private-secret
+        // revocation and guard restoration: the owner stays usable for local
+        // work; only cloud reuse is denied by the failed state. -2 means the
+        // revocation/cleanup is unproved: the owner is operationally
+        // quarantined; recovery is a synchronous owner-thread close and a
+        // fresh reopen preserving the original access mode under the retained
+        // workspace lock (Rust level); read-only authority must not be widened. The in-process architecture has no process exit or fence to
+        // fall back on, and no reusable connection merely because the
+        // diagnostic is sanitized.
+        return cleanup_proved&&guard_removal_proved?-1:-2;
+    }
+    }catch(...) {
+        // Guard lookup/path snapshot must not throw across the C boundary.
+        // Their absence prevents proving restoration: quarantine operational reuse.
+        if(capacity){std::strncpy(error,"trusted GCS reader initialization failed",capacity-1);error[capacity-1]=0;}
+        return -2;
     }
 }
 extern "C" int grv_native_gcs_query(void *owner,const char *const *locations,size_t count,const char *query,unsigned char *output,size_t allowance,size_t *written,char *error,size_t capacity) {

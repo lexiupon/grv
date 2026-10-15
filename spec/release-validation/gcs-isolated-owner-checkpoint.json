@@ -1,0 +1,321 @@
+{
+  "capability_advertised": false,
+  "historical_setup_revocation_live_evidence": [
+    {
+      "cleanup": {
+        "all_versions_inventory_empty": true,
+        "bucket": "grv-httpfs-oauth-01f14442abeb47b39db06f72",
+        "bucket_absence_http_status": 404,
+        "deleted_object_generations": 1,
+        "iam_changes": false,
+        "key_creation": false,
+        "organization_policy_changes": false
+      },
+      "cleanup_sha256": "f6ddbde01efdc085465cb92b3fd336b89edaa640c9d5da55a952e4e36bb0d785",
+      "directory": "~/grv-shipping-gcs-w0to3lh0",
+      "native_guard_revision": 5,
+      "sha256": {
+        "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup.txt": "be6e51e526aef23dda5c3c184822afd16e13a4c92a95a80ba139fd103bce51f1",
+        "native_live_gcs_guarded_pull_refresh_and_source_free_replay.txt": "cc5b8cc011a2bb732e5bf12daee69bcd06267567574e4ab0bbf33957cd515859"
+      },
+      "tests": ["native_live_gcs_guarded_pull_refresh_and_source_free_replay", "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup"]
+    }
+  ],
+  "limitations": [
+    "32MiB candidate reserve admission passes; worstcase pairwide escaping/other-variant highwater bounds still not qualified.",
+    "Full GRV receipt/descendant/setup/network-phase adversarial qualification remains.",
+    "Installed helper identity/relocation and supported targets pending.",
+    "Standalone signed headertrickle failure retained."
+  ],
+  "live_evidence": {
+    "cleanup": {
+      "all_versions_inventory_empty": true,
+      "bucket": "grv-httpfs-oauth-8f5a27f0f3f44ef78c152f3e",
+      "bucket_absence_http_status": 404,
+      "deleted_object_generations": 1,
+      "iam_changes": false,
+      "key_creation": false,
+      "organization_policy_changes": false
+    },
+    "cleanup_sha256": "e4152633a628224f9fe6c1f5be5e9d95c6e7007553ab8bd7d1daa8ae840c4568",
+    "directory": "~/grv-shipping-gcs-6h97jpuz",
+    "native_guard_revision": 5,
+    "sha256": {
+      "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup.txt": "254ae700aa02b6610af24d72b79ae0c8381c4c3feb52c7d161b45fb8b4de6cf2",
+      "native_live_gcs_guarded_pull_refresh_and_source_free_replay.txt": "262b903ab693b94f607d9e2dee63ed9c42accba09148f3e0bb5ee1cebe0ff564"
+    },
+    "stage": "after completed review inspection-completion/preamble containment fixes",
+    "tests": ["native_live_gcs_guarded_pull_refresh_and_source_free_replay", "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup"]
+  },
+  "live_evidence_before_bounded_ipc": {
+    "cleanup": {
+      "all_versions_inventory_empty": true,
+      "bucket": "grv-httpfs-oauth-c4d558c36e044aa09bee095f",
+      "bucket_absence_http_status": 404,
+      "deleted_object_generations": 1,
+      "iam_changes": false,
+      "key_creation": false,
+      "organization_policy_changes": false
+    },
+    "cleanup_sha256": "8f3acec0152451b86ef03a797b10b20557d3552d654955869bca72a92c346c15",
+    "directory": "~/grv-shipping-gcs-oh8fzc6h",
+    "sha256": {
+      "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup.txt": "1046380eea00cae101b6cd365086503a0a644d07be347f389133b7e449c4a1fe",
+      "native_live_gcs_guarded_pull_refresh_and_source_free_replay.txt": "84d74da66b5c7f605cebf60214b15d5f88f05a992ce434bd98e2c994f4f8e121"
+    },
+    "tests": ["native_live_gcs_guarded_pull_refresh_and_source_free_replay", "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup"]
+  },
+  "live_evidence_before_late_cleanup_fix": {
+    "cleanup": {
+      "all_versions_inventory_empty": true,
+      "bucket": "grv-httpfs-oauth-a4c51e16165a4592bd979c97",
+      "bucket_absence_http_status": 404,
+      "deleted_object_generations": 1,
+      "iam_changes": false,
+      "key_creation": false,
+      "organization_policy_changes": false
+    },
+    "cleanup_sha256": "b4bc081f3eef5a1bbc0b1364968e917183fff36a39ee3ad0d865d893f270adda",
+    "directory": "~/grv-shipping-gcs-d9labe3i",
+    "native_gcs_streaming_metadata": true,
+    "sha256": {
+      "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup.txt": "ff0daf9656af4b76e8eff9907cca20da3e51cc5901a0a75af3c17cfa6c0d19e6",
+      "native_live_gcs_guarded_pull_refresh_and_source_free_replay.txt": "9adbb99dd201c1b6025beddce9622c687fb6e3554e08bb1f7fb4e8379d9b949b"
+    },
+    "tests": ["native_live_gcs_guarded_pull_refresh_and_source_free_replay", "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup"]
+  },
+  "live_evidence_before_native_streaming": {
+    "cleanup": {
+      "all_versions_inventory_empty": true,
+      "bucket": "grv-httpfs-oauth-11c83564505546b2ab8d32cc",
+      "bucket_absence_http_status": 404,
+      "deleted_object_generations": 1,
+      "iam_changes": false,
+      "key_creation": false,
+      "organization_policy_changes": false
+    },
+    "cleanup_sha256": "c4b0db32d728b769db89806f40f9949fc88bc70a2ca4a5bd2c78673d2d7357a0",
+    "directory": "~/grv-shipping-gcs-_791jmu6",
+    "latest_preflight_helper_separate_target": true,
+    "sha256": {
+      "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup.txt": "69449055417ebeef98e8c4bffbf19c0570a31e1c230bfc83b45910fa84f2b898",
+      "native_live_gcs_guarded_pull_refresh_and_source_free_replay.txt": "b2fcb249bd146b10d5bf1691add219484d8f95d3afb66010bc6dace8836d3cf4"
+    },
+    "tests": ["native_live_gcs_guarded_pull_refresh_and_source_free_replay", "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup"]
+  },
+  "live_evidence_before_setup_revocation": {
+    "cleanup": {
+      "all_versions_inventory_empty": true,
+      "bucket": "grv-httpfs-oauth-ccd97101c63c402087934c86",
+      "bucket_absence_http_status": 404,
+      "deleted_object_generations": 1,
+      "iam_changes": false,
+      "key_creation": false,
+      "organization_policy_changes": false
+    },
+    "cleanup_sha256": "a77959b40c6a687ef5ee66646ee4cbfb5f730361d282bcf17926cb854b299192",
+    "directory": "~/grv-shipping-gcs-a00qrq7y",
+    "native_gcs_streaming_metadata": true,
+    "sha256": {
+      "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup.txt": "614abbfc882fbae6cd6623256b14df1b65e6c1444230aac933229ed15aae4a90",
+      "native_live_gcs_guarded_pull_refresh_and_source_free_replay.txt": "2bc3018ce39e810441dfb53ff1f6db0851e2edfebcd29f2e704efbfc04b7ae0c"
+    },
+    "tests": ["native_live_gcs_guarded_pull_refresh_and_source_free_replay", "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup"]
+  },
+  "live_evidence_raw_ipc_before_preflight": {
+    "cleanup": {
+      "all_versions_inventory_empty": true,
+      "bucket": "grv-httpfs-oauth-b72816a4fe72494bb3ec3e2f",
+      "bucket_absence_http_status": 404,
+      "deleted_object_generations": 1,
+      "iam_changes": false,
+      "key_creation": false,
+      "organization_policy_changes": false
+    },
+    "cleanup_sha256": "cd692fee4d46d29e195c4d9a2edb4ab58673bf5285ec7a75395f8a5ddefa20e9",
+    "directory": "~/grv-shipping-gcs-67d7npml",
+    "sha256": {
+      "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup.txt": "761eaf7ac5d42a879ce6f5808b8611185c84f19cc982545b46486fccc2b3432c",
+      "native_live_gcs_guarded_pull_refresh_and_source_free_replay.txt": "6c42dc9045e7c154e8b9f89c4bd819c05bda7d5bc68aa93e5eaa4051a312774a"
+    },
+    "tests": ["native_live_gcs_guarded_pull_refresh_and_source_free_replay", "live_nonempty_gcs_external_self_prepare_reopen_and_cleanup"]
+  },
+  "native_guard_revision": 5,
+  "publication_approved": false,
+  "qualification": "isolated-gcs-owner-checkpoint-not-release",
+  "source_sha256": {
+    "crates/grv-adapter-duckdb/native/gcs.inc": "de91007025b8f803653100b2b718a2b97d2d0e8ee983ebb9815b40598171780d",
+    "crates/grv-adapter-duckdb/native/gcs_setup_proof.cpp": "54e0f9d72c0650bc83af4636dd5b2ccdb8fc5416af503f8430ef4509b7bd8b32",
+    "crates/grv-adapter-duckdb/native/metadata_stream_proof.cpp": "c9f45b45f5e2617dfd67f87d1ebcdcc7ab80237ee23dc951892ab0687ebcd688",
+    "crates/grv-adapter-duckdb/native/pull.inc": "8460387ca4932c79f189bf99fc7d8247819a14ee828c00a481ff1c1b633db24f",
+    "crates/grv-adapter-duckdb/native/shim.cpp": "23f05be291495c89ce06c7fd569dc6aaf3046128dc911a5e9f5504266836b4b1",
+    "crates/grv-adapter-duckdb/src/build.rs": "1cbe51077eead956ae70efa92e0a313d888dd5b0692e62156183bb569028f2ca",
+    "crates/grv-adapter-duckdb/src/native.rs": "c8bcde8c5e7b546caa5253b0c628cc7da5154b867a915262251d9c012815f85c",
+    "crates/grv-adapter-duckdb/src/native_owner.rs": "ece1b1ce57c735a8baaf33413985df155a52a4628b230ae7300630fe473fb3cf",
+    "crates/grv-adapter-duckdb/src/native_owner_recovery_tests.rs": "26799040898730846eac8c1ce580726eb673f55fb3cb6bfdd853fab89541a6cf",
+    "crates/grv-adapter-duckdb/src/native_owner_tests.rs": "b4af2b9d2925f4a3b37e7294a9461664bd0d21e3ac5935d95131270f5e045268"
+  },
+  "status": "partial-implementation-and-supplemental-proofs",
+  "validation": {
+    "adapter_host": {
+      "conformance_passed": 22,
+      "passed": 4
+    },
+    "auxiliary_offline_checks": {
+      "release_readiness": "not assessed",
+      "s3_safety": 12,
+      "scripts": 49,
+      "validation_catalog": 42,
+      "validation_records": 94
+    },
+    "borrowed_argument_rejection": "40MiB borrowed arguments reject beforecopy/effects; samechild rollback/sourcefreereopen pass",
+    "bounded_ipc": {
+      "aggregate_argument_bytes": 2097152,
+      "command_frame_bytes": 2162688,
+      "full_pairwide_highwater_proved": false,
+      "gcs_owned_metadata_preflight_bytes": 8388608,
+      "raw_response_bytes": 2097152,
+      "simultaneous_paused_sender_and_receiver_capacity_bytes": 4194304,
+      "stale_helper_open_shape_refused": true
+    },
+    "concurrent_owners_canary": "passed synthetic cancel/otherowner isolation/freshowner DBstate and absentDBsecret; not real concurrentOAuth or postsecret fault proof",
+    "configured_gcs_streaming_metadata": {
+      "adopted_chunk_limit_bytes": 4194304,
+      "billion_rows_refused_before_full_materialization": true,
+      "close_alone_rollback_proof": false,
+      "injected_query_end_exception_revokes_authority": true,
+      "oversized_varchar_before_copy": true,
+      "query_end_cleanup_witness": true,
+      "stock_streaming_buffer_soft_threshold_bytes": 65536,
+      "test": "gcs_streamed_metadata_refuses_large_results_and_closes_before_rollback",
+      "upstream_engine_allocation_highwater_proved": false
+    },
+    "escaped_frame_capacity": "maximum2MiB escaped query rejected at fixedframecap withoutgrowth; not full allocation highwater evidence",
+    "failed_setup_load_canary": "passed synthetic extension LOAD failure genericerror transactionrollback/reopen absentDBsecret; not aftersecret-injected fault",
+    "historical_broad_ignored_invocation": {
+      "exact_compute_rerun": "passed, not universal fence qualification",
+      "log": "/tmp/grv-revision5-gcsartifact.txt",
+      "required_live_environment_missing_tests": 3,
+      "transient_unresolved_compute_fence": 1
+    },
+    "isolated_configured_gcs_and_local_self_base_transaction": "passed",
+    "isolated_descriptor_unlinked_exact_scope": "passed",
+    "lost_commit_reply_without_reexecution": "passed native primitive; full GRV receipts remain",
+    "lost_precommit_state_recovery": "passed",
+    "native_adapter": {
+      "failed": 0,
+      "ignored": 22,
+      "passed": 113
+    },
+    "native_ctest": {
+      "passed": 10
+    },
+    "normal_failure_rollback_commit_reopen": "passed",
+    "parent_crash_uncommitted_recovery": "passed",
+    "parent_held_bounded_ipc": {
+      "artifact_verification": {
+        "helper": {
+          "path": "/Users/jiacao/projects/grv/target/debug/grv-duckdb-gcs-owner",
+          "sha256": "ec9daf771b8f42e5de58aafcca14bee41be2d92a0209a90f8d00db64ad2a5f61"
+        },
+        "measurement": "post-run only; no pre-run digest captured; before/after equality not independently established",
+        "native_library": {
+          "path": "/Users/jiacao/.grv-native-work/cmake/libgrv_duckdb_guard.dylib",
+          "sha256": "4d08e76503f3fde2993e5a83553688150e550a788c68847f7d857a297585aea4"
+        },
+        "no_rebuild_or_source_changes_by_runner": true,
+        "scope": "earlier raw-response helper artifact; not latest borrowed-argument admission or allocation-free preflight guards"
+      },
+      "cleanup_sha256": "1d5325e8a80a14ddbccfe52fc17da17d606dff53f64130887b9ff42dc01d831d",
+      "elapsed_seconds": 1839.11,
+      "latest_preallocation_preflight_guards_covered": false,
+      "passed": true,
+      "predates_native_streaming": true,
+      "private_evidence_directory": "~/grv-held-gcs-9zqrg2qn",
+      "result_sha256": "f50e040b2f8c8a11c1a70a2b195efdd2d22902546e9e5a8f78c7d5c9892acccc"
+    },
+    "parent_held_post_isolation": {
+      "cleanup_sha256": "f59d39a314618aa68672ec76539e4ab417cf5581aad59ca3ad06dc7739b61e17",
+      "elapsed_seconds": 1919.0,
+      "passed": true,
+      "predates_bounded_ipc": true,
+      "private_evidence_directory": "~/grv-held-gcs-d0xk4f7t",
+      "result_sha256": "dfb44e07029566264f3e57aba290ec098cfa016564685a0b638fbdf33c38b9ba"
+    },
+    "post_secret_setup_faults": {
+      "completed_review": "a795fa78-ba50-4db: scoped support, two additional containment findings fixed/tested; not full security acceptance",
+      "failed_read_admission_denied": true,
+      "forced_drop_failure_requires_owner_exit": true,
+      "fully_combined_injected_parent_receipt_race": false,
+      "guard_paths_restored": true,
+      "inspection_after_absence_exception_requires_fence": true,
+      "preamble_exception_contained_requires_fence": true,
+      "secret_absence_proved": true,
+      "stages": ["after secret creation", "after HTTP policy installation", "after exact filesystem installation"],
+      "synthetic_handler_exit_code": 125
+    },
+    "recovery_targeted_tests": {
+      "failed": 0,
+      "includes": [
+        "parent crash",
+        "lost commit reply",
+        "lost precommit",
+        "database replacement refusal",
+        "preexisting interrupt clone cancellation",
+        "failed synthetic extension LOAD sanitized rollback canary",
+        "later configuration cannot renew original budget"
+      ],
+      "passed": 7
+    },
+    "same_group_descendant": "stop/groupfence positive proof or unresolved ownership quarantine test passed; not escaped descendant proof",
+    "scratch_admission_boundary_tests": "passed before auth/helper discovery;32MiB threshold not full highwater proof",
+    "signed_header_trickle": {
+      "elapsed_test_seconds": 1.26,
+      "one_head_then_socket_closed": true,
+      "production_helper_network_phase_qualification": false,
+      "supervisor_budget_ms": 1200,
+      "workspace_reference_reacquired": true
+    },
+    "source_free_discovery_atomicity": "passed",
+    "streaming_scanner_zstd_slice": {
+      "cleanup": {
+        "all_versions_inventory_empty": true,
+        "bucket": "grv-httpfs-oauth-9ca1e5cfa3734bd9a1ebe8f9",
+        "bucket_absence_http_status": 404,
+        "deleted_object_generations": 1,
+        "iam_changes": false,
+        "key_creation": false,
+        "organization_policy_changes": false
+      },
+      "directory": "~/grv-shipping-matrix-_ymm6gwa",
+      "sha256": {
+        "cleanup.json": "d58e2c04e3fe29366c31d0efe5b9c04753fd7446dcb5024b22f6889a08448349",
+        "results.json": "fec6a3c43fce00a54c70a0b47f9f22f8c09029267f75907f177dfface10a4318",
+        "summary.json": "deb1f1148059d64215ad6ba952db764fc85dc63caa465db1ce4cd8815b2b2619"
+      },
+      "summary": {
+        "account": "jiacao@on.sinch.com",
+        "binary_sha256_after": "118e347f7efe425e11a4e029961b68a8c1e1d15387ee3aa6ac8905621e3b30e0",
+        "binary_sha256_before": "118e347f7efe425e11a4e029961b68a8c1e1d15387ee3aa6ac8905621e3b30e0",
+        "compression": "ZSTD",
+        "dictionary": true,
+        "exit": 0,
+        "fixture_bytes": 19780713,
+        "limitations": ["preparation traffic not measured", "not a release candidate", "one-file scanner slice, not full shipping pull matrix"],
+        "project": "entit-finance-prod",
+        "source": "actual-shipping-native-scanners-test-only-counters",
+        "statistics": false
+      }
+    },
+    "strict_clippy": "affected native adapter and host passed",
+    "supplemental_network_stalls": {
+      "original_supervisor_budget_ms": 1200,
+      "passed": true,
+      "phases": ["incomplete status", "header trickle", "range body", "chunk stream", "trailer header"],
+      "production_helper_network_phase_qualification": false
+    },
+    "synthetic_compute_deadline": "passed",
+    "tagged_content_preflight": "allocationfree structural pass before typedenum buffering;100000emptylocations refused and4096max accepted",
+    "verified_descriptor_ipc_tests": 26
+  }
+}

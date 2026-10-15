@@ -4,3 +4,7 @@
 /artifacts
 /.release-validation.local.json
 __pycache__/
+
+# Local scratch and ignored working dirs, retained on disk but not versioned.
+/.tmp*/
+**/.tmp*/

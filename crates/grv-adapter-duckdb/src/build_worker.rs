@@ -154,3 +154,68 @@ impl Drop for BuildWorker {
         let _ = self.stop();
     }
 }
+
+#[cfg(test)]
+mod predispatch_tests {
+    use super::*;
+    use crate::build::BuildStore;
+    use crate::lock::WorkspaceLock;
+    use grv_adapter_api::Resources;
+    use std::sync::atomic::AtomicUsize;
+
+    /// Cancellation set BEFORE any job is dispatched: the counter closure is
+    /// never executed, the owner is joined, and the workspace lock is released.
+    /// No incomplete invocation is ever repeated.
+    #[test]
+    fn cancel_before_dispatch_joins_owner_and_never_runs_the_job() {
+        let directory = tempfile::tempdir().unwrap();
+        let database = directory.path().join("predispatch-build.duckdb");
+        let mut owner = BuildWorker::open(
+            &database,
+            "file:///private/grv".into(),
+            None,
+            Resources::default(),
+        )
+        .unwrap();
+        assert!(WorkspaceLock::acquire(&database).is_err());
+        let counter = Arc::new(AtomicUsize::new(0));
+        let stop = Arc::new(AtomicBool::new(true));
+        let count = counter.clone();
+        let error = owner
+            .call(
+                move |store: &mut BuildStore| {
+                    count.fetch_add(1, Ordering::SeqCst);
+                    Ok(store.workspace_id())
+                },
+                stop.as_ref(),
+            )
+            .unwrap_err();
+        assert!(
+            matches!(
+                error,
+                BuildError::Incomplete(ref message) if message.contains("stopped before dispatch")
+            ),
+            "{error:?}"
+        );
+        // The job closure was never dispatched to the owner.
+        assert_eq!(counter.load(Ordering::SeqCst), 0);
+        // The owner thread has joined: the command channel and owner handle are
+        // empty, and the workspace lock is released under the real WorkspaceLock.
+        assert!(owner.sender.is_none());
+        assert!(owner.owner.is_none());
+        assert!(WorkspaceLock::acquire(&database).is_ok());
+        // A stopped owner is not reused: a second dispatch is refused the same way.
+        let count = counter.clone();
+        let again = owner
+            .call(
+                move |store: &mut BuildStore| {
+                    count.fetch_add(1, Ordering::SeqCst);
+                    Ok(store.workspace_id())
+                },
+                stop.as_ref(),
+            )
+            .unwrap_err();
+        assert!(matches!(again, BuildError::Incomplete(_)), "{again:?}");
+        assert_eq!(counter.load(Ordering::SeqCst), 0);
+    }
+}

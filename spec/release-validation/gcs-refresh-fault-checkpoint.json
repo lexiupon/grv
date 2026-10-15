@@ -1,0 +1,181 @@
+{
+  "reviewed_parent_gcs_refresh_fault_stage": {
+    "status": "package25 complete within finite reviewed scope",
+    "checkpoint": "spec/gcs-refresh-fault-checkpoint.md",
+    "requested_model": "remote-qwen3.8-27b",
+    "thinking": "xhigh",
+    "max_concurrent_agents": 1,
+    "parent_actual_review_and_corrections": true,
+    "production_execution_changes": false,
+    "publication_approved": false,
+    "capability_advertised": false,
+    "offline": {
+      "native_passed": 121,
+      "native_ignored": 20,
+      "integration": 48,
+      "host": 22,
+      "peer_cli": 12,
+      "ctest": 15,
+      "driver_tests": 13,
+      "strict_checks": "pass"
+    },
+    "live": {
+      "directory": "/Users/jiacao/grv-task25-live-47dmnvxc",
+      "exact_one_test_passes": 3,
+      "seconds": [14.91, 14.11, 32.3],
+      "two_nonempty_commit_children_exit": 86,
+      "summary": {
+        "tests": [
+          {
+            "symbol": "pull::tests::native_live_gcs_multifile_evolution_special_coordinate_refresh_and_replay",
+            "exit": 0,
+            "one_test_passed": true,
+            "log_sha256": "8053446d7397fc3c71b283c49f2184383ca1fcd6aea91e143c5378bc0c6c7f62"
+          },
+          {
+            "symbol": "pull::tests::native_live_gcs_nonempty_precommit_and_postcommit_exit_recover_immutable_receipts",
+            "exit": 0,
+            "one_test_passed": true,
+            "log_sha256": "e6c17ebc5b1e30b33557173e86edf576bdc3b91de3bf6d5c1225d2f94a1b1cff"
+          },
+          {
+            "symbol": "pull::tests::native_live_gcs_missing_replaced_source_loss_preserves_immutable_receipts",
+            "one_test_passed": true,
+            "exit": 0,
+            "log_sha256": "d27ea555efa266b4f49ddeb12e8c4b2837a97862a9f6ae45641fc501a88f7dbf"
+          }
+        ],
+        "failure": null,
+        "cleanup_error": null,
+        "pre_post_equal": true,
+        "no_published_held_or_S3_matrix": true
+      },
+      "cleanup": {
+        "bucket": "grv-gcs-pull-1754ee453cbe4f04afbb725d",
+        "deleted_object_generations": 5,
+        "all_versions_inventory_empty": true,
+        "inventory_observed": true,
+        "bucket_absence_http_status": 404,
+        "keys_created": false,
+        "existing_iam_acl_policy_versioning_changes": false
+      },
+      "frozen_artifacts": {
+        "/Users/jiacao/.grv-native-work/owner-validation-target/debug/deps/grv_adapter_duckdb-273b55543ed855e5": "42a62ae333966e42c1e1f9667fee130e3d44e66d0330a595c2ae47e4dfafc6b7",
+        "/Users/jiacao/.grv-native-work/cmake/libgrv_duckdb_guard.dylib": "2709cc619eb125d1ecdc48377303019ea20bfe32f20c4e964c298b2b66abdd5f",
+        "/Users/jiacao/.grv-httpfs-prototype-extensions/osx_arm64/httpfs.duckdb_extension": "0cde1f5acd1970bfd414b11f5e945a1eddd8425e96e273f6411538d8fe3d951d",
+        "/Users/jiacao/.grv-httpfs-prototype-extensions/osx_arm64/aws.duckdb_extension": "911b68461fdd989e0c9e74926b197c8a05727bfafc05df38baa47ece42174f1c",
+        "/private/tmp/grv-task25-live-driver.py": "bc36dc4495c43ea2fb23e5ea416816482286d86fee20b86be6ac872d35e89807",
+        "/Users/jiacao/projects/grv/crates/grv-adapter-duckdb/src/native.rs": "a666214f0e9c5f9ba19dedb751639f86b70cc0cf267069750d0942cd66b4f4f1",
+        "/Users/jiacao/projects/grv/crates/grv-adapter-duckdb/src/build.rs": "bfc43f1a078d89deb0807dc5abf332b9817d806e9faa82c68c7dfced03ca2476",
+        "/Users/jiacao/projects/grv/crates/grv-adapter-duckdb/src/gcs_token.rs": "3f3538371ede8c2a3079293a823204a1e1db6d321797561f9c6c5eb10f2b2e31",
+        "/Users/jiacao/projects/grv/notices/native-extensions.json": "644e3a1e665bf1ee87771d3b14a5d963924ef94d38b315fa31bd88b70fc25b8a",
+        "/Users/jiacao/projects/grv/spec/gcs-refresh-fault-live-plan.md": "a24af2afe407384d034b0a7f5e56aa754cc3d097049c8b6cec06ea6faed2e054",
+        "/Users/jiacao/projects/grv/crates/grv-adapter-duckdb/src/pull.rs": "6a05663417bd67909066cee182475dda921ebd94d4d0c9dbfd19eef8aed0b9e7"
+      },
+      "pre_post_current_equal": true
+    },
+    "known_replacement_limitation": "stale size/SHA/generation descriptors can observe same-schema privileged replacement; not stock per-range pinning or integrity waiver",
+    "limits": [
+      "cooperative only, no shipping hardstop/join/rollback-at-expiry or finite stock overrun",
+      "specificCOMMITexit boundaries not universal abruptcrash/WAL/race proof",
+      "fullpreparation mandatory separately, belowSDKtest notCLIheld qualification",
+      "no universalheap/RSS/escapedowner/sourcebinary guarantee",
+      "held27/S326/aggregate/install/release remain open"
+    ],
+    "baseline_preservation": {
+      "baseline_entries": 81,
+      "unchanged": 79,
+      "changed_paths": ["crates/grv-adapter-duckdb/src/native.rs", "crates/grv-adapter-duckdb/src/pull.rs"]
+    },
+    "development_live_stages": [
+      {
+        "directory": "/Users/jiacao/grv-task25-live-_chfl9_q",
+        "reason": "driver generic percent aliases refused by canonical fixture before native apply; no crash/fault launched",
+        "summary": {
+          "tests": [],
+          "failure": "Live stage failed; details suppressed; no retry",
+          "cleanup_error": null,
+          "pre_post_equal": true,
+          "no_published_held_or_S3_matrix": true
+        },
+        "cleanup": {
+          "bucket": "grv-gcs-pull-4fefeb4bd4df4695b10e295e",
+          "deleted_object_generations": 4,
+          "all_versions_inventory_empty": true,
+          "inventory_observed": true,
+          "bucket_absence_http_status": 404,
+          "keys_created": false,
+          "existing_iam_acl_policy_versioning_changes": false
+        },
+        "pre_post_equal": true,
+        "stage_log_hashes": {
+          "/Users/jiacao/grv-task25-live-_chfl9_q/positive-refresh.txt": "3cbfa454141909fd7772396b16b3c6ed898af32f3a5ed19ea9277052faf39c88"
+        }
+      },
+      {
+        "directory": "/Users/jiacao/grv-task25-live-h87rl16n",
+        "reason": "positive15.37s pass, reopened crash inspection lacked testguard admission; fault notlaunched",
+        "summary": {
+          "tests": [
+            {
+              "symbol": "pull::tests::native_live_gcs_multifile_evolution_special_coordinate_refresh_and_replay",
+              "exit": 0,
+              "one_test_passed": true,
+              "log_sha256": "1f51db9191a1b0241665c81885be95bc4766d1e7ad7f17281aa27ef7dab933d2"
+            }
+          ],
+          "failure": "Live stage failed; details suppressed; no retry",
+          "cleanup_error": null,
+          "pre_post_equal": true,
+          "no_published_held_or_S3_matrix": true
+        },
+        "cleanup": {
+          "bucket": "grv-gcs-pull-09d50b2b52cd4e488fe6e5af",
+          "deleted_object_generations": 4,
+          "all_versions_inventory_empty": true,
+          "inventory_observed": true,
+          "bucket_absence_http_status": 404,
+          "keys_created": false,
+          "existing_iam_acl_policy_versioning_changes": false
+        },
+        "pre_post_equal": true,
+        "stage_log_hashes": {
+          "/Users/jiacao/grv-task25-live-h87rl16n/nonempty-crash.txt": "4f4de6338ae258968e0291f5476be9f640642f9d9e7d2e8451b5d52f8ea6fd24",
+          "/Users/jiacao/grv-task25-live-h87rl16n/positive-refresh.txt": "1f51db9191a1b0241665c81885be95bc4766d1e7ad7f17281aa27ef7dab933d2"
+        }
+      }
+    ],
+    "sha256": {
+      "/Users/jiacao/projects/grv/spec/gcs-refresh-fault-checkpoint.md": "21706c1b3d5eaf3f0937026591207b212ef24f6aca5d7441441cb8e83dcfda62",
+      "/Users/jiacao/projects/grv/spec/gcs-refresh-fault-live-plan.md": "a24af2afe407384d034b0a7f5e56aa754cc3d097049c8b6cec06ea6faed2e054",
+      "/Users/jiacao/projects/grv/crates/grv-adapter-duckdb/src/pull.rs": "6a05663417bd67909066cee182475dda921ebd94d4d0c9dbfd19eef8aed0b9e7",
+      "/Users/jiacao/projects/grv/crates/grv-adapter-duckdb/src/native.rs": "a666214f0e9c5f9ba19dedb751639f86b70cc0cf267069750d0942cd66b4f4f1",
+      "/tmp/grv-task25/parent-final-native.txt": "e381acc71fda8ffda78fd0441719469a7bf17cf8574b26cc6fa64b77766b4911",
+      "/tmp/grv-task25/parent-admission-native.txt": "7aa7e305ff2cc9ae3653d65e34a4d3b8b052041e143cf36ee663a2add6e79264",
+      "/tmp/grv-task25/parent-final-conformance.txt": "240b183b1893a974edcba8d870502502953766e8e6982a8bc657f449cb7030ae",
+      "/tmp/grv-task25/parent-final-ctest.txt": "4c8b093c951fdab067ad786daaad82534d7f6b48cf47c23b2f224123c140ce79",
+      "/tmp/grv-task25/parent-final-clippy-native.txt": "479a6fa38e2b1a4bcbea1950620709b9dc0624326e555a2936d21b17a5947b92",
+      "/tmp/grv-task25/parent-final-clippy-nonnative.txt": "2f4ec8917a4666c9574eb4ea9faecb3e242ee9ef4b9f3a6dcebeda9a7e276a35",
+      "/tmp/grv-task25/parent-admission-clippy.txt": "479a6fa38e2b1a4bcbea1950620709b9dc0624326e555a2936d21b17a5947b92",
+      "/tmp/grv-task25/parent-final-fmt.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/tmp/grv-task25/parent-final-diff.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/tmp/grv-task25/parent-final-driver-canonical.txt": "31f06dcb7d1a8e6f18c1602479126a914cca7e8ac52709531c8baa6aeae194be",
+      "/tmp/grv-task25/parent-preservation.json": "9e40dffb3152cd55f16e528a0ca445f460c6fb65df2a13b80363e03ca5eb8cd6",
+      "/tmp/grv-task25/parent-live-admission-launch.txt": "e7b43c1da7ece0f93c49f05ec938776ac61602eb0f3719a2d93a525f40e558a5",
+      "/Users/jiacao/grv-task25-live-47dmnvxc/summary.json": "f4c60b68cc601216c4a69710dd574ae4fbfdcecc5258b3fdeb9eaf93bf625a30",
+      "/Users/jiacao/grv-task25-live-47dmnvxc/cleanup.json": "aa8d995ca460412fe236d11d597fc2f25d9682a36f721e30ee5832fe9f0b5b59",
+      "/Users/jiacao/grv-task25-live-47dmnvxc/positive-refresh.txt": "8053446d7397fc3c71b283c49f2184383ca1fcd6aea91e143c5378bc0c6c7f62",
+      "/Users/jiacao/grv-task25-live-47dmnvxc/nonempty-crash.txt": "e6c17ebc5b1e30b33557173e86edf576bdc3b91de3bf6d5c1225d2f94a1b1cff",
+      "/Users/jiacao/grv-task25-live-47dmnvxc/fault-route.txt": "d27ea555efa266b4f49ddeb12e8c4b2837a97862a9f6ae45641fc501a88f7dbf",
+      "/Users/jiacao/grv-task25-live-47dmnvxc/state.json": "cfce3668c9bd7b6c9b9899eb7617a3a916b8bfcdc26cf0c6a630df6e3b9b426c",
+      "/Users/jiacao/grv-task25-live-47dmnvxc/pre-artifact-hashes.json": "f2f9b3403bd921b968a63e38eb79d842badfc5f6f9557fbdc0de3e8420f8966c",
+      "/Users/jiacao/grv-task25-live-47dmnvxc/post-artifact-hashes.json": "f2f9b3403bd921b968a63e38eb79d842badfc5f6f9557fbdc0de3e8420f8966c",
+      "/Users/jiacao/grv-task25-live-47dmnvxc/audit/delete-primary.ready": "27c8d3881e7bdbfc182f1977bda1b07a98f5cce6ae72120b39f1f5e765a9fd47",
+      "/Users/jiacao/grv-task25-live-47dmnvxc/audit/delete-all.ack": "0fb3dc76763c17b1cebedf6d949d78eb259bcf01a218340ababe63e384c3c2ca",
+      "/Users/jiacao/grv-task25-live-47dmnvxc/audit/delete-all.ready": "ae2aa191c8bdd1972ef80b34ff592da883cc986b20cc92e4e6d488963bcbcfc5",
+      "/Users/jiacao/grv-task25-live-47dmnvxc/audit/replace-primary.ack": "3a7bf3978cf3831aff16be8204ec2082f86b1a6a8ad390a456fb3064ea74a3d8",
+      "/Users/jiacao/grv-task25-live-47dmnvxc/audit/replace-primary.ready": "7ccc46f62bf34a7f6e425d692247560ef0ffb12e8934abe2e04de57c3035f21f",
+      "/Users/jiacao/grv-task25-live-47dmnvxc/audit/delete-primary.ack": "00dfd21d33b1cb042aaf5590c2fd7eaeca4ddb28577208d5fa736d63140d89ea"
+    }
+  }
+}

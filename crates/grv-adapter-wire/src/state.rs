@@ -75,6 +75,7 @@ pub struct State {
     closed: bool,
     documents: [Documents; 2],
     document_ids: BTreeSet<String>,
+    bounded_metadata: bool,
     stream: Stream,
     build_session: Option<grv_adapter_api::BuildSession>,
     build_counts: Vec<grv_adapter_api::TableCount>,
@@ -95,11 +96,31 @@ impl State {
             closed: false,
             documents: Default::default(),
             document_ids: Default::default(),
+            bounded_metadata: false,
             stream: Default::default(),
             build_session: None,
             build_counts: vec![],
             accepted_completion: None,
         }
+    }
+    pub fn enable_bounded_gcs_metadata(&mut self) -> Result<()> {
+        if self.document_ids.len() > crate::metadata::GCS_DOCUMENT_IDS {
+            return fail("GCS retained document ID allowance exceeded");
+        }
+        for docs in &self.documents {
+            if docs
+                .upload
+                .as_ref()
+                .is_some_and(|upload| upload.size > crate::metadata::GCS_DOCUMENT_BYTES)
+            {
+                return fail("GCS document allowance exceeded");
+            }
+            if let Some(doc) = &docs.complete {
+                crate::metadata::admit(&doc.value)?;
+            }
+        }
+        self.bounded_metadata = true;
+        Ok(())
     }
     pub fn acknowledgements_frozen(&self) -> bool {
         self.cancelled.is_some() || self.poisoned
@@ -112,6 +133,9 @@ impl State {
             .complete
             .as_ref()
             .ok_or_else(|| ProtocolError::Invalid("unknown document".into()))?;
+        if self.bounded_metadata {
+            crate::metadata::admit(&d.value)?;
+        }
         if d.id != id || !d.acked {
             return fail("unacknowledged document reference");
         }
@@ -127,6 +151,9 @@ impl State {
         }
     }
     pub fn resolved_frame(&self, frame: &Frame, outbound: bool) -> Result<Frame> {
+        if self.bounded_metadata {
+            crate::metadata::admit(frame)?;
+        }
         fn expand(state: &State, sender: Role, v: &mut Value) -> Result<()> {
             if let Some(obj) = v.as_object_mut() {
                 if obj.len() == 1 && obj.contains_key("document_id") {
@@ -145,6 +172,14 @@ impl State {
             Ok(())
         }
         let mut v = value(frame);
+        self.admit_expansion(
+            if outbound {
+                self.role
+            } else {
+                self.role.other()
+            },
+            &v,
+        )?;
         expand(
             self,
             if outbound {
@@ -157,6 +192,9 @@ impl State {
         Ok(serde_json::from_value(v)?)
     }
     pub fn observe(&mut self, frame: &Frame, outbound: bool) -> Result<()> {
+        if self.bounded_metadata {
+            crate::metadata::admit(frame)?;
+        }
         if matches!(frame, Frame::DocumentBegin { size, .. } if size.get() > DOCUMENT_LIMIT as u64)
         {
             return Err(ProtocolError::DocumentTooLarge);
@@ -173,6 +211,7 @@ impl State {
             self.role.other()
         };
         let mut v = value(frame);
+        self.admit_expansion(sender, &v)?;
         let msg = v["msg"].as_str().unwrap().to_owned();
         if msg == "error" {
             if let Some(req) = v["req"].as_u64() {
@@ -511,6 +550,12 @@ impl State {
         match msg {
             "document_begin" => {
                 let size = number_string(v, "size")? as usize;
+                if self.bounded_metadata
+                    && (size > crate::metadata::GCS_DOCUMENT_BYTES
+                        || self.document_ids.len() >= crate::metadata::GCS_DOCUMENT_IDS)
+                {
+                    return fail("GCS document or retained ID allowance exceeded");
+                }
                 if size > DOCUMENT_LIMIT {
                     return Err(ProtocolError::DocumentTooLarge);
                 }
@@ -558,6 +603,9 @@ impl State {
                 {
                     return fail("document length/hash mismatch");
                 }
+                if self.bounded_metadata {
+                    crate::metadata::Admission::raw(&u.bytes)?;
+                }
                 let parsed = crate::json::parse(&u.bytes)?;
                 if grv_types::canonical_json(&parsed)
                     .map_err(|e| ProtocolError::Invalid(e.to_string()))?
@@ -574,6 +622,42 @@ impl State {
             _ => return fail("unknown document control"),
         }
         Ok(())
+    }
+    fn admit_expansion(&self, sender: Role, v: &Value) -> Result<()> {
+        if !self.bounded_metadata {
+            return Ok(());
+        }
+        fn charge(
+            state: &State,
+            sender: Role,
+            v: &Value,
+            reserve: &mut crate::metadata::Admission,
+        ) -> Result<()> {
+            if let Some(obj) = v.as_object() {
+                if obj.len() == 1 && obj.contains_key("document_id") {
+                    let d = state.documents[sender.index()]
+                        .complete
+                        .as_ref()
+                        .ok_or_else(|| ProtocolError::Invalid("unknown bounded document".into()))?;
+                    if obj["document_id"].as_str() != Some(d.id.as_str()) || !d.acked {
+                        return fail("unacknowledged bounded document");
+                    }
+                    reserve.include(&d.value)?;
+                } else {
+                    for child in obj.values() {
+                        charge(state, sender, child, reserve)?;
+                    }
+                }
+            } else if let Some(array) = v.as_array() {
+                for child in array {
+                    charge(state, sender, child, reserve)?;
+                }
+            }
+            Ok(())
+        }
+        let mut reserve = crate::metadata::Admission::default();
+        reserve.include(v)?;
+        charge(self, sender, v, &mut reserve)
     }
     fn expand_documents(&mut self, sender: Role, v: &mut Value) -> Result<()> {
         if let Some(obj) = v.as_object_mut() {
@@ -622,8 +706,18 @@ impl State {
             return Ok(true);
         }
         if msg == "checkpoint" {
+            if self.bounded_metadata && s.checkpoint_ids.len() >= crate::metadata::GCS_DOCUMENT_IDS
+            {
+                return fail("GCS retained checkpoint ID allowance exceeded");
+            }
             if !s.started {
                 return fail("checkpoint before start");
+            }
+            if self.bounded_metadata {
+                let mut reserve = crate::metadata::Admission::default();
+                reserve.include(&s.snapshots)?;
+                reserve.include(&s.checkpoints)?;
+                reserve.include(&v["payload"])?;
             }
             let id = v["checkpoint_id"].as_str().unwrap();
             let mut tables = Vec::new();
@@ -762,4 +856,40 @@ fn is_request(msg: &str) -> bool {
         "close",
     ]
     .contains(&msg)
+}
+#[cfg(test)]
+mod bounded_tests {
+    #[test]
+    fn gcs_expansion_charges_all_references_before_any_document_clones() {
+        let mut state = super::State::new(super::Role::Adapter);
+        state.bounded_metadata = true;
+        let id = "00000000-0000-4000-8000-000000000001";
+        state.documents[super::Role::Parent.index()].complete = Some(super::Document {
+            id: id.into(),
+            value: serde_json::json!({"large":"x".repeat(1024*1024)}),
+            acked: true,
+        });
+        let v = serde_json::json!({"arbitrary":(0..10).map(|_|serde_json::json!({"document_id":id})).collect::<Vec<_>>()});
+        assert!(state.admit_expansion(super::Role::Parent, &v).is_err());
+        assert!(state.document(super::Role::Parent, id).is_ok());
+        state
+            .admit_expansion(super::Role::Parent, &serde_json::json!({"document_id":id}))
+            .unwrap();
+    }
+    #[test]
+    fn gcs_document_id_admission_never_resets_retained_uniqueness() {
+        let mut state = super::State::new(super::Role::Adapter);
+        for i in 0..crate::metadata::GCS_DOCUMENT_IDS {
+            state.document_ids.insert(format!("retained-{i}"));
+        }
+        state.enable_bounded_gcs_metadata().unwrap();
+        let v = serde_json::json!({"document_id":"new-id","size":"1","sha256":"a".repeat(64)});
+        assert!(
+            state
+                .document_control(super::Role::Parent, "document_begin", &v)
+                .is_err()
+        );
+        assert_eq!(state.document_ids.len(), crate::metadata::GCS_DOCUMENT_IDS);
+        assert!(state.documents[0].upload.is_none());
+    }
 }

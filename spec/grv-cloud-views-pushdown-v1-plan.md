@@ -9,6 +9,17 @@
 
 ## 1. Direction and boundaries
 
+**Latest approved decision:** return GCS native execution to in-process DuckDB
+within the adapter, matching local/S3. Accept cooperative rather than hard
+in-flight stop/join/rollback deadlines and partial engine memory-limit coverage;
+retain independently bounded transfer buffers and fail-closed unknown outcomes.
+See [execution decision](gcs-in-process-execution-decision.md). Native revision6 code is
+now in-process; transition live/held/installed qualification is not complete. See
+[transition checkpoint](gcs-in-process-transition-checkpoint.md). Do not
+implement the proposed helper-only allocation policy. Historical helper evidence
+below is retained, not current architecture acceptance. Pause after memory-related
+scope completes, before unrelated qualification.
+
 Use signed pinned DuckDB HTTPFS's **HTTPS reader with temporary HTTP bearer
 secrets**, not the GCS HMAC reader. Initial provider: explicitly selected gcloud
 account/project, matching the available production access. No HMAC/private-key
@@ -48,7 +59,9 @@ approval; this request authorizes planning/committing, not publication.
   remains unadmitted. Independent review flagged shared request-parameter
   mutation and failed-setup secret cleanup. Private request/parameter copies and
   secret revocation are added in source, pending production rerun. Hard owner
-  stop/join remains unresolved; capability remains blocked.
+  stop/join was the former unresolved gate; the stronger guarantee is now an
+  explicit accepted limitation, not a passing test. In-process transition and
+  cancellation/cleanup/recovery qualification still block capability activation.
 - Revision-4 shipping-scanner GCS slice: ten local-oracle trials passed on a fixed
   137,136,798-byte uncompressed fixture. Query body bytes wide/narrow/selective
   wide: **137,244,704 / 788,768 / 4,542,849**, projection **99.43%**, selective
@@ -70,7 +83,7 @@ approval; this request authorizes planning/committing, not publication.
   `~/grv-held-gcs-vmm02qcj`, cleaned/bucket HTTP404. Successful published dependencies
   retain holds by design; abort/prune/release/expiry qualification remains open.
 - Not complete: complete cloud projection/predicate matrices, request cancellation
-  races and bounded in-flight transport behavior, full held-build/fault/resource
+  races and disclosed cooperative in-flight behavior, full held-build/fault/resource
   tests, ordinary DuckDB consumption and supported-target package/install
   qualification.
 - Requester Pays: explicit header and no-header both succeeded for the selected
@@ -118,7 +131,8 @@ source-coordinate model and guard design.
   acquisition passed. No guessed one-hour lifetime. Enforce at most 300 seconds
   anchored before acquisition, expiry beyond budget plus 120-second margin.
   Worker/native watchdog remains an integration release gate.
-- Set token refresh between executions only, deadline cancellation/rollback,
+- Set token refresh between executions only, cooperative deadline cancellation
+  and late-result refusal (no stop/rollback-at-deadline promise),
   unknown/insufficient lifetime rejection, and no mid-query secret replacement
   or automatic retry after results/effects. Define ordinary DuckDB expiry limits.
 - Finalize canonical HTTPS mapping and fixed-host/no-redirect policy. If the
@@ -187,8 +201,12 @@ pass, no weakening of full-object preparation to inflate pushdown evidence.
   A scoped secret/allowed_paths alone is not the production sandbox.
 - Deny unlisted/glob URLs, redirects, writes, secret/catalog/config access,
   new readers/extension setup and callback/macro/nested-view escape routes.
-- Bound bind/execute to token deadline, network/memory budgets and cancellation;
-  prevent partial effects if token expires or a late table fails.
+- Enforce lease admission/authority and late-result refusal with cooperative
+  cancellation. Disclose stock in-flight overrun; retain owner until native work
+  actually stops and prove cleanup/outcomes before reuse. Independently bound
+  transfer/result buffers; DuckDB engine memory_limit is partial, not total RSS.
+  Preserve atomic effects when failure/expiry is observed; no timely rollback
+  assertion while a native call is still blocked.
 - Preserve transactional multi-table refresh, owner/checkpoint/receipt atomicity;
   include reader/materialization contract in receipt identity.
 - Current-contract replay/inspection must execute before source/config/auth;
@@ -320,9 +338,28 @@ Contract decisions (I1 / task #22) and the duplicate I3 foundation (#33) are
 complete. I2/I3/I4 code is implemented; open tasks track remaining acceptance,
 not a request to rebuild completed foundations. Latest evidence is in
 [gcs-implementation-checkpoint.md](gcs-implementation-checkpoint.md).
-The [absolute in-flight deadline blocker](gcs-deadline-qualification-blocker.md)
-requires an owner/process-boundary design decision; no timeout-field adjustment
-or passing pushdown matrix alone closes it.
+The [retained absolute-deadline finding](gcs-deadline-qualification-blocker.md)
+remains valid, but the user has superseded task39's dedicated-owner direction:
+[approved in-process decision](gcs-in-process-execution-decision.md). Task45 tracks
+qualification after removal of helper execution/package complexity while retaining
+discovery snapshot, exact authority and fail-closed cleanup. Offline revision6
+slices and explicit selected OAuth live pair `296qgt4m` pass/owned cleanup404.
+Operator reauthentication is restored; actual prebuilt held lifecycle `dw_ypv61`
+passed1test/1962.69s with five matching pre/post hashes and owned404, no rebuild
+during execution. Subsequent Rust memory guards are a separate artifact stage. Task34 now qualifies
+cooperative cancellation, late refusal, honest blocked-owner behavior and durable
+recovery—not a hard native-stop guarantee. Task37 must finish independently
+bounded transfer/metadata accounting and partial engine-limit documentation, not
+a universal32MiB/RSS proof. Do not call those tasks complete before the replacement
+is implemented and qualified. Task #40 is also resolved: explicit S3 profile `lexiupon-aws-cli-s3`,
+region `eu-west-1`, account `590184134474`, newly owned synthetic buckets only.
+S3 request-time catalog initialization blocker #41 is fixed by fresh exact
+pinned HTTPFSParams construction without secret/settings lookup; signed client
+transport and GRV SigV4 remain. Two smaller8192-row diagnostic slices passed ten
+oracles and guard probes each; larger65536-row execution #26 is underway.
+Permission to test or smaller-slice success is not evidence of a complete matrix
+or permission to change IAM/policies or publish. Failed prior slices/timeouts
+and cleanup recoveries are retained separately.
 
 1. **Final independent review** (#23/#24/#32/#34): revision-4 stock request delegate,
    subtype/header compatibility, owner lifetime, token/setup isolation, canonical cross-peer records,

@@ -76,6 +76,20 @@ pub fn native_allowance(
         .min(scratch.saturating_sub(scratch_fixed) / 4))
 }
 
+/// Reserve the encoded native allocation from the GCS source unit before
+/// native decoded vectors enter transfer. Scratch remains independently bounded.
+/// Local/S3 retain their existing allowance semantics.
+pub(crate) fn gcs_transfer_allowances(native: usize, source: usize) -> io::Result<(usize, usize)> {
+    let encoded = native.min(source / 2);
+    let decoded = source
+        .checked_sub(encoded)
+        .filter(|remaining| encoded >= 256 && *remaining > 0)
+        .ok_or_else(|| {
+            io::Error::other("GCS source unit cannot reserve encoded and decoded transfer")
+        })?;
+    Ok((encoded, decoded))
+}
+
 pub fn encode(
     window: &NativeWindow,
     schema: Arc<Schema>,
@@ -265,5 +279,39 @@ impl Write for BoundedOutput {
     }
     fn flush(&mut self) -> io::Result<()> {
         Ok(())
+    }
+}
+#[cfg(test)]
+mod budget_tests {
+    #[test]
+    fn gcs_partitioned_source_allowances_scan_actual_staged_windows() {
+        let directory = tempfile::tempdir().unwrap();
+        let mut engine =
+            crate::native::NativeEngine::open(&directory.path().join("source-budget.duckdb"))
+                .unwrap();
+        let schema = engine
+            .acquire("SELECT range::BIGINT AS id, repeat('x',32) AS value FROM range(5000)")
+            .unwrap();
+        let (encoded, decoded) = super::gcs_transfer_allowances(1024, 256 * 1024).unwrap();
+        let mut rows = 0;
+        while let Some(window) = engine.fetch_acquired(&schema, encoded, decoded).unwrap() {
+            rows += window.row_count();
+        }
+        assert_eq!(rows, 5000);
+    }
+    #[test]
+    fn gcs_source_reserves_full_encoded_capacity_alongside_decoded_vectors() {
+        for (native, source) in [
+            (8 * 1024 * 1024, 32 * 1024 * 1024),
+            (8 * 1024 * 1024, 2 * 1024 * 1024),
+            (1024, 512),
+        ] {
+            let (encoded, decoded) = super::gcs_transfer_allowances(native, source).unwrap();
+            assert_eq!(encoded + decoded, source);
+            assert!(encoded <= native && encoded <= source / 2);
+            assert!(decoded >= encoded);
+        }
+        assert!(super::gcs_transfer_allowances(255, 1024).is_err());
+        assert!(super::gcs_transfer_allowances(1024, 511).is_err());
     }
 }

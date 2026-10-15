@@ -77,6 +77,27 @@ impl Runtime {
                 "pull requires canonical root",
             )
         })?;
+        if root.starts_with("gs://")
+            || self
+                .connections
+                .values()
+                .any(|bound| bound.binding.canonical_root.starts_with("gs://"))
+        {
+            if !self.connections.is_empty() {
+                return Err(error(
+                    ErrorCode::InvalidDeclaration,
+                    "GCS runtime admits one retained connection",
+                ));
+            }
+            crate::gcs_metadata_budget::admit(&(&locator, &root, &expected, &workspace)).map_err(
+                |_| {
+                    error(
+                        ErrorCode::InvalidDeclaration,
+                        "GCS connection metadata exceeds allowance",
+                    )
+                },
+            )?;
+        }
         let relocated = binding::locate_pull(locator.canonical_connection.clone())
             .map_err(|e| failure(e.into()))?;
         if relocated != locator
@@ -235,6 +256,14 @@ impl Runtime {
                 "fixed pull identity differs from bound destination",
             ));
         }
+        if request.root.starts_with("gs://") {
+            crate::gcs_metadata_budget::admit(request).map_err(|_| {
+                error(
+                    ErrorCode::InvalidDeclaration,
+                    "GCS request metadata exceeds reserve",
+                )
+            })?;
+        }
         let declaration = binding::validate_pull(request.effective_declaration.clone())
             .map_err(|e| failure(e.into()))?;
         if declaration != request.effective_declaration {
@@ -383,6 +412,38 @@ impl Runtime {
         }
     }
     fn native_plan(&self, handle: &Handle, plan: &api::PullPlan) -> Result<pull::PullPlan> {
+        if plan.request.root.starts_with("gs://") {
+            let mut budget = crate::gcs_metadata_budget::Admission::new();
+            let admitted = (|| -> std::io::Result<()> {
+                budget.include(plan)?;
+                // The converted native plan repeats contracts per file. Charge
+                // each clone before creating it, not only the original document.
+                for table in &plan.tables {
+                    budget.include(&table.source_contract)?;
+                    budget.include(&table.output_contract)?;
+                    // Selected-partition JSON repeats the table name and tuple
+                    // per item, with an intermediate Vec and final Value.
+                    for partition in &table.partitions {
+                        budget.include(&(&table.name, partition))?;
+                        budget.include(&(&table.name, partition))?;
+                    }
+                    for file in plan.files.iter().filter(|file| file.table == table.name) {
+                        budget.include(&table.source_contract)?;
+                        budget.include(file)?;
+                        budget.include(&file.schema)?;
+                        budget.include(&file.partition)?;
+                    }
+                }
+                budget.include(&plan.request)?;
+                Ok(())
+            })();
+            admitted.map_err(|_| {
+                error(
+                    ErrorCode::InvalidDeclaration,
+                    "GCS pull metadata copies exceed reserve",
+                )
+            })?;
+        }
         let identity = self.fixed(handle, &plan.request)?;
         let materialization_mode =
             match plan.request.effective_declaration["options"]["materialization"].as_str() {
@@ -396,6 +457,38 @@ impl Runtime {
                     ));
                 }
             };
+        if materialization_mode == pull::MaterializationMode::GcsView {
+            // Admit repeated target-column SQL before per-file contract/schema
+            // clones. The later native bridge still validates exact authority.
+            for table in &plan.tables {
+                let target = table.target["table"].as_str().unwrap_or("");
+                let wrapper = target
+                    .len()
+                    .checked_add(identity.target_schema.as_str().len())
+                    .and_then(|n| n.checked_mul(2))
+                    .and_then(|n| n.checked_add(64))
+                    .ok_or_else(|| {
+                        error(
+                            ErrorCode::InvalidDeclaration,
+                            "GCS view wrapper size overflow",
+                        )
+                    })?;
+                pull::admit_gcs_view_sql(
+                    &table.source_contract,
+                    plan.files
+                        .iter()
+                        .filter(|file| file.table == table.name)
+                        .map(|file| file.location.as_str()),
+                    wrapper,
+                )
+                .map_err(|_| {
+                    error(
+                        ErrorCode::InvalidDeclaration,
+                        "GCS generated view exceeds command budget",
+                    )
+                })?;
+            }
+        }
         let declarations = plan.request.effective_declaration["tables"]
             .as_array()
             .unwrap();

@@ -70,6 +70,27 @@ impl Runtime {
                 "invalid DuckDB build binding mode",
             ));
         }
+        if root.as_ref().is_some_and(|root| root.starts_with("gs://"))
+            || self
+                .connections
+                .values()
+                .any(|bound| bound.root.starts_with("gs://"))
+        {
+            if !self.connections.is_empty() {
+                return Err(error(
+                    ErrorCode::InvalidDeclaration,
+                    "GCS runtime admits one retained connection",
+                ));
+            }
+            crate::gcs_metadata_budget::admit(&(&locator, &root, &expected, &workspace)).map_err(
+                |_| {
+                    error(
+                        ErrorCode::InvalidDeclaration,
+                        "GCS connection metadata exceeds allowance",
+                    )
+                },
+            )?;
+        }
         let mut relocated = binding::locate_pull(locator.canonical_connection.clone())
             .map_err(|e| failure(e.into()))?;
         relocated.session_lock_path = locator.session_lock_path.clone();
@@ -161,7 +182,22 @@ impl Runtime {
         request: DiscoverBuildRequest,
         stop: &StopToken,
     ) -> Result<BuildDiscovery> {
-        if self.bound(&handle)?.mode != request.execution.mode() {
+        if request.identity.root.starts_with("gs://") {
+            crate::gcs_metadata_budget::admit(&request).map_err(|_| {
+                error(
+                    ErrorCode::InvalidDeclaration,
+                    "GCS discovery metadata exceeds reserve",
+                )
+            })?;
+        }
+        let bound = self.bound(&handle)?;
+        if bound.root.starts_with("gs://") && !bound.sessions.is_empty() {
+            return Err(error(
+                ErrorCode::InvalidDeclaration,
+                "GCS runtime admits one retained build session; reopen its exact identity",
+            ));
+        }
+        if bound.mode != request.execution.mode() {
             return Err(error(
                 ErrorCode::ProtocolFailure,
                 "build execution mode differs from connection",
@@ -175,6 +211,14 @@ impl Runtime {
         request: PrepareBuildRequest,
         stop: &StopToken,
     ) -> Result<BuildSession> {
+        if request.discovery.identity.root.starts_with("gs://") {
+            crate::gcs_metadata_budget::admit(&request).map_err(|_| {
+                error(
+                    ErrorCode::InvalidDeclaration,
+                    "GCS preparation metadata exceeds reserve",
+                )
+            })?;
+        }
         request.validate().map_err(|_| {
             error(
                 ErrorCode::ProtocolFailure,
@@ -182,6 +226,18 @@ impl Runtime {
             )
         })?;
         let bound = self.bound(&handle)?;
+        if bound.root.starts_with("gs://")
+            && !bound.sessions.is_empty()
+            && !bound
+                .sessions
+                .values()
+                .any(|old| old == &request.discovery.identity)
+        {
+            return Err(error(
+                ErrorCode::InvalidDeclaration,
+                "GCS runtime admits one retained build session",
+            ));
+        }
         if request.discovery.identity.root != bound.root
             || request.discovery.identity.connection_identity != bound.identity
         {
@@ -276,9 +332,37 @@ impl Runtime {
         stop: &StopToken,
         inspect: bool,
     ) -> Result<BuildRecord> {
+        let bound = self.bound(&handle)?;
+        if bound.root.starts_with("gs://") {
+            crate::gcs_metadata_budget::admit(&identity).map_err(|_| {
+                error(
+                    ErrorCode::InvalidDeclaration,
+                    "GCS session identity exceeds allowance",
+                )
+            })?;
+            if !inspect
+                && !bound.sessions.is_empty()
+                && !bound.sessions.values().any(|old| old == &identity)
+            {
+                return Err(error(
+                    ErrorCode::InvalidDeclaration,
+                    "GCS runtime admits one retained build session",
+                ));
+            }
+        }
         let record = self.call(&handle, move |store| store.open_session(&identity), stop)?;
         if !inspect {
-            self.connections.get_mut(&handle).unwrap().sessions.insert(
+            let bound = self.connections.get_mut(&handle).unwrap();
+            if bound.root.starts_with("gs://")
+                && !bound.sessions.is_empty()
+                && bound.sessions.get(&record.session.session_id) != Some(&record.session.identity)
+            {
+                return Err(error(
+                    ErrorCode::OutcomeUnknown,
+                    "GCS durable session identifier differs from retained identity",
+                ));
+            }
+            bound.sessions.insert(
                 record.session.session_id.clone(),
                 record.session.identity.clone(),
             );

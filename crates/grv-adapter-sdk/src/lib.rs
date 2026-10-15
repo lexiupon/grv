@@ -277,6 +277,10 @@ pub enum BuildExportEvent {
 
 pub trait Adapter: Send + 'static {
     fn registration(&self) -> Registration;
+    /// Internal adapter opt-in; activated on a gs:// bound root. No wire field.
+    fn bounded_gcs_metadata(&self) -> bool {
+        false
+    }
     /// Store negotiated budgets only; no authentication, engine, or source I/O.
     fn configure_resources(&mut self, _resources: &Resources) -> Result<()> {
         Ok(())
@@ -492,6 +496,17 @@ struct Outbound {
 }
 impl Outbound {
     fn new(frame: Frame, payload: Vec<u8>) -> Result<Self> {
+        Self::with_policy(frame, payload, false)
+    }
+    fn with_policy(frame: Frame, payload: Vec<u8>, bounded: bool) -> Result<Self> {
+        if bounded {
+            grv_adapter_wire::metadata::admit(&frame).map_err(|_| {
+                error(
+                    ErrorCode::AdapterFailure,
+                    "GCS outgoing metadata exceeds allowance",
+                )
+            })?;
+        }
         let req = frame.req().expect("operation output");
         let terminal = !matches!(
             frame,
@@ -506,7 +521,10 @@ impl Outbound {
         let mut bytes = None;
         let mut id = None;
         let mut output = frame;
-        if serde_json::to_vec(&output).expect("frame serializes").len() + 1
+        if grv_adapter_wire::serialized_len(&output)
+            .map_err(|_| protocol("adapter frame serialization failed"))?
+            .checked_add(1)
+            .ok_or_else(|| protocol("adapter frame size overflow"))?
             > grv_adapter_wire::FRAME_LIMIT
         {
             let mut value = serde_json::to_value(&output).expect("frame serializes");
@@ -525,13 +543,27 @@ impl Outbound {
                     )
                 })?;
             let content = doc.as_object_mut().unwrap().remove("inline").unwrap();
+            if bounded {
+                grv_adapter_wire::metadata::admit(&content).map_err(|_| {
+                    error(
+                        ErrorCode::AdapterFailure,
+                        "GCS outgoing document exceeds logical allowance",
+                    )
+                })?;
+            }
             let canonical = grv_types::canonical_json(&content).map_err(|_| {
                 error(
                     ErrorCode::AdapterFailure,
                     "adapter document canonicalization failed",
                 )
             })?;
-            if canonical.len() > grv_adapter_wire::DOCUMENT_LIMIT {
+            if canonical.len()
+                > if bounded {
+                    grv_adapter_wire::metadata::GCS_DOCUMENT_BYTES
+                } else {
+                    grv_adapter_wire::DOCUMENT_LIMIT
+                }
+            {
                 return Err(error(
                     ErrorCode::AdapterFailure,
                     "adapter metadata exceeds document budget",
@@ -1160,15 +1192,32 @@ fn start(
 /// Serve an already-connected channel. Useful for process conformance tests.
 pub fn serve(adapter: impl Adapter, stream: UnixStream) -> std::result::Result<(), SdkError> {
     let registration = adapter.registration();
+    let gcs_policy_supported = adapter.bounded_gcs_metadata();
+    let gcs_policy = Arc::new(AtomicBool::new(false));
     registration.validate()?;
     let reader_stream = stream.try_clone()?;
     let shutdown = stream.try_clone()?;
     let (tx, input) = mpsc::sync_channel(4);
+    // Reader admission can start as soon as binding bytes arrive, but must not
+    // change preceding operations' writer/state policy until main dispatch.
+    let reader_policy = Arc::new(AtomicBool::new(false));
     let reader = thread::spawn(move || {
         let mut codec = Codec::new(reader_stream, 67108864);
+        codec.metadata_policy(reader_policy.clone());
         loop {
             match codec.read() {
                 Ok(p) => {
+                    // Binding frame itself is parsed under the generic cap; all
+                    // following reader packets are admitted before parsing.
+                    if gcs_policy_supported
+                        && matches!(&p.frame,Frame::BindConnection{root:Some(root),..} if root.starts_with("gs://"))
+                    {
+                        if let Err(e) = grv_adapter_wire::metadata::admit(&p.frame) {
+                            let _ = tx.send(Err(e));
+                            break;
+                        }
+                        reader_policy.store(true, Ordering::Release);
+                    }
                     if tx.send(Ok(p)).is_err() {
                         break;
                     }
@@ -1181,6 +1230,7 @@ pub fn serve(adapter: impl Adapter, stream: UnixStream) -> std::result::Result<(
         }
     });
     let mut writer = Codec::new(stream, 67108864);
+    writer.metadata_policy(gcs_policy.clone());
     let mut state = State::new(Role::Adapter);
     let send = |state: &mut State,
                 writer: &mut Codec<UnixStream>,
@@ -1198,6 +1248,7 @@ pub fn serve(adapter: impl Adapter, stream: UnixStream) -> std::result::Result<(
     let mut bound_handle: Option<Handle> = None;
     let mut authenticate_called = false;
     let mut hook_requests: BTreeMap<Uuid, AfterPublishRequest> = BTreeMap::new();
+    let mut refused_terminal_cancel = false;
     let mut prepared_pull: Option<PullPlan> = None;
     let mut pull_lookup: Option<(Uuid, String)> = None;
     let mut pull_authorization: Option<(RequestRecord, Option<Value>)> = None;
@@ -1265,6 +1316,12 @@ pub fn serve(adapter: impl Adapter, stream: UnixStream) -> std::result::Result<(
                 }
                 if output.completed() {
                     let output = outbound.take().unwrap();
+                    if refused_terminal_cancel {
+                        return Err(SdkError(
+                            "known terminal result refused during cancellation; recovery required"
+                                .into(),
+                        ));
+                    }
                     if output.terminal {
                         last_completed = Some(output.req);
                         if let Some(req) = pending_cancel.take() {
@@ -1291,7 +1348,11 @@ pub fn serve(adapter: impl Adapter, stream: UnixStream) -> std::result::Result<(
                 match a.receiver.try_recv() {
                     Ok(WorkerReply::Event(f, payload)) => {
                         if !a.stop.is_cancelled() {
-                            match Outbound::new(f, payload) {
+                            match Outbound::with_policy(
+                                f,
+                                payload,
+                                gcs_policy.load(Ordering::Acquire),
+                            ) {
                                 Ok(output) => outbound = Some(output),
                                 Err(e) => {
                                     a.stop.cancel();
@@ -1306,6 +1367,23 @@ pub fn serve(adapter: impl Adapter, stream: UnixStream) -> std::result::Result<(
                         )));
                     }
                     Ok(WorkerReply::Finished(returned, mut result)) => {
+                        // Refusal cannot install a successful SDK lifecycle or
+                        // authorization state that the peer never received.
+                        if gcs_policy.load(Ordering::Acquire)
+                            && let Ok(Some(frame)) = &result
+                            && (grv_adapter_wire::metadata::admit(frame).is_err()
+                                || builds.admit_gcs_transition(frame).is_err())
+                        {
+                            let refusal = error(
+                                ErrorCode::AdapterFailure,
+                                "GCS outgoing result metadata exceeds allowance",
+                            );
+                            // Even with pending cancellation, a known terminal
+                            // result refused by admission is not stopped work.
+                            refused_terminal_cancel = pending_cancel.is_some();
+                            pending_failure = Some(refusal.clone());
+                            result = Err(refusal);
+                        }
                         if let Ok(Some(frame)) = &result
                             && let Err(error) =
                                 builds.observe_result(&active.as_ref().unwrap().request, frame)
@@ -1360,9 +1438,16 @@ pub fn serve(adapter: impl Adapter, stream: UnixStream) -> std::result::Result<(
                         } else if let Some(req) = pending_cancel {
                             match result {
                                 Ok(Some(f)) => {
-                                    outbound = Some(Outbound::new(f, vec![]).unwrap_or_else(|e| {
-                                        Outbound::new(error_frame(req, e), vec![]).unwrap()
-                                    }))
+                                    outbound = Some(
+                                        Outbound::with_policy(
+                                            f,
+                                            vec![],
+                                            gcs_policy.load(Ordering::Acquire),
+                                        )
+                                        .unwrap_or_else(
+                                            |e| Outbound::new(error_frame(req, e), vec![]).unwrap(),
+                                        ),
+                                    )
                                 }
                                 _ => {
                                     pending_cancel = None;
@@ -1381,9 +1466,18 @@ pub fn serve(adapter: impl Adapter, stream: UnixStream) -> std::result::Result<(
                         } else {
                             match result {
                                 Ok(Some(f)) => {
-                                    outbound = Some(Outbound::new(f, vec![]).unwrap_or_else(|e| {
-                                        Outbound::new(error_frame(a.req, e), vec![]).unwrap()
-                                    }))
+                                    outbound =
+                                        Some(
+                                            Outbound::with_policy(
+                                                f,
+                                                vec![],
+                                                gcs_policy.load(Ordering::Acquire),
+                                            )
+                                            .unwrap_or_else(|e| {
+                                                Outbound::new(error_frame(a.req, e), vec![])
+                                                    .unwrap()
+                                            }),
+                                        )
                                 }
                                 Ok(None) => {
                                     return Err(SdkError(
@@ -1412,6 +1506,14 @@ pub fn serve(adapter: impl Adapter, stream: UnixStream) -> std::result::Result<(
                     return Err(SdkError("channel EOF".into()));
                 }
             };
+            if gcs_policy_supported
+                && matches!(&packet.frame,Frame::BindConnection{root:Some(root),..} if root.starts_with("gs://"))
+            {
+                gcs_policy.store(true, Ordering::Release);
+            }
+            if gcs_policy.load(Ordering::Acquire) {
+                state.enable_bounded_gcs_metadata()?;
+            }
             let frame = state.resolved_frame(&packet.frame, false)?;
             frame.validate()?;
             state.observe(&packet.frame, false)?;
@@ -1494,7 +1596,43 @@ pub fn serve(adapter: impl Adapter, stream: UnixStream) -> std::result::Result<(
                     last_completed = frame.req();
                     continue;
                 }
+                if gcs_policy.load(Ordering::Acquire) {
+                    let mut reserve = grv_adapter_wire::metadata::Admission::default();
+                    if reserve
+                        .include(&hook_requests)
+                        .and_then(|()| reserve.include(&request))
+                        .is_err()
+                    {
+                        send(
+                            &mut state,
+                            &mut writer,
+                            &error_frame(
+                                frame.req().unwrap(),
+                                error(
+                                    ErrorCode::AdapterFailure,
+                                    "GCS retained hook metadata exceeds allowance",
+                                ),
+                            ),
+                            &[],
+                        )?;
+                        last_completed = frame.req();
+                        continue;
+                    }
+                }
                 hook_requests.insert(attempt_id.clone(), request);
+            }
+            if gcs_policy.load(Ordering::Acquire)
+                && frame.req().is_some()
+                && let Err(error) = builds.admit_gcs_transition(&frame)
+            {
+                send(
+                    &mut state,
+                    &mut writer,
+                    &error_frame(frame.req().unwrap(), error),
+                    &[],
+                )?;
+                last_completed = frame.req();
+                continue;
             }
             if let Err(error) = builds.authorize(&frame) {
                 send(
@@ -1680,14 +1818,33 @@ pub fn serve(adapter: impl Adapter, stream: UnixStream) -> std::result::Result<(
                     })();
                     match result {
                         Ok(call) => {
+                            if gcs_policy.load(Ordering::Acquire)
+                                && grv_adapter_wire::metadata::admit(&call).is_err()
+                            {
+                                send(
+                                    &mut state,
+                                    &mut writer,
+                                    &error_frame(
+                                        req,
+                                        error(
+                                            ErrorCode::AdapterFailure,
+                                            "GCS prepared command metadata exceeds allowance",
+                                        ),
+                                    ),
+                                    &[],
+                                )?;
+                                last_completed = Some(req);
+                                continue;
+                            }
                             prepared = Some(call.clone());
                             outbound = Some(
-                                Outbound::new(
+                                Outbound::with_policy(
                                     Frame::CommandPrepared {
                                         req,
                                         call: Doc::inline(call),
                                     },
                                     vec![],
+                                    gcs_policy.load(Ordering::Acquire),
                                 )
                                 .unwrap_or_else(|e| {
                                     Outbound::new(error_frame(req, e), vec![]).unwrap()
@@ -1871,6 +2028,9 @@ mod tests {
         response_size: usize,
     }
     impl Adapter for TestAdapter {
+        fn bounded_gcs_metadata(&self) -> bool {
+            true
+        }
         fn registration(&self) -> Registration {
             Registration {
                 name: Name::new("test").unwrap(),
@@ -1928,6 +2088,19 @@ mod tests {
             request: InspectConnectionRequest,
             stop: &StopToken,
         ) -> Result<Value> {
+            if request
+                .declaration
+                .as_ref()
+                .is_some_and(|v| v["test_known_terminal_after_cancel"] == true)
+            {
+                self.writes.fetch_add(1, Ordering::SeqCst);
+                self.pid.store(1, Ordering::SeqCst);
+                while !stop.is_cancelled() {
+                    thread::sleep(Duration::from_millis(2));
+                }
+                // Synthetic already-completed effect, terminal cannot be stopped.
+                return Ok(json!({"large":"x".repeat(9*1024*1024)}));
+            }
             stop.check()?;
             Ok(json!({"root":request.root,"declaration":request.declaration}))
         }
@@ -1961,7 +2134,11 @@ mod tests {
                 identity: Some("test-source".into()),
                 workspace_id: None,
                 binding: BindingState::NotApplicable,
-                details: json!({}),
+                details: if self.response_size > 0 {
+                    json!({"large":"x".repeat(self.response_size)})
+                } else {
+                    json!({})
+                },
             })
         }
         fn resolve_pull(
@@ -2194,6 +2371,166 @@ mod tests {
                 operation_id: None,
             },
         }
+    }
+    #[test]
+    fn gcs_admission_refused_known_terminal_with_pending_cancel_is_not_stopped() {
+        let (mut channel, server, writes, pid, _) = setup(false);
+        channel
+            .send(
+                &Frame::BindConnection {
+                    req: req(1),
+                    locator: Doc::inline(ConnectionLocator {
+                        canonical_connection: json!({}),
+                        identity: None,
+                        engine_path: None,
+                        session_lock_path: None,
+                    }),
+                    root: Some("gs://test-bucket/data".into()),
+                    expected_identity: None,
+                    expected_workspace_id: None,
+                    mode: Mode::Extract,
+                },
+                &[],
+            )
+            .unwrap();
+        assert!(matches!(
+            channel.receive().unwrap().frame,
+            Frame::BindResult { .. }
+        ));
+        channel
+            .send(
+                &Frame::InspectConnection {
+                    req: req(2),
+                    handle: Handle::new("test-handle").unwrap(),
+                    root: Some("gs://test-bucket/data".into()),
+                    declaration: Some(Doc::inline(
+                        json!({"test_known_terminal_after_cancel":true}),
+                    )),
+                },
+                &[],
+            )
+            .unwrap();
+        while pid.load(Ordering::SeqCst) == 0 {
+            thread::sleep(Duration::from_millis(2));
+        }
+        channel.send(&Frame::Cancel { req: req(2) }, &[]).unwrap();
+        assert!(matches!(
+            channel.receive().unwrap().frame,
+            Frame::Error {
+                code: ErrorCode::AdapterFailure,
+                ..
+            }
+        ));
+        assert_eq!(writes.load(Ordering::SeqCst), 1);
+        assert!(channel.codec.read().is_err());
+        assert!(server.join().unwrap().is_err());
+    }
+    #[test]
+    fn refused_gcs_bind_result_reports_failure_and_only_closes_without_retry() {
+        let (mut channel, server, writes, _, stopped) = setup_with_response(false, 9 * 1024 * 1024);
+        channel
+            .send(
+                &Frame::BindConnection {
+                    req: req(1),
+                    locator: Doc::inline(ConnectionLocator {
+                        canonical_connection: json!({}),
+                        identity: None,
+                        engine_path: None,
+                        session_lock_path: None,
+                    }),
+                    root: Some("gs://test-bucket/data".into()),
+                    expected_identity: None,
+                    expected_workspace_id: None,
+                    mode: Mode::Extract,
+                },
+                &[],
+            )
+            .unwrap();
+        assert!(matches!(
+            channel.receive().unwrap().frame,
+            Frame::Error {
+                code: ErrorCode::AdapterFailure,
+                ..
+            }
+        ));
+        channel.send(&Frame::Close { req: req(2) }, &[]).unwrap();
+        assert!(matches!(
+            channel.receive().unwrap().frame,
+            Frame::CloseResult { .. }
+        ));
+        server.join().unwrap().unwrap();
+        assert!(stopped.load(Ordering::SeqCst));
+        assert_eq!(writes.load(Ordering::SeqCst), 0);
+    }
+    #[test]
+    fn gcs_bind_activates_reader_policy_before_following_packets() {
+        let (mut channel, server, _, _, stopped) = setup(false);
+        channel
+            .send(
+                &Frame::BindConnection {
+                    req: req(1),
+                    locator: Doc::inline(ConnectionLocator {
+                        canonical_connection: json!({}),
+                        identity: None,
+                        engine_path: None,
+                        session_lock_path: None,
+                    }),
+                    root: Some("gs://test-bucket/data".into()),
+                    expected_identity: None,
+                    expected_workspace_id: None,
+                    mode: Mode::Extract,
+                },
+                &[],
+            )
+            .unwrap();
+        assert!(matches!(
+            channel.receive().unwrap().frame,
+            Frame::BindResult { .. }
+        ));
+        let bytes = serde_json::to_vec(&vec![""; 40000]).unwrap();
+        let id = Uuid::v4();
+        channel
+            .send(
+                &Frame::DocumentBegin {
+                    document_id: id.clone(),
+                    size: U64::new(bytes.len() as u64).unwrap(),
+                    sha256: grv_types::sha256(&bytes),
+                },
+                &[],
+            )
+            .unwrap();
+        use base64::Engine;
+        channel
+            .send(
+                &Frame::DocumentChunk {
+                    document_id: id.clone(),
+                    index: SafeInt::new(0).unwrap(),
+                    data: base64::engine::general_purpose::STANDARD.encode(&bytes),
+                },
+                &[],
+            )
+            .unwrap();
+        channel
+            .send(&Frame::DocumentEnd { document_id: id }, &[])
+            .unwrap();
+        assert!(channel.codec.read().is_err());
+        assert!(server.join().unwrap().is_err());
+        assert!(stopped.load(Ordering::SeqCst));
+    }
+    #[test]
+    fn opted_in_outbound_metadata_refuses_before_document_copies() {
+        let frame = Frame::CommandResult {
+            req: req(1),
+            details: Doc::inline(json!({"nodes":vec!["";40000]})),
+        };
+        assert!(Outbound::new(frame.clone(), vec![]).is_ok());
+        let error = Outbound::with_policy(frame, vec![], true).err().unwrap();
+        assert_eq!(error.code, ErrorCode::AdapterFailure);
+        let normal = Frame::CommandResult {
+            req: req(1),
+            details: Doc::inline(json!({"value":"escaped\\\"🍕"})),
+        };
+        assert!(Outbound::with_policy(normal, vec![], true).is_ok());
     }
     #[test]
     fn after_publish_rebind_replay_needs_no_extraction_and_rejects_changed_fixed_hook() {

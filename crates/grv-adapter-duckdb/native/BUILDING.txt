@@ -1,6 +1,6 @@
 DuckDB native guard and extraction seam
 
-Engine: DuckDB v1.5.6, native guard revision 4. The build requires the official
+Engine: DuckDB v1.5.6, native guard revision 6. The build requires the official
 source archive at https://github.com/duckdb/duckdb/archive/refs/tags/v1.5.6.tar.gz
 SHA-256: 1fadcbe9e69e1470f9093b6bcde08daf477d729c449e59a807f45c346622099b
 
@@ -19,7 +19,19 @@ from duckdb-httpfs 4bc690dba4496c765777a0269d48fdbaff7cdc11, SHA-256
 0dcbe1e3f9981fda00e23cd1e85e797d0c31a47b970a7a52dc637429d1b1c317.
 Header/extension compatibility and required licenses/notices are package gates.
 
-GCS revision 4 uses a virtual SendRequest policy delegate with pinned
+Revision6 returns GCS native execution to the adapter process. Source-free GCS
+metadata can activate bounded streaming before discovery/auth without authorizing
+cloud scans or replacing its connection. Revision5's secret-revocation evidence
+is retained: uncertain setup cleanup (-2) now quarantines the Rust owner until
+synchronous teardown/reopen, never _exit of the embedding process. No packaged
+GCS helper, private IPC or override is required. Coordinated revision6 Rust/native
+checks reject old libraries; public wire/durable versions are unchanged.
+Test-only post-secret faults build as grv_gcs_setup_proof under
+GRV_BUILD_CLOUD_QUALIFICATION; no shipping environment switch enables them.
+Hard in-flight stop/join/rollback and a total-engine/RSS cap are explicitly not
+promised; see spec/gcs-in-process-execution-decision.md.
+
+GCS revision 4 introduced the virtual SendRequest policy delegate with pinned
 HTTPFSParams, forwarding to signed stock httplib, not a replacement transport.
 Revision 3's engine Request patch is bypassed by signed HTTPFS private symbols
 and its mock proof is supplemental only. Curl is not admitted for bounded GCS
@@ -303,7 +315,8 @@ candidate and terminal outcome survive output cleanup. Native subprocess tests
 prove cancellation/EOF interrupt and join the owner before acknowledgement and
 workspace-lock release, including completion/cancellation races. Production
 capability advertisement additionally requires parent publication/recovery and
-full external helper containment/session-lock gates.
+full external cancellation/recovery/session-lock gates. Historical dedicated
+GCS-helper containment proofs do not qualify revision6 in-process execution.
 
   GRV_DUCKDB_NATIVE_LIB_DIR=/tmp/grv-duckdb-native/cmake \
     cargo test -p grv-adapter-duckdb --features native --test build

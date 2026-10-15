@@ -1,0 +1,222 @@
+{
+  "artifact_sha256_after": {
+    "aws.duckdb_extension": "911b68461fdd989e0c9e74926b197c8a05727bfafc05df38baa47ece42174f1c",
+    "grv_cloud_qualification": "15b1c1a2a7f89895f60e347830f1b28b6df7ca2bb8b0578c51582497041d6999",
+    "httpfs.duckdb_extension": "0cde1f5acd1970bfd414b11f5e945a1eddd8425e96e273f6411538d8fe3d951d",
+    "libgrv_duckdb_guard.dylib": "2709cc619eb125d1ecdc48377303019ea20bfe32f20c4e964c298b2b66abdd5f",
+    "native/cloud_qualification.cpp": "7da105aac459bb0dccf36e719a8d5f72bc2f1d20fcbc33dc53fd663d1e80031e",
+    "native/fixture.cpp": "24f45e016e134566e3b845e751386bc0e168209bb324985104d2756d33edad8f",
+    "native/gcs.inc": "d7061b3d63746847f3a80fcf799fc981f4b766772c9172955ee1e57f20655572",
+    "native/gcs_filesystem.inc": "fdadb009d4ca8162b67fc2e6a3b7883ec4489f76bbdf7ea016bba85f323112d9",
+    "native/gcs_http_policy.hpp": "29f4cf4665061fbfd1e55d81b126963434b2042267d85c82c0b2a4b7786edb1e",
+    "native/gcs_oauth_isolation_proof.cpp": "2b6aecd93e74ab01d9c451eb27d62a51ecd961404c23a73cf0cc03090e2f6f51",
+    "native/gcs_request_proof.cpp": "a6c9d78a9459dac54addcc258081784854e036d4290ebadabcacba1d77dad263",
+    "native/gcs_scanner_lifecycle_proof.cpp": "0dd6032a10377ef2394aa8c6364148c9ec2e304147a4ed104fc1613337b9c707",
+    "native/gcs_setup_proof.cpp": "3206db379081409741e4c0bdc3889a39b4c000773d941bba04255a35d4c21c33",
+    "native/gcs_stock_request_proof.cpp": "ad6308ebf3823675fac8b57e4d6af4845fec6dee0e797e155d829b97e59c8eed",
+    "native/grv_guard.hpp": "1a623abc0556266c3b14bcf22cbddabc27e18d78f5d55b5b4be47c010d540bc5",
+    "native/grv_http_request_guard.hpp": "4d0a00220ede1d1e052e0cf7e9b93b55fd1653ec3d2b10af01d5b1361a9aea01",
+    "native/httpfs_client_pinned.hpp": "0dcbe1e3f9981fda00e23cd1e85e797d0c31a47b970a7a52dc637429d1b1c317",
+    "native/in_process_gate_proof.cpp": "b9c8437af9c594fa07fa2325c2e5299660a7cb3540142fee6a4040582dd91569",
+    "native/metadata_allocation_proof.cpp": "78105a0efdd7a2c0adee4955512852ccdd209549f082b0655b7355902b2896b7",
+    "native/metadata_stream_proof.cpp": "c9f45b45f5e2617dfd67f87d1ebcdcc7ab80237ee23dc951892ab0687ebcd688",
+    "native/proof.cpp": "8074265d512369d4680205ce7e07d2aa5d99d282a3c1abdf43fdcb898e61ac54",
+    "native/pull.inc": "ebc80c579cd60921d69cdafe2cf517c2a330508f70f82c97b9698627de3ba94c",
+    "native/run_s3_qualification.py": "f2d69fc685bcc4fcc18ab0056f3ddaeb8e55a94346a06b31eab19e139579af3f",
+    "native/s3.inc": "52b15f7808c437b23f49854e5340ce2a8b49c1f21ebd4099bc1624c71017520a",
+    "native/s3_limits.hpp": "c181aa1800c88dec9ee1da0b704a7c2a6488700a851a0b87f418b6b773e1f416",
+    "native/s3_limits_proof.cpp": "1850e37140c543f6cf88607b20fd5acacc3d3bbf8074ebdb663562dd25b469f6",
+    "native/shim.cpp": "4a6415afc8f9e2261314302a45ff598dae4c60aad54314ead2301c3700fdd2f1",
+    "native/staging.inc": "dd175fcacecfe2eb248376b0c4c70220d859355eb7d9108af3166dac47d09de1",
+    "native/transaction_fault_proof.cpp": "30dcef1a2d409644c4efc889ce7df6d8dcbaa665b63f8902ef33fca041173459",
+    "native/verified_fd.inc": "e4dcc44015f6e429bf54de8a68ae774e918136fe20b3a8978a9b1da8423d15e5",
+    "native/verified_s3.inc": "7eb814e5d71a83f098de487e151766014d55384581e584c8d06370d053866cd6"
+  },
+  "artifact_sha256_before": {
+    "aws.duckdb_extension": "911b68461fdd989e0c9e74926b197c8a05727bfafc05df38baa47ece42174f1c",
+    "grv_cloud_qualification": "15b1c1a2a7f89895f60e347830f1b28b6df7ca2bb8b0578c51582497041d6999",
+    "httpfs.duckdb_extension": "0cde1f5acd1970bfd414b11f5e945a1eddd8425e96e273f6411538d8fe3d951d",
+    "libgrv_duckdb_guard.dylib": "2709cc619eb125d1ecdc48377303019ea20bfe32f20c4e964c298b2b66abdd5f",
+    "native/cloud_qualification.cpp": "7da105aac459bb0dccf36e719a8d5f72bc2f1d20fcbc33dc53fd663d1e80031e",
+    "native/fixture.cpp": "24f45e016e134566e3b845e751386bc0e168209bb324985104d2756d33edad8f",
+    "native/gcs.inc": "d7061b3d63746847f3a80fcf799fc981f4b766772c9172955ee1e57f20655572",
+    "native/gcs_filesystem.inc": "fdadb009d4ca8162b67fc2e6a3b7883ec4489f76bbdf7ea016bba85f323112d9",
+    "native/gcs_http_policy.hpp": "29f4cf4665061fbfd1e55d81b126963434b2042267d85c82c0b2a4b7786edb1e",
+    "native/gcs_oauth_isolation_proof.cpp": "2b6aecd93e74ab01d9c451eb27d62a51ecd961404c23a73cf0cc03090e2f6f51",
+    "native/gcs_request_proof.cpp": "a6c9d78a9459dac54addcc258081784854e036d4290ebadabcacba1d77dad263",
+    "native/gcs_scanner_lifecycle_proof.cpp": "0dd6032a10377ef2394aa8c6364148c9ec2e304147a4ed104fc1613337b9c707",
+    "native/gcs_setup_proof.cpp": "3206db379081409741e4c0bdc3889a39b4c000773d941bba04255a35d4c21c33",
+    "native/gcs_stock_request_proof.cpp": "ad6308ebf3823675fac8b57e4d6af4845fec6dee0e797e155d829b97e59c8eed",
+    "native/grv_guard.hpp": "1a623abc0556266c3b14bcf22cbddabc27e18d78f5d55b5b4be47c010d540bc5",
+    "native/grv_http_request_guard.hpp": "4d0a00220ede1d1e052e0cf7e9b93b55fd1653ec3d2b10af01d5b1361a9aea01",
+    "native/httpfs_client_pinned.hpp": "0dcbe1e3f9981fda00e23cd1e85e797d0c31a47b970a7a52dc637429d1b1c317",
+    "native/in_process_gate_proof.cpp": "b9c8437af9c594fa07fa2325c2e5299660a7cb3540142fee6a4040582dd91569",
+    "native/metadata_allocation_proof.cpp": "78105a0efdd7a2c0adee4955512852ccdd209549f082b0655b7355902b2896b7",
+    "native/metadata_stream_proof.cpp": "c9f45b45f5e2617dfd67f87d1ebcdcc7ab80237ee23dc951892ab0687ebcd688",
+    "native/proof.cpp": "8074265d512369d4680205ce7e07d2aa5d99d282a3c1abdf43fdcb898e61ac54",
+    "native/pull.inc": "ebc80c579cd60921d69cdafe2cf517c2a330508f70f82c97b9698627de3ba94c",
+    "native/run_s3_qualification.py": "f2d69fc685bcc4fcc18ab0056f3ddaeb8e55a94346a06b31eab19e139579af3f",
+    "native/s3.inc": "52b15f7808c437b23f49854e5340ce2a8b49c1f21ebd4099bc1624c71017520a",
+    "native/s3_limits.hpp": "c181aa1800c88dec9ee1da0b704a7c2a6488700a851a0b87f418b6b773e1f416",
+    "native/s3_limits_proof.cpp": "1850e37140c543f6cf88607b20fd5acacc3d3bbf8074ebdb663562dd25b469f6",
+    "native/shim.cpp": "4a6415afc8f9e2261314302a45ff598dae4c60aad54314ead2301c3700fdd2f1",
+    "native/staging.inc": "dd175fcacecfe2eb248376b0c4c70220d859355eb7d9108af3166dac47d09de1",
+    "native/transaction_fault_proof.cpp": "30dcef1a2d409644c4efc889ce7df6d8dcbaa665b63f8902ef33fca041173459",
+    "native/verified_fd.inc": "e4dcc44015f6e429bf54de8a68ae774e918136fe20b3a8978a9b1da8423d15e5",
+    "native/verified_s3.inc": "7eb814e5d71a83f098de487e151766014d55384581e584c8d06370d053866cd6"
+  },
+  "artifacts_unchanged": true,
+  "capability_advertised": false,
+  "cleanup": {
+    "bucket": "grv-s3-shipping-probe-8aa80712bf3049eab0a55051c500e487",
+    "bucket_absence_code": "404",
+    "credential_creation": false,
+    "delete_markers_inventory_empty": true,
+    "deleted_owned_generations": 0,
+    "existing_data_changes": false,
+    "iam_changes": false,
+    "live_inventory_empty": true,
+    "multipart_inventory_empty": true,
+    "owner_marker_matched": true,
+    "versions_inventory_empty": true
+  },
+  "failure": null,
+  "identity": {
+    "account": "590184134474",
+    "arn": "arn:aws:iam::590184134474:user/lexiupon-aws-cli-s3",
+    "fallback": false,
+    "profile": "lexiupon-aws-cli-s3",
+    "region": "eu-west-1"
+  },
+  "limitations": [
+    "Not release qualification, a frozen release candidate or the full shipping matrix.",
+    "Recorded hashes identify attempted artifacts and sources, not source-to-binary build attestation or the current installed package.",
+    "Counters cover accepted protected-reader GET bodies and HEAD/GET attempts only; not headers, rejected bodies, TLS or total wire bytes.",
+    "Full preparation traffic and parent end-to-end operation traffic are not measured.",
+    "EXPLAIN counters do not publish or verify plan contents.",
+    "Four fixed single-file slices (the two settings pairs, the approved special-name coordinate and one empty fixture) plus one three-file aggregate slice omit typed/evolved and broad fault/cancellation/resource tests.",
+    "Multi-file ground truth is computed independently in Python from the local fixtures because the harness local oracle admits only one descriptor per call; the guarded cloud path is unchanged.",
+    "Cold versus warm on this path means two sequential guarded executions inside one retained connection-session: no durable cache exists across processes, so a second run is cold again.",
+    "The cold/warm shape records per-trial counters but asserts no direction: reduced warm fetching and full warm re-fetch are both accepted outcomes.",
+    "No universal savings claim; no-statistics savings are not evidence of statistics pruning.",
+    "Native verification trusts an exact matching ETag; the supplied local SHA256 is used for the mismatch fallback, not independently rehashed remotely on this path.",
+    "Outer process timeout is not qualification of native absolute in-flight deadlines.",
+    "Independent security review and remaining package/release gates remain open."
+  ],
+  "prior_attempt": {
+    "archive": "~/grv-evidence/grv-s3-shipping-i1_n_kqp/prior-sanitized-checkpoint.json",
+    "archive_sha256": "ce9d056834d22e11b777df3282de3d1820734e8742953aae0b714d1fd11486c3",
+    "cleanup": {
+      "bucket": "grv-s3-shipping-probe-77f120a003d740f591a08506a604310d",
+      "bucket_absence_code": "404",
+      "credential_creation": false,
+      "delete_markers_inventory_empty": true,
+      "deleted_owned_generations": 5,
+      "existing_data_changes": false,
+      "iam_changes": false,
+      "live_inventory_empty": true,
+      "multipart_inventory_empty": true,
+      "owner_marker_matched": true,
+      "versions_inventory_empty": true
+    },
+    "cleanup_recovery": null,
+    "failure": null,
+    "initial_failure_archive": {
+      "mode": "0400",
+      "path": "~/grv-s3-shipping-p56794y4/initial-failed-checkpoint.json",
+      "sha256": "8664f72da3f13f61c804f19f924845096dba905a1058a9ca027e3f7d1328b5f6"
+    },
+    "status": "qualification-slice-not-release-qualified"
+  },
+  "private_evidence_directory": "~/grv-evidence/grv-s3-shipping-i1_n_kqp",
+  "private_evidence_sha256": {
+    "cleanup.json": "0419601666806741a2e13590542da24438395ea436639a3bb1fb9eccdade7429",
+    "manifest-cold-warm.json": "876ea37e54ddfedd9fe78d047f3693979d5f39fa987f10765b6b3eb619a3d4dd",
+    "prior-sanitized-checkpoint.json": "ce9d056834d22e11b777df3282de3d1820734e8742953aae0b714d1fd11486c3",
+    "state.json": "5cfba27690c9115a8ff65abfea1e4076725258bd67aba283e581350feb1e7b10"
+  },
+  "qualification": "isolated-s3-shipping-scanner-slice",
+  "release_published": false,
+  "slices": [
+    {
+      "counter_direction_not_asserted": true,
+      "denials": {
+        "direct": true,
+        "nested_glob": true,
+        "secrets": true,
+        "unlisted": true
+      },
+      "elapsed_seconds": 20.206,
+      "files": [
+        {
+          "bytes": 4286477,
+          "canonical_coordinate": "s3://grv-s3-shipping-probe-8aa80712bf3049eab0a55051c500e487/data/cold-warm.parquet",
+          "cleaned_individually": true,
+          "compression": "NONE",
+          "dictionary": false,
+          "etag": "\"dd41b5551d565507aeaddb99ba06d461\"",
+          "local_fixture": "cold-warm.parquet",
+          "row_group_rows": 2048,
+          "rows": 2048,
+          "sha256": "7776d444c951a753f3b3c70302e390ae747d5b88130687fddac77d55dcac4d5a",
+          "statistics": true,
+          "version_id": null
+        }
+      ],
+      "ground_truth": "computed independently in Python from the local fixture; the harness local oracle admits only one descriptor per call",
+      "manifest_mode": true,
+      "name": "cold-warm-same-object",
+      "native_timeout_seconds": 300,
+      "observation": [
+        {
+          "kind": "cold",
+          "trial": "wide",
+          "trial_index": 0
+        },
+        {
+          "kind": "warm",
+          "trial": "narrow",
+          "trial_index": 1
+        }
+      ],
+      "one_object_two_trials": true,
+      "order_fixed_in_code": ["wide", "narrow"],
+      "trials": [
+        {
+          "correct": true,
+          "expected_sha256": "47b5b5ee98c7ab4c606c7dee5b7aea4e68e397e3e3df255ae2ef666af4f5c298",
+          "explain": {
+            "body_bytes": 16384,
+            "get": 1,
+            "head": 0
+          },
+          "query": {
+            "body_bytes": 4297089,
+            "get": 67,
+            "head": 0
+          },
+          "trial": "wide",
+          "trial_index": 0
+        },
+        {
+          "correct": true,
+          "expected_sha256": "e5d6e0c49aad10717a0d2ee14f93861fc2ef7283ad8f4d5a180d74bfbac0521f",
+          "explain": {
+            "body_bytes": 16384,
+            "get": 1,
+            "head": 0
+          },
+          "query": {
+            "body_bytes": 32841,
+            "get": 2,
+            "head": 0
+          },
+          "trial": "narrow",
+          "trial_index": 1
+        }
+      ],
+      "warm_read_gains_no_new_authority": true
+    }
+  ],
+  "status": "qualification-slice-not-release-qualified"
+}

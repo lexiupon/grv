@@ -50,6 +50,16 @@ impl AccessToken {
             deadline: Instant::now() + execution,
         }
     }
+    /// Test-only: a distinct synthetic canary per owner. Non-Clone and
+    /// non-Serialize in production are unchanged; the bearer is zeroized on
+    /// drop and the Debug rendering stays redacted.
+    #[cfg(all(test, feature = "native"))]
+    pub(crate) fn synthetic_with_canary_for_test(execution: Duration, canary: &str) -> Self {
+        Self {
+            bearer: Zeroizing::new(canary.into()),
+            deadline: Instant::now() + execution,
+        }
+    }
     pub fn ensure_live(&self) -> io::Result<()> {
         if Instant::now() < self.deadline {
             Ok(())
@@ -375,6 +385,7 @@ fn bounded_program(
 mod tests {
     use super::*;
     use std::cell::RefCell;
+    use std::os::unix::fs::PermissionsExt;
     fn response(expiry: &str) -> Vec<u8> {
         format!(r#"{{"credential":{{"access_token":"synthetic-token","token_expiry":"{expiry}"}},"configuration":{{"properties":{{"core":{{"account":"reader@example.com","project":"selected-project"}},"auth":{{}}}}}}}}"#).into_bytes()
     }
@@ -514,6 +525,302 @@ mod tests {
         let token = acquire(&account, &project, Duration::from_secs(300)).unwrap();
         assert!(token.ensure_live().is_ok());
         assert!(!token.bearer().unwrap().is_empty());
+    }
+    #[test]
+    #[ignore = "actual fresh/concurrent OAuth gate: parent launches with GRV_GCS_ACCOUNT=jiacao@on.sinch.com and GRV_GCS_PROJECT=entit-finance-prod; no token output, no cloud resource, stop on reauth mismatch, no automatic retry"]
+    fn explicitly_selected_fresh_and_concurrent_acquisition_is_independent_per_invocation() {
+        let account = std::env::var("GRV_GCS_ACCOUNT").expect("explicit account required");
+        let project = std::env::var("GRV_GCS_PROJECT").expect("explicit project required");
+        let budget = Duration::from_secs(300);
+        // Two sequential fresh independent acquisitions: each is its own
+        // --force-auth-refresh provider invocation; no fallback, no reuse.
+        let first = acquire(&account, &project, budget).unwrap();
+        let second = acquire(&account, &project, budget).unwrap();
+        assert!(first.ensure_live().is_ok());
+        assert!(!first.bearer().unwrap().is_empty());
+        assert!(second.ensure_live().is_ok());
+        assert!(!second.bearer().unwrap().is_empty());
+        // Two concurrent acquisitions of the same selected identity, each in
+        // its own private bounded helper process. No comparison of token
+        // values is made: the provider may legitimately return the same live
+        // token. Already-launched helpers are joined privately and bounded by
+        // the helper timeout; a reauthentication mismatch stops, it never
+        // auto-retries.
+        let (left_account, right_account) = (account.clone(), account);
+        let (left_project, right_project) = (project.clone(), project);
+        let (left, right) = std::thread::scope(|scope| {
+            let left = scope.spawn(move || acquire(&left_account, &left_project, budget));
+            let right = scope.spawn(move || acquire(&right_account, &right_project, budget));
+            // Join BOTH before inspecting either result; scoped teardown also
+            // waits for launched threads if launch/join unexpectedly panics.
+            let left = left.join();
+            let right = right.join();
+            (
+                left.expect("left acquisition thread panicked"),
+                right.expect("right acquisition thread panicked"),
+            )
+        });
+        let left = left.expect("left fresh acquisition failed");
+        let right = right.expect("right fresh acquisition failed");
+        assert!(left.ensure_live().is_ok());
+        assert!(!left.bearer().unwrap().is_empty());
+        assert!(right.ensure_live().is_ok());
+        assert!(!right.bearer().unwrap().is_empty());
+    }
+    /// Private child-process fixture: a fake gcloud in a temp dir plus a
+    /// helper counter. Only the owning (child) process environment is
+    /// mutated; every mutation is restored on drop, so the baseline
+    /// inherited state is unchanged in any process.
+    struct AmbientFixture {
+        /// Held only so the temp dir (and the fake gcloud inside it) is
+        /// removed by TempDir's own drop; never read again.
+        #[allow(dead_code)]
+        dir: tempfile::TempDir,
+        counter: std::path::PathBuf,
+        old_path: Option<std::ffi::OsString>,
+        removed: Vec<(String, Option<std::ffi::OsString>)>,
+    }
+    impl AmbientFixture {
+        fn new() -> Option<Self> {
+            let dir = tempfile::tempdir().ok()?;
+            let counter = dir.path().join("helper-counter");
+            let fake = dir.path().join("gcloud");
+            if std::fs::write(
+                &fake,
+                "#!/bin/sh\necho x >> \"$GRV_AMBIENT_HELPER_COUNTER\"\nexit 7\n",
+            )
+            .is_err()
+            {
+                return None;
+            }
+            if std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o755)).is_err() {
+                return None;
+            }
+            let removed = std::env::vars_os()
+                .filter(|(key, _)| {
+                    key.to_string_lossy()
+                        .to_ascii_uppercase()
+                        .starts_with("CLOUDSDK_AUTH_")
+                })
+                .map(|(key, value)| (key.to_string_lossy().into_owned(), Some(value)))
+                .collect::<Vec<_>>();
+            for (key, _) in &removed {
+                unsafe { std::env::remove_var(key) };
+            }
+            let old_path = std::env::var_os("PATH");
+            unsafe {
+                std::env::set_var(
+                    "PATH",
+                    format!(
+                        "{}:{}",
+                        dir.path().display(),
+                        old_path
+                            .as_ref()
+                            .map(|value| value.to_string_lossy())
+                            .unwrap_or_default()
+                    ),
+                );
+                std::env::set_var("GRV_AMBIENT_HELPER_COUNTER", counter.clone());
+            }
+            Some(Self {
+                dir,
+                counter,
+                old_path,
+                removed,
+            })
+        }
+    }
+    impl Drop for AmbientFixture {
+        fn drop(&mut self) {
+            unsafe {
+                std::env::remove_var("GRV_AMBIENT_HELPER_COUNTER");
+                std::env::remove_var("CLOUDSDK_AUTH_ACCESS_TOKEN_FILE");
+                match self.old_path.take() {
+                    Some(value) => std::env::set_var("PATH", value),
+                    None => std::env::remove_var("PATH"),
+                }
+                for (key, value) in self.removed.iter().rev() {
+                    match value {
+                        Some(value) => std::env::set_var(key, value),
+                        None => std::env::remove_var(key),
+                    }
+                }
+            }
+        }
+    }
+    fn helper_invocations(counter: &std::path::Path) -> usize {
+        std::fs::read_to_string(counter)
+            .map(|text| text.lines().count())
+            .unwrap_or(0)
+    }
+    /// Child mode: from a clean environment the explicit helper is the only
+    /// acquisition path; the fake helper fails closed and is observed via its
+    /// private counter, never through process-global state.
+    #[test]
+    fn child_ambient_control_proves_helper_invocation() {
+        if std::env::var("GRV_TEST_GCS_AMBIENT_CHILD").as_deref()
+            != Ok("gcs_token::tests::child_ambient_control_proves_helper_invocation")
+        {
+            return;
+        }
+        let fixture = AmbientFixture::new().expect("private fixture");
+        let error = acquire(
+            "reader@example.com",
+            "selected-project",
+            Duration::from_secs(300),
+        )
+        .expect_err("the fake helper must fail closed");
+        assert!(!error.to_string().contains("reader@example.com"));
+        assert!(!error.to_string().contains("selected-project"));
+        assert!(
+            helper_invocations(&fixture.counter) > 0,
+            "clean acquire must reach the explicit helper"
+        );
+        println!("GRV_AMBIENT_PROBE_HELPER_INVOKED");
+        drop(fixture);
+    }
+    /// Child mode: the clean phase invokes the helper; the ambient override
+    /// phase refuses BEFORE any helper invocation.
+    #[test]
+    fn child_ambient_probe_refuses_before_helper_under_override() {
+        if std::env::var("GRV_TEST_GCS_AMBIENT_CHILD").as_deref()
+            != Ok("gcs_token::tests::child_ambient_probe_refuses_before_helper_under_override")
+        {
+            return;
+        }
+        let fixture = AmbientFixture::new().expect("private fixture");
+        let error = acquire(
+            "reader@example.com",
+            "selected-project",
+            Duration::from_secs(300),
+        )
+        .expect_err("the fake helper must fail closed");
+        assert!(!error.to_string().contains("reader@example.com"));
+        let invoked = helper_invocations(&fixture.counter);
+        assert!(invoked > 0, "clean acquire must reach the explicit helper");
+        println!("GRV_AMBIENT_PROBE_HELPER_INVOKED");
+        unsafe { std::env::set_var("CLOUDSDK_AUTH_ACCESS_TOKEN_FILE", "/never/read") };
+        let error = acquire(
+            "reader@example.com",
+            "selected-project",
+            Duration::from_secs(300),
+        )
+        .expect_err("an ambient override must refuse acquisition");
+        assert!(!error.to_string().contains("/never/read"));
+        assert_eq!(
+            helper_invocations(&fixture.counter),
+            invoked,
+            "the helper must not be invoked under an ambient override"
+        );
+        println!("GRV_AMBIENT_PROBE_OVERRIDE_REFUSED");
+        drop(fixture);
+    }
+    /// Parent mode: spawn exact child processes of this test binary (one per
+    /// probe) with inherited ambient overrides removed from the child
+    /// environment only; the parent process environment is never mutated and
+    /// is asserted byte-for-byte unchanged afterwards.
+    #[test]
+    fn ambient_auth_override_refuses_before_any_helper_invocation() {
+        let environment = || {
+            std::env::vars_os()
+                .collect::<std::collections::BTreeMap<std::ffi::OsString, std::ffi::OsString>>()
+        };
+        let baseline = environment();
+        let spawn = |filter: &str| -> (bool, String) {
+            let mut command = std::process::Command::new(
+                std::env::current_exe().expect("test binary path required"),
+            );
+            command
+                .arg(filter)
+                .arg("--exact")
+                .arg("--test-threads=1")
+                .arg("--nocapture")
+                .env("GRV_TEST_GCS_AMBIENT_CHILD", filter)
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped());
+            for (key, _) in std::env::vars_os() {
+                if key
+                    .to_string_lossy()
+                    .to_ascii_uppercase()
+                    .starts_with("CLOUDSDK_AUTH_")
+                {
+                    command.env_remove(key);
+                }
+            }
+            let output = command.output().expect("child probe spawn");
+            (
+                output.status.success(),
+                String::from_utf8_lossy(&output.stdout).into_owned(),
+            )
+        };
+        let (control_ok, control_out) =
+            spawn("gcs_token::tests::child_ambient_control_proves_helper_invocation");
+        assert!(control_ok, "control child failed: {control_out}");
+        assert!(
+            control_out.contains("GRV_AMBIENT_PROBE_HELPER_INVOKED"),
+            "control child marker missing: {control_out}"
+        );
+        let (probe_ok, probe_out) =
+            spawn("gcs_token::tests::child_ambient_probe_refuses_before_helper_under_override");
+        assert!(probe_ok, "probe child failed: {probe_out}");
+        assert!(
+            probe_out.contains("GRV_AMBIENT_PROBE_HELPER_INVOKED"),
+            "probe child invocation marker missing: {probe_out}"
+        );
+        assert!(
+            probe_out.contains("GRV_AMBIENT_PROBE_OVERRIDE_REFUSED"),
+            "probe child refusal marker missing: {probe_out}"
+        );
+        // Compare keys AND values without rendering potentially private env.
+        assert!(
+            environment() == baseline,
+            "parent environment must remain unchanged"
+        );
+    }
+    #[test]
+    fn subprocess_token_canary_never_enters_public_evidence() {
+        let canary = "synthetic-bearer-canary-0123456789abcdef";
+        // Token output followed by a non-zero exit: the public error is generic.
+        let error = bounded_program(
+            "/bin/sh",
+            &["-c", &format!("printf '{canary}'; exit 7")],
+            Duration::from_secs(5),
+        )
+        .unwrap_err();
+        assert!(!error.to_string().contains(canary));
+        // Token output followed by a hang: the timeout path is canary-free.
+        let error = bounded_program(
+            "/bin/sh",
+            &["-c", &format!("printf '{canary}'; sleep 30")],
+            Duration::from_millis(200),
+        )
+        .unwrap_err();
+        assert!(!error.to_string().contains(canary));
+        // Partial output beyond the bounded limit: only the bounded prefix is
+        // retained and the error is generic.
+        let error = bounded_program(
+            "/bin/sh",
+            &["-c", &format!("yes '{canary}' | head -c 70000")],
+            Duration::from_millis(200),
+        )
+        .unwrap_err();
+        assert!(!error.to_string().contains(canary));
+        // stderr is never captured: a canary written there cannot enter evidence.
+        let error = bounded_program(
+            "/bin/sh",
+            &["-c", &format!("printf '{canary}' >&2; exit 7")],
+            Duration::from_secs(5),
+        )
+        .unwrap_err();
+        assert!(!error.to_string().contains(canary));
+        // The success path returns only the bounded payload.
+        let bytes = bounded_program(
+            "/bin/sh",
+            &["-c", &format!("printf '{canary}'")],
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert_eq!(&*bytes, canary.as_bytes());
     }
     #[test]
     fn slow_acquisition_cannot_extend_execution_lease() {

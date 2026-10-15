@@ -61,6 +61,20 @@ impl Write for Fragmented {
     }
 }
 #[test]
+fn wire_size_measurement_matches_encoding_and_refuses_before_any_write() {
+    let value = json!({"escaped":"\\\"🍕\n","empty":[null,{},[],""],"number":1.25});
+    assert_eq!(
+        grv_adapter_wire::serialized_len(&value).unwrap(),
+        serde_json::to_vec(&value).unwrap().len()
+    );
+    let frame = f(
+        json!({"msg":"error","req":null,"code":"ADAPTER_FAILURE","message":"x".repeat(grv_adapter_wire::FRAME_LIMIT),"retryable":false,"object":null}),
+    );
+    let mut codec = Codec::new(Cursor::new(Vec::<u8>::new()), 1024);
+    assert!(codec.write(&frame, &[]).is_err());
+    assert!(codec.into_inner().into_inner().is_empty());
+}
+#[test]
 fn eof_transport_errors_and_malformed_truncation_remain_distinct() {
     use grv_adapter_wire::ProtocolError;
     let mut empty = Codec::new(Cursor::new(Vec::<u8>::new()), 1024);
@@ -293,6 +307,43 @@ fn completion_wins_cancellation_race_and_duplicate_terminal_is_rejected() {
     assert!(s.observe(&terminal, false).is_err());
 }
 #[test]
+fn bounded_gcs_policy_refuses_large_docs_and_node_amplification_without_changing_default() {
+    use base64::Engine;
+    let begin = f(
+        json!({"msg":"document_begin","document_id":UUID,"size":(grv_adapter_wire::metadata::GCS_DOCUMENT_BYTES+1).to_string(),"sha256":grv_types::sha256(b"synthetic")}),
+    );
+    let mut generic = boot();
+    generic.observe(&begin, true).unwrap();
+    let mut bounded = boot();
+    bounded.enable_bounded_gcs_metadata().unwrap();
+    assert!(bounded.observe(&begin, true).is_err());
+    let bytes = serde_json::to_vec(&vec![""; 40000]).unwrap();
+    let mut bounded = boot();
+    bounded.enable_bounded_gcs_metadata().unwrap();
+    bounded.observe(&f(json!({"msg":"document_begin","document_id":UUID,"size":bytes.len().to_string(),"sha256":grv_types::sha256(&bytes)})),true).unwrap();
+    bounded.observe(&f(json!({"msg":"document_chunk","document_id":UUID,"index":0,"data":base64::engine::general_purpose::STANDARD.encode(&bytes)})),true).unwrap();
+    assert!(
+        bounded
+            .observe(&f(json!({"msg":"document_end","document_id":UUID})), true)
+            .is_err()
+    );
+    assert!(bounded.document(Role::Parent, UUID).is_err());
+}
+#[test]
+fn bounded_gcs_codec_refuses_amplification_before_typed_frame_while_default_admits() {
+    let frame =
+        f(json!({"msg":"command_result","req":1,"details":{"inline":{"nodes":vec!["";40000]}}}));
+    let mut bytes = serde_json::to_vec(&frame).unwrap();
+    bytes.push(b'\n');
+    let mut default = Codec::new(Cursor::new(bytes.clone()), 1024);
+    assert!(default.read().is_ok());
+    let mut bounded = Codec::new(Cursor::new(bytes), 1024);
+    bounded.metadata_policy(std::sync::Arc::new(std::sync::atomic::AtomicBool::new(
+        true,
+    )));
+    assert!(bounded.read().is_err());
+}
+#[test]
 fn document_hash_ack_canonicality_consumption_and_reuse() {
     use base64::Engine;
     let mut s = boot();
@@ -451,6 +502,52 @@ fn oversized_adapter_document_has_distinct_typed_failure() {
 fn build_session_value() -> Value {
     json!({"session_id":UUID,"options":{},"identity":{"attempt_id":UUID,"root":"/root","dataset":"product","run_id":"01ARZ3NDEKTSV4RRFFQ69G5FAV","workspace_id":UUID,"declaration_sha256":"a".repeat(64),"adapter_identity":identity(),"connection_identity":"fixture"},"execution":"managed","base_revision":"0","base_contracts":[],"inputs":[],"outputs":[{"table":"rows","source":{"sql":"SELECT 1 AS value"},"engine_table":"_private.rows","columns":[{"name":"value","type":"int64"}],"contract":{"columns":[{"name":"value","type":"int64"}],"partition_keys":[],"extensions":{},"column_ext":{}}},{"table":"empty","source":{"sql":"SELECT 1 AS value WHERE false"},"engine_table":"_private.empty","columns":[{"name":"value","type":"int64"}],"contract":{"columns":[{"name":"value","type":"int64"}],"partition_keys":[],"extensions":{},"column_ext":{}}}],"selected_outputs":["rows","empty"],"self_input":false,"adapter_details":{}})
 }
+#[test]
+fn incompatible_remote_access_is_refused_at_codec_before_operation_dispatch() {
+    let session = build_session_value();
+    let file = json!({"table":"rows","partition":{},"version":"1","schema":{"columns":[{"name":"value","type":"int64"}]},"access":"gcs-view","location":"gs://test-bucket/data/part.parquet","size":"1","sha256":"a".repeat(64),"validator":"generation"});
+    let request = json!({"msg":"prepare_build","req":1,"handle":"h","payload":{"inline":{"discovery":{"discovery_id":UUID,"identity":session["identity"],"inputs":[],"outputs":session["outputs"]},"base_revision":"1","self_input":true,"base_contracts":[],"base_files":[file],"input_files":[],"holds_confirmed":true}}});
+    assert!(serde_json::from_value::<Frame>(request.clone()).is_ok());
+    for access in ["gcs-hmac-view", "remote", "gs", "GcsView"] {
+        let mut incompatible = request.clone();
+        incompatible["payload"]["inline"]["base_files"][0]["access"] = json!(access);
+        let mut bytes = serde_json::to_vec(&incompatible).unwrap();
+        bytes.push(b'\n');
+        let mut codec = Codec::new(Cursor::new(bytes), 65536);
+        assert!(matches!(
+            codec.read(),
+            Err(grv_adapter_wire::ProtocolError::Invalid(_))
+        ));
+    }
+    // Large-document transport must apply the same typed decoder when it
+    // expands the reference; it must not turn an unknown access into Local.
+    use base64::Engine as _;
+    let mut incompatible = request["payload"]["inline"].clone();
+    incompatible["base_files"][0]["access"] = json!("gcs-hmac-view");
+    let document = serde_json::to_vec(&incompatible).unwrap();
+    let mut document_state = boot();
+    document_state.observe(&f(json!({"msg":"document_begin","document_id":UUID,"size":document.len().to_string(),"sha256":grv_types::sha256(&document)})), true).unwrap();
+    document_state.observe(&f(json!({"msg":"document_chunk","document_id":UUID,"index":0,"data":base64::engine::general_purpose::STANDARD.encode(&document)})),true).unwrap();
+    document_state
+        .observe(&f(json!({"msg":"document_end","document_id":UUID})), true)
+        .unwrap();
+    document_state
+        .observe(&f(json!({"msg":"document_ack","document_id":UUID})), false)
+        .unwrap();
+    let referenced =
+        f(json!({"msg":"prepare_build","req":1,"handle":"h","payload":{"document_id":UUID}}));
+    assert!(document_state.resolved_frame(&referenced, true).is_err());
+    assert!(document_state.observe(&referenced, true).is_err());
+    // Refusal did not dispatch/consume a request in the protocol state.
+    let mut state = boot();
+    state
+        .observe(&f(json!({"msg":"close","req":1})), true)
+        .unwrap();
+    state
+        .observe(&f(json!({"msg":"close_result","req":1})), false)
+        .unwrap();
+}
+
 fn build_completion_value() -> Value {
     json!({"result_version":1,"run_id":"01ARZ3NDEKTSV4RRFFQ69G5FAV","workspace_id":UUID,"declaration_sha256":"a".repeat(64),"kind":"engine","invocation_id":"fixed","status":"succeeded","writers_stopped":true,"completed_at":"2026-10-06T00:00:00Z","completed_outputs":[{"table":"rows","engine_table":"_private.rows"},{"table":"empty","engine_table":"_private.empty"}]})
 }

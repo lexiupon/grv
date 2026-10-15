@@ -35,7 +35,8 @@ def main():
         "owned_probe", root / "prototypes/cloud-views/httpfs/live_oauth.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    directory = pathlib.Path(tempfile.mkdtemp(prefix="grv-shipping-matrix-", dir=pathlib.Path.home()))
+    directory = pathlib.Path(tempfile.mkdtemp(prefix="grv-shipping-matrix-",
+                                             dir=pathlib.Path.home() / "grv-evidence"))
     state = directory / "state.json"
     module.private_json(state, {"bucket": "grv-httpfs-oauth-" + uuid.uuid4().hex[:24],
                                "account": args.account, "project": args.project})

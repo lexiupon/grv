@@ -593,13 +593,13 @@ mod tests {
         store::InitOptions,
     };
     use grv_adapter_api::{Column, TableContract};
-    use grv_storage::{FaultInjector, FaultPoint, LocalBackend};
+    use grv_storage::{FaultInjector, FaultPoint, LocalBackend, ObjectMeta};
     use grv_types::{RunId, Timestamp};
     use std::{
         collections::BTreeMap,
         sync::{
             Arc,
-            atomic::{AtomicBool, AtomicU64, Ordering},
+            atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering},
         },
         time::Duration,
     };
@@ -625,6 +625,146 @@ mod tests {
             }
         }
     }
+    /// Which conditional write the wrapper watches on the exact target key.
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum WriteKind {
+        Create,
+        Put,
+    }
+
+    /// Test-only wrapper that borrows the fixture backend and performs every
+    /// operation for real, including the target write. The ambiguous
+    /// `MaybeApplied` acknowledgement is produced by the real local backend's
+    /// own post-install fault point (the fixture injector), which proves install
+    /// for these exact faults rather than for every `MaybeApplied` outcome, because
+    /// the storage crate keeps its ambiguous-error constructor private; this
+    /// wrapper only refuses the exact-target readback afterwards and counts
+    /// what actually reached the real backend. It never deletes or corrupts
+    /// history. This is a deliberately finite local boundary, not a universal
+    /// crash proof, and it exercises no SDK, cloud, or provider code path.
+    struct BoundaryFault<'a> {
+        inner: &'a LocalBackend,
+        target: ObjectKey,
+        kind: WriteKind,
+        readback_blocked: AtomicBool,
+        target_writes: AtomicUsize,
+        target_applied: AtomicUsize,
+        refused_reads: AtomicUsize,
+    }
+    impl<'a> BoundaryFault<'a> {
+        fn new(inner: &'a LocalBackend, target: ObjectKey, kind: WriteKind) -> Self {
+            Self {
+                inner,
+                target,
+                kind,
+                readback_blocked: AtomicBool::new(false),
+                target_writes: AtomicUsize::new(0),
+                target_applied: AtomicUsize::new(0),
+                refused_reads: AtomicUsize::new(0),
+            }
+        }
+        /// Disarm the readback refusal without performing any additional effect.
+        fn disarm(&self) {
+            self.readback_blocked.store(false, Ordering::SeqCst);
+        }
+        fn counts(
+            &self,
+            kind: WriteKind,
+            result: &std::result::Result<Validator, grv_storage::Error>,
+        ) {
+            if self.kind != kind {
+                return;
+            }
+            self.target_writes.fetch_add(1, Ordering::SeqCst);
+            if result
+                .as_ref()
+                .err()
+                .is_some_and(|error| error.effect == WriteEffect::MaybeApplied)
+            {
+                self.target_applied.fetch_add(1, Ordering::SeqCst);
+                self.readback_blocked.store(true, Ordering::SeqCst);
+            }
+        }
+        fn refuses_read(&self, key: &ObjectKey) -> bool {
+            *key == self.target && self.readback_blocked.load(Ordering::SeqCst)
+        }
+    }
+    impl Backend for BoundaryFault<'_> {
+        fn s3_data_uri(&self, key: &ObjectKey) -> grv_storage::Result<Option<String>> {
+            self.inner.s3_data_uri(key)
+        }
+        fn gcs_data_uri(&self, key: &ObjectKey) -> grv_storage::Result<Option<String>> {
+            self.inner.gcs_data_uri(key)
+        }
+        fn gcs_view_eligible(&self) -> grv_storage::Result<()> {
+            self.inner.gcs_view_eligible()
+        }
+        fn get(
+            &self,
+            key: &ObjectKey,
+            sink: &mut dyn std::io::Write,
+        ) -> grv_storage::Result<ObjectMeta> {
+            if self.refuses_read(key) {
+                self.refused_reads.fetch_add(1, Ordering::SeqCst);
+                return Err(grv_storage::Error::new(
+                    ErrorKind::Io,
+                    "test boundary refuses the ambiguous target readback",
+                ));
+            }
+            self.inner.get(key, sink)
+        }
+        fn read_range(
+            &self,
+            key: &ObjectKey,
+            expected: &Validator,
+            offset: u64,
+            length: usize,
+            sink: &mut dyn std::io::Write,
+        ) -> grv_storage::Result<ObjectMeta> {
+            self.inner.read_range(key, expected, offset, length, sink)
+        }
+        fn head(&self, key: &ObjectKey) -> grv_storage::Result<ObjectMeta> {
+            self.inner.head(key)
+        }
+        fn list(
+            &self,
+            prefix: &ObjectPrefix,
+            mode: ListMode,
+        ) -> grv_storage::Result<Vec<ListEntry>> {
+            self.inner.list(prefix, mode)
+        }
+        fn delete(&self, key: &ObjectKey) -> grv_storage::Result<()> {
+            self.inner.delete(key)
+        }
+        fn conditional_create(
+            &self,
+            key: &ObjectKey,
+            source: &mut dyn std::io::Read,
+        ) -> grv_storage::Result<Validator> {
+            let result = self.inner.conditional_create(key, source);
+            if *key == self.target {
+                self.counts(WriteKind::Create, &result);
+            }
+            result
+        }
+        fn conditional_put(
+            &self,
+            key: &ObjectKey,
+            expected: &Validator,
+            source: &mut dyn std::io::Read,
+        ) -> grv_storage::Result<Validator> {
+            let result = self.inner.conditional_put(key, expected, source);
+            if *key == self.target {
+                self.counts(WriteKind::Put, &result);
+            }
+            result
+        }
+    }
+
+    fn control_key(consumer: &Name, id: RunId) -> ObjectKey {
+        key(consumer, &format!(".runs/{id}.control.json"))
+    }
+
     fn name(value: &str) -> Name {
         Name::new(value).unwrap()
     }
@@ -2061,5 +2201,152 @@ mod tests {
                 .code,
             ErrorCode::IntegrityFailure
         );
+    }
+    // Finite local boundary proof. The ambiguous write itself is performed by the
+    // real local backend and only its acknowledgement is lost at the backend's own
+    // post-install fault point; the test wrapper refuses the exact-target readback.
+    // This is a deliberately bounded local proof boundary, not a universal crash
+    // proof, and it exercises no SDK, cloud, or provider code path.
+    #[test]
+    fn ambiguous_hold_create_with_unreadable_proof_preserves_unknown_until_exact_readback() {
+        let f = Fixture::new();
+        let (control, record) = f.consumer(3);
+        let target = hold_key(&record);
+        let wrapper = BoundaryFault::new(&f.store.backend, target.clone(), WriteKind::Create);
+        let store = Store::open(wrapper).unwrap();
+        let holds = Holds::new(&store, &f.clock, f.root.path());
+        // Arm the real backend fault only after the real source and consumer exist.
+        f.fault.0.store(true, Ordering::SeqCst);
+        match holds.acquire(&record) {
+            Ok(_) => panic!("an unreadable proof must not authorize a hold"),
+            Err(error) => assert_eq!(error.code, ErrorCode::OutcomeUnknown),
+        }
+        assert_eq!(store.backend.target_writes.load(Ordering::SeqCst), 1);
+        assert_eq!(store.backend.target_applied.load(Ordering::SeqCst), 1);
+        assert_eq!(store.backend.refused_reads.load(Ordering::SeqCst), 1);
+        // The real backend did install the exact bytes, so nothing is fabricated.
+        let (ambiguous_bytes, ambiguous_meta) =
+            f.store.backend.read_bytes(&target, RECORD_LIMIT).unwrap();
+        assert_eq!(ambiguous_bytes, encode_record(&record).unwrap());
+        assert_eq!(
+            f.store.backend.head(&target).unwrap().validator,
+            ambiguous_meta.validator
+        );
+        assert_eq!(f.holds().read::<HoldRecord>(&target).unwrap().0, record);
+        assert!(
+            f.holds()
+                .optional::<HoldReleaseMarker>(&release_key(&record))
+                .unwrap()
+                .is_none(),
+            "an unknown outcome may not invent a release"
+        );
+        assert!(
+            !f.holds()
+                .read::<RunControl>(&control_key(&name("consumer"), run(3)))
+                .unwrap()
+                .0
+                .holds_confirmed
+        );
+        assert!(!f.root.path().join("datasets/consumer/events").exists());
+        // Disarm without any additional effect and retry the exact identity: the
+        // legitimate idempotent proof verification must succeed. Attempts may grow
+        // to two, but they remain distinct from the one durable effect.
+        store.backend.disarm();
+        let proof = holds.acquire(&record).unwrap();
+        assert_eq!(store.backend.target_writes.load(Ordering::SeqCst), 2);
+        assert_eq!(store.backend.target_applied.load(Ordering::SeqCst), 1);
+        // The second attempt was refused by precondition, so the durable proof
+        // and its backend-computed validator must be byte-identical.
+        assert_eq!(
+            f.store.backend.read_bytes(&target, RECORD_LIMIT).unwrap().0,
+            ambiguous_bytes
+        );
+        assert_eq!(
+            f.store.backend.head(&target).unwrap().validator,
+            ambiguous_meta.validator
+        );
+        let confirmed = holds
+            .confirm_run(&name("consumer"), &control, std::slice::from_ref(&proof))
+            .unwrap();
+        assert!(confirmed.holds_confirmed);
+        assert!(
+            f.holds()
+                .read::<RunControl>(&control_key(&name("consumer"), run(3)))
+                .unwrap()
+                .0
+                .holds_confirmed
+        );
+        assert!(f.holds().active(&record).unwrap());
+    }
+    // Same finite local boundary on the confirmation CAS: the durable put lands and
+    // then loses its acknowledgement, and only the exact-target readback is refused.
+    // confirm_run's readback performs exact object gets only, so no provider work is
+    // claimed. Bounded local proof boundary, not a universal crash proof.
+    #[test]
+    fn ambiguous_hold_confirmation_with_unreadable_proof_keeps_known_hold_and_no_authority() {
+        let f = Fixture::new();
+        let (control, record) = f.consumer(3);
+        let target = control_key(&name("consumer"), run(3));
+        let wrapper = BoundaryFault::new(&f.store.backend, target.clone(), WriteKind::Put);
+        let store = Store::open(wrapper).unwrap();
+        let holds = Holds::new(&store, &f.clock, f.root.path());
+        // Acquire with nothing armed, so hold creation is an ordinary real write.
+        let proof = holds.acquire(&record).unwrap();
+        assert_eq!(store.backend.target_writes.load(Ordering::SeqCst), 0);
+        f.fault.0.store(true, Ordering::SeqCst);
+        match holds.confirm_run(&name("consumer"), &control, std::slice::from_ref(&proof)) {
+            Ok(_) => panic!("an unreadable proof must not confirm a run"),
+            Err(error) => assert_eq!(error.code, ErrorCode::OutcomeUnknown),
+        }
+        assert_eq!(store.backend.target_writes.load(Ordering::SeqCst), 1);
+        assert_eq!(store.backend.target_applied.load(Ordering::SeqCst), 1);
+        assert_eq!(store.backend.refused_reads.load(Ordering::SeqCst), 1);
+        // The durable control really took the CAS; only its readback was unreadable.
+        let (ambiguous_bytes, ambiguous_meta) =
+            f.store.backend.read_bytes(&target, RECORD_LIMIT).unwrap();
+        assert_eq!(
+            f.store.backend.head(&target).unwrap().validator,
+            ambiguous_meta.validator
+        );
+        let (durable, durable_validator) = f.holds().read::<RunControl>(&target).unwrap();
+        assert!(durable.holds_confirmed);
+        assert_eq!(durable.run_id, control.run_id);
+        assert_eq!(durable_validator, ambiguous_meta.validator);
+        assert!(f.holds().active(&record).unwrap());
+        assert!(
+            f.holds()
+                .optional::<HoldReleaseMarker>(&release_key(&record))
+                .unwrap()
+                .is_none(),
+            "the source hold remains present and unreleased"
+        );
+        assert!(
+            !control.holds_confirmed,
+            "an unknown outcome grants no local confirmation authority"
+        );
+        assert!(!f.root.path().join("datasets/consumer/events").exists());
+        // Disarm without retrying any effect: the retry adopts the exact durable CAS
+        // result, whose mutation id differs from the original while its owner token
+        // matches, so the existing confirmation is returned unchanged.
+        store.backend.disarm();
+        let adopted = holds
+            .confirm_run(&name("consumer"), &control, std::slice::from_ref(&proof))
+            .unwrap();
+        assert!(adopted.holds_confirmed);
+        assert_ne!(adopted.mutation_id, control.mutation_id);
+        assert_eq!(adopted, durable);
+        assert_eq!(adopted.owner_token, control.owner_token);
+        // Adoption is a read-only adoption of the same durable bytes and validator.
+        assert_eq!(
+            f.store.backend.read_bytes(&target, RECORD_LIMIT).unwrap().0,
+            ambiguous_bytes
+        );
+        assert_eq!(
+            f.store.backend.head(&target).unwrap().validator,
+            ambiguous_meta.validator
+        );
+        assert_eq!(store.backend.target_writes.load(Ordering::SeqCst), 1);
+        assert_eq!(store.backend.target_applied.load(Ordering::SeqCst), 1);
+        assert!(f.holds().active(&record).unwrap());
     }
 }

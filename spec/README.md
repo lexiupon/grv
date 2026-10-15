@@ -27,6 +27,31 @@ the storage layout. Conflicts require correction of the dependent document,
 not an implicit override. The crypto-shredding RFC does not make its proposed
 extension a mandatory storage feature.
 
+## Cloud-view execution decision
+
+The [GCS in-process execution decision](gcs-in-process-execution-decision.md)
+records the approved return to the local/S3 execution placement, the stock
+HTTPFS hard-deadline limitation and partial engine-memory coverage.
+[Transition checkpoint](gcs-in-process-transition-checkpoint.md): native revision6
+is in-process; settled memory-stage artifacts passed live/held validation, while
+later changes do not inherit it and broader fault/installed qualification remains pending. GCS capability
+remains unadvertised. Historical helper
+proofs are preserved, not qualification of the replacement. The
+[cloud-view RFC](grv-cloud-views-pushdown-v1-rfc.md) and
+[plan](grv-cloud-views-pushdown-v1-plan.md) carry the revised boundary.
+[GCS metadata policy](gcs-metadata-policy.md) records approved internal admission,
+activation/bootstrap and lifetime caps; it is not a heap/RSS protection contract
+by itself. [GCS memory completion](gcs-memory-qualification-completion.md) records
+completed agreed logical metadata/transfer scope and final unchanged-artifact
+held validation at that completed checkpoint. Subsequent qualification proceeds
+under its separately authorized package sequence. This is not a process-wide RSS cap. Generic/local/S3 defaults remain unchanged.
+[GCS cancellation/recovery checkpoint](gcs-in-process-cancellation-recovery-checkpoint.md)
+records the separately authorized targeted offline cooperative cancellation and
+immutable-outcome qualification; broader cloud faults/install/release remain open.
+[GCS OAuth isolation](gcs-oauth-isolation-checkpoint.md) and
+[peer/history refusal](gcs-peer-history-refusal-checkpoint.md) record the reviewed
+subsequent packages, not release or capability-promotion approval.
+
 ## Versions and compatibility
 
 Storage v2, client v1, adapter interface v1, and `crypto-shredding/1` are

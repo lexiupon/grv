@@ -126,7 +126,7 @@ def main():
             if path.exists() and path.read_bytes() == old_content:
                 os.utime(path, ns=(old_stat.st_atime_ns, old_stat.st_mtime_ns))
         configure_stamp.write_text(configuration_hash)
-    subprocess.run(["cmake", "--build", str(cmake_build), "--target", "grv_duckdb_guard", "grv_native_proof", "grv_native_fixture", "grv_s3_limits_proof", "grv_gcs_request_proof", "-j", str(args.jobs)], check=True)
+    subprocess.run(["cmake", "--build", str(cmake_build), "--target", "grv_duckdb_guard", "grv_native_proof", "grv_native_fixture", "grv_s3_limits_proof", "grv_gcs_request_proof", "grv_metadata_allocation_proof", "grv_transaction_fault_proof", "grv_metadata_stream_proof", "grv_in_process_gate_proof", "-j", str(args.jobs)], check=True)
     subprocess.run(["ctest", "--test-dir", str(cmake_build), "--output-on-failure"], check=True)
 
 

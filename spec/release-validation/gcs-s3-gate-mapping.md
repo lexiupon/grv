@@ -13,21 +13,21 @@ deferred for review.
 
 ## G1 Candidate
 
-| Requirement                                    | Evidence                                                              | Status                     |
-| ---------------------------------------------- | --------------------------------------------------------------------- | -------------------------- |
-| Reviewed source, lockfile and contracts frozen | Commit `b3c5f6e`, tree clean, nothing pushed                          | evidenced                  |
-| Full automated run, scripts and lint           | `~/grv-evidence/grv-task28-gate-run/`                                 | running at time of writing |
-| Release-profile build of the release profile   | Native rebuild window                                                 | not run                    |
-| Declared MSRV proved or explicitly revised     | Declared `rust-version = 1.89`; proof runs on the available toolchain | not run                    |
-| Binary hashes bound independently              | Parent-side re-hashes only so far                                     | deferral (this gate)       |
+| Requirement                                    | Evidence                                                                                                                                                                                | Status                         |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| Reviewed source, lockfile and contracts frozen | Commit `b3c5f6e`, tree clean, nothing pushed                                                                                                                                            | evidenced                      |
+| Full automated run, scripts and lint           | CI run `38863068396`, commit `2996b83`, **four platforms** (osx_arm64, osx_amd64, linux_arm64, linux_amd64), native features. Local offline chunk `~/grv-evidence/grv-task28-gate-run/` | **evidenced**                  |
+| Release-profile build of the release profile   | CI built the native guard and ran tests; the Rust release profile itself was not built on this path. Byte-identical rebuild still pending — see note below                              | not run                        |
+| Declared MSRV proved or explicitly revised     | CI installs and uses declared `rust-version = 1.89` on all four platforms, including full native tests and strict lint                                                                  | **evidenced (four platforms)** |
+| Binary hashes bound independently              | Parent-side re-hashes only so far                                                                                                                                                       | deferral (this gate)           |
 
 ## G2 Installation
 
-| Requirement                                                                                        | Evidence       | Status  |
-| -------------------------------------------------------------------------------------------------- | -------------- | ------- |
-| Relocated release bundle; protected directory and tarball installs                                 | Packaging work | not run |
-| CLI and both production adapters and native dependencies load without build tree, cache or network | Packaging work | not run |
-| Representative production workflow on the installed form                                           | Packaging work | not run |
+| Requirement                                                                                        | Evidence                                                                                                                                                               | Status                                                 |
+| -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Relocated release bundle; protected directory and tarball installs                                 | CI run `38863068396` verifies **relocation** on four platforms (artifacts uploaded from each). Protected directory and tarball _installs_ are not covered by that step | **partially evidenced** — dev profile, relocation only |
+| CLI and both production adapters and native dependencies load without build tree, cache or network | Packaging work                                                                                                                                                         | not run                                                |
+| Representative production workflow on the installed form                                           | Packaging work                                                                                                                                                         | not run                                                |
 
 ## G3 Distribution — no preview exemption
 
@@ -95,6 +95,24 @@ Both remain recorded as they happened. Neither is called a pattern:
 - `zstd-dictionary-no-statistics` failed once at phase 32 with status 0; it was green before and after.
 - An observation round for the refusal shape ran with the wrong expected code and is kept as a failure;
   the expectation was corrected to 212 on the strength of the observed round.
+
+## What this run changed
+
+- `build.py` previously built five targets while `CMakeLists.txt` registered tests for fourteen
+  executables. The four unbuilt targets were exactly the tests reported `Not Run` on the first run of
+  this work. Fixed in `3d4ffaa`; the guard suite now passes on all four platforms.
+- The guard was rebuilt from committed source and **its digest changed**: `2709cc619eb125d1…` →
+  `be5ce03b192047f14e74…`. The previous binary had been built from sources other than the committed
+  ones, so `notices/native-build.json` was refreshed as the reviewed source-change the register was
+  holding. **Historical checkpoints citing the old digest are not rewritten.**
+
+**Standing caveat, stated plainly:** the refreshed record was produced by a build **on this machine**.
+A byte-identical rebuild from pinned source at a fresh location has not been run, so the record is
+currently **machine-bound**, not proven reproducible. The record is also Mach-O specific
+(`mach_o_architecture`, `mach_o_minimum_os`), so it can only attest the macOS build identity; the
+Linux platforms have no equivalent binding record. CI packaging runs `--profile dev` **without**
+`--require-distribution-ready`, so on that path the native-library binding check is **not enforced**
+and a non-matching guard binary is accepted.
 
 ## What closes where
 

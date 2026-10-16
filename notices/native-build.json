@@ -3,7 +3,7 @@
   "scope": "guarded-duckdb-native-build-identity",
   "complete": false,
   "source_archive_sha256": "1fadcbe9e69e1470f9093b6bcde08daf477d729c449e59a807f45c346622099b",
-  "native_library_sha256": "35f926113bd95f309af4dbd557bcb494141a4621879c5461c5b035706754ac45",
+  "native_library_sha256": "be5ce03b192047f14e745911c325e81055c4f5836eec25b991b790b0c2d33825",
   "compile_commands_sha256": "1bf031aeddd3ea205367f07929547cb74dfdbd56b2fc932cf88dd6919e73b9b7",
   "compiled_source_sha256": {
     "extension/core_functions/core_functions_extension.cpp": "cd1dea980002edea934004fec5911258117dccf4aa7d9181d8d83b287f30116a",
@@ -218,16 +218,16 @@
   "mach_o_architecture": "arm64",
   "source_release_url": "https://github.com/duckdb/duckdb/archive/refs/tags/v1.5.6.tar.gz",
   "guard_sources_sha256": {
-    "crates/grv-adapter-duckdb/native/s3.inc": "3ca25d9458d5468caf5903896bdfcc9f578ddc35a1521fa0fa749ed1600dc838",
-    "crates/grv-adapter-duckdb/native/shim.cpp": "921038f545ce41a39637874d3181385c1d16c120ad5eb8bb5971e25a32b4e0f1",
+    "crates/grv-adapter-duckdb/native/s3.inc": "52b15f7808c437b23f49854e5340ce2a8b49c1f21ebd4099bc1624c71017520a",
+    "crates/grv-adapter-duckdb/native/shim.cpp": "4a6415afc8f9e2261314302a45ff598dae4c60aad54314ead2301c3700fdd2f1",
     "crates/grv-adapter-duckdb/native/s3_limits_proof.cpp": "1850e37140c543f6cf88607b20fd5acacc3d3bbf8074ebdb663562dd25b469f6",
     "crates/grv-adapter-duckdb/native/fixture.cpp": "24f45e016e134566e3b845e751386bc0e168209bb324985104d2756d33edad8f",
     "crates/grv-adapter-duckdb/native/proof.cpp": "8074265d512369d4680205ce7e07d2aa5d99d282a3c1abdf43fdcb898e61ac54",
     "crates/grv-adapter-duckdb/native/grv_guard.hpp": "1a623abc0556266c3b14bcf22cbddabc27e18d78f5d55b5b4be47c010d540bc5",
     "crates/grv-adapter-duckdb/native/s3_limits.hpp": "c181aa1800c88dec9ee1da0b704a7c2a6488700a851a0b87f418b6b773e1f416",
-    "crates/grv-adapter-duckdb/native/pull.inc": "493b4a2fc4127a0c5e670cf7a8b988b1aba0660e3b2454dcf1ded8e3b8933354",
+    "crates/grv-adapter-duckdb/native/pull.inc": "ebc80c579cd60921d69cdafe2cf517c2a330508f70f82c97b9698627de3ba94c",
     "crates/grv-adapter-duckdb/native/staging.inc": "dd175fcacecfe2eb248376b0c4c70220d859355eb7d9108af3166dac47d09de1",
     "crates/grv-adapter-duckdb/native/verified_fd.inc": "e4dcc44015f6e429bf54de8a68ae774e918136fe20b3a8978a9b1da8423d15e5",
-    "crates/grv-adapter-duckdb/native/verified_s3.inc": "2685fff80df3525d5865e9223284dbbf5071baa86798042087bc98a4ba7fa8f0"
+    "crates/grv-adapter-duckdb/native/verified_s3.inc": "7eb814e5d71a83f098de487e151766014d55384581e584c8d06370d053866cd6"
   }
 }

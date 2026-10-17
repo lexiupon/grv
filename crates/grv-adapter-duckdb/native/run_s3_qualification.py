@@ -2616,6 +2616,320 @@ class SafetyTests(unittest.TestCase):
         self.assertIn("verify_reported(entries, report, [expectation])", text)
         self.assertIn("verify_reported(entries, report, expectations)", text)
 
+    # --- the two new cross-file shapes -------------------------------------------------
+
+    def recipe_columns(self, plan):
+        """Read-back stand-ins derived from the standard recipe alone, never from a run."""
+        return [{column: recipe_column(column, entry["physical"][column], entry["offset"],
+                                       entry["rows"])
+                 for column in entry["columns"]} for entry in plan["files"]]
+
+    def cross_file_fixtures(self, directory, plan):
+        fixtures = {}
+        for entry in plan["files"]:
+            fixture = pathlib.Path(directory) / entry["local_fixture"]
+            fixture.write_bytes(b"cross-file-offline-fixture")
+            fixtures[entry["key"]] = fixture
+        return fixtures
+
+    def cross_file_ok(self, probe, fixtures):
+        def ok(_service, operation, **parameters):
+            key = parameters.get("Key")
+            if operation == "get-bucket-tagging":
+                return {"TagSet": [{"Key": MARKER, "Value": probe.state["owner_marker"]}]}
+            if operation == "put-object":
+                return {"ETag": self.etag_for(key)}
+            if operation == "head-object":
+                return {"ETag": self.etag_for(key),
+                        "Metadata": {"grv-owner": probe.state["owner_marker"],
+                                     "grv-sha256": digest(fixtures[key])},
+                        "ContentLength": fixtures[key].stat().st_size}
+            return {}
+
+        probe.ok = mock.Mock(side_effect=ok)
+
+    def evolution_report(self, plan, fixtures, actual, correct=True):
+        return {"manifest_mode": True, "shipping_scanner_source": True,
+                "files": [{"index": index, "size": fixtures[entry["key"]].stat().st_size,
+                           "sha256": digest(fixtures[entry["key"]]),
+                           "validator_sha256": hashlib.sha256(
+                               self.etag_for(entry["key"]).encode()).hexdigest()}
+                          for index, entry in enumerate(plan["files"])],
+                "phases": {"view_binding": {"body_bytes": 0, "head": 0, "get": 0}},
+                "trials": [{"trial_index": 0, "trial": plan["trial"], "correct": correct,
+                            "query": {"body_bytes": 0, "head": 0, "get": 0},
+                            "explain": {"body_bytes": 0, "head": 0, "get": 0},
+                            "actual": actual}],
+                "denials": {name: True for name in
+                            ("direct", "unlisted", "nested_glob", "secrets")}}
+
+    def test_contradiction_plan_plans_a_refusal_and_asserts_no_code(self):
+        import sys
+        plan = contradiction_plan(8192, "bucket")
+        self.assertEqual(plan["name"], CONTRADICTION_SHAPE_NAME)
+        self.assertEqual(plan["outcome"], "refused")
+        self.assertFalse(plan["value_compared"])
+        self.assertEqual(plan["contradicted_column"], "payload4")
+        self.assertEqual(plan["trial"], "wide")
+        # The code is NOT invented here: it is per spec, to be confirmed at the round gate.
+        self.assertIsNone(plan["expected_code"])
+        self.assertEqual(plan["expected_code_status"], "per spec; to be confirmed at round gate")
+        self.assertEqual(len(plan["files"]), 2)
+        self.assertEqual([entry["rows"] for entry in plan["files"]], [2048, 2048])
+        self.assertEqual([entry["offset"] for entry in plan["files"]], [0, 2048])
+        # Same nine names in both files; exactly one column differs, and it differs in PHYSICAL
+        # type only. That is the whole shape.
+        for entry in plan["files"]:
+            self.assertEqual(sorted(entry["columns"]), sorted(SCHEMA))
+            self.assertEqual(len(entry["columns"]), 9)
+        differ = [column for column in plan["files"][0]["columns"]
+                  if plan["files"][0]["physical"][column] != plan["files"][1]["physical"][column]]
+        self.assertEqual(differ, ["payload4"])
+        self.assertEqual(plan["files"][0]["physical"]["payload4"], "int64")
+        self.assertEqual(plan["files"][1]["physical"]["payload4"], "string")
+        # Offline-build fixture SHAs, recorded for traceability and not gated.
+        self.assertEqual(plan["files"][0]["offline_fixture_sha256"],
+                         "1cbfaf00343dab554219ff175ebfa6da8064ec44d13d72e6a8e768a36262639e")
+        self.assertEqual(plan["files"][1]["offline_fixture_sha256"],
+                         "439d7673fb7a49966002387a09d5d76e53653e221c773259fb2686d8558aceea")
+        self.assertEqual([entry["coordinate"] for entry in plan["files"]],
+                         ["s3://bucket/data/contradiction-0.parquet",
+                          "s3://bucket/data/contradiction-1.parquet"])
+        module = sys.modules[__name__]
+        for case, physical, stage in (
+                ("no contradiction", ({"id": "int64", **{f"payload{c}": "string"
+                                                        for c in range(8)}},
+                                     {"id": "int64", **{f"payload{c}": "string"
+                                                       for c in range(8)}}),
+                 "contradiction-single-column"),
+                ("two columns differ", ({"id": "int64", **{f"payload{c}": "string"
+                                                           for c in range(8)},
+                                        "payload3": "int64", "payload4": "int64"},
+                                       {"id": "int64", **{f"payload{c}": "string"
+                                                        for c in range(8)}}),
+                 "contradiction-single-column"),
+                ("name closure broken", ({"id": "int64", **{f"payload{c}": "string"
+                                                            for c in range(8)}},
+                                        {f"payload{c}": "string" for c in range(8)}),
+                 "contradiction-name-closure")):
+            with self.subTest(case=case), mock.patch.object(module, "CONTRADICTION_PHYSICAL",
+                                                            physical):
+                with self.assertRaisesRegex(SafeFailure, re.escape(stage)):
+                    contradiction_plan(8192, "bucket")
+        # A run that pins a number this runner cannot attribute is refused as an invented plan.
+        with mock.patch.object(module, "CONTRADICTION_EXPECTED_CODE", 212):
+            with self.assertRaisesRegex(SafeFailure, "contradiction-code-not-asserted"):
+                contradiction_plan(8192, "bucket")
+        with self.assertRaisesRegex(SafeFailure, "shape-row-expectation"):
+            contradiction_plan(2048, "bucket")
+
+    def test_contradiction_gate_refuses_a_fixture_that_is_not_the_planned_contradiction(self):
+        plan = contradiction_plan(8192, "bucket")
+        full = {"id": "int64", **{f"payload{c}": "string" for c in range(8)}}
+        planned = [dict(CONTRADICTION_PHYSICAL[0]), dict(CONTRADICTION_PHYSICAL[1])]
+        require_contradiction_types(planned, plan)
+        for case, types, stage in (
+                ("contradiction removed", [dict(planned[0], payload4="string"), planned[1]],
+                 "contradiction-physical-drift"),
+                ("both files int64", [planned[0], dict(planned[1], payload4="int64")],
+                 "contradiction-physical-drift"),
+                ("name missing from second file", [planned[0],
+                                                  {key: value for key, value in planned[1].items()
+                                                   if key != "payload7"}],
+                 "contradiction-name-closure"),
+                ("no difference at all", [full, full], "contradiction-physical-drift")):
+            with self.subTest(case=case):
+                with self.assertRaisesRegex(SafeFailure, re.escape(stage)):
+                    require_contradiction_types(types, plan)
+        with self.assertRaisesRegex(SafeFailure, "contradiction-shape-files"):
+            require_contradiction_types([planned[0]], plan)
+
+    def test_contradiction_slice_requires_a_refusal_and_records_any_code(self):
+        def diagnostic(code, status):
+            return (b"shipping qualification failed (private details suppressed; protected "
+                    b"read phase %d, HTTP status %d)\n" % (code, status))
+        for case, code, error, stage, recorded, status in (
+                # No number is asserted, so any refusal is the planned outcome and whatever the
+                # round observed is what gets recorded.
+                ("refusal-at-an-unpredicted-code", 1, diagnostic(211, 0), None, 211, 0),
+                ("refusal-at-the-refusal-shape-code", 1, diagnostic(212, 206), None, 212, 206),
+                ("unexpected-success", 0, b"", "contradiction-shape-unexpected-success",
+                 None, None),
+                ("unparsable", 1, b"some other diagnostic\n",
+                 "contradiction-shape-unparsable-diagnostic", None, None)):
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as directory:
+                probe = self.probe(directory)
+                plan = contradiction_plan(8192, probe.state["bucket"])
+                fixtures = self.cross_file_fixtures(directory, plan)
+                self.cross_file_ok(probe, fixtures)
+                probe.harness_code = mock.Mock(return_value=(code, b"", error))
+                evidence = {"failed_slices": []}
+                types = [dict(CONTRADICTION_PHYSICAL[0]), dict(CONTRADICTION_PHYSICAL[1])]
+                if stage is None:
+                    item = probe.contradiction_slice(types, plan, evidence)
+                    self.assertEqual(item["outcome"], "refused")
+                    self.assertEqual(item["decision_code"], recorded)
+                    self.assertEqual(item["http_status"], status)
+                    self.assertEqual(item["expected_code"], None)
+                    self.assertEqual(item["expected_code_status"],
+                                     "per spec; to be confirmed at round gate")
+                    self.assertEqual(evidence["failed_slices"], [])
+                    self.assertEqual(item["manifest_placeholder_expected_sha256"],
+                                     hashlib.sha256(
+                                         b"contradiction shape: value not compared").hexdigest())
+                    self.assertEqual([call.args[1] for call in probe.ok.call_args_list
+                                      if call.args[1] == "delete-object"].count("delete-object"), 2)
+                    continue
+                with self.assertRaisesRegex(SafeFailure, re.escape(stage)):
+                    probe.contradiction_slice(types, plan, evidence)
+                self.assertEqual(evidence["failed_slices"][-1]["decision_code"], recorded)
+                self.assertEqual(evidence["failed_slices"][-1]["stage"], stage)
+                self.assertFalse(any(call.args[1] == "delete-object"
+                                     for call in probe.ok.call_args_list))
+
+    def test_evolution_plan_is_the_second_file_adding_one_column(self):
+        plan = evolution_plan(8192, "bucket")
+        self.assertEqual(plan["name"], EVOLUTION_SHAPE_NAME)
+        self.assertEqual(plan["outcome"], "typed-null-union")
+        self.assertEqual(plan["added_column"], "payload3")
+        self.assertEqual(plan["trial"], "wide")
+        self.assertEqual(len(plan["files"]), 2)
+        self.assertEqual([entry["rows"] for entry in plan["files"]], [2048, 2048])
+        self.assertEqual([entry["offset"] for entry in plan["files"]], [0, 2048])
+        self.assertEqual(sorted(plan["files"][1]["columns"]), sorted(SCHEMA))
+        self.assertEqual(sorted(plan["files"][0]["columns"]),
+                         sorted(set(SCHEMA) - {"payload3"}))
+        for entry in plan["files"]:
+            for column in entry["columns"]:
+                self.assertEqual(entry["physical"][column], "int64" if column == "id" else "string")
+        # Offline-build fixture SHAs, recorded for traceability and not gated.
+        self.assertEqual(plan["files"][0]["offline_fixture_sha256"],
+                         "ca4262e7e07280a2c608397340982490b6c695cd8fad415e6fd3b0a28703ec34")
+        self.assertEqual(plan["files"][1]["offline_fixture_sha256"],
+                         "439d7673fb7a49966002387a09d5d76e53653e221c773259fb2686d8558aceea")
+        # The pre-authored row, restated by hand: ids 0..4095 summed, every value 256 characters,
+        # and payload3 present in the second file only so only 2048 of its rows contribute.
+        self.assertEqual(EVOLUTION_EXPECTED_ROW,
+                         [sum(range(4096))] + [(2048 if column == "payload3" else 4096) * 256
+                                               for column in PROJECTION_ORDER[1:]])
+        self.assertEqual(sum(range(4096)), 8386560)
+        self.assertEqual(4096 * 256, 1048576)
+        self.assertEqual(2048 * 256, 524288)
+        import sys
+        module = sys.modules[__name__]
+        for case, physical, stage in (
+                ("first file not missing anything", ({"id": "int64",
+                                                     **{f"payload{c}": "string"
+                                                        for c in range(8)}},
+                                                    {"id": "int64", **{f"payload{c}": "string"
+                                                                      for c in range(8)}}),
+                 "evolution-first-file-closure"),
+                ("second file missing the column", (
+                    {key: value for key, value in SCHEMA.items() if key != "payload3"},
+                    {key: value for key, value in SCHEMA.items() if key != "payload3"}),
+                 "evolution-second-file-closure")):
+            with self.subTest(case=case), mock.patch.object(module, "EVOLUTION_PHYSICAL",
+                                                            physical):
+                with self.assertRaisesRegex(SafeFailure, re.escape(stage)):
+                    evolution_plan(8192, "bucket")
+        with self.assertRaisesRegex(SafeFailure, "shape-row-expectation"):
+            evolution_plan(2048, "bucket")
+
+    def test_evolution_expectation_is_the_preauthored_typed_null_union(self):
+        plan = evolution_plan(8192, "bucket")
+        columns = self.recipe_columns(plan)
+        self.assertEqual(evolution_expectation(columns, plan),
+                         encode_result(EVOLUTION_EXPECTED_ROW))
+        # What a shared-schema pair would have given: every payload present in both files. The
+        # pre-authored row differs from it at exactly one position, and that difference is exactly
+        # the typed-NULL contribution of the file that lacks the column.
+        shared = [{column: recipe_column(column, "string" if column != "id" else "int64",
+                                        entry["offset"], entry["rows"])
+                   for column in PROJECTION_ORDER} for entry in plan["files"]]
+        shared_row = [sum(shared[0]["id"] + shared[1]["id"])] + [
+            sum(len(value) for file in shared for value in file[column])
+            for column in PROJECTION_ORDER[1:]]
+        differ = [index for index in range(9) if shared_row[index] != EVOLUTION_EXPECTED_ROW[index]]
+        self.assertEqual(differ, [4])
+        self.assertEqual(shared_row[4] - EVOLUTION_EXPECTED_ROW[4], 2048 * 256)
+
+    def test_evolution_gates_refuse_drift_before_upload(self):
+        plan = evolution_plan(8192, "bucket")
+        columns = self.recipe_columns(plan)
+        for case, columns_arg, plan_arg, stage in (
+                ("fixture name drift", [{key: value for key, value in columns[0].items()
+                                        if key != "payload2"}, columns[1]], plan,
+                 "evolution-fixture-drift"),
+                ("union not closed", [columns[0], {key: value for key, value in columns[1].items()
+                                                   if key != "payload2"}], plan,
+                 "evolution-fixture-drift"),
+                ("id not integral", [{**columns[0], "id": ["x"] + columns[0]["id"][1:]},
+                                    columns[1]], plan, "evolution-id-recipe-drift"),
+                ("payload not string", [columns[0], {**columns[1], "payload5": [5]
+                                                     + columns[1]["payload5"][1:]},], plan,
+                 "evolution-payload-recipe-drift"),
+                ("value drift", [{**columns[0], "payload0": ["short"] + columns[0]["payload0"][1:]},
+                                columns[1]], plan, "evolution-expectation-drift"),
+                ("trial not the closed one", columns, dict(plan, trial="narrow"),
+                 "evolution-trial"),
+                ("both files carry every column", [{column: recipe_column(
+                    column, "int64" if column == "id" else "string", entry["offset"], entry["rows"])
+                    for column in PROJECTION_ORDER} for entry in plan["files"]],
+                 {"files": [{"columns": PROJECTION_ORDER, "offset": 0, "rows": 2048},
+                            {"columns": PROJECTION_ORDER, "offset": 2048, "rows": 2048}],
+                  "trial": "wide"}, "evolution-added-column")):
+            with self.subTest(case=case):
+                with self.assertRaisesRegex(SafeFailure, re.escape(stage)):
+                    evolution_expectation(columns_arg, plan_arg)
+        with self.assertRaisesRegex(SafeFailure, "evolution-shape-files"):
+            evolution_expectation([columns[0]], plan)
+
+    def test_evolution_slice_compares_the_preauthored_expectation(self):
+        for case, actual, stage, deletes in (
+                ("matches-the-preauthored-value", encode_result(EVOLUTION_EXPECTED_ROW), None, 2),
+                ("reported-a-shared-schema-value",
+                 encode_result([8386560] + [1048576] * 8), "reported-expectation-mismatch", 0),
+                ("oracle-not-correct", encode_result(EVOLUTION_EXPECTED_ROW), "native-oracle", 0)):
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as directory:
+                probe = self.probe(directory)
+                plan = evolution_plan(8192, probe.state["bucket"])
+                fixtures = self.cross_file_fixtures(directory, plan)
+                self.cross_file_ok(probe, fixtures)
+                report = self.evolution_report(plan, fixtures, actual,
+                                              correct=stage != "native-oracle")
+                probe.harness_code = mock.Mock(return_value=(0, json.dumps(report), b""))
+                evidence = {"failed_slices": []}
+                columns = self.recipe_columns(plan)
+                if stage is None:
+                    item = probe.evolution_slice(columns, plan, evidence)
+                    self.assertEqual(item["outcome"], "typed-null-union")
+                    self.assertEqual(item["added_column"], "payload3")
+                    self.assertEqual(item["preauthored_row"], EVOLUTION_EXPECTED_ROW)
+                    self.assertEqual(evidence["failed_slices"], [])
+                    self.assertEqual([call.args[1] for call in probe.ok.call_args_list
+                                      if call.args[1] == "delete-object"].count("delete-object"),
+                                     deletes)
+                    continue
+                with self.assertRaisesRegex(SafeFailure, re.escape(stage)):
+                    probe.evolution_slice(columns, plan, evidence)
+                self.assertEqual([call.args[1] for call in probe.ok.call_args_list
+                                  if call.args[1] == "delete-object"].count("delete-object"),
+                                 deletes)
+        # A fixture that is not the fixture the expectation was written for stops before any
+        # upload, so a drift can never be absorbed as a pass.
+        with tempfile.TemporaryDirectory() as directory:
+            probe = self.probe(directory)
+            plan = evolution_plan(8192, probe.state["bucket"])
+            fixtures = self.cross_file_fixtures(directory, plan)
+            self.cross_file_ok(probe, fixtures)
+            probe.harness_code = mock.Mock(return_value=(0, json.dumps({}), b""))
+            columns = self.recipe_columns(plan)
+            columns[1]["payload3"] = [None] + columns[1]["payload3"][1:]
+            with self.assertRaisesRegex(SafeFailure, "evolution-expectation-drift"):
+                probe.evolution_slice(columns, plan, {"failed_slices": []})
+            self.assertFalse(any(call.args[1] in ("put-object", "delete-object")
+                                 for call in probe.ok.call_args_list))
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)

@@ -3,8 +3,8 @@
   "scope": "guarded-duckdb-native-build-identity",
   "complete": false,
   "source_archive_sha256": "1fadcbe9e69e1470f9093b6bcde08daf477d729c449e59a807f45c346622099b",
-  "native_library_sha256": "be5ce03b192047f14e745911c325e81055c4f5836eec25b991b790b0c2d33825",
-  "compile_commands_sha256": "1bf031aeddd3ea205367f07929547cb74dfdbd56b2fc932cf88dd6919e73b9b7",
+  "native_library_sha256": "6577b9586724e44b452511ae0bcf1914463c7eab4cf2a4d0b925746f2bab327c",
+  "compile_commands_sha256": "bb3251e29313ae4a3cea8cbbf2fc620510e6b6d497fb875129b8b74bcf36f702",
   "compiled_source_sha256": {
     "extension/core_functions/core_functions_extension.cpp": "cd1dea980002edea934004fec5911258117dccf4aa7d9181d8d83b287f30116a",
     "extension/core_functions/function_list.cpp": "5fe9d97d41ca7f2fd192000386f0aea1cfa0a809b75ba1e628a92d6ec58d2463",
@@ -213,7 +213,7 @@
     "ENABLE_EXTENSION_AUTOINSTALL:BOOL": "OFF",
     "ENABLE_EXTENSION_AUTOLOADING:BOOL": "OFF"
   },
-  "cmake_cache_sha256": "c80e65588a62a64c5b748fa298f525337f0a335c6ec2641e47ec8877eeab53ff",
+  "cmake_cache_sha256": "5f3c6490cd8b0cef7de691ba27cf9101f740abcccd30d3f492619b04cd77f9e5",
   "mach_o_minimum_os": "26.0",
   "mach_o_architecture": "arm64",
   "source_release_url": "https://github.com/duckdb/duckdb/archive/refs/tags/v1.5.6.tar.gz",

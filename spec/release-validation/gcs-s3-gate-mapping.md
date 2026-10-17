@@ -227,3 +227,50 @@ Explicitly NOT closed here, with destinations: the three standing register refus
 self-pin line 7; lines 13 and 15) and the demoted line-8 claim are one knot — gcs-view
 ACTIVATION — and belong to task 31. Supported-target ABI/destruction/transport qualification
 remains open per the recorded position. Packaging the capability as-is does not advertise it.
+
+## Counter widening and path remap — outcome of the remap window (2026-10-17)
+
+**Counter widening: CLOSED AS DECLINED.** All four named items — headers, TLS, total wire, and
+preparation as its own phase — reached this window with no recorded measurement semantics: no unit, no
+direction, no defined composition. Nothing was invented to close them; each closes on what the plan
+already says. Headers: `**What they do not cover.** Response headers, rejected bodies, TLS, and total
+wire`, and the header figure the plan does report rests on a `stated nominal header allowance`, not on
+a counter. TLS: `TLS handshake and record framing are **excluded and not measured**`. Total wire: `This
+is an estimate, not wire truth` — and with TLS framing excluded it cannot be a wire figure.
+Preparation: `It is visible at the statement level and is not separable below it`, so making it its own
+phase would change what the existing counters mean. The traffic item closes by the plan's own decisions
+on an `**application-layer estimate**, computed at the report level`, and the plan states the cost of a
+real counter plainly: `The value here does not justify that` — a real header count would mean editing
+`verified_s3.inc` or `gcs_filesystem.inc`, and a change to the read path must be reviewed as production
+code. No native counter code was added. No parser or gate output changed.
+
+**Path remap: KEPT.** `-ffile-prefix-map` for the two location-dependent roots is in committed source
+(`crates/grv-adapter-duckdb/native/CMakeLists.txt`, commit `2104195`) and does what it claims: the one
+location-dependent string that reaches these binaries — the `__FILE__` path — is now location-free,
+`grv-build-root/duckdb/src/storage/../../../../duckdb-1.5.6/src/storage/external_file_cache.cpp` where
+it formerly carried the absolute build path. **Byte-identity remains NON-MANDATORY, and this window
+measured why it cannot be mandatory.** Across two clean builds at different locations, all 350 compiled
+objects are byte-identical (content hash, path-matched). The linked binaries still differ, because the
+linker stamps a random `LC_UUID` per link and the load commands are otherwise identical. The control
+that settles it: **two relinks of the same target, in the same tree, at the same location, also differ**
+(`ee71c1fb…` against `541f6652…` — 788,509 differing bytes, more than the 408,024 bytes that differ
+across locations). No amount of path remapping removes a per-link random field. Residual path leakage
+is confined to 38 object _file names_ for absolute-path sources (brotli, lz4, snappy, thrift,
+`parquet_types`, through `parquet_extension`); that shifts the linker's sort order, not the compiler
+output. The earlier decision on this point stands unchanged: byte-identical reproducibility across
+locations is not claimed on this toolchain.
+
+**Refresh executed; canonical instance recorded.** The canonical instance for the refreshed record is
+the **custody copy of `widening-c`** — guard `libgrv_duckdb_guard.dylib`
+`6577b9586724e44b452511ae0bcf1914463c7eab4cf2a4d0b925746f2bab327c` and harness
+`grv_cloud_qualification` `e0baa4cede0fef1dc7ba8d5b14bb1765a2e5462bd7e1cf72f62376b3afedf3fd` — copied
+to `~/grv-evidence/grv-task30-work/custody/` with digests verified before and after the copy and
+recorded in `custody-manifest.json`. Source tree: built from committed source at `2104195` through the
+declared `build.py` entry point, native suite 15/15 green at the source tree. Copies, not moves: the
+main tree and `repro-full` were not written to and their custody digests stand (`be5ce03b…`,
+`a5ccfa88…`). `notices/native-build.json` moves on three fields only — `native_library_sha256`,
+`compile_commands_sha256`, `cmake_cache_sha256` — because the remap flag changes the compile lines and
+therefore the build-tree-dependent digests. `source_archive_sha256` is unchanged (same pinned tarball
+`1fadcbe9…`); no `guard_sources_sha256` line changes, since no pinned key in that map names a file the
+commit touched; `scope` is unchanged and `complete` stays `false`. Historical checkpoints citing the
+superseded digests are not rewritten.

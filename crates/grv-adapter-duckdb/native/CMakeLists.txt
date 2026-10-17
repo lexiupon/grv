@@ -8,6 +8,12 @@ set(DISABLE_BUILTIN_EXTENSIONS ON CACHE BOOL "" FORCE)
 set(BUILD_COMPLETE_EXTENSION_SET OFF CACHE BOOL "" FORCE)
 set(OVERRIDE_GIT_DESCRIBE "v1.5.6" CACHE STRING "" FORCE)
 set(GIT_COMMIT_HASH "069cc9f" CACHE STRING "" FORCE)
+# Build-location independence. The only location-dependent text that reaches these
+# binaries is the absolute source path recorded through __FILE__, which is emitted
+# verbatim. Both location-dependent roots are pinned to fixed placeholders, so two
+# clean builds of the same tree state at different locations produce the same bytes.
+# Recorded paths only: no behaviour, ABI or output change.
+add_compile_options("-ffile-prefix-map=${CMAKE_BINARY_DIR}=grv-build-root" "-ffile-prefix-map=${GRV_DUCKDB_SOURCE}=grv-source-root")
 add_subdirectory(${GRV_DUCKDB_SOURCE} duckdb)
 if(APPLE)
   set(GRV_NATIVE_LIBRARIES duckdb_static duckdb_generated_extension_loader core_functions_extension parquet_extension)

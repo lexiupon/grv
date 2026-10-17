@@ -107,8 +107,20 @@ Both remain recorded as they happened. Neither is called a pattern:
   holding. **Historical checkpoints citing the old digest are not rewritten.**
 
 **Standing caveat, stated plainly:** the refreshed record was produced by a build **on this machine**.
-A byte-identical rebuild from pinned source at a fresh location has not been run, so the record is
-currently **machine-bound**, not proven reproducible. The record is also Mach-O specific
+**Decision (2026-10-16): byte-identical reproducibility across locations is NOT claimed for this
+project on this toolchain, and is dropped as an acceptance item.** A clean run of the declared
+procedure (`build.py`, fresh extraction from the pinned tarball, archive and member verification
+passing, guard suite 13/13) produced `a5ccfa88d53170c5907d6f39dc0f0c025b25775455a142c95680fa054fb757d8`
+— different bytes from the recorded `be5ce03b…`, as expected once path embedding is understood.
+Path remapping (`-ffile-prefix-map`) stays an optional enhancement for the #30 window.
+
+Provenance for the native build therefore rests on five things, all of which are in force: pinned
+inputs verified at fetch; the declared procedure verifying every archive member except explicit patch
+sites; digests recorded from clean runs; **custody — the artifact that produced a cited digest stays
+on disk** (both `be5ce03b…` and `a5ccfa88…` are retained; the dead `35f92611…` was overwritten during
+the reviewed rebuild and its historical checkpoints are paper-only, not rewritten); and behavioural
+tests against the recorded binary (15/15 original tree, 13/13 fresh tree, four platforms green on CI,
+reproduced on a second full run `38887075813`). The record is Mach-O specific
 (`mach_o_architecture`, `mach_o_minimum_os`), so it can only attest the macOS build identity; the
 Linux platforms have no equivalent binding record. CI packaging runs `--profile dev` **without**
 `--require-distribution-ready`, so on that path the native-library binding check is **not enforced**

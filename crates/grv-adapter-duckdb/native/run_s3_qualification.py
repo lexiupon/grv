@@ -34,6 +34,8 @@ MARKER = "grv-qualification-owner"
 TRIALS = ("wide", "narrow", "selective_wide", "selective_narrow", "and_range",
           "or_range", "null", "string", "wrapper", "nonidentity_cast")
 SCHEMA = {"id": "BIGINT", **{f"payload{column}": "VARCHAR" for column in range(8)}}
+# The fixed projection, in the order the fixtures are written and the closed trials read it.
+PROJECTION_ORDER = ["id"] + ["payload%d" % column for column in range(8)]
 # The positive shape stores one real object whose key carries one space, one literal `+`, one
 # non-ASCII letter, one apostrophe and one literal `-`. The stored key is that decoded form; the
 # coordinate handed to the proof is the same key in GRV canonical encoding, and the two must
@@ -156,6 +158,72 @@ COLD_WARM_SQL = {
             + " FROM data",
     "narrow": "SELECT sum(id)::BIGINT FROM data",
 }
+
+# --- cross-file type contradiction -------------------------------------------------
+# The one cross-file type-contradiction shape: TWO files that carry the SAME nine column
+# names, where ONE column (payload4) has TWO different physical types -- int64 in the first
+# file, string in the second. The plan is the whole claim: the specified behaviour is a
+# REFUSAL, and no value is compared. The exact decision code is deliberately NOT asserted
+# here. spec/s3-shipping-evolved-typed-live-plan.md states the numeric codes are per
+# call-site, not per mechanism, so offline work cannot say WHICH mechanism refuses on this
+# shape: the expected code is per spec, to be confirmed at the round gate. What this slice
+# does assert is that a refusal happens, that its observed numbers are recorded whatever they
+# are, and that an unexpected success or an unparsable diagnostic stops the run before delete.
+CONTRADICTION_SHAPE_NAME = "cross-file-contradiction-refusal"
+CONTRADICTION_SHAPE_ROWS = (2048, 2048)
+CONTRADICTION_TRIAL = "wide"
+CONTRADICTION_COLUMN = "payload4"
+CONTRADICTION_EXPECTED_CODE = None  # per spec; to be confirmed at round gate
+CONTRADICTION_EXPECTED_CODE_STATUS = "per spec; to be confirmed at round gate"
+# Physical types as a local parquet read-back reports them, stated per file so the
+# contradiction is planned data and never something inferred from a run. Order is the order the
+# offline builder wrote the columns in, which is the standard projection order.
+CONTRADICTION_PHYSICAL = ({"id": "int64", "payload0": "string", "payload1": "string",
+                           "payload2": "string", "payload3": "string", "payload4": "int64",
+                           "payload5": "string", "payload6": "string", "payload7": "string"},
+                          {"id": "int64", "payload0": "string", "payload1": "string",
+                           "payload2": "string", "payload3": "string", "payload4": "string",
+                           "payload5": "string", "payload6": "string", "payload7": "string"})
+
+# --- cross-file evolution ----------------------------------------------------------
+# The one cross-file evolution shape: the SECOND file ADDS a projected column (payload3) that
+# the FIRST lacks; every other column, by name and physical type, is the standard one. This is
+# the multi-file case the single-file all-null shape (fixture sha256 d5dcff4a...) could not
+# reach: the file that lacks the projected column carries typed NULLs for it, sum() and
+# sum(length()) ignore NULLs, so the union value is what the surviving file alone gives on
+# that column and the sum over both files on every other column.
+#
+# The expectation below was authored BEFORE any live round, computed independently in Python
+# from local fixture read-backs (~/grv-evidence/grv-task28-work/build_fixtures.py, system
+# python with pyarrow 21.0.0) and re-derived in closed form: ids 0..4095 sum to 8,386,560;
+# every payload value is 256 characters; payload3 exists in the second file only, so it
+# contributes 2048 x 256 = 524,288, while every other payload is present in both files and
+# contributes 4096 x 256 = 1,048,576. It was not fitted to an observed run and no live round
+# has run it. The offline indicator for THIS direction (the column missing from the FIRST file)
+# comes from the DuckDB 1.4.2 probe recorded in spec/s3-shipping-evolved-typed-live-plan.md,
+# not from the pinned 1.5.6 build, so it is an indicator of the rule and not an attestation.
+EVOLUTION_SHAPE_NAME = "cross-file-evolution-typed-null-union"
+EVOLUTION_SHAPE_ROWS = (2048, 2048)
+EVOLUTION_TRIAL = "wide"
+EVOLUTION_ADDED_COLUMN = "payload3"
+EVOLUTION_EXPECTED_ROW = [8386560, 1048576, 1048576, 1048576, 524288, 1048576, 1048576,
+                          1048576, 1048576]
+EVOLUTION_PHYSICAL = ({"id": "int64", "payload0": "string", "payload1": "string",
+                       "payload2": "string", "payload4": "string", "payload5": "string",
+                       "payload6": "string", "payload7": "string"},
+                      {"id": "int64", **{"payload%d" % column: "string"
+                                         for column in range(8)}})
+# Fixture SHA-256 recorded from the offline build (two independent builds agreed). Recorded
+# for traceability, NOT gated: byte-identical reproducibility is not an acceptance item, and
+# the same content written through a different code path hashes differently.
+OFFLINE_FIXTURE_SHA256 = {"contradiction-0.parquet":
+                          "1cbfaf00343dab554219ff175ebfa6da8064ec44d13d72e6a8e768a36262639e",
+                          "contradiction-1.parquet":
+                          "439d7673fb7a49966002387a09d5d76e53653e221c773259fb2686d8558aceea",
+                          "evolution-0.parquet":
+                          "ca4262e7e07280a2c608397340982490b6c695cd8fad415e6fd3b0a28703ec34",
+                          "evolution-1.parquet":
+                          "439d7673fb7a49966002387a09d5d76e53653e221c773259fb2686d8558aceea"}
 
 MANIFEST_DOCUMENT_FIELDS = frozenset({"files", "trials"})
 MANIFEST_FILE_FIELDS = frozenset({"local", "coordinate", "size", "sha256", "validator"})
@@ -399,6 +467,158 @@ def cold_warm_expectation(columns, trial):
     return encode_result(row)
 
 
+def recipe_column(column, physical, offset, count):
+    """Standard fixture values for one column under its planned physical type.
+
+    string -> the standard 256-character value; int64 -> the row's own id, the only integral
+    recipe, so a physical-type difference stays the only variable and the values stay
+    reproducible offline. Pure Python and pyarrow-free, so a cross-file shape's pre-authored
+    expectation can be recomputed from the recipe alone and never from an observed run. run()
+    builds the two new cross-file fixtures from this recipe, so the offline build and the
+    run-time build carry the same values even when their bytes differ.
+    """
+    require(column in SCHEMA, "recipe-column")
+    require(physical in ("int64", "string"), "recipe-physical")
+    if physical == "int64":
+        return list(range(offset, offset + count))
+    return [hashlib.sha256(f"{column}-{row}".encode()).hexdigest() * 4
+            for row in range(offset, offset + count)]
+
+
+def recipe_array(column, physical, offset, count):
+    """One standard fixture column as an Arrow array, for the run-time build (pyarrow caller)."""
+    import pyarrow as pa
+    return pa.array(recipe_column(column, physical, offset, count),
+                    type=(pa.int64() if physical == "int64" else pa.string()))
+
+
+def contradiction_plan(rows, bucket):
+    """Resolve the one cross-file type-contradiction shape: same names, one column, two types.
+
+    The outcome is a refusal and no value is compared, so the plan carries no expectation value.
+    The decision code is None on purpose: it is per spec, to be confirmed at the round gate, and
+    this runner will not invent a number for a mechanism it cannot attribute offline.
+    """
+    require(rows in (8192, 65536) and rows >= sum(CONTRADICTION_SHAPE_ROWS),
+            "shape-row-expectation")
+    require(len(CONTRADICTION_PHYSICAL) == len(CONTRADICTION_SHAPE_ROWS) == 2,
+            "contradiction-shape-files")
+    for physical in CONTRADICTION_PHYSICAL:
+        require(sorted(physical) == sorted(SCHEMA), "contradiction-name-closure")
+    differ = sorted(column for column in PROJECTION_ORDER
+                    if CONTRADICTION_PHYSICAL[0][column] != CONTRADICTION_PHYSICAL[1][column])
+    require(differ == [CONTRADICTION_COLUMN], "contradiction-single-column")
+    require({CONTRADICTION_PHYSICAL[0][CONTRADICTION_COLUMN],
+             CONTRADICTION_PHYSICAL[1][CONTRADICTION_COLUMN]} == {"int64", "string"},
+            "contradiction-physical-types")
+    require(CONTRADICTION_EXPECTED_CODE is None
+            and CONTRADICTION_EXPECTED_CODE_STATUS == "per spec; to be confirmed at round gate",
+            "contradiction-code-not-asserted")
+    files = []
+    for index, count in enumerate(CONTRADICTION_SHAPE_ROWS):
+        name = "contradiction-%d.parquet" % index
+        key = "data/" + name
+        coordinate = "s3://" + bucket + "/" + grv_encode(key.encode())
+        require(s3_key_canonical(coordinate) == key.encode(), "coordinate-round-trip")
+        files.append({"name": name, "key": key, "local_fixture": name, "rows": count,
+                      "offset": sum(CONTRADICTION_SHAPE_ROWS[:index]),
+                      "coordinate": coordinate, "columns": list(CONTRADICTION_PHYSICAL[index]),
+                      "physical": dict(CONTRADICTION_PHYSICAL[index]),
+                      "offline_fixture_sha256": OFFLINE_FIXTURE_SHA256[name]})
+    require(len({item["coordinate"] for item in files}) == len(files),
+            "contradiction-duplicate-coordinate")
+    require(files[0]["physical"][CONTRADICTION_COLUMN] != files[1]["physical"][CONTRADICTION_COLUMN],
+            "contradiction-single-column")
+    return {"name": CONTRADICTION_SHAPE_NAME, "files": files, "outcome": "refused",
+            "value_compared": False, "expected_code": CONTRADICTION_EXPECTED_CODE,
+            "expected_code_status": CONTRADICTION_EXPECTED_CODE_STATUS,
+            "contradicted_column": CONTRADICTION_COLUMN, "trial": CONTRADICTION_TRIAL,
+            "columns": dict(SCHEMA), "compression": "NONE", "dictionary": False,
+            "statistics": True, "row_group_rows": 2048}
+
+
+def evolution_plan(rows, bucket):
+    """Resolve the one cross-file evolution shape: the second file adds one projected column."""
+    require(rows in (8192, 65536) and rows >= sum(EVOLUTION_SHAPE_ROWS), "shape-row-expectation")
+    require(len(EVOLUTION_PHYSICAL) == len(EVOLUTION_SHAPE_ROWS) == 2, "evolution-shape-files")
+    require(set(EVOLUTION_PHYSICAL[1]) == set(SCHEMA), "evolution-second-file-closure")
+    require(set(EVOLUTION_PHYSICAL[0]) == set(SCHEMA) - {EVOLUTION_ADDED_COLUMN},
+            "evolution-first-file-closure")
+    require(len(EVOLUTION_EXPECTED_ROW) == len(SCHEMA), "evolution-expectation-shape")
+    files = []
+    for index, count in enumerate(EVOLUTION_SHAPE_ROWS):
+        name = "evolution-%d.parquet" % index
+        key = "data/" + name
+        coordinate = "s3://" + bucket + "/" + grv_encode(key.encode())
+        require(s3_key_canonical(coordinate) == key.encode(), "coordinate-round-trip")
+        files.append({"name": name, "key": key, "local_fixture": name, "rows": count,
+                      "offset": sum(EVOLUTION_SHAPE_ROWS[:index]),
+                      "coordinate": coordinate,
+                      "columns": [column for column in PROJECTION_ORDER
+                                  if column in EVOLUTION_PHYSICAL[index]],
+                      "physical": dict(EVOLUTION_PHYSICAL[index]),
+                      "offline_fixture_sha256": OFFLINE_FIXTURE_SHA256[name]})
+    require(len({item["coordinate"] for item in files}) == len(files),
+            "evolution-duplicate-coordinate")
+    return {"name": EVOLUTION_SHAPE_NAME, "files": files, "outcome": "typed-null-union",
+            "added_column": EVOLUTION_ADDED_COLUMN, "expected_row": list(EVOLUTION_EXPECTED_ROW),
+            "trial": EVOLUTION_TRIAL, "columns": dict(SCHEMA), "compression": "NONE",
+            "dictionary": False, "statistics": True, "row_group_rows": 2048}
+
+
+def evolution_expectation(columns_by_file, plan):
+    """Recompute the pre-authored typed-NULL union from local fixture read-backs and require agreement.
+
+    A projected column a file does not carry is a typed NULL on that file's rows, and sum() and
+    sum(length()) ignore NULLs, so the file that lacks the column contributes nothing to it and
+    every other column sums across both files. EVOLUTION_EXPECTED_ROW was authored offline before
+    any live round; a fixture that is not the fixture the expectation was written for stops the
+    run here, before any upload, so a drift can never be absorbed as a pass.
+    """
+    require(len(columns_by_file) == len(plan["files"]) == 2, "evolution-shape-files")
+    require(plan["trial"] == EVOLUTION_TRIAL, "evolution-trial")
+    union = set()
+    for entry, columns in zip(plan["files"], columns_by_file):
+        require(sorted(columns) == sorted(entry["columns"]), "evolution-fixture-drift")
+        union.update(columns)
+    require(union == set(SCHEMA), "evolution-union-closure")
+    first, second = (set(entry["columns"]) for entry in plan["files"])
+    require(second - first == {EVOLUTION_ADDED_COLUMN} and not first - second,
+            "evolution-added-column")
+    row = []
+    for column in PROJECTION_ORDER:
+        total = 0
+        for columns in columns_by_file:
+            values = columns.get(column, [])
+            if column == "id":
+                require(all(type(value) is int for value in values), "evolution-id-recipe-drift")
+                total += sum(values)
+            else:
+                require(all(value is None or type(value) is str for value in values),
+                        "evolution-payload-recipe-drift")
+                total += sum(len(value) for value in values if value is not None)
+        row.append(total)
+    require(row == EVOLUTION_EXPECTED_ROW, "evolution-expectation-drift")
+    return encode_result(row)
+
+
+def require_contradiction_types(types_by_file, plan):
+    """Refuse to act when the two fixtures do not carry the planned contradiction.
+
+    Both files must carry every projected column by name, exactly one column may differ in
+    physical type, and that column must be the planned one with the two planned types. Pure
+    Python and pyarrow-free so the gate is testable offline.
+    """
+    require(len(types_by_file) == len(plan["files"]) == 2, "contradiction-shape-files")
+    for entry, types in zip(plan["files"], types_by_file):
+        require(sorted(types) == sorted(entry["columns"]), "contradiction-name-closure")
+        for column in entry["columns"]:
+            require(types[column] == entry["physical"][column], "contradiction-physical-drift")
+    differ = sorted(column for column in PROJECTION_ORDER
+                    if types_by_file[0][column] != types_by_file[1][column])
+    require(differ == [CONTRADICTION_COLUMN], "contradiction-column-drift")
+
+
 class SafeFailure(Exception):
     """Only programmer-defined stages, never remote error text."""
 
@@ -411,7 +631,8 @@ def require(condition, stage):
 def selected_slices(only):
     """The slices a run will execute. Empty selection means every slice, in the fixed order."""
     universe = ([entry[0] for entry in SHAPES] + [MULTI_SHAPE_NAME, REFUSAL_SHAPE_NAME,
-                                                 COLD_WARM_SHAPE_NAME])
+                                                 COLD_WARM_SHAPE_NAME, CONTRADICTION_SHAPE_NAME,
+                                                 EVOLUTION_SHAPE_NAME])
     if not only:
         return universe
     unknown = [name for name in only if name not in universe]
@@ -1012,6 +1233,182 @@ class Probe:
                            "version_id": self.state["objects"][item["key"]]["version_id"],
                            "cleaned_individually": True} for item in plan["files"]]}
 
+    def contradiction_slice(self, types_by_file, plan, evidence):
+        """Run the one cross-file type-contradiction shape and require the harness to refuse it.
+
+        Two files, the same nine column names, one column (payload4) carrying two different
+        physical types. This shape asserts a REFUSAL and compares no value. The decision code is
+        recorded, not asserted: the plan states the code as per spec, to be confirmed at the round
+        gate, because the closed codes are per call-site and offline work cannot attribute a
+        mechanism. An unexpected success or an unparsable diagnostic stops the run before any
+        delete, and whatever numbers were observed are kept on every path that is not the plan.
+        The guarded cloud path and the manifest grammar are unchanged.
+        """
+        require_contradiction_types(types_by_file, plan)
+        entries = []
+        for item in plan["files"]:
+            fixture = self.directory / item["local_fixture"]
+            entry = self.upload(item["key"], fixture)
+            entries.append({"local": str(fixture), "coordinate": item["coordinate"],
+                            "size": entry["bytes"], "sha256": entry["sha256"],
+                            "validator": entry["etag"]})
+        placeholder = hashlib.sha256(b"contradiction shape: value not compared").hexdigest()
+        manifest = self.directory / "manifest-contradiction.json"
+        atomic_json(manifest, manifest_document(entries, [{"trial": plan["trial"],
+                                                          "expected": placeholder}]))
+        manifest.chmod(0o600)
+        self.journal("manifest-written-private")
+        command = [str(self.args.binary), "s3", str(self.args.httpfs), str(self.args.aws),
+                   "s3://" + self.state["bucket"] + "/data", self.args.profile,
+                   self.args.region, str(manifest)]
+        self.journal("manifest-harness-start")
+        started = time.monotonic()
+        code, _stdout, error = self.harness_code(command, self.args.native_timeout)
+        self.journal("manifest-harness-reaped")
+        diagnostic = re.fullmatch(
+            rb"shipping qualification failed \(private details suppressed; protected read "
+            rb"phase ([0-9]{1,3}), HTTP status ([0-9]{1,3})\)\n", error)
+        if code == 0:
+            observed = "unexpected-success"
+        elif diagnostic is None:
+            observed = "unparsable-diagnostic"
+        else:
+            # Any refusal is the planned outcome here; the number is recorded, never asserted.
+            observed = None
+        if observed is not None:
+            # Never lose the observed numbers on any path that is not the planned outcome.
+            if evidence is not None:
+                evidence.setdefault("failed_slices", []).append({
+                    "name": plan["name"], "multi_file": True,
+                    "decision_code": int(diagnostic.group(1)) if diagnostic else None,
+                    "http_status": int(diagnostic.group(2)) if diagnostic else None,
+                    "native_exit": code, "expected_code": plan["expected_code"],
+                    "expected_code_status": plan["expected_code_status"],
+                    "stage": "contradiction-shape-" + observed, "native_reaped": True,
+                    "elapsed_seconds": round(time.monotonic() - started, 3)})
+            raise SafeFailure("contradiction-shape-" + observed)
+        for item in plan["files"]:
+            entry = self.state["objects"][item["key"]]
+            require(self.inspect_object(item["key"], entry["version_id"]) ==
+                    {"etag": entry["etag"], "version_id": entry["version_id"]},
+                    "post-native-identity-mismatch")
+        for item in plan["files"]:
+            entry = self.state["objects"][item["key"]]
+            require("put_etag" in entry and "put_version_id" in entry,
+                    "cleanup-generation-mismatch")
+            self.delete_owned(item["key"], self.canonical_version(entry["put_version_id"]),
+                              entry["put_etag"])
+        return {"name": plan["name"], "multi_file": True, "outcome": "refused",
+                "assertion": "refusal required; no value comparison performed and no decision "
+                             "code asserted (per spec, to be confirmed at the round gate)",
+                "expected_code": plan["expected_code"],
+                "expected_code_status": plan["expected_code_status"],
+                "decision_code": int(diagnostic.group(1)),
+                "http_status": int(diagnostic.group(2)), "native_exit": code,
+                "native_reaped": True, "contradicted_column": plan["contradicted_column"],
+                "elapsed_seconds": round(time.monotonic() - started, 3),
+                "native_timeout_seconds": self.args.native_timeout,
+                "manifest_placeholder_expected_sha256": placeholder,
+                "files": [{"local_fixture": item["local_fixture"],
+                           "canonical_coordinate": item["coordinate"], "rows": item["rows"],
+                           "columns": sorted(item["columns"]),
+                           "physical_types": {column: item["physical"][column]
+                                              for column in sorted(item["columns"])},
+                           "offline_fixture_sha256": item["offline_fixture_sha256"],
+                           "bytes": self.state["objects"][item["key"]]["bytes"],
+                           "sha256": self.state["objects"][item["key"]]["sha256"],
+                           "etag": self.state["objects"][item["key"]]["etag"],
+                           "version_id": self.state["objects"][item["key"]]["version_id"],
+                           "cleaned_individually": True} for item in plan["files"]]}
+
+    def evolution_slice(self, columns_by_file, plan, evidence):
+        """Run the one cross-file evolution shape: two files, the second adds one column.
+
+        Ground truth is computed independently in Python from the local fixtures, the same way the
+        three-file aggregate does it, because the harness local oracle seam admits only ONE
+        descriptor per call. The expectation is the pre-authored typed-NULL union and it is
+        recomputed here from the fixture read-backs before anything is uploaded: if the two do not
+        agree, the run stops before any cloud write. A disagreement between a recorded identity and
+        the reported result stops the slice before any delete.
+        """
+        expectation = {"trial": plan["trial"],
+                       "expected": evolution_expectation(columns_by_file, plan)}
+        entries = []
+        for item in plan["files"]:
+            fixture = self.directory / item["local_fixture"]
+            entry = self.upload(item["key"], fixture)
+            entries.append({"local": str(fixture), "coordinate": item["coordinate"],
+                            "size": entry["bytes"], "sha256": entry["sha256"],
+                            "validator": entry["etag"]})
+        manifest = self.directory / "manifest-evolution.json"
+        atomic_json(manifest, manifest_document(entries, [expectation]))
+        manifest.chmod(0o600)
+        self.journal("manifest-written-private")
+        command = [str(self.args.binary), "s3", str(self.args.httpfs), str(self.args.aws),
+                   "s3://" + self.state["bucket"] + "/data", self.args.profile, self.args.region,
+                   str(manifest)]
+        self.journal("manifest-harness-start")
+        started = time.monotonic()
+        code, stdout, error = self.harness_code(command, self.args.native_timeout)
+        self.journal("manifest-harness-reaped")
+        if code != 0:
+            # Fixed numeric decision codes only; no manifest content or provider text is kept.
+            diagnostic = re.fullmatch(
+                rb"shipping qualification failed \(private details suppressed; protected read "
+                rb"phase ([0-9]{1,3}), HTTP status ([0-9]{1,3})\)\n", error)
+            if evidence is not None:
+                evidence.setdefault("failed_slices", []).append({
+                    "name": plan["name"], "multi_file": True,
+                    "decision_code": int(diagnostic.group(1)) if diagnostic else None,
+                    "http_status": int(diagnostic.group(2)) if diagnostic else None,
+                    "native_exit": code, "stage": "manifest-harness-failed",
+                    "native_reaped": True, "elapsed_seconds": round(time.monotonic() - started, 3)})
+            raise SafeFailure("manifest-harness-failed")
+        report = safe_manifest_native(stdout)
+        verify_reported(entries, report, [expectation])
+        for item in plan["files"]:
+            entry = self.state["objects"][item["key"]]
+            require(self.inspect_object(item["key"], entry["version_id"]) ==
+                    {"etag": entry["etag"], "version_id": entry["version_id"]},
+                    "post-native-identity-mismatch")
+        for item in plan["files"]:
+            entry = self.state["objects"][item["key"]]
+            require("put_etag" in entry and "put_version_id" in entry,
+                    "cleanup-generation-mismatch")
+            self.delete_owned(item["key"], self.canonical_version(entry["put_version_id"]),
+                              entry["put_etag"])
+        return {"name": plan["name"], "manifest_mode": True, "multi_file": True,
+                "outcome": "typed-null-union", "added_column": plan["added_column"],
+                "ground_truth": "computed independently in Python from the local fixtures; the "
+                                "harness local oracle admits only one descriptor per call; the "
+                                "pre-authored value was authored before the round and recomputed "
+                                "here from the fixture read-backs",
+                "preauthored_row": plan["expected_row"],
+                "files": [{"local_fixture": item["local_fixture"],
+                           "canonical_coordinate": item["coordinate"], "rows": item["rows"],
+                           "columns": sorted(item["columns"]),
+                           "physical_types": {column: item["physical"][column]
+                                              for column in sorted(item["columns"])},
+                           "offline_fixture_sha256": item["offline_fixture_sha256"],
+                           "row_group_rows": plan["row_group_rows"],
+                           "compression": plan["compression"],
+                           "dictionary": plan["dictionary"], "statistics": plan["statistics"],
+                           "bytes": self.state["objects"][item["key"]]["bytes"],
+                           "sha256": self.state["objects"][item["key"]]["sha256"],
+                           "etag": self.state["objects"][item["key"]]["etag"],
+                           "version_id": self.state["objects"][item["key"]]["version_id"],
+                           "cleaned_individually": True} for item in plan["files"]],
+                "trial": {"trial": plan["trial"],
+                          "expected": "sum(id) plus eight sum(length(payloadN)) over the union of "
+                                      "the two files, where the column only one file carries is a "
+                                      "typed NULL on the other file's rows and contributes nothing",
+                          "expected_sha256": hashlib.sha256(
+                              bytes.fromhex(expectation["expected"])).hexdigest(),
+                          "reported": report["trials"][0]},
+                "phases": report["phases"], "denials": report["denials"],
+                "native_timeout_seconds": self.args.native_timeout,
+                "elapsed_seconds": round(time.monotonic() - started, 3)}
+
     def cleanup(self):
         if not self.state["creation_intent"]:
             return {"not_created": True}
@@ -1126,6 +1523,9 @@ def run(args):
                     "Four fixed single-file slices (the two settings pairs, the approved special-name coordinate and one empty fixture) plus one three-file aggregate slice omit typed/evolved and broad fault/cancellation/resource tests.",
                     "Multi-file ground truth is computed independently in Python from the local fixtures because the harness local oracle admits only one descriptor per call; the guarded cloud path is unchanged.",
                     "Cold versus warm on this path means two sequential guarded executions inside one retained connection-session: no durable cache exists across processes, so a second run is cold again.",
+                    "The cross-file type-contradiction shape asserts a REFUSAL only and asserts no decision code: the closed codes are per call-site, not per mechanism, so the mechanism cannot be attributed offline and the expected code is per spec, to be confirmed at the round gate.",
+                    "The cross-file evolution shape's typed-NULL union expectation was pre-authored in Python from local fixture read-backs before any live round; ground truth stays Python-computed because the harness local oracle admits one descriptor per call, and the offline indicator for this direction came from DuckDB 1.4.2, not the pinned build.",
+                    "Fixture SHA-256s recorded for the two new cross-file shapes come from the offline build and are recorded, not gated: byte-identical reproducibility is not an acceptance item, and the same content written through another code path hashes differently.",
                     "The cold/warm shape records per-trial counters but asserts no direction: reduced warm fetching and full warm re-fetch are both accepted outcomes.",
                     "No universal savings claim; no-statistics savings are not evidence of statistics pruning.",
                     "Native verification trusts an exact matching ETag; the supplied local SHA256 is used for the mismatch fallback, not independently rehashed remotely on this path.",
@@ -1271,6 +1671,46 @@ def run(args):
             cold_warm_columns.append({name: read[name].to_pylist() for name in SCHEMA})
         if COLD_WARM_SHAPE_NAME in run_set:
             evidence["slices"].append(probe.cold_warm_slice(cold_warm_columns, plan, evidence))
+        # The two cross-file shapes need per-file column sets and per-file physical types, so
+        # their fixtures are written from the standard recipe column by column, in the planned
+        # order, one row group per file. Both fixtures of a shape are read back locally and the
+        # read-back is what the shape's gate checks before anything is uploaded.
+        plan = contradiction_plan(args.rows, probe.state["bucket"])
+        contradiction_types = []
+        for item in plan["files"]:
+            probe.journal("fixture-generation-" + item["name"])
+            fixture = directory / item["local_fixture"]
+            data = {column: recipe_array(column, item["physical"][column], item["offset"],
+                                        item["rows"])
+                    for column in item["columns"]}
+            pq.write_table(pa.table(data), fixture, row_group_size=plan["row_group_rows"],
+                           compression=plan["compression"], use_dictionary=plan["dictionary"],
+                           write_statistics=plan["statistics"])
+            fixture.chmod(0o600)
+            read = pq.read_table(fixture)
+            contradiction_types.append({column: str(read.schema.field(column).type)
+                                        for column in read.schema.names})
+        if CONTRADICTION_SHAPE_NAME in run_set:
+            evidence["slices"].append(probe.contradiction_slice(contradiction_types, plan,
+                                                                 evidence))
+        plan = evolution_plan(args.rows, probe.state["bucket"])
+        evolution_columns = []
+        for item in plan["files"]:
+            probe.journal("fixture-generation-" + item["name"])
+            fixture = directory / item["local_fixture"]
+            data = {}
+            for column in item["columns"]:
+                data[column] = recipe_array(column, item["physical"][column], item["offset"],
+                                            item["rows"])
+            pq.write_table(pa.table(data), fixture, row_group_size=plan["row_group_rows"],
+                           compression=plan["compression"], use_dictionary=plan["dictionary"],
+                           write_statistics=plan["statistics"])
+            fixture.chmod(0o600)
+            read = pq.read_table(fixture)
+            evolution_columns.append({column: read[column].to_pylist()
+                                      for column in read.schema.names})
+        if EVOLUTION_SHAPE_NAME in run_set:
+            evidence["slices"].append(probe.evolution_slice(evolution_columns, plan, evidence))
     except BaseException as exc:
         failure = exc.args[0] if isinstance(exc, SafeFailure) else "unknown-failure-suppressed"
     finally:
@@ -1321,14 +1761,21 @@ class SafetyTests(unittest.TestCase):
 
     def test_slice_selector_cannot_widen_or_narrow_the_universe_silently(self):
         universe = ([entry[0] for entry in SHAPES] + [MULTI_SHAPE_NAME, REFUSAL_SHAPE_NAME,
-                                                      COLD_WARM_SHAPE_NAME])
+                                                     COLD_WARM_SHAPE_NAME, CONTRADICTION_SHAPE_NAME,
+                                                     EVOLUTION_SHAPE_NAME])
         self.assertEqual(selected_slices([]), universe)
-        self.assertEqual(len(universe), 8)
+        self.assertEqual(len(universe), 10)
         self.assertEqual(selected_slices([MULTI_SHAPE_NAME]), [MULTI_SHAPE_NAME])
         self.assertEqual(selected_slices(["empty", "all-null-typed"]),
                          ["empty", "all-null-typed"])  # fixed order, not call order
         # The new slice is selectable on its own, and the fixed order still wins over call order.
         self.assertEqual(selected_slices([COLD_WARM_SHAPE_NAME]), [COLD_WARM_SHAPE_NAME])
+        # The two cross-file slices are selectable on their own, for a round gate that wants them
+        # alone, and the fixed order still wins over call order.
+        self.assertEqual(selected_slices([CONTRADICTION_SHAPE_NAME]), [CONTRADICTION_SHAPE_NAME])
+        self.assertEqual(selected_slices([EVOLUTION_SHAPE_NAME]), [EVOLUTION_SHAPE_NAME])
+        self.assertEqual(selected_slices([EVOLUTION_SHAPE_NAME, CONTRADICTION_SHAPE_NAME]),
+                         [CONTRADICTION_SHAPE_NAME, EVOLUTION_SHAPE_NAME])
         self.assertEqual(selected_slices([COLD_WARM_SHAPE_NAME, MULTI_SHAPE_NAME,
                                          REFUSAL_SHAPE_NAME]),
                          [MULTI_SHAPE_NAME, REFUSAL_SHAPE_NAME, COLD_WARM_SHAPE_NAME])
@@ -1344,7 +1791,9 @@ class SafetyTests(unittest.TestCase):
         self.assertIn("probe.cleanup()", body[finally_at:finally_at + 200])
         for guard in ("if name not in run_set:", "if MULTI_SHAPE_NAME in run_set:",
                       "if REFUSAL_SHAPE_NAME in run_set:",
-                      "if COLD_WARM_SHAPE_NAME in run_set:"):
+                      "if COLD_WARM_SHAPE_NAME in run_set:",
+                      "if CONTRADICTION_SHAPE_NAME in run_set:",
+                      "if EVOLUTION_SHAPE_NAME in run_set:"):
             self.assertLess(body.index(guard), finally_at)
 
     def test_evidence_root_is_the_durable_location(self):

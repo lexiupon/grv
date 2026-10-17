@@ -105,17 +105,24 @@ of them exists, the fixture-level coverage stays scoped, and lines 13 and 15 sta
 
 ## 7. Parent review
 
-<!-- Dispositions go here. This section is intentionally empty. -->
+Dispositions were given on 2026-10-17 and executed in the register. Six recommended re-pins ran
+(lines 9, 10, 11, 12, 14, 16) and all 169 anchors were re-derived; no row text changed. Line 8
+is demoted, and its pin now matches the current bytes. Line 7 keeps the pre-review reviewed
+digest for the reason in its row. Lines 13 and 15 stay open.
 
-| Line | Recommendation | Parent disposition | Date |
-| ---- | -------------- | ------------------ | ---- |
-| 7    | RE-PIN         |                    |      |
-| 8    | DEMOTE         |                    |      |
-| 9    | RE-PIN         |                    |      |
-| 10   | RE-PIN         |                    |      |
-| 11   | RE-PIN         |                    |      |
-| 12   | RE-PIN         |                    |      |
-| 13   | NEEDS-RERUN    |                    |      |
-| 14   | RE-PIN         |                    |      |
-| 15   | NEEDS-RERUN    |                    |      |
-| 16   | RE-PIN         |                    |      |
+| Line | Recommendation | Parent disposition                                                                                                                                                                                                                                                                                                                                                                   | Date       |
+| ---- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- |
+| 7    | RE-PIN         | RE-PIN recorded, pin left unchanged. Self-pinning is impossible by construction: a refresh changes the bytes this line would have to match. The pin stays on the pre-review reviewed state, and this document is the authority for this refresh batch. No normative change; the delta is tooling commit `9900dff`.                                                                   | 2026-10-17 |
+| 8    | DEMOTE         | DEMOTE executed. Pin refreshed to the current bytes. The claim is what a shipping user declaration may author today, and it belongs with capability activation (#29), where the advertisement record excludes the value. The formatting remainder needed no re-review.                                                                                                               | 2026-10-17 |
+| 9    | RE-PIN         | RE-PIN executed. Pin and the 108 anchors refreshed; row text unchanged. Basis: the offline closure round of 2026-10-17, 15 of 15, credited once to both gates; the four-platform CI runs `38863068396` and `38887075813`, on bytes identical to the current file; the live refusals `211/206` and `212/206` in `grv-s3-shipping-madrrsjm`; the frozen reviewed change set `b3c5f6e`. | 2026-10-17 |
+| 10   | RE-PIN         | RE-PIN executed. Pin and the 61 anchors refreshed; row text unchanged. Basis: the preparation and traffic-accounting decision `7d56a6e`; the aggregate-metadata and per-shape rows recorded as evidenced, with scope stated; the OAuth isolation proof; the live refusals above; the live GCS leg `grv-shipping-matrix-yl5kcolh`; the four-platform CI runs on current bytes.        | 2026-10-17 |
+| 11   | RE-PIN         | RE-PIN executed. Pin refreshed. No normative change: token comparison after syntax normalisation shows nothing. The delta is tooling commit `9900dff`. No register row derives from this file.                                                                                                                                                                                       | 2026-10-17 |
+| 12   | RE-PIN         | RE-PIN executed. Pin refreshed. Parse-identical to the pinned bytes; the delta is tooling commit `9900dff`. The compiled-in copy was exercised by the post-change runs.                                                                                                                                                                                                              | 2026-10-17 |
+| 13   | NEEDS-RERUN    | Open. Pin left unchanged, pending gcs-view activation (section 5). Offline mirror tests and successful builds cannot qualify native grammar.                                                                                                                                                                                                                                         | 2026-10-17 |
+| 14   | RE-PIN         | RE-PIN executed. Pin refreshed. Parse-identical to the pinned bytes; the delta is tooling commit `9900dff`. No normative change.                                                                                                                                                                                                                                                     | 2026-10-17 |
+| 15   | NEEDS-RERUN    | Open. Pin left unchanged, pending gcs-view activation (section 5). The shipping-declaration path for the added value has never run, and offline evidence cannot close it.                                                                                                                                                                                                            | 2026-10-17 |
+| 16   | RE-PIN         | RE-PIN executed. Pin refreshed. Parse-identical to the pinned bytes; the delta is tooling commit `9900dff`. No normative change. The live Salesforce oracle stays at the platform gate and is not pulled forward.                                                                                                                                                                    | 2026-10-17 |
+
+The checker stops at the first mismatch and names one file, so it reports line 7 only. Lines
+13 and 15 stay unmatched behind it. Three unmatched lines are the expected end state of this
+batch.

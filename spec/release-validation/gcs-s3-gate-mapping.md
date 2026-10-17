@@ -180,3 +180,19 @@ against the frozen candidate complete, and publication stops for explicit approv
   verified. Round-three cleanup reported `deleted_owned_generations: 0` where failure-path rounds
   reported 2 — runner bookkeeping noted; inventories independently verified empty at both ends.
 - **Salesforce oracle stays at the platform gate** — not pulled forward.
+
+## Task 28 closure (2026-10-17)
+
+- **GCS shipping-scanner live leg PASSED on current in-process artifacts against the rebuilt guard**
+  (`be5ce03b…`): `~/grv-evidence/grv-shipping-matrix-yl5kcolh`, savings recorded, owned cleanup —
+  empty inventory and bucket 404 verified. The credential gate failed closed on the prior attempt
+  (token unavailable; no ambient substitution), ran only after explicit re-login of the pinned
+  identity, and created nothing before it stopped.
+- S3 live legs: contradiction refusal (212/206) and same-version refusal against the re-authored
+  expectation; both failed rounds retained (see above).
+- **Remaining named residuals at closure time:** in-process re-expression of the network-phase
+  qualification, real concurrent OAuth owners, and the after-secret injected fault (all need new
+  harness work; retired-helper evidence cannot be credited); cross-version NULL-filling stays at
+  the revision layer, offline-proven; Salesforce oracle stays at the platform gate; install
+  coverage stands at dev baseline pending the release-profile run.
+- **Task 28 closes within accepted contract. Not release readiness. Publication unapproved.**

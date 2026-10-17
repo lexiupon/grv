@@ -87,6 +87,40 @@ These stay partial. They are not folded into a pass by this mapping:
 - `gcs-native-resource-fault-checkpoint` — partial native resource and fault checkpoint.
 - `gcs-isolated-owner-checkpoint` — partial implementation and supplemental proofs.
 
+### Offline closure round for these two records (2026-10-17)
+
+Both records keep their own status words. One offline round ran on the frozen native
+binaries under `/Users/jiacao/.grv-native-work/cmake`. No build step ran. The digest of
+every binary used was the same before and after the round.
+
+- `grv_metadata_allocation_proof` printed the eighteen figures that
+  `gcs-native-resource-fault-checkpoint.json` records. Every figure matched. The process
+  exited 0.
+- `grv_transaction_fault_proof` passed the three recorded cases. The process exited 0.
+- `grv_metadata_stream_proof` passed. The process exited 0.
+- `grv_gcs_setup_proof` passed. The process exited 0. That binary is older than the frozen
+  source `b3c5f6e`, so this run attests the binary, not the committed source.
+- The full CTest suite passed, 15 of 15, in 1.60 seconds. This round ran once and is
+  credited to both this gate and the isolated-owner record.
+
+The digests inside the two records name earlier binaries. Those records do not attest the
+current bytes, and are not rewritten.
+
+Dispositions:
+
+- `gcs-native-resource-fault-checkpoint` — **accept the residual**. Four items stay open:
+  the crash-at-WAL-boundary matrix, the full undo I/O fault matrix, whole-heap RSS
+  coverage, and shipping-declaration reachability. Each needs a new method or a live round.
+  The helper allocation policy stays declined.
+- `gcs-isolated-owner-checkpoint` — **accept the residual** for two items that no longer
+  apply to the current path: the retired helper install/relocate item, and the Close-alone
+  property of the pinned engine. **Defer to a live round** the network-phase, real
+  concurrent-OAuth and after-secret fault qualification on the current in-process
+  artifacts. The pair-wide high-water item stays with the paused memory scope.
+
+No status was raised by a single run. Raw output is under
+`~/grv-evidence/grv-task28-work/closure/`.
+
 ## Single-occurrence failures retained
 
 Both remain recorded as they happened. Neither is called a pattern:

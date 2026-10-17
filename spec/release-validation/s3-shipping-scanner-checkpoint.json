@@ -3,7 +3,7 @@
     "aws.duckdb_extension": "911b68461fdd989e0c9e74926b197c8a05727bfafc05df38baa47ece42174f1c",
     "grv_cloud_qualification": "15b1c1a2a7f89895f60e347830f1b28b6df7ca2bb8b0578c51582497041d6999",
     "httpfs.duckdb_extension": "0cde1f5acd1970bfd414b11f5e945a1eddd8425e96e273f6411538d8fe3d951d",
-    "libgrv_duckdb_guard.dylib": "2709cc619eb125d1ecdc48377303019ea20bfe32f20c4e964c298b2b66abdd5f",
+    "libgrv_duckdb_guard.dylib": "be5ce03b192047f14e745911c325e81055c4f5836eec25b991b790b0c2d33825",
     "native/cloud_qualification.cpp": "7da105aac459bb0dccf36e719a8d5f72bc2f1d20fcbc33dc53fd663d1e80031e",
     "native/fixture.cpp": "24f45e016e134566e3b845e751386bc0e168209bb324985104d2756d33edad8f",
     "native/gcs.inc": "d7061b3d63746847f3a80fcf799fc981f4b766772c9172955ee1e57f20655572",
@@ -22,7 +22,7 @@
     "native/metadata_stream_proof.cpp": "c9f45b45f5e2617dfd67f87d1ebcdcc7ab80237ee23dc951892ab0687ebcd688",
     "native/proof.cpp": "8074265d512369d4680205ce7e07d2aa5d99d282a3c1abdf43fdcb898e61ac54",
     "native/pull.inc": "ebc80c579cd60921d69cdafe2cf517c2a330508f70f82c97b9698627de3ba94c",
-    "native/run_s3_qualification.py": "f2d69fc685bcc4fcc18ab0056f3ddaeb8e55a94346a06b31eab19e139579af3f",
+    "native/run_s3_qualification.py": "c9adcd15b7bf4c60cc43641dda8803b80fbe42bb119356f2a8ecccb193a4b8ec",
     "native/s3.inc": "52b15f7808c437b23f49854e5340ce2a8b49c1f21ebd4099bc1624c71017520a",
     "native/s3_limits.hpp": "c181aa1800c88dec9ee1da0b704a7c2a6488700a851a0b87f418b6b773e1f416",
     "native/s3_limits_proof.cpp": "1850e37140c543f6cf88607b20fd5acacc3d3bbf8074ebdb663562dd25b469f6",
@@ -36,7 +36,7 @@
     "aws.duckdb_extension": "911b68461fdd989e0c9e74926b197c8a05727bfafc05df38baa47ece42174f1c",
     "grv_cloud_qualification": "15b1c1a2a7f89895f60e347830f1b28b6df7ca2bb8b0578c51582497041d6999",
     "httpfs.duckdb_extension": "0cde1f5acd1970bfd414b11f5e945a1eddd8425e96e273f6411538d8fe3d951d",
-    "libgrv_duckdb_guard.dylib": "2709cc619eb125d1ecdc48377303019ea20bfe32f20c4e964c298b2b66abdd5f",
+    "libgrv_duckdb_guard.dylib": "be5ce03b192047f14e745911c325e81055c4f5836eec25b991b790b0c2d33825",
     "native/cloud_qualification.cpp": "7da105aac459bb0dccf36e719a8d5f72bc2f1d20fcbc33dc53fd663d1e80031e",
     "native/fixture.cpp": "24f45e016e134566e3b845e751386bc0e168209bb324985104d2756d33edad8f",
     "native/gcs.inc": "d7061b3d63746847f3a80fcf799fc981f4b766772c9172955ee1e57f20655572",
@@ -55,7 +55,7 @@
     "native/metadata_stream_proof.cpp": "c9f45b45f5e2617dfd67f87d1ebcdcc7ab80237ee23dc951892ab0687ebcd688",
     "native/proof.cpp": "8074265d512369d4680205ce7e07d2aa5d99d282a3c1abdf43fdcb898e61ac54",
     "native/pull.inc": "ebc80c579cd60921d69cdafe2cf517c2a330508f70f82c97b9698627de3ba94c",
-    "native/run_s3_qualification.py": "f2d69fc685bcc4fcc18ab0056f3ddaeb8e55a94346a06b31eab19e139579af3f",
+    "native/run_s3_qualification.py": "c9adcd15b7bf4c60cc43641dda8803b80fbe42bb119356f2a8ecccb193a4b8ec",
     "native/s3.inc": "52b15f7808c437b23f49854e5340ce2a8b49c1f21ebd4099bc1624c71017520a",
     "native/s3_limits.hpp": "c181aa1800c88dec9ee1da0b704a7c2a6488700a851a0b87f418b6b773e1f416",
     "native/s3_limits_proof.cpp": "1850e37140c543f6cf88607b20fd5acacc3d3bbf8074ebdb663562dd25b469f6",
@@ -68,7 +68,7 @@
   "artifacts_unchanged": true,
   "capability_advertised": false,
   "cleanup": {
-    "bucket": "grv-s3-shipping-probe-8aa80712bf3049eab0a55051c500e487",
+    "bucket": "grv-s3-shipping-probe-9a9f9d7a5910419d939eb2d3e830c873",
     "bucket_absence_code": "404",
     "credential_creation": false,
     "delete_markers_inventory_empty": true,
@@ -97,6 +97,9 @@
     "Four fixed single-file slices (the two settings pairs, the approved special-name coordinate and one empty fixture) plus one three-file aggregate slice omit typed/evolved and broad fault/cancellation/resource tests.",
     "Multi-file ground truth is computed independently in Python from the local fixtures because the harness local oracle admits only one descriptor per call; the guarded cloud path is unchanged.",
     "Cold versus warm on this path means two sequential guarded executions inside one retained connection-session: no durable cache exists across processes, so a second run is cold again.",
+    "The cross-file type-contradiction shape asserts a REFUSAL only and asserts no decision code: the closed codes are per call-site, not per mechanism, so the mechanism cannot be attributed offline and the expected code is per spec, to be confirmed at the round gate.",
+    "The cross-file evolution shape asserts a REFUSAL and compares no value: within one version every file must match, and two pinned-build rounds each refused this shape at 211 with HTTP status 206 and both stand as failures. No decision code is asserted for it, because no code is defined for this case and the closed codes are per call-site, not per mechanism; the pre-round typed-NULL union value stays in the manifest because its grammar requires one, and a value returned on this shape stops the run as an unexpected success. The offline indicator for this direction came from DuckDB 1.4.2, not the pinned build.",
+    "Fixture SHA-256s recorded for the two new cross-file shapes come from the offline build and are recorded, not gated: byte-identical reproducibility is not an acceptance item, and the same content written through another code path hashes differently.",
     "The cold/warm shape records per-trial counters but asserts no direction: reduced warm fetching and full warm re-fetch are both accepted outcomes.",
     "No universal savings claim; no-statistics savings are not evidence of statistics pruning.",
     "Native verification trusts an exact matching ETag; the supplied local SHA256 is used for the mismatch fallback, not independently rehashed remotely on this path.",
@@ -104,14 +107,14 @@
     "Independent security review and remaining package/release gates remain open."
   ],
   "prior_attempt": {
-    "archive": "~/grv-evidence/grv-s3-shipping-i1_n_kqp/prior-sanitized-checkpoint.json",
-    "archive_sha256": "ce9d056834d22e11b777df3282de3d1820734e8742953aae0b714d1fd11486c3",
+    "archive": "~/grv-evidence/grv-s3-shipping-iez8t1so/prior-sanitized-checkpoint.json",
+    "archive_sha256": "50840ffdd199d1d82f4f43c5e84d951aff85a685bd4bddbae2cec8e81ccb4dea",
     "cleanup": {
-      "bucket": "grv-s3-shipping-probe-77f120a003d740f591a08506a604310d",
+      "bucket": "grv-s3-shipping-probe-7fe2bdec0fb743b6b7c6acd180d49a17",
       "bucket_absence_code": "404",
       "credential_creation": false,
       "delete_markers_inventory_empty": true,
-      "deleted_owned_generations": 5,
+      "deleted_owned_generations": 2,
       "existing_data_changes": false,
       "iam_changes": false,
       "live_inventory_empty": true,
@@ -120,102 +123,103 @@
       "versions_inventory_empty": true
     },
     "cleanup_recovery": null,
-    "failure": null,
+    "failure": "manifest-harness-failed",
     "initial_failure_archive": {
       "mode": "0400",
       "path": "~/grv-s3-shipping-p56794y4/initial-failed-checkpoint.json",
       "sha256": "8664f72da3f13f61c804f19f924845096dba905a1058a9ca027e3f7d1328b5f6"
     },
-    "status": "qualification-slice-not-release-qualified"
+    "status": "failed-closed"
   },
-  "private_evidence_directory": "~/grv-evidence/grv-s3-shipping-i1_n_kqp",
+  "private_evidence_directory": "~/grv-evidence/grv-s3-shipping-iez8t1so",
   "private_evidence_sha256": {
-    "cleanup.json": "0419601666806741a2e13590542da24438395ea436639a3bb1fb9eccdade7429",
-    "manifest-cold-warm.json": "876ea37e54ddfedd9fe78d047f3693979d5f39fa987f10765b6b3eb619a3d4dd",
-    "prior-sanitized-checkpoint.json": "ce9d056834d22e11b777df3282de3d1820734e8742953aae0b714d1fd11486c3",
-    "state.json": "5cfba27690c9115a8ff65abfea1e4076725258bd67aba283e581350feb1e7b10"
+    "cleanup.json": "da416b917e87f3817a14172d126b0d5667a2858b2011ee394fa1fbd0e7adc24a",
+    "manifest-evolution.json": "71fcb3e38dfd86fd81cce7631c94eaa1a9013312b08116d1fe6b312d89bcddf3",
+    "prior-sanitized-checkpoint.json": "50840ffdd199d1d82f4f43c5e84d951aff85a685bd4bddbae2cec8e81ccb4dea",
+    "state.json": "96090e11592cdcf5e0efef3007e845f961a4f093870751365a2496e543b87649"
   },
   "qualification": "isolated-s3-shipping-scanner-slice",
   "release_published": false,
   "slices": [
     {
-      "counter_direction_not_asserted": true,
-      "denials": {
-        "direct": true,
-        "nested_glob": true,
-        "secrets": true,
-        "unlisted": true
-      },
-      "elapsed_seconds": 20.206,
+      "added_column": "payload3",
+      "assertion": "refusal required; no value comparison performed and no decision code asserted (per spec, no code defined for this case; the observed numbers are recorded as observed)",
+      "decision_code": 211,
+      "elapsed_seconds": 7.111,
+      "expected_code": null,
+      "expected_code_status": "per spec; no code asserted; refusal required",
       "files": [
         {
-          "bytes": 4286477,
-          "canonical_coordinate": "s3://grv-s3-shipping-probe-8aa80712bf3049eab0a55051c500e487/data/cold-warm.parquet",
+          "bytes": 3752774,
+          "canonical_coordinate": "s3://grv-s3-shipping-probe-9a9f9d7a5910419d939eb2d3e830c873/data/evolution-0.parquet",
           "cleaned_individually": true,
-          "compression": "NONE",
-          "dictionary": false,
-          "etag": "\"dd41b5551d565507aeaddb99ba06d461\"",
-          "local_fixture": "cold-warm.parquet",
-          "row_group_rows": 2048,
+          "columns": ["id", "payload0", "payload1", "payload2", "payload4", "payload5", "payload6", "payload7"],
+          "etag": "\"1d1c91836b82454f9cbb183312892cd5\"",
+          "local_fixture": "evolution-0.parquet",
+          "offline_fixture_sha256": "ca4262e7e07280a2c608397340982490b6c695cd8fad415e6fd3b0a28703ec34",
+          "physical_types": {
+            "id": "int64",
+            "payload0": "string",
+            "payload1": "string",
+            "payload2": "string",
+            "payload4": "string",
+            "payload5": "string",
+            "payload6": "string",
+            "payload7": "string"
+          },
           "rows": 2048,
-          "sha256": "7776d444c951a753f3b3c70302e390ae747d5b88130687fddac77d55dcac4d5a",
-          "statistics": true,
+          "sha256": "ca4262e7e07280a2c608397340982490b6c695cd8fad415e6fd3b0a28703ec34",
+          "version_id": null
+        },
+        {
+          "bytes": 4286477,
+          "canonical_coordinate": "s3://grv-s3-shipping-probe-9a9f9d7a5910419d939eb2d3e830c873/data/evolution-1.parquet",
+          "cleaned_individually": true,
+          "columns": ["id", "payload0", "payload1", "payload2", "payload3", "payload4", "payload5", "payload6", "payload7"],
+          "etag": "\"fd3d1a1c2e91d7194a7cbd12ef0fe9b4\"",
+          "local_fixture": "evolution-1.parquet",
+          "offline_fixture_sha256": "439d7673fb7a49966002387a09d5d76e53653e221c773259fb2686d8558aceea",
+          "physical_types": {
+            "id": "int64",
+            "payload0": "string",
+            "payload1": "string",
+            "payload2": "string",
+            "payload3": "string",
+            "payload4": "string",
+            "payload5": "string",
+            "payload6": "string",
+            "payload7": "string"
+          },
+          "rows": 2048,
+          "sha256": "439d7673fb7a49966002387a09d5d76e53653e221c773259fb2686d8558aceea",
           "version_id": null
         }
       ],
-      "ground_truth": "computed independently in Python from the local fixture; the harness local oracle admits only one descriptor per call",
-      "manifest_mode": true,
-      "name": "cold-warm-same-object",
+      "http_status": 206,
+      "multi_file": true,
+      "name": "cross-file-evolution-typed-null-union",
+      "native_exit": 1,
+      "native_reaped": true,
       "native_timeout_seconds": 300,
-      "observation": [
+      "observed_rounds_recorded_not_gated": [
         {
-          "kind": "cold",
-          "trial": "wide",
-          "trial_index": 0
+          "decision_code": 211,
+          "evidence": "~/grv-evidence/grv-s3-shipping-madrrsjm",
+          "http_status": 206,
+          "native_exit": 1,
+          "stage": "manifest-harness-failed"
         },
         {
-          "kind": "warm",
-          "trial": "narrow",
-          "trial_index": 1
+          "decision_code": 211,
+          "evidence": "~/grv-evidence/grv-s3-shipping-meqesy0l",
+          "http_status": 206,
+          "native_exit": 1,
+          "stage": "manifest-harness-failed"
         }
       ],
-      "one_object_two_trials": true,
-      "order_fixed_in_code": ["wide", "narrow"],
-      "trials": [
-        {
-          "correct": true,
-          "expected_sha256": "47b5b5ee98c7ab4c606c7dee5b7aea4e68e397e3e3df255ae2ef666af4f5c298",
-          "explain": {
-            "body_bytes": 16384,
-            "get": 1,
-            "head": 0
-          },
-          "query": {
-            "body_bytes": 4297089,
-            "get": 67,
-            "head": 0
-          },
-          "trial": "wide",
-          "trial_index": 0
-        },
-        {
-          "correct": true,
-          "expected_sha256": "e5d6e0c49aad10717a0d2ee14f93861fc2ef7283ad8f4d5a180d74bfbac0521f",
-          "explain": {
-            "body_bytes": 16384,
-            "get": 1,
-            "head": 0
-          },
-          "query": {
-            "body_bytes": 32841,
-            "get": 2,
-            "head": 0
-          },
-          "trial": "narrow",
-          "trial_index": 1
-        }
-      ],
-      "warm_read_gains_no_new_authority": true
+      "outcome": "refused",
+      "planned_row_recorded_not_compared": [8386560, 1048576, 1048576, 1048576, 524288, 1048576, 1048576, 1048576, 1048576],
+      "planned_value_manifest_sha256": "2b463676d52bcc9793fa96bf83bed8cb9c55e9efc7ebbde7e6b26973b9fae527"
     }
   ],
   "status": "qualification-slice-not-release-qualified"

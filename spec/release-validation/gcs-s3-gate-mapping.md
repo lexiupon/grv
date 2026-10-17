@@ -164,3 +164,19 @@ and a non-matching guard binary is accepted.
 
 This document is an input to review. It closes nothing by itself. Gate closure happens when the runs
 against the frozen candidate complete, and publication stops for explicit approval.
+
+## Cross-file deferrals — closed at their correct layer (2026-10-17)
+
+- **Cross-file type contradiction: CLOSED live.** Refusal confirmed on the pinned path, decision
+  code 212, HTTP 206, inside retained round `grv-s3-shipping-madrrsjm`.
+- **Cross-file mixed schemas (same version): CLOSED live at that layer.** The pinned path refuses
+  to bind (`union_by_name=false` is the pinned grammar; the spec defines no per-mechanism code).
+  The pre-authored union expectation was wrong at this layer — it came from a 1.4.2 offline
+  indicator and tested a cross-version scenario as a same-version read. Expectation re-authored to
+  EXPECT-REFUSAL (commit `8f38158`); round three passed against it (`failure: null`, refusal
+  observed at 211/206, recorded-not-gated, per the spec's per-call-site rule).
+- **Cross-version NULL-filling remains at the revision layer** — offline-proven only, still named.
+- **The two failed rounds stand as failures** (`madrrsjm`, `meqesy0l`); both cleaned, custody
+  verified. Round-three cleanup reported `deleted_owned_generations: 0` where failure-path rounds
+  reported 2 — runner bookkeeping noted; inventories independently verified empty at both ends.
+- **Salesforce oracle stays at the platform gate** — not pulled forward.

@@ -2,6 +2,7 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import re
 import tempfile
 import unittest
 
@@ -25,6 +26,29 @@ class AuditTests(unittest.TestCase):
             (root / 'bin/grv').write_bytes(b'changed')
             with self.assertRaisesRegex(ValueError, 'hash'):
                 MOD.audit(root, [])
+
+    def test_each_registered_canary_is_detected_on_its_own(self):
+        register = json.loads((Path(__file__).resolve().parents[2] / 'spec/fixtures/release-validation/canaries.json').read_text())
+        self.assertEqual(len(register), len(MOD.PATTERNS))
+        for index, canary in enumerate(register):
+            with self.subTest(canary=canary):
+                self.assertEqual([i for i, p in enumerate(MOD.PATTERNS) if re.search(p, canary.encode())], [index])
+                with tempfile.TemporaryDirectory() as temp:
+                    root = Path(temp)
+                    self.fixture(root, b'leading bytes\n' + canary.encode() + b'\ntrailing bytes\n')
+                    with self.assertRaisesRegex(ValueError, 'suppressed'):
+                        MOD.audit(root, [])
+                    with self.assertRaisesRegex(ValueError, 'suppressed'):
+                        MOD.audit(root, [canary.encode()])
+
+    def test_clean_fixture_passes_the_full_register_and_reports_the_count(self):
+        register = json.loads((Path(__file__).resolve().parents[2] / 'spec/fixtures/release-validation/canaries.json').read_text())
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.fixture(root)
+            report = MOD.audit(root, [c.encode() for c in register])
+            self.assertEqual(report['canaries_checked'], len(register))
+            self.assertEqual(report['credential_patterns_found'], 0)
 
     def test_canary_across_chunk_boundary(self):
         with tempfile.TemporaryDirectory() as temp:

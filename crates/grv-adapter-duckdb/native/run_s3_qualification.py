@@ -189,25 +189,60 @@ CONTRADICTION_PHYSICAL = ({"id": "int64", "payload0": "string", "payload1": "str
 # The one cross-file evolution shape: the SECOND file ADDS a projected column (payload3) that
 # the FIRST lacks; every other column, by name and physical type, is the standard one. This is
 # the multi-file case the single-file all-null shape (fixture sha256 d5dcff4a...) could not
-# reach: the file that lacks the projected column carries typed NULLs for it, sum() and
-# sum(length()) ignore NULLs, so the union value is what the surviving file alone gives on
-# that column and the sum over both files on every other column.
+# reach.
 #
-# The expectation below was authored BEFORE any live round, computed independently in Python
-# from local fixture read-backs (~/grv-evidence/grv-task28-work/build_fixtures.py, system
-# python with pyarrow 21.0.0) and re-derived in closed form: ids 0..4095 sum to 8,386,560;
-# every payload value is 256 characters; payload3 exists in the second file only, so it
-# contributes 2048 x 256 = 524,288, while every other payload is present in both files and
-# contributes 4096 x 256 = 1,048,576. It was not fitted to an observed run and no live round
-# has run it. The offline indicator for THIS direction (the column missing from the FIRST file)
-# comes from the DuckDB 1.4.2 probe recorded in spec/s3-shipping-evolved-typed-live-plan.md,
-# not from the pinned 1.5.6 build, so it is an indicator of the rule and not an attestation.
+# EXPECT-REFUSAL, and no decision code is asserted. What this block carried before was a VALUE:
+# the typed-NULL union, authored BEFORE any live round, computed independently in Python from
+# local fixture read-backs (~/grv-evidence/grv-task28-work/build_fixtures.py, system python with
+# pyarrow 21.0.0) and re-derived in closed form -- ids 0..4095 sum to 8,386,560, every payload
+# value is 256 characters, payload3 exists in the second file only so it contributes
+# 2048 x 256 = 524,288, every other payload is present in both files and contributes
+# 4096 x 256 = 1,048,576. It was not fitted to an observed run, and it rested on the DuckDB
+# 1.4.2 offline probe recorded in spec/s3-shipping-evolved-typed-live-plan.md, which is an
+# indicator of the rule and not an attestation of the pinned build.
+#
+# Two live rounds on the pinned 1.5.6 build then established what the pinned path actually does
+# with this shape: it REFUSES. Both rounds are kept as failed and neither is relabeled --
+# ~/grv-evidence/grv-s3-shipping-madrrsjm and ~/grv-evidence/grv-s3-shipping-meqesy0l, each
+# recorded at the harness's own view-binding call as code 211 with HTTP status 206 and native
+# exit 1. The reviewed decision that followed is the specified behaviour: within one version --
+# and one flat multi-file read IS one version -- every file must match, so a mismatch refuses.
+# Cross-version NULL-filling belongs to the revision layer and stays a named deferral.
+#
+# So the expectation now asserts a refusal and compares no value, in the same style the
+# contradiction block used before its round gate. The spec defines NO decision code for this
+# exact case -- spec/s3-shipping-evolved-typed-live-plan.md states the numeric codes are per
+# call-site, not per mechanism, so nothing offline can say WHICH mechanism refused -- therefore
+# nothing here is gated on a number: any refusal is the planned outcome, and the numbers it
+# carries are recorded whatever they are. The numbers the two failed rounds observed are recorded
+# below as observation only, recorded-but-not-gated. A value that comes back is the surprise, and
+# the surprise FAILS: a value-returning run stops the run before any delete, so this shape can
+# never quietly pass on a value match. The closed manifest grammar still requires an expected
+# value for every trial, so the pre-round number stays in the manifest as a record, and the
+# offline gate still refuses a fixture that is not the planned pair before any upload.
+#
+# The shape NAME stays as recorded, because both failed rounds recorded this shape under it and
+# historical records are not rewritten.
 EVOLUTION_SHAPE_NAME = "cross-file-evolution-typed-null-union"
 EVOLUTION_SHAPE_ROWS = (2048, 2048)
 EVOLUTION_TRIAL = "wide"
 EVOLUTION_ADDED_COLUMN = "payload3"
-EVOLUTION_EXPECTED_ROW = [8386560, 1048576, 1048576, 1048576, 524288, 1048576, 1048576,
-                          1048576, 1048576]
+EVOLUTION_EXPECTED_CODE = None  # per spec; no code defined for this case, so none is asserted
+EVOLUTION_EXPECTED_CODE_STATUS = "per spec; no code asserted; refusal required"
+# What the pre-round value expectation computed, still recomputable from the recipe alone and
+# still carried in the closed manifest because its grammar requires one expected value per trial.
+# It is a record, not the thing this shape asserts: a run that returns a value stops here as an
+# unexpected success, so a match against this number can never be taken as a pass.
+EVOLUTION_PLANNED_ROW = [8386560, 1048576, 1048576, 1048576, 524288, 1048576, 1048576,
+                         1048576, 1048576]
+# Recorded observation from the two live rounds on the pinned build. Both stand as failures and
+# both are recorded-but-not-gated: this runner asserts a refusal, never these numbers.
+EVOLUTION_OBSERVED_ROUNDS = ({"decision_code": 211, "http_status": 206, "native_exit": 1,
+                              "stage": "manifest-harness-failed",
+                              "evidence": "~/grv-evidence/grv-s3-shipping-madrrsjm"},
+                             {"decision_code": 211, "http_status": 206, "native_exit": 1,
+                              "stage": "manifest-harness-failed",
+                              "evidence": "~/grv-evidence/grv-s3-shipping-meqesy0l"})
 EVOLUTION_PHYSICAL = ({"id": "int64", "payload0": "string", "payload1": "string",
                        "payload2": "string", "payload4": "string", "payload5": "string",
                        "payload6": "string", "payload7": "string"},
@@ -538,13 +573,22 @@ def contradiction_plan(rows, bucket):
 
 
 def evolution_plan(rows, bucket):
-    """Resolve the one cross-file evolution shape: the second file adds one projected column."""
+    """Resolve the one cross-file evolution shape: the second file adds one projected column.
+
+    The outcome is a REFUSAL and no value is compared, so the plan carries no expectation value.
+    The decision code is None on purpose: the spec defines none for this case, and this runner will
+    not invent a number for a mechanism it cannot attribute offline. The number the two failed
+    pinned-build rounds observed is carried as recorded observation, not as a gate.
+    """
     require(rows in (8192, 65536) and rows >= sum(EVOLUTION_SHAPE_ROWS), "shape-row-expectation")
     require(len(EVOLUTION_PHYSICAL) == len(EVOLUTION_SHAPE_ROWS) == 2, "evolution-shape-files")
     require(set(EVOLUTION_PHYSICAL[1]) == set(SCHEMA), "evolution-second-file-closure")
     require(set(EVOLUTION_PHYSICAL[0]) == set(SCHEMA) - {EVOLUTION_ADDED_COLUMN},
             "evolution-first-file-closure")
-    require(len(EVOLUTION_EXPECTED_ROW) == len(SCHEMA), "evolution-expectation-shape")
+    require(len(EVOLUTION_PLANNED_ROW) == len(SCHEMA), "evolution-planned-row-shape")
+    require(EVOLUTION_EXPECTED_CODE is None
+            and EVOLUTION_EXPECTED_CODE_STATUS == "per spec; no code asserted; refusal required",
+            "evolution-code-not-asserted")
     files = []
     for index, count in enumerate(EVOLUTION_SHAPE_ROWS):
         name = "evolution-%d.parquet" % index
@@ -560,20 +604,24 @@ def evolution_plan(rows, bucket):
                       "offline_fixture_sha256": OFFLINE_FIXTURE_SHA256[name]})
     require(len({item["coordinate"] for item in files}) == len(files),
             "evolution-duplicate-coordinate")
-    return {"name": EVOLUTION_SHAPE_NAME, "files": files, "outcome": "typed-null-union",
-            "added_column": EVOLUTION_ADDED_COLUMN, "expected_row": list(EVOLUTION_EXPECTED_ROW),
+    return {"name": EVOLUTION_SHAPE_NAME, "files": files, "outcome": "refused",
+            "value_compared": False, "expected_code": EVOLUTION_EXPECTED_CODE,
+            "expected_code_status": EVOLUTION_EXPECTED_CODE_STATUS,
+            "observed_rounds": [dict(entry) for entry in EVOLUTION_OBSERVED_ROUNDS],
+            "planned_row": list(EVOLUTION_PLANNED_ROW), "added_column": EVOLUTION_ADDED_COLUMN,
             "trial": EVOLUTION_TRIAL, "columns": dict(SCHEMA), "compression": "NONE",
             "dictionary": False, "statistics": True, "row_group_rows": 2048}
 
 
-def evolution_expectation(columns_by_file, plan):
-    """Recompute the pre-authored typed-NULL union from local fixture read-backs and require agreement.
+def evolution_planned_value(columns_by_file, plan):
+    """Recompute the pre-round planned value from local fixture read-backs and require agreement.
 
     A projected column a file does not carry is a typed NULL on that file's rows, and sum() and
     sum(length()) ignore NULLs, so the file that lacks the column contributes nothing to it and
-    every other column sums across both files. EVOLUTION_EXPECTED_ROW was authored offline before
-    any live round; a fixture that is not the fixture the expectation was written for stops the
-    run here, before any upload, so a drift can never be absorbed as a pass.
+    every other column sums across both files. The number was authored offline before any live
+    round and is a RECORD, not the expectation: the shape expects a refusal. A fixture that is not
+    the fixture the number was written for stops the run here, before any upload, so a drift can
+    never be absorbed as a pass.
     """
     require(len(columns_by_file) == len(plan["files"]) == 2, "evolution-shape-files")
     require(plan["trial"] == EVOLUTION_TRIAL, "evolution-trial")
@@ -598,7 +646,7 @@ def evolution_expectation(columns_by_file, plan):
                         "evolution-payload-recipe-drift")
                 total += sum(len(value) for value in values if value is not None)
         row.append(total)
-    require(row == EVOLUTION_EXPECTED_ROW, "evolution-expectation-drift")
+    require(row == EVOLUTION_PLANNED_ROW, "evolution-planned-value-drift")
     return encode_result(row)
 
 
@@ -1322,17 +1370,21 @@ class Probe:
                            "cleaned_individually": True} for item in plan["files"]]}
 
     def evolution_slice(self, columns_by_file, plan, evidence):
-        """Run the one cross-file evolution shape: two files, the second adds one column.
+        """Run the one cross-file evolution shape and require the harness to refuse it.
 
-        Ground truth is computed independently in Python from the local fixtures, the same way the
-        three-file aggregate does it, because the harness local oracle seam admits only ONE
-        descriptor per call. The expectation is the pre-authored typed-NULL union and it is
-        recomputed here from the fixture read-backs before anything is uploaded: if the two do not
-        agree, the run stops before any cloud write. A disagreement between a recorded identity and
-        the reported result stops the slice before any delete.
+        Two files, the second ADDS a projected column the first lacks. The specified behaviour is a
+        REFUSAL and this runner compares no value. The decision code is recorded, not asserted: the
+        spec defines none for this case and the closed codes are per call-site, not per mechanism,
+        so offline work cannot attribute a mechanism; the number is whatever the round reports, and
+        two pinned-build rounds reported 211 with HTTP status 206 and both stand as failures. The
+        pre-round planned value stays in the closed manifest because its grammar requires one
+        expected value per trial, and the planned-value gate below still runs on the fixture
+        read-backs before anything is uploaded, so the manifest cannot silently describe a
+        different shape. An unexpected success -- a value coming back, even the planned one -- or an
+        unparsable diagnostic stops the run before any delete, and whatever numbers were observed
+        are kept. The guarded cloud path and the manifest grammar are unchanged.
         """
-        expectation = {"trial": plan["trial"],
-                       "expected": evolution_expectation(columns_by_file, plan)}
+        planned_value = evolution_planned_value(columns_by_file, plan)
         entries = []
         for item in plan["files"]:
             fixture = self.directory / item["local_fixture"]
@@ -1341,7 +1393,8 @@ class Probe:
                             "size": entry["bytes"], "sha256": entry["sha256"],
                             "validator": entry["etag"]})
         manifest = self.directory / "manifest-evolution.json"
-        atomic_json(manifest, manifest_document(entries, [expectation]))
+        atomic_json(manifest, manifest_document(entries, [{"trial": plan["trial"],
+                                                           "expected": planned_value}]))
         manifest.chmod(0o600)
         self.journal("manifest-written-private")
         command = [str(self.args.binary), "s3", str(self.args.httpfs), str(self.args.aws),
@@ -1349,23 +1402,31 @@ class Probe:
                    str(manifest)]
         self.journal("manifest-harness-start")
         started = time.monotonic()
-        code, stdout, error = self.harness_code(command, self.args.native_timeout)
+        code, _stdout, error = self.harness_code(command, self.args.native_timeout)
         self.journal("manifest-harness-reaped")
-        if code != 0:
-            # Fixed numeric decision codes only; no manifest content or provider text is kept.
-            diagnostic = re.fullmatch(
-                rb"shipping qualification failed \(private details suppressed; protected read "
-                rb"phase ([0-9]{1,3}), HTTP status ([0-9]{1,3})\)\n", error)
+        diagnostic = re.fullmatch(
+            rb"shipping qualification failed \(private details suppressed; protected read "
+            rb"phase ([0-9]{1,3}), HTTP status ([0-9]{1,3})\)\n", error)
+        if code == 0:
+            # A value coming back is the surprise here, even the planned one: it is not a pass.
+            observed = "unexpected-success"
+        elif diagnostic is None:
+            observed = "unparsable-diagnostic"
+        else:
+            # Any refusal is the planned outcome here; the number is recorded, never asserted.
+            observed = None
+        if observed is not None:
+            # Never lose the observed numbers on any path that is not the planned outcome.
             if evidence is not None:
                 evidence.setdefault("failed_slices", []).append({
                     "name": plan["name"], "multi_file": True,
                     "decision_code": int(diagnostic.group(1)) if diagnostic else None,
                     "http_status": int(diagnostic.group(2)) if diagnostic else None,
-                    "native_exit": code, "stage": "manifest-harness-failed",
-                    "native_reaped": True, "elapsed_seconds": round(time.monotonic() - started, 3)})
-            raise SafeFailure("manifest-harness-failed")
-        report = safe_manifest_native(stdout)
-        verify_reported(entries, report, [expectation])
+                    "native_exit": code, "expected_code": plan["expected_code"],
+                    "expected_code_status": plan["expected_code_status"],
+                    "stage": "evolution-shape-" + observed, "native_reaped": True,
+                    "elapsed_seconds": round(time.monotonic() - started, 3)})
+            raise SafeFailure("evolution-shape-" + observed)
         for item in plan["files"]:
             entry = self.state["objects"][item["key"]]
             require(self.inspect_object(item["key"], entry["version_id"]) ==
@@ -1377,37 +1438,32 @@ class Probe:
                     "cleanup-generation-mismatch")
             self.delete_owned(item["key"], self.canonical_version(entry["put_version_id"]),
                               entry["put_etag"])
-        return {"name": plan["name"], "manifest_mode": True, "multi_file": True,
-                "outcome": "typed-null-union", "added_column": plan["added_column"],
-                "ground_truth": "computed independently in Python from the local fixtures; the "
-                                "harness local oracle admits only one descriptor per call; the "
-                                "pre-authored value was authored before the round and recomputed "
-                                "here from the fixture read-backs",
-                "preauthored_row": plan["expected_row"],
+        return {"name": plan["name"], "multi_file": True, "outcome": "refused",
+                "assertion": "refusal required; no value comparison performed and no decision "
+                             "code asserted (per spec, no code defined for this case; the "
+                             "observed numbers are recorded as observed)",
+                "expected_code": plan["expected_code"],
+                "expected_code_status": plan["expected_code_status"],
+                "observed_rounds_recorded_not_gated": plan["observed_rounds"],
+                "decision_code": int(diagnostic.group(1)),
+                "http_status": int(diagnostic.group(2)), "native_exit": code,
+                "native_reaped": True, "added_column": plan["added_column"],
+                "planned_row_recorded_not_compared": plan["planned_row"],
+                "planned_value_manifest_sha256": hashlib.sha256(
+                    bytes.fromhex(planned_value)).hexdigest(),
+                "elapsed_seconds": round(time.monotonic() - started, 3),
+                "native_timeout_seconds": self.args.native_timeout,
                 "files": [{"local_fixture": item["local_fixture"],
                            "canonical_coordinate": item["coordinate"], "rows": item["rows"],
                            "columns": sorted(item["columns"]),
                            "physical_types": {column: item["physical"][column]
                                               for column in sorted(item["columns"])},
                            "offline_fixture_sha256": item["offline_fixture_sha256"],
-                           "row_group_rows": plan["row_group_rows"],
-                           "compression": plan["compression"],
-                           "dictionary": plan["dictionary"], "statistics": plan["statistics"],
                            "bytes": self.state["objects"][item["key"]]["bytes"],
                            "sha256": self.state["objects"][item["key"]]["sha256"],
                            "etag": self.state["objects"][item["key"]]["etag"],
                            "version_id": self.state["objects"][item["key"]]["version_id"],
-                           "cleaned_individually": True} for item in plan["files"]],
-                "trial": {"trial": plan["trial"],
-                          "expected": "sum(id) plus eight sum(length(payloadN)) over the union of "
-                                      "the two files, where the column only one file carries is a "
-                                      "typed NULL on the other file's rows and contributes nothing",
-                          "expected_sha256": hashlib.sha256(
-                              bytes.fromhex(expectation["expected"])).hexdigest(),
-                          "reported": report["trials"][0]},
-                "phases": report["phases"], "denials": report["denials"],
-                "native_timeout_seconds": self.args.native_timeout,
-                "elapsed_seconds": round(time.monotonic() - started, 3)}
+                           "cleaned_individually": True} for item in plan["files"]]}
 
     def cleanup(self):
         if not self.state["creation_intent"]:
@@ -1524,7 +1580,7 @@ def run(args):
                     "Multi-file ground truth is computed independently in Python from the local fixtures because the harness local oracle admits only one descriptor per call; the guarded cloud path is unchanged.",
                     "Cold versus warm on this path means two sequential guarded executions inside one retained connection-session: no durable cache exists across processes, so a second run is cold again.",
                     "The cross-file type-contradiction shape asserts a REFUSAL only and asserts no decision code: the closed codes are per call-site, not per mechanism, so the mechanism cannot be attributed offline and the expected code is per spec, to be confirmed at the round gate.",
-                    "The cross-file evolution shape's typed-NULL union expectation was pre-authored in Python from local fixture read-backs before any live round; ground truth stays Python-computed because the harness local oracle admits one descriptor per call, and the offline indicator for this direction came from DuckDB 1.4.2, not the pinned build.",
+                    "The cross-file evolution shape asserts a REFUSAL and compares no value: within one version every file must match, and two pinned-build rounds each refused this shape at 211 with HTTP status 206 and both stand as failures. No decision code is asserted for it, because no code is defined for this case and the closed codes are per call-site, not per mechanism; the pre-round typed-NULL union value stays in the manifest because its grammar requires one, and a value returned on this shape stops the run as an unexpected success. The offline indicator for this direction came from DuckDB 1.4.2, not the pinned build.",
                     "Fixture SHA-256s recorded for the two new cross-file shapes come from the offline build and are recorded, not gated: byte-identical reproducibility is not an acceptance item, and the same content written through another code path hashes differently.",
                     "The cold/warm shape records per-trial counters but asserts no direction: reduced warm fetching and full warm re-fetch are both accepted outcomes.",
                     "No universal savings claim; no-statistics savings are not evidence of statistics pruning.",
@@ -2790,7 +2846,25 @@ class SafetyTests(unittest.TestCase):
     def test_evolution_plan_is_the_second_file_adding_one_column(self):
         plan = evolution_plan(8192, "bucket")
         self.assertEqual(plan["name"], EVOLUTION_SHAPE_NAME)
-        self.assertEqual(plan["outcome"], "typed-null-union")
+        # The shape is EXPECT-REFUSAL: two pinned-build rounds established refusal as the specified
+        # same-version behaviour, so the plan resolves to a refusal and compares no value.
+        self.assertEqual(plan["outcome"], "refused")
+        self.assertFalse(plan["value_compared"])
+        # No code is defined for this case, so none is asserted here.
+        self.assertIsNone(plan["expected_code"])
+        self.assertEqual(plan["expected_code_status"],
+                         "per spec; no code asserted; refusal required")
+        # What the two failed rounds observed is carried as record, not as a gate, and both rounds
+        # stand as failures.
+        self.assertEqual(plan["observed_rounds"],
+                         [{"decision_code": 211, "http_status": 206, "native_exit": 1,
+                           "stage": "manifest-harness-failed",
+                           "evidence": "~/grv-evidence/grv-s3-shipping-madrrsjm"},
+                          {"decision_code": 211, "http_status": 206, "native_exit": 1,
+                           "stage": "manifest-harness-failed",
+                           "evidence": "~/grv-evidence/grv-s3-shipping-meqesy0l"}])
+        self.assertTrue(all(entry["stage"] == "manifest-harness-failed"
+                            for entry in plan["observed_rounds"]))
         self.assertEqual(plan["added_column"], "payload3")
         self.assertEqual(plan["trial"], "wide")
         self.assertEqual(len(plan["files"]), 2)
@@ -2807,9 +2881,11 @@ class SafetyTests(unittest.TestCase):
                          "ca4262e7e07280a2c608397340982490b6c695cd8fad415e6fd3b0a28703ec34")
         self.assertEqual(plan["files"][1]["offline_fixture_sha256"],
                          "439d7673fb7a49966002387a09d5d76e53653e221c773259fb2686d8558aceea")
-        # The pre-authored row, restated by hand: ids 0..4095 summed, every value 256 characters,
-        # and payload3 present in the second file only so only 2048 of its rows contribute.
-        self.assertEqual(EVOLUTION_EXPECTED_ROW,
+        # The pre-round value, restated by hand: ids 0..4095 summed, every value 256 characters,
+        # and payload3 present in the second file only so only 2048 of its rows contribute. It is
+        # carried as a record and as a fixture gate, NOT as an assertion about what a round returns.
+        self.assertEqual(plan["planned_row"], EVOLUTION_PLANNED_ROW)
+        self.assertEqual(EVOLUTION_PLANNED_ROW,
                          [sum(range(4096))] + [(2048 if column == "payload3" else 4096) * 256
                                                for column in PROJECTION_ORDER[1:]])
         self.assertEqual(sum(range(4096)), 8386560)
@@ -2817,6 +2893,10 @@ class SafetyTests(unittest.TestCase):
         self.assertEqual(2048 * 256, 524288)
         import sys
         module = sys.modules[__name__]
+        # A run that pins a number this runner cannot attribute is refused as an invented plan.
+        with mock.patch.object(module, "EVOLUTION_EXPECTED_CODE", 211):
+            with self.assertRaisesRegex(SafeFailure, "evolution-code-not-asserted"):
+                evolution_plan(8192, "bucket")
         for case, physical, stage in (
                 ("first file not missing anything", ({"id": "int64",
                                                      **{f"payload{c}": "string"
@@ -2835,13 +2915,13 @@ class SafetyTests(unittest.TestCase):
         with self.assertRaisesRegex(SafeFailure, "shape-row-expectation"):
             evolution_plan(2048, "bucket")
 
-    def test_evolution_expectation_is_the_preauthored_typed_null_union(self):
+    def test_evolution_planned_value_is_recorded_and_gates_the_fixture(self):
         plan = evolution_plan(8192, "bucket")
         columns = self.recipe_columns(plan)
-        self.assertEqual(evolution_expectation(columns, plan),
-                         encode_result(EVOLUTION_EXPECTED_ROW))
+        self.assertEqual(evolution_planned_value(columns, plan),
+                         encode_result(EVOLUTION_PLANNED_ROW))
         # What a shared-schema pair would have given: every payload present in both files. The
-        # pre-authored row differs from it at exactly one position, and that difference is exactly
+        # recorded row differs from it at exactly one position, and that difference is exactly
         # the typed-NULL contribution of the file that lacks the column.
         shared = [{column: recipe_column(column, "string" if column != "id" else "int64",
                                         entry["offset"], entry["rows"])
@@ -2849,9 +2929,9 @@ class SafetyTests(unittest.TestCase):
         shared_row = [sum(shared[0]["id"] + shared[1]["id"])] + [
             sum(len(value) for file in shared for value in file[column])
             for column in PROJECTION_ORDER[1:]]
-        differ = [index for index in range(9) if shared_row[index] != EVOLUTION_EXPECTED_ROW[index]]
+        differ = [index for index in range(9) if shared_row[index] != EVOLUTION_PLANNED_ROW[index]]
         self.assertEqual(differ, [4])
-        self.assertEqual(shared_row[4] - EVOLUTION_EXPECTED_ROW[4], 2048 * 256)
+        self.assertEqual(shared_row[4] - EVOLUTION_PLANNED_ROW[4], 2048 * 256)
 
     def test_evolution_gates_refuse_drift_before_upload(self):
         plan = evolution_plan(8192, "bucket")
@@ -2869,7 +2949,7 @@ class SafetyTests(unittest.TestCase):
                                                      + columns[1]["payload5"][1:]},], plan,
                  "evolution-payload-recipe-drift"),
                 ("value drift", [{**columns[0], "payload0": ["short"] + columns[0]["payload0"][1:]},
-                                columns[1]], plan, "evolution-expectation-drift"),
+                                columns[1]], plan, "evolution-planned-value-drift"),
                 ("trial not the closed one", columns, dict(plan, trial="narrow"),
                  "evolution-trial"),
                 ("both files carry every column", [{column: recipe_column(
@@ -2880,42 +2960,104 @@ class SafetyTests(unittest.TestCase):
                   "trial": "wide"}, "evolution-added-column")):
             with self.subTest(case=case):
                 with self.assertRaisesRegex(SafeFailure, re.escape(stage)):
-                    evolution_expectation(columns_arg, plan_arg)
+                    evolution_planned_value(columns_arg, plan_arg)
         with self.assertRaisesRegex(SafeFailure, "evolution-shape-files"):
-            evolution_expectation([columns[0]], plan)
+            evolution_planned_value([columns[0]], plan)
 
-    def test_evolution_slice_compares_the_preauthored_expectation(self):
-        for case, actual, stage, deletes in (
-                ("matches-the-preauthored-value", encode_result(EVOLUTION_EXPECTED_ROW), None, 2),
-                ("reported-a-shared-schema-value",
-                 encode_result([8386560] + [1048576] * 8), "reported-expectation-mismatch", 0),
-                ("oracle-not-correct", encode_result(EVOLUTION_EXPECTED_ROW), "native-oracle", 0)):
+    def test_evolution_slice_requires_a_refusal_and_records_any_code(self):
+        def diagnostic(code, status):
+            return (b"shipping qualification failed (private details suppressed; protected "
+                    b"read phase %d, HTTP status %d)\n" % (code, status))
+        for case, code, error, stage, recorded, status in (
+                # No number is asserted, so any parsable refusal is the planned outcome and what
+                # the round observed is what gets recorded, including the numbers the two failed
+                # pinned-build rounds produced.
+                ("refusal-at-the-observed-code", 1, diagnostic(211, 206), None, 211, 206),
+                ("refusal-at-an-unpredicted-code", 1, diagnostic(212, 206), None, 212, 206),
+                ("refusal-at-a-zero-http-status", 1, diagnostic(213, 0), None, 213, 0),
+                # A value coming back is the surprise, and the surprise FAILS the run.
+                ("unexpected-success", 0, b"", "evolution-shape-unexpected-success", None, None),
+                ("unparsable", 1, b"some other diagnostic\n",
+                 "evolution-shape-unparsable-diagnostic", None, None)):
             with self.subTest(case=case), tempfile.TemporaryDirectory() as directory:
                 probe = self.probe(directory)
                 plan = evolution_plan(8192, probe.state["bucket"])
                 fixtures = self.cross_file_fixtures(directory, plan)
                 self.cross_file_ok(probe, fixtures)
-                report = self.evolution_report(plan, fixtures, actual,
-                                              correct=stage != "native-oracle")
-                probe.harness_code = mock.Mock(return_value=(0, json.dumps(report), b""))
+                probe.harness_code = mock.Mock(return_value=(code, "", error))
                 evidence = {"failed_slices": []}
                 columns = self.recipe_columns(plan)
                 if stage is None:
                     item = probe.evolution_slice(columns, plan, evidence)
-                    self.assertEqual(item["outcome"], "typed-null-union")
-                    self.assertEqual(item["added_column"], "payload3")
-                    self.assertEqual(item["preauthored_row"], EVOLUTION_EXPECTED_ROW)
+                    self.assertEqual(item["outcome"], "refused")
+                    self.assertEqual(item["decision_code"], recorded)
+                    self.assertEqual(item["http_status"], status)
+                    self.assertEqual(item["native_exit"], 1)
+                    # Nothing here is gated on the number, and no value is compared.
+                    self.assertEqual(item["expected_code"], None)
+                    self.assertEqual(item["expected_code_status"],
+                                     "per spec; no code asserted; refusal required")
+                    self.assertEqual(item["planned_row_recorded_not_compared"],
+                                     EVOLUTION_PLANNED_ROW)
+                    self.assertEqual(item["observed_rounds_recorded_not_gated"],
+                                     plan["observed_rounds"])
                     self.assertEqual(evidence["failed_slices"], [])
                     self.assertEqual([call.args[1] for call in probe.ok.call_args_list
                                       if call.args[1] == "delete-object"].count("delete-object"),
-                                     deletes)
+                                     2)
                     continue
                 with self.assertRaisesRegex(SafeFailure, re.escape(stage)):
                     probe.evolution_slice(columns, plan, evidence)
-                self.assertEqual([call.args[1] for call in probe.ok.call_args_list
-                                  if call.args[1] == "delete-object"].count("delete-object"),
-                                 deletes)
-        # A fixture that is not the fixture the expectation was written for stops before any
+                self.assertEqual(evidence["failed_slices"][-1]["stage"], stage)
+                self.assertEqual(evidence["failed_slices"][-1]["native_exit"], code)
+                self.assertEqual(evidence["failed_slices"][-1]["decision_code"], recorded)
+                self.assertEqual(evidence["failed_slices"][-1]["http_status"], status)
+                self.assertEqual(evidence["failed_slices"][-1]["expected_code"], None)
+                self.assertEqual(evidence["failed_slices"][-1]["expected_code_status"],
+                                 "per spec; no code asserted; refusal required")
+                self.assertFalse(any(call.args[1] == "delete-object"
+                                     for call in probe.ok.call_args_list))
+
+    def test_evolution_value_returning_success_is_a_failure_not_a_quiet_pass(self):
+        # The required direction, stated as its own test: this shape must not pass on a value match.
+        # A harness that returned the planned typed-NULL union and exited 0 is NOT the plan, so it
+        # is recorded as a failed slice and stops the run before any delete. The fail-closed refusal
+        # is the outcome that is expected, and it records no failed slice.
+        for case, code, error, stage in (
+                ("value-returning-success-on-the-planned-row", 0, b"",
+                 "evolution-shape-unexpected-success"),
+                ("fail-closed-refusal-is-expected", 1,
+                 b"shipping qualification failed (private details suppressed; protected read "
+                 b"phase 211, HTTP status 206)\n", None)):
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as directory:
+                probe = self.probe(directory)
+                plan = evolution_plan(8192, probe.state["bucket"])
+                fixtures = self.cross_file_fixtures(directory, plan)
+                self.cross_file_ok(probe, fixtures)
+                report = self.evolution_report(plan, fixtures, encode_result(EVOLUTION_PLANNED_ROW))
+                probe.harness_code = mock.Mock(return_value=(code, json.dumps(report), error))
+                evidence = {"failed_slices": []}
+                columns = self.recipe_columns(plan)
+                def deletes():
+                    return [call.args[1] for call in probe.ok.call_args_list
+                            if call.args[1] == "delete-object"].count("delete-object")
+                if stage is None:
+                    item = probe.evolution_slice(columns, plan, evidence)
+                    self.assertEqual(item["outcome"], "refused")
+                    self.assertEqual(item["decision_code"], 211)
+                    self.assertEqual(item["http_status"], 206)
+                    self.assertEqual(evidence["failed_slices"], [])
+                    self.assertEqual(deletes(), 2)
+                    continue
+                with self.assertRaisesRegex(SafeFailure, re.escape(stage)):
+                    probe.evolution_slice(columns, plan, evidence)
+                self.assertEqual(evidence["failed_slices"][-1]["stage"], stage)
+                self.assertEqual(evidence["failed_slices"][-1]["native_exit"], 0)
+                self.assertEqual(evidence["failed_slices"][-1]["decision_code"], None)
+                self.assertEqual(deletes(), 0)
+
+    def test_evolution_gate_stops_a_foreign_fixture_before_any_upload(self):
+        # A fixture that is not the fixture the recorded value was written for stops before any
         # upload, so a drift can never be absorbed as a pass.
         with tempfile.TemporaryDirectory() as directory:
             probe = self.probe(directory)
@@ -2925,7 +3067,7 @@ class SafetyTests(unittest.TestCase):
             probe.harness_code = mock.Mock(return_value=(0, json.dumps({}), b""))
             columns = self.recipe_columns(plan)
             columns[1]["payload3"] = [None] + columns[1]["payload3"][1:]
-            with self.assertRaisesRegex(SafeFailure, "evolution-expectation-drift"):
+            with self.assertRaisesRegex(SafeFailure, "evolution-planned-value-drift"):
                 probe.evolution_slice(columns, plan, {"failed_slices": []})
             self.assertFalse(any(call.args[1] in ("put-object", "delete-object")
                                  for call in probe.ok.call_args_list))
